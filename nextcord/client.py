@@ -328,7 +328,7 @@ class Client:
         self._ready: asyncio.Event = asyncio.Event()
         self._connection._get_websocket = self._get_websocket
         self._connection._get_client = lambda: self
-        self._token: str | None = None
+        self._token: Optional[str] = None
 
         self._lazy_load_commands: bool = lazy_load_commands
         self._client_cogs: Set[ClientCog] = set()

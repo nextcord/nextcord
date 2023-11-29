@@ -103,7 +103,7 @@ _DEFAULT_API_VERSION: Literal[10] = 10
 _API_VERSION: Literal[10] = _DEFAULT_API_VERSION
 
 
-def _get_logging_auth(auth: str | None) -> str:
+def _get_logging_auth(auth: Optional[str]) -> str:
     if auth is None:
         return "None"
 
@@ -167,7 +167,7 @@ class RateLimit:
         """Maximum amount of requests before requests have to wait for the rate limit to reset."""
         self.remaining: int = 1
         """Remaining amount of requests before requests have to wait for the rate limit to reset."""
-        self.reset: datetime | None = None
+        self.reset: Optional[datetime] = None
         """Datetime that the bucket roughly will be reset at."""
         self._tracked_reset_time: float = 1.0
         """The estimate time between bucket resets. Found via reset if use_reset_timestamp is True, found with
@@ -175,7 +175,7 @@ class RateLimit:
         """
         self.reset_after: float = 1.0
         """Amount of seconds roughly until the rate limit will be reset."""
-        self.bucket: str | None = None
+        self.bucket: Optional[str] = None
         """Name of the bucket, if it has one."""
 
         self._time_offset: float = time_offset
@@ -184,11 +184,11 @@ class RateLimit:
         """If the reset timestamp should be used for bucket resets. If False, the float reset_after is used."""
         self._first_update: bool = True
         """If the next update to be ran will be the first."""
-        self._reset_remaining_task: asyncio.Task | None = None
+        self._reset_remaining_task: Optional[asyncio.Task] = None
         """Holds the task object for resetting the remaining count."""
         self._on_reset_event: asyncio.Event = asyncio.Event()
         """Used to indicate when the rate limit is ready to be acquired."""
-        self._migrating: str | None = None
+        self._migrating: Optional[str] = None
         """When this RateLimit is being deprecated and acquiring requests need to migrate to a different RateLimit, this
         variable should be set to the different RateLimit/buckets string name.
         """
@@ -344,7 +344,7 @@ class RateLimit:
         _log.debug("Bucket %s: Reset, allowing requests to continue.", self.bucket)
 
     @property
-    def migrating(self) -> str | None:
+    def migrating(self) -> Optional[str]:
         """If not ``None``, this indicates what bucket acquiring requests should migrate to."""
         return self._migrating
 
@@ -549,12 +549,12 @@ class HTTPClient:
 
         self._buckets: dict[str, RateLimit] = {}
         """{"Discord bucket name": RateLimit}"""
-        self._global_rate_limits: dict[str | None, RateLimit] = {}
+        self._global_rate_limits: dict[Optional[str], RateLimit] = {}
         """{"Auth string": RateLimit}, None for auth-less ratelimit."""
-        self._url_rate_limits: dict[tuple[str, str, str | None], RateLimit] = {}
+        self._url_rate_limits: dict[tuple[str, str, Optional[str]], RateLimit] = {}
         """{("METHOD", "Route.bucket", "auth string"): RateLimit} auth string may be None to indicate auth-less."""
 
-    def _make_global_rate_limit(self, auth: str | None, max_per_second: int) -> GlobalRateLimit:
+    def _make_global_rate_limit(self, auth: Optional[str], max_per_second: int) -> GlobalRateLimit:
         _log.debug(
             "Creating global ratelimit for auth %s with max per second %s.",
             _get_logging_auth(auth),
@@ -569,7 +569,7 @@ class HTTPClient:
         self._global_rate_limits[auth] = rate_limit
         return rate_limit
 
-    def _make_url_rate_limit(self, method: str, route: Route, auth: str | None) -> RateLimit:
+    def _make_url_rate_limit(self, method: str, route: Route, auth: Optional[str]) -> RateLimit:
         _log.debug(
             "Making URL rate limit for %s %s %s", method, route.bucket, _get_logging_auth(auth)
         )
@@ -580,21 +580,21 @@ class HTTPClient:
         return ret
 
     def _set_url_rate_limit(
-        self, method: str, route: Route, auth: str | None, rate_limit: RateLimit
+        self, method: str, route: Route, auth: Optional[str], rate_limit: RateLimit
     ) -> None:
         self._url_rate_limits[(method, route.bucket, auth)] = rate_limit
 
-    def _get_url_rate_limit(self, method: str, route: Route, auth: str | None) -> RateLimit | None:
+    def _get_url_rate_limit(self, method: str, route: Route, auth: Optional[str]) -> Optional[RateLimit]:
         return self._url_rate_limits.get((method, route.bucket, auth), None)
 
-    def set_default_auth(self, auth: str | None) -> None:
+    def set_default_auth(self, auth: Optional[str]) -> None:
         self._default_auth = auth
 
     def _make_headers(
         self,
         original_headers: dict[str, str],
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
     ) -> dict[str, str]:
         """Creates a new dictionary of headers, without overwriting values from the given headers.
 
@@ -724,8 +724,8 @@ class HTTPClient:
             route.bucket,
             _get_logging_auth(auth),
         )  # Only use this for logging.
-        ret: Any | None = None
-        response: aiohttp.ClientResponse | None = None
+        ret: Optional[str] = None
+        response: Optional[aiohttp.ClientResponse] = None
 
         # If retry_request is False and any of the rate limits are locked, don't continue and raise immediately.
         if retry_request is False:
@@ -1008,7 +1008,7 @@ class HTTPClient:
         client_secret: str,
         code: str,
         redirect_uri: str,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ):
         # TODO: Look into how viable this function is here.
@@ -1031,7 +1031,7 @@ class HTTPClient:
     async def get_current_user(
         self,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ):
         return await self.request(
@@ -1060,7 +1060,7 @@ class HTTPClient:
         user_id: Snowflake,
         recipients: List[int],
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[channel.GroupDMChannel]:
         payload = {
@@ -1078,7 +1078,7 @@ class HTTPClient:
         self,
         channel_id,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         return self.request(
@@ -1093,7 +1093,7 @@ class HTTPClient:
         self,
         user_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[channel.DMChannel]:
         payload = {
@@ -1168,7 +1168,7 @@ class HTTPClient:
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
         flags: Optional[int] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[message.Message]:
         r = Route("POST", "/channels/{channel_id}/messages", channel_id=channel_id)
@@ -1196,7 +1196,7 @@ class HTTPClient:
         self,
         channel_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         return self.request(
@@ -1279,7 +1279,7 @@ class HTTPClient:
         components: Optional[List[components.Component]] = None,
         attachments: Optional[List[Dict[str, Any]]] = None,
         flags: Optional[int] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[message.Message]:
         payload: Dict[str, Any] = {
@@ -1323,7 +1323,7 @@ class HTTPClient:
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
         flags: Optional[int] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[message.Message]:
         r = Route("POST", "/channels/{channel_id}/messages", channel_id=channel_id)
@@ -1350,7 +1350,7 @@ class HTTPClient:
         message_id: Snowflake,
         *,
         reason: Optional[str] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
@@ -1372,7 +1372,7 @@ class HTTPClient:
         message_ids: SnowflakeList,
         *,
         reason: Optional[str] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         r = Route("POST", "/channels/{channel_id}/messages/bulk-delete", channel_id=channel_id)
@@ -1392,7 +1392,7 @@ class HTTPClient:
         self,
         channel_id: Snowflake,
         message_id: Snowflake,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
         **fields: Any,
     ) -> Response[message.Message]:
@@ -1417,7 +1417,7 @@ class HTTPClient:
         message_id: Snowflake,
         emoji: str,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
@@ -1440,7 +1440,7 @@ class HTTPClient:
         emoji: str,
         member_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
@@ -1463,7 +1463,7 @@ class HTTPClient:
         message_id: Snowflake,
         emoji: str,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
@@ -1487,7 +1487,7 @@ class HTTPClient:
         limit: int,
         after: Optional[Snowflake] = None,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[List[user.User]]:
         r = Route(
@@ -1515,7 +1515,7 @@ class HTTPClient:
         channel_id: Snowflake,
         message_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
@@ -1537,7 +1537,7 @@ class HTTPClient:
         message_id: Snowflake,
         emoji: str,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
@@ -1558,7 +1558,7 @@ class HTTPClient:
         channel_id: Snowflake,
         message_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[message.Message]:
         r = Route(
@@ -1577,7 +1577,7 @@ class HTTPClient:
         self,
         channel_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[channel.Channel]:
         r = Route("GET", "/channels/{channel_id}", channel_id=channel_id)
@@ -1595,7 +1595,7 @@ class HTTPClient:
         after: Optional[Snowflake] = None,
         around: Optional[Snowflake] = None,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[List[message.Message]]:
         params: Dict[str, Any] = {
@@ -1621,7 +1621,7 @@ class HTTPClient:
         channel_id: Snowflake,
         message_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[message.Message]:
         return self.request(
@@ -1641,7 +1641,7 @@ class HTTPClient:
         message_id: Snowflake,
         reason: Optional[str] = None,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
@@ -1663,7 +1663,7 @@ class HTTPClient:
         message_id: Snowflake,
         reason: Optional[str] = None,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
@@ -1683,7 +1683,7 @@ class HTTPClient:
         self,
         channel_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[List[message.Message]]:
         return self.request(Route("GET", "/channels/{channel_id}/pins", channel_id=channel_id))
@@ -1696,7 +1696,7 @@ class HTTPClient:
         guild_id: Snowflake,
         reason: Optional[str] = None,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
@@ -1716,7 +1716,7 @@ class HTTPClient:
         delete_message_seconds: int = 86400,
         reason: Optional[str] = None,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         r = Route("PUT", "/guilds/{guild_id}/bans/{user_id}", guild_id=guild_id, user_id=user_id)
@@ -1738,7 +1738,7 @@ class HTTPClient:
         guild_id: Snowflake,
         *,
         reason: Optional[str] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         r = Route("DELETE", "/guilds/{guild_id}/bans/{user_id}", guild_id=guild_id, user_id=user_id)
@@ -1757,7 +1757,7 @@ class HTTPClient:
         mute: Optional[bool] = None,
         deafen: Optional[bool] = None,
         reason: Optional[str] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[member.Member]:
         r = Route(
@@ -1782,7 +1782,7 @@ class HTTPClient:
         self,
         payload: Dict[str, Any],
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[user.User]:
         return self.request(
@@ -1798,7 +1798,7 @@ class HTTPClient:
         nickname: str,
         *,
         reason: Optional[str] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[member.Nickname]:
         r = Route("PATCH", "/guilds/{guild_id}/members/@me/nick", guild_id=guild_id)
@@ -1820,7 +1820,7 @@ class HTTPClient:
         nickname: str,
         *,
         reason: Optional[str] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[member.Member]:
         r = Route(
@@ -1842,7 +1842,7 @@ class HTTPClient:
         guild_id: Snowflake,
         payload: Dict[str, Any],
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         r = Route("PATCH", "/guilds/{guild_id}/voice-states/@me", guild_id=guild_id)
@@ -1859,7 +1859,7 @@ class HTTPClient:
         user_id: Snowflake,
         payload: Dict[str, Any],
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
@@ -1878,7 +1878,7 @@ class HTTPClient:
         user_id: Snowflake,
         *,
         reason: Optional[str] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
         **fields: Any,
     ) -> Response[member.MemberWithUser]:
@@ -1900,7 +1900,7 @@ class HTTPClient:
         channel_id: Snowflake,
         *,
         reason: Optional[str] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
         **options: Any,
     ) -> Response[channel.Channel]:
@@ -1946,7 +1946,7 @@ class HTTPClient:
         data: List[guild.ChannelPositionUpdate],
         *,
         reason: Optional[str] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         r = Route("PATCH", "/guilds/{guild_id}/channels", guild_id=guild_id)
@@ -1964,7 +1964,7 @@ class HTTPClient:
         channel_type: channel.ChannelType,
         *,
         reason: Optional[str] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
         **options: Any,
     ) -> Response[channel.GuildChannel]:
@@ -2006,7 +2006,7 @@ class HTTPClient:
         channel_id: Snowflake,
         *,
         reason: Optional[str] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         return self.request(
@@ -2026,7 +2026,7 @@ class HTTPClient:
         name: str,
         auto_archive_duration: threads.ThreadArchiveDuration,
         reason: Optional[str] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[threads.Thread]:
         payload = {
@@ -2057,7 +2057,7 @@ class HTTPClient:
         type: threads.ThreadType,
         invitable: bool = True,
         reason: Optional[str] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[threads.Thread]:
         payload = {
@@ -2093,7 +2093,7 @@ class HTTPClient:
         applied_tag_ids: Optional[List[str]] = None,
         flags: Optional[int] = None,
         reason: Optional[str] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[threads.Thread]:
         payload = {
@@ -2144,7 +2144,7 @@ class HTTPClient:
         applied_tag_ids: Optional[List[str]] = None,
         flags: Optional[int] = None,
         reason: Optional[str] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[threads.Thread]:
         payload = {
@@ -2184,7 +2184,7 @@ class HTTPClient:
         self,
         channel_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         return self.request(
@@ -2198,7 +2198,7 @@ class HTTPClient:
         channel_id: Snowflake,
         user_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         return self.request(
@@ -2216,7 +2216,7 @@ class HTTPClient:
         self,
         channel_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         return self.request(
@@ -2230,7 +2230,7 @@ class HTTPClient:
         channel_id: Snowflake,
         user_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         route = Route(
@@ -2251,7 +2251,7 @@ class HTTPClient:
         before: Optional[Snowflake] = None,
         limit: int = 50,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[threads.ThreadPaginationPayload]:
         route = Route(
@@ -2275,7 +2275,7 @@ class HTTPClient:
         before: Optional[Snowflake] = None,
         limit: int = 50,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[threads.ThreadPaginationPayload]:
         route = Route(
@@ -2299,7 +2299,7 @@ class HTTPClient:
         before: Optional[Snowflake] = None,
         limit: int = 50,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[threads.ThreadPaginationPayload]:
         route = Route(
@@ -2322,7 +2322,7 @@ class HTTPClient:
         self,
         guild_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[threads.ThreadPaginationPayload]:
         route = Route("GET", "/guilds/{guild_id}/threads/active", guild_id=guild_id)
@@ -2336,7 +2336,7 @@ class HTTPClient:
         self,
         channel_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[List[threads.ThreadMember]]:
         route = Route("GET", "/channels/{channel_id}/thread-members", channel_id=channel_id)
@@ -2355,7 +2355,7 @@ class HTTPClient:
         name: str,
         avatar: Optional[str] = None,
         reason: Optional[str] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[webhook.Webhook]:
         payload: Dict[str, Any] = {
@@ -2377,7 +2377,7 @@ class HTTPClient:
         self,
         channel_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[List[webhook.Webhook]]:
         return self.request(
@@ -2390,7 +2390,7 @@ class HTTPClient:
         self,
         guild_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[List[webhook.Webhook]]:
         return self.request(
@@ -2403,7 +2403,7 @@ class HTTPClient:
         self,
         webhook_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[webhook.Webhook]:
         return self.request(
@@ -2418,7 +2418,7 @@ class HTTPClient:
         webhook_channel_id: Snowflake,
         reason: Optional[str] = None,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         payload = {
@@ -2441,7 +2441,7 @@ class HTTPClient:
         after: Optional[Snowflake] = None,
         with_counts: bool = False,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[List[guild.Guild]]:
         params: Dict[str, Any] = {"limit": limit, "with_counts": int(with_counts)}
@@ -2462,7 +2462,7 @@ class HTTPClient:
         self,
         guild_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         return self.request(
@@ -2476,7 +2476,7 @@ class HTTPClient:
         guild_id: Snowflake,
         *,
         with_counts: bool = True,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[guild.Guild]:
         params = {"with_counts": int(with_counts)}
@@ -2491,7 +2491,7 @@ class HTTPClient:
         self,
         guild_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[guild.GuildPreview]:
         return self.request(
@@ -2504,7 +2504,7 @@ class HTTPClient:
         self,
         guild_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         return self.request(
@@ -2519,7 +2519,7 @@ class HTTPClient:
         region: str,
         icon: Optional[str],
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[guild.Guild]:
         payload = {
@@ -2541,7 +2541,7 @@ class HTTPClient:
         guild_id: Snowflake,
         *,
         reason: Optional[str] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
         **fields: Any,
     ) -> Response[guild.Guild]:
@@ -2581,7 +2581,7 @@ class HTTPClient:
         self,
         code: str,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[template.Template]:
         return self.request(
@@ -2594,7 +2594,7 @@ class HTTPClient:
         self,
         guild_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[List[template.Template]]:
         return self.request(
@@ -2608,7 +2608,7 @@ class HTTPClient:
         guild_id: Snowflake,
         payload: template.CreateTemplate,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[template.Template]:
         return self.request(
@@ -2623,7 +2623,7 @@ class HTTPClient:
         guild_id: Snowflake,
         code: str,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[template.Template]:
         return self.request(
@@ -2638,7 +2638,7 @@ class HTTPClient:
         code: str,
         payload,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[template.Template]:
         valid_keys = (
@@ -2658,7 +2658,7 @@ class HTTPClient:
         guild_id: Snowflake,
         code: str,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         return self.request(
@@ -2674,7 +2674,7 @@ class HTTPClient:
         region: str,
         icon: Optional[str],
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[guild.Guild]:
         payload = {
@@ -2697,7 +2697,7 @@ class HTTPClient:
         before: Optional[Snowflake] = None,
         after: Optional[Snowflake] = None,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[List[guild.Ban]]:
         params: Dict[str, Union[int, Snowflake]] = {}
@@ -2721,7 +2721,7 @@ class HTTPClient:
         user_id: Snowflake,
         guild_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[guild.Ban]:
         return self.request(
@@ -2734,7 +2734,7 @@ class HTTPClient:
         self,
         guild_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[invite.VanityInvite]:
         return self.request(
@@ -2749,7 +2749,7 @@ class HTTPClient:
         code: str,
         *,
         reason: Optional[str] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         payload: Dict[str, Any] = {"code": code}
@@ -2765,7 +2765,7 @@ class HTTPClient:
         self,
         guild_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[List[guild.GuildChannel]]:
         return self.request(
@@ -2780,7 +2780,7 @@ class HTTPClient:
         limit: int,
         after: Optional[Snowflake],
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[List[member.MemberWithUser]]:
         params: Dict[str, Any] = {
@@ -2802,7 +2802,7 @@ class HTTPClient:
         guild_id: Snowflake,
         member_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[member.MemberWithUser]:
         return self.request(
@@ -2824,7 +2824,7 @@ class HTTPClient:
         roles: List[str],
         *,
         reason: Optional[str] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[guild.GuildPrune]:
         payload: Dict[str, Any] = {
@@ -2848,7 +2848,7 @@ class HTTPClient:
         days: int,
         roles: List[str],
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[guild.GuildPrune]:
         params: Dict[str, Any] = {
@@ -2868,7 +2868,7 @@ class HTTPClient:
         self,
         sticker_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[sticker.Sticker]:
         return self.request(
@@ -2880,7 +2880,7 @@ class HTTPClient:
     def list_premium_sticker_packs(
         self,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[sticker.ListPremiumStickerPacks]:
         return self.request(
@@ -2893,7 +2893,7 @@ class HTTPClient:
         self,
         guild_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[List[sticker.GuildSticker]]:
         return self.request(
@@ -2907,7 +2907,7 @@ class HTTPClient:
         guild_id: Snowflake,
         sticker_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[sticker.GuildSticker]:
         return self.request(
@@ -2928,7 +2928,7 @@ class HTTPClient:
         file: File,
         reason: Optional[str],
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[sticker.GuildSticker]:
         initial_bytes = file.fp.read(16)
@@ -2976,7 +2976,7 @@ class HTTPClient:
         payload: sticker.EditGuildSticker,
         reason: Optional[str],
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[sticker.GuildSticker]:
         return self.request(
@@ -2998,7 +2998,7 @@ class HTTPClient:
         sticker_id: Snowflake,
         reason: Optional[str],
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         return self.request(
@@ -3017,7 +3017,7 @@ class HTTPClient:
         self,
         guild_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[List[emoji.Emoji]]:
         return self.request(
@@ -3031,7 +3031,7 @@ class HTTPClient:
         guild_id: Snowflake,
         emoji_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[emoji.Emoji]:
         return self.request(
@@ -3050,7 +3050,7 @@ class HTTPClient:
         *,
         roles: Optional[SnowflakeList] = None,
         reason: Optional[str] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[emoji.Emoji]:
         payload = {
@@ -3074,7 +3074,7 @@ class HTTPClient:
         emoji_id: Snowflake,
         *,
         reason: Optional[str] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
@@ -3089,7 +3089,7 @@ class HTTPClient:
         *,
         payload: Dict[str, Any],
         reason: Optional[str] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[emoji.Emoji]:
         r = Route(
@@ -3107,7 +3107,7 @@ class HTTPClient:
         self,
         guild_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[List[integration.Integration]]:
         r = Route("GET", "/guilds/{guild_id}/integrations", guild_id=guild_id)
@@ -3124,7 +3124,7 @@ class HTTPClient:
         type: integration.IntegrationType,
         id: int,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         payload = {
@@ -3145,7 +3145,7 @@ class HTTPClient:
         guild_id: Snowflake,
         integration_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
         **payload: Any,
     ) -> Response[None]:
@@ -3168,7 +3168,7 @@ class HTTPClient:
         guild_id: Snowflake,
         integration_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
@@ -3190,7 +3190,7 @@ class HTTPClient:
         integration_id: Snowflake,
         *,
         reason: Optional[str] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
@@ -3216,7 +3216,7 @@ class HTTPClient:
         user_id: Optional[Snowflake] = None,
         action_type: Optional[AuditLogAction] = None,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[audit_log.AuditLog]:
         params: Dict[str, Any] = {"limit": limit}
@@ -3241,7 +3241,7 @@ class HTTPClient:
         self,
         guild_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[widget.Widget]:
         return self.request(
@@ -3255,7 +3255,7 @@ class HTTPClient:
         guild_id: Snowflake,
         payload,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[widget.WidgetSettings]:
         return self.request(
@@ -3279,7 +3279,7 @@ class HTTPClient:
         target_type: Optional[invite.InviteTargetType] = None,
         target_user_id: Optional[Snowflake] = None,
         target_application_id: Optional[Snowflake] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[invite.Invite]:
         r = Route("POST", "/channels/{channel_id}/invites", channel_id=channel_id)
@@ -3313,7 +3313,7 @@ class HTTPClient:
         *,
         with_counts: bool = True,
         with_expiration: bool = True,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[invite.Invite]:
         params = {
@@ -3331,7 +3331,7 @@ class HTTPClient:
         self,
         guild_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[List[invite.Invite]]:
         return self.request(
@@ -3344,7 +3344,7 @@ class HTTPClient:
         self,
         channel_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[List[invite.Invite]]:
         return self.request(
@@ -3358,7 +3358,7 @@ class HTTPClient:
         invite_id: str,
         *,
         reason: Optional[str] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         return self.request(
@@ -3374,7 +3374,7 @@ class HTTPClient:
         self,
         guild_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[List[role.Role]]:
         return self.request(
@@ -3389,7 +3389,7 @@ class HTTPClient:
         role_id: Snowflake,
         *,
         reason: Optional[str] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
         **fields: Any,
     ) -> Response[role.Role]:
@@ -3418,7 +3418,7 @@ class HTTPClient:
         role_id: Snowflake,
         *,
         reason: Optional[str] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
@@ -3438,7 +3438,7 @@ class HTTPClient:
         role_ids: List[int],
         *,
         reason: Optional[str] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[member.MemberWithUser]:
         return self.edit_member(
@@ -3455,7 +3455,7 @@ class HTTPClient:
         guild_id: Snowflake,
         *,
         reason: Optional[str] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
         **fields: Any,
     ) -> Response[role.Role]:
@@ -3474,7 +3474,7 @@ class HTTPClient:
         positions: List[guild.RolePositionUpdate],
         *,
         reason: Optional[str] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[List[role.Role]]:
         r = Route("PATCH", "/guilds/{guild_id}/roles", guild_id=guild_id)
@@ -3493,7 +3493,7 @@ class HTTPClient:
         role_id: Snowflake,
         *,
         reason: Optional[str] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
@@ -3517,7 +3517,7 @@ class HTTPClient:
         role_id: Snowflake,
         *,
         reason: Optional[str] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
@@ -3543,7 +3543,7 @@ class HTTPClient:
         type: channel.OverwriteType,
         *,
         reason: Optional[str] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         payload = {"id": target, "allow": allow, "deny": deny, "type": type}
@@ -3567,7 +3567,7 @@ class HTTPClient:
         target: Snowflake,
         *,
         reason: Optional[str] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
@@ -3592,7 +3592,7 @@ class HTTPClient:
         channel_id: Snowflake,
         *,
         reason: Optional[str] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[member.MemberWithUser]:
         return self.edit_member(
@@ -3610,7 +3610,7 @@ class HTTPClient:
         self,
         channel_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[channel.StageInstance]:
         return self.request(
@@ -3623,7 +3623,7 @@ class HTTPClient:
         self,
         *,
         reason: Optional[str],
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
         **payload: Any,
     ) -> Response[channel.StageInstance]:
@@ -3647,7 +3647,7 @@ class HTTPClient:
         channel_id: Snowflake,
         *,
         reason: Optional[str] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
         **payload: Any,
     ) -> Response[None]:
@@ -3670,7 +3670,7 @@ class HTTPClient:
         channel_id: Snowflake,
         *,
         reason: Optional[str] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         return self.request(
@@ -3687,7 +3687,7 @@ class HTTPClient:
         application_id: Snowflake,
         with_localizations: bool = True,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[List[interactions.ApplicationCommand]]:
         params: Dict[str, str] = {}
@@ -3706,7 +3706,7 @@ class HTTPClient:
         application_id: Snowflake,
         command_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[interactions.ApplicationCommand]:
         r = Route(
@@ -3726,7 +3726,7 @@ class HTTPClient:
         application_id: Snowflake,
         payload,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[interactions.ApplicationCommand]:
         r = Route("POST", "/applications/{application_id}/commands", application_id=application_id)
@@ -3743,7 +3743,7 @@ class HTTPClient:
         command_id: Snowflake,
         payload: interactions.EditApplicationCommand,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[interactions.ApplicationCommand]:
         valid_keys = (
@@ -3770,7 +3770,7 @@ class HTTPClient:
         application_id: Snowflake,
         command_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
@@ -3790,7 +3790,7 @@ class HTTPClient:
         application_id: Snowflake,
         payload,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[List[interactions.ApplicationCommand]]:
         r = Route("PUT", "/applications/{application_id}/commands", application_id=application_id)
@@ -3809,7 +3809,7 @@ class HTTPClient:
         guild_id: Snowflake,
         with_localizations: bool = True,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[List[interactions.ApplicationCommand]]:
         params: Dict[str, str] = {}
@@ -3834,7 +3834,7 @@ class HTTPClient:
         guild_id: Snowflake,
         command_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[interactions.ApplicationCommand]:
         r = Route(
@@ -3856,7 +3856,7 @@ class HTTPClient:
         guild_id: Snowflake,
         payload: interactions.EditApplicationCommand,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[interactions.ApplicationCommand]:
         r = Route(
@@ -3879,7 +3879,7 @@ class HTTPClient:
         command_id: Snowflake,
         payload: interactions.EditApplicationCommand,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[interactions.ApplicationCommand]:
         valid_keys = (
@@ -3908,7 +3908,7 @@ class HTTPClient:
         guild_id: Snowflake,
         command_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
@@ -3930,7 +3930,7 @@ class HTTPClient:
         guild_id: Snowflake,
         payload: List[interactions.EditApplicationCommand],
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[List[interactions.ApplicationCommand]]:
         r = Route(
@@ -4128,7 +4128,7 @@ class HTTPClient:
         application_id: Snowflake,
         guild_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[List[interactions.GuildApplicationCommandPermissions]]:
         r = Route(
@@ -4149,7 +4149,7 @@ class HTTPClient:
         guild_id: Snowflake,
         command_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[interactions.GuildApplicationCommandPermissions]:
         r = Route(
@@ -4172,7 +4172,7 @@ class HTTPClient:
         command_id: Snowflake,
         payload: interactions.BaseGuildApplicationCommandPermissions,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
@@ -4195,7 +4195,7 @@ class HTTPClient:
         guild_id: Snowflake,
         payload: List[interactions.PartialGuildApplicationCommandPermissions],
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
@@ -4216,7 +4216,7 @@ class HTTPClient:
     def application_info(
         self,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[appinfo.AppInfo]:
         return self.request(
@@ -4238,7 +4238,7 @@ class HTTPClient:
         *,
         encoding: str = "json",
         zlib: bool = True,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> str:
         try:
@@ -4257,7 +4257,7 @@ class HTTPClient:
         *,
         encoding: str = "json",
         zlib: bool = True,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Tuple[int, str]:
         try:
@@ -4275,7 +4275,7 @@ class HTTPClient:
         self,
         user_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[user.User]:
         return self.request(
@@ -4289,7 +4289,7 @@ class HTTPClient:
         guild_id: Snowflake,
         with_user_count: bool,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[List[scheduled_events.ScheduledEvent]]:
         params: Dict[str, Any] = {"with_user_count": str(with_user_count)}
@@ -4306,7 +4306,7 @@ class HTTPClient:
         guild_id: Snowflake,
         *,
         reason: Optional[str] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
         **payload: Any,
     ) -> Response[scheduled_events.ScheduledEvent]:
@@ -4337,7 +4337,7 @@ class HTTPClient:
         event_id: Snowflake,
         with_user_count: bool,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[scheduled_events.ScheduledEvent]:
         params: Dict[str, Any] = {"with_user_count": str(with_user_count)}
@@ -4360,7 +4360,7 @@ class HTTPClient:
         event_id: Snowflake,
         *,
         reason: Optional[str] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
         **payload: Any,
     ) -> Response[scheduled_events.ScheduledEvent]:
@@ -4396,7 +4396,7 @@ class HTTPClient:
         guild_id: Snowflake,
         event_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
@@ -4420,7 +4420,7 @@ class HTTPClient:
         with_member: bool = MISSING,
         before: Optional[Snowflake] = None,
         after: Optional[Snowflake] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[List[scheduled_events.ScheduledEventUser]]:
         params: Dict[str, Any] = {}
@@ -4449,7 +4449,7 @@ class HTTPClient:
         self,
         guild_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[List[auto_moderation.AutoModerationRule]]:
         r = Route("GET", "/guilds/{guild_id}/auto-moderation/rules", guild_id=guild_id)
@@ -4464,7 +4464,7 @@ class HTTPClient:
         guild_id: Snowflake,
         auto_moderation_rule_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[auto_moderation.AutoModerationRule]:
         r = Route(
@@ -4485,7 +4485,7 @@ class HTTPClient:
         data: auto_moderation.AutoModerationRuleCreate,
         *,
         reason: Optional[str] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[auto_moderation.AutoModerationRule]:
         valid_keys = (
@@ -4517,7 +4517,7 @@ class HTTPClient:
         data: auto_moderation.AutoModerationRuleModify,
         *,
         reason: Optional[str] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[auto_moderation.AutoModerationRule]:
         valid_keys = (
@@ -4552,7 +4552,7 @@ class HTTPClient:
         auto_moderation_rule_id: Snowflake,
         *,
         reason: Optional[str] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[None]:
         r = Route(
@@ -4572,7 +4572,7 @@ class HTTPClient:
         self,
         application_id: Snowflake,
         *,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[List[role_connections.ApplicationRoleConnectionMetadata]]:
         r = Route(
@@ -4592,7 +4592,7 @@ class HTTPClient:
         data: List[role_connections.ApplicationRoleConnectionMetadata],
         *,
         reason: Optional[str] = None,
-        auth: str | None = MISSING,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[List[role_connections.ApplicationRoleConnectionMetadata]]:
         r = Route(
