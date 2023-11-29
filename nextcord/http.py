@@ -722,7 +722,7 @@ class HTTPClient:
             route.bucket,
             _get_logging_auth(auth),
         )  # Only use this for logging.
-        ret: Optional[str] = None
+        ret: Union[Optional[str], dict] = None
         response: Optional[aiohttp.ClientResponse] = None
 
         # If retry_request is False and any of the rate limits are locked, don't continue and raise immediately.
