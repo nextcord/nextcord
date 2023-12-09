@@ -115,7 +115,7 @@ class File:
             self._original_pos = fp.tell()
             self._owner = False
         else:
-            self.fp = open(fp, "rb")
+            self.fp = open(fp, "rb")  # noqa: SIM115
             self._original_pos = 0
             self._owner = True
 
