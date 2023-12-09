@@ -8,9 +8,9 @@ import nextcord
 from nextcord import abc
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 class TestGuildChannel:
-    @pytest.fixture
+    @pytest.fixture()
     def channel(self):
         channel = mock.Mock(
             abc.GuildChannel,
