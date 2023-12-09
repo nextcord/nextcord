@@ -171,6 +171,10 @@ class Modal:
         item: :class:`Item`
             The item to add to the modal.
 
+            .. note::
+
+                The only items that are currently supported are :class:`TextInput`\s.
+
         Raises
         ------
         TypeError
