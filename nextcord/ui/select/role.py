@@ -3,16 +3,13 @@
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, TypeVar
+from typing import TYPE_CHECKING, Callable, List, Optional, Tuple
 
 from ...components import RoleSelectMenu
 from ...enums import ComponentType
-from ...interactions import ClientT
 from ...role import Role
 from ...state import ConnectionState
 from ...utils import MISSING
-from ..item import ItemCallbackType
-from ..view import View
 from .base import SelectBase, SelectValuesBase
 
 if TYPE_CHECKING:
@@ -21,10 +18,11 @@ if TYPE_CHECKING:
     from ...guild import Guild
     from ...types.components import RoleSelectMenu as RoleSelectMenuPayload
     from ...types.interactions import ComponentInteractionData
+    from .._types import ItemCallbackType, ViewT_co
+
+    Decorator = ItemCallbackType["RoleSelect[ViewT_co]"]
 
 __all__ = ("RoleSelect", "role_select", "RoleSelectValues")
-
-V_co = TypeVar("V_co", bound="View", covariant=True)
 
 
 class RoleSelectValues(SelectValuesBase):
@@ -36,7 +34,7 @@ class RoleSelectValues(SelectValuesBase):
         return [v for v in self.data if isinstance(v, Role)]
 
 
-class RoleSelect(SelectBase, Generic[V_co]):
+class RoleSelect(SelectBase[ViewT_co]):
 
     """Represents a UI role select menu.
 
@@ -143,9 +141,7 @@ def role_select(
     max_values: int = 1,
     disabled: bool = False,
     row: Optional[int] = None,
-) -> Callable[
-    [ItemCallbackType[RoleSelect[V_co], ClientT]], ItemCallbackType[RoleSelect[V_co], ClientT]
-]:
+) -> Callable[[Decorator], Decorator]:
     """A decorator that attaches a role select menu to a component.
 
     The function being decorated should have three parameters, ``self`` representing
@@ -180,7 +176,9 @@ def role_select(
         Whether the select is disabled or not. Defaults to ``False``.
     """
 
-    def decorator(func: ItemCallbackType) -> ItemCallbackType:
+    def decorator(
+        func: Decorator,
+    ) -> Decorator:
         if not asyncio.iscoroutinefunction(func):
             raise TypeError("Select function must be a coroutine function")
 

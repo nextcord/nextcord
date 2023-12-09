@@ -2,11 +2,21 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Coroutine, Generic, Optional, Tuple, TypeVar
+from typing import (
+    TYPE_CHECKING,
+    Generic,
+    Literal,
+    Optional,
+    Tuple,
+)
 
-from ..interactions import ClientT, Interaction
+from ..interactions import Interaction
+from ._types import ModalT_co, ViewT_co
 
-__all__ = ("Item",)
+__all__ = (
+    "ViewItem",
+    "ModalItem",
+)
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -17,33 +27,14 @@ if TYPE_CHECKING:
     from ..state import ConnectionState
     from ..types.components import Component as ComponentPayload
     from ..types.interactions import ComponentInteractionData
-    from .view import View
-
-I = TypeVar("I", bound="Item")
-V_co = TypeVar("V_co", bound="View", covariant=True)
-ItemCallbackType = Callable[[Any, I, Interaction[ClientT]], Coroutine[Any, Any, Any]]
 
 
-class Item(Generic[V_co]):
-    """Represents the base UI item that all UI components inherit from.
-
-    The current UI items supported are:
-
-    - :class:`nextcord.ui.Button`
-    - :class:`nextcord.ui.StringSelect`
-    - :class:`nextcord.ui.TextInput`
-    - :class:`nextcord.ui.UserSelect`
-    - :class:`nextcord.ui.ChannelSelect`
-    - :class:`nextcord.ui.RoleSelect`
-    - :class:`nextcord.ui.MentionableSelect`
-
-    .. versionadded:: 2.0
-    """
+class Item:
+    """Represents the UI item that all UI components inherit from."""
 
     __item_repr_attributes__: Tuple[str, ...] = ("row",)
 
     def __init__(self) -> None:
-        self._view: Optional[V_co] = None
         self._row: Optional[int] = None
         self._rendered_row: Optional[int] = None
         # This works mostly well but there is a gotcha with
@@ -100,8 +91,28 @@ class Item(Generic[V_co]):
     def width(self) -> int:
         return 1
 
+
+class ViewItem(Item, Generic[ViewT_co]):
+    """Represents the View UI item that all UI components supporting :class:`View` inherit from.
+
+    The current UI items supported for View are:
+
+    - :class:`nextcord.ui.Button`
+    - :class:`nextcord.ui.StringSelect`
+    - :class:`nextcord.ui.UserSelect`
+    - :class:`nextcord.ui.ChannelSelect`
+    - :class:`nextcord.ui.RoleSelect`
+    - :class:`nextcord.ui.MentionableSelect`
+
+    .. versionadded:: 2.0
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._view: Optional[ViewT_co] = None
+
     @property
-    def view(self) -> Optional[V_co]:
+    def view(self) -> Optional[ViewT_co]:
         """Optional[:class:`View`]: The underlying view for this item."""
         return self._view
 
@@ -117,3 +128,26 @@ class Item(Generic[V_co]):
         interaction: :class:`.Interaction`
             The interaction that triggered this UI item.
         """
+
+
+class ModalItem(Item, Generic[ModalT_co]):
+    """Represents the Modal UI item that all UI components supporting :class:`Modal` inherit from.
+
+    The current UI items supported for Modal are:
+
+    - :class:`nextcord.ui.TextInput`
+
+    .. versionadded:: 2.6
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._modal: Optional[ModalT_co] = None
+
+        # backwards compatibility
+        self.callback: Literal[None] = None
+
+    @property
+    def modal(self) -> Optional[ModalT_co]:
+        """Optional[:class:`Modal`]: The underlying modal for this item."""
+        return self._modal

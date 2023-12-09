@@ -11,10 +11,10 @@ from functools import partial
 from itertools import groupby
 from typing import TYPE_CHECKING, Any, Callable, Dict, Iterator, List, Optional, Set, Tuple
 
-from ..components import Component
+from ..components import Component, TextInput as TextInputComponent
 from ..utils import MISSING
-from .item import Item
-from .view import _component_to_item, _ViewWeights, _walk_all_components
+from .item import ModalItem
+from .view import _ViewWeights, _walk_all_components
 
 __all__ = (
     "Modal",
@@ -23,6 +23,8 @@ __all__ = (
 
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from ..interactions import ClientT, Interaction
     from ..state import ConnectionState
     from ..types.components import ActionRow as ActionRowPayload
@@ -41,6 +43,15 @@ def _walk_component_interaction_data(
             yield from item["components"]  # type: ignore
         else:
             yield item
+
+
+def _component_to_item(component: Component) -> ModalItem:
+    if isinstance(component, TextInputComponent):
+        from .text_input import TextInput
+
+        return TextInput.from_component(component)
+
+    return ModalItem.from_component(component)
 
 
 class Modal:
@@ -72,7 +83,7 @@ class Modal:
     timeout: Optional[:class:`float`]
         Timeout from last interaction with the UI before no longer accepting input.
         If ``None`` then there is no timeout.
-    children: List[:class:`Item`]
+    children: List[:class:`ModalItem`]
         The list of children attached to this modal.
     custom_id: :class:`str`
         The ID of the modal that gets received during an interaction.
@@ -96,8 +107,8 @@ class Modal:
         self.custom_id = os.urandom(16).hex() if custom_id is MISSING else custom_id
         self.auto_defer = auto_defer
 
-        self.children = []
-        self.__weights = _ViewWeights(self.children)
+        self.children: list[ModalItem[Self]] = []
+        self.__weights = _ViewWeights(list(self.children))
         loop = asyncio.get_running_loop()
         self.id: str = os.urandom(16).hex()
         self.__cancel_callback: Optional[Callable[[Modal], None]] = None
@@ -124,7 +135,7 @@ class Modal:
             await asyncio.sleep(self.__timeout_expiry - now)
 
     def to_components(self) -> List[ActionRowPayload]:
-        def key(item: Item) -> int:
+        def key(item: ModalItem[Self]) -> int:
             return item._rendered_row or 0
 
         children = sorted(self.children, key=key)
@@ -163,12 +174,12 @@ class Modal:
         """
         return self.__timeout_expiry
 
-    def add_item(self, item: Item) -> Modal:
+    def add_item(self, item: ModalItem) -> Modal:
         """Adds an item to the modal.
 
         Parameters
         ----------
-        item: :class:`Item`
+        item: :class:`ModalItem`
             The item to add to the modal.
 
             .. note::
@@ -178,13 +189,13 @@ class Modal:
         Raises
         ------
         TypeError
-            An :class:`Item` was not passed.
+            An :class:`ModalItem` was not passed.
         ValueError
             The row the item is trying to be added to is full.
         """
 
-        if not isinstance(item, Item):
-            raise TypeError(f"Expected Item not {item.__class__!r}")
+        if not isinstance(item, ModalItem):
+            raise TypeError(f"Expected ModalItem not {item.__class__!r}")
 
         self.__weights.add_item(item)
 
@@ -192,12 +203,12 @@ class Modal:
 
         return self
 
-    def remove_item(self, item: Item) -> Modal:
+    def remove_item(self, item: ModalItem[Self]) -> Modal:
         """Removes an item from the modal.
 
         Parameters
         ----------
-        item: :class:`Item`
+        item: :class:`ModalItem`
             The item to remove from the modal.
         """
 
@@ -248,7 +259,7 @@ class Modal:
         ----------
         error: :class:`Exception`
             The exception that was raised.
-        item: :class:`Item`
+        item: :class:`ModalItem`
             The item that failed the dispatch.
         interaction: :class:`~nextcord.Interaction`
             The interaction that led to the failure.
@@ -308,13 +319,13 @@ class Modal:
 
     def refresh(self, components: List[Component]) -> None:
         # This is pretty hacky at the moment
-        old_state: Dict[Tuple[int, str], Item] = {
+        old_state: Dict[Tuple[int, str], ModalItem] = {
             (item.type.value, item.custom_id): item  # type: ignore
             # TODO: refactor this to explicitly type custom_id
             for item in self.children
             if item.is_dispatchable()
         }
-        children: List[Item] = []
+        children: List[ModalItem] = []
         for component in _walk_all_components(components):
             try:
                 older = old_state[(component.type.value, component.custom_id)]  # type: ignore

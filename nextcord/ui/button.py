@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import asyncio
 import os
-from typing import TYPE_CHECKING, Callable, Optional, Tuple, TypeVar, Union
+from typing import TYPE_CHECKING, Callable, Optional, Tuple, Union
 
 from ..components import Button as ButtonComponent
 from ..enums import ButtonStyle, ComponentType
 from ..partial_emoji import PartialEmoji, _EmojiTag
-from .item import Item, ItemCallbackType
+from .item import ViewItem
 
 __all__ = (
     "Button",
@@ -20,14 +20,11 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from ..emoji import Emoji
-    from ..interactions import ClientT
     from ..types.components import ButtonComponent as ButtonComponentPayload
-    from .view import View
-
-V_co = TypeVar("V_co", bound="View", covariant=True)
+    from ._types import ItemCallbackType, ViewT_co
 
 
-class Button(Item[V_co]):
+class Button(ViewItem[ViewT_co]):
     """Represents a UI button.
 
     .. versionadded:: 2.0
@@ -218,7 +215,7 @@ def button(
     style: ButtonStyle = ButtonStyle.secondary,
     emoji: Optional[Union[str, Emoji, PartialEmoji]] = None,
     row: Optional[int] = None,
-) -> Callable[[ItemCallbackType[Button[V_co], ClientT]], ItemCallbackType[Button[V_co], ClientT]]:
+) -> Callable[[ItemCallbackType[Button[ViewT_co]]], ItemCallbackType[Button[ViewT_co]]]:
     """A decorator that attaches a button to a component.
 
     The function being decorated should have three parameters, ``self`` representing
@@ -255,9 +252,7 @@ def button(
         ordering. The row number must be between 0 and 4 (i.e. zero indexed).
     """
 
-    def decorator(
-        func: ItemCallbackType[Button[V_co], ClientT]
-    ) -> ItemCallbackType[Button[V_co], ClientT]:
+    def decorator(func: ItemCallbackType[Button[ViewT_co]]) -> ItemCallbackType[Button[ViewT_co]]:
         if not asyncio.iscoroutinefunction(func):
             raise TypeError("Button function must be a coroutine function")
 

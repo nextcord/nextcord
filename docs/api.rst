@@ -3096,10 +3096,25 @@ Modal
 .. autoclass:: nextcord.ui.Modal
     :members:
 
+ViewItem
+~~~~~~~~
+
+.. attributetable:: nextcord.ui.ViewItem
+
+.. autoclass:: nextcord.ui.ViewItem
+    :members:
+
+ModalItem
+~~~~~~~~~
+
+.. attributetable:: nextcord.ui.ModalItem
+
+.. autoclass:: nextcord.ui.ModalItem
+    :members:
+    :exclude-members: callback
+
 Item
 ~~~~
-
-.. attributetable:: nextcord.ui.Item
 
 .. autoclass:: nextcord.ui.Item
     :members:

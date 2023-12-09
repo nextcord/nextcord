@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING, Optional, Tuple, TypeVar
+from typing import TYPE_CHECKING, Optional, Tuple
 
 from ..components import TextInput as TextInputComponent
 from ..enums import ComponentType, TextInputStyle
 from ..guild import Guild
 from ..state import ConnectionState
 from ..utils import MISSING
-from .item import Item
+from .item import ModalItem
 
 __all__ = ("TextInput",)
 
@@ -19,13 +19,10 @@ if TYPE_CHECKING:
 
     from ..types.components import TextInputComponent as TextInputComponentPayload
     from ..types.interactions import ComponentInteractionData
-    from .view import View
+    from ._types import ModalT_co
 
 
-V_co = TypeVar("V_co", bound="View", covariant=True)
-
-
-class TextInput(Item[V_co]):
+class TextInput(ModalItem[ModalT_co]):
     """Represent a UI text input.
 
     .. versionadded:: 2.0
@@ -85,8 +82,10 @@ class TextInput(Item[V_co]):
         default_value: Optional[str] = None,
         placeholder: Optional[str] = None,
     ) -> None:
+        super().__init__()
         self._provided_custom_id = custom_id is not MISSING
         custom_id = os.urandom(16).hex() if custom_id is MISSING else custom_id
+
         self._underlying = TextInputComponent._raw_construct(
             type=ComponentType.text_input,
             custom_id=custom_id,

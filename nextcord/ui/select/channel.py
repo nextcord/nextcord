@@ -3,15 +3,12 @@
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, TypeVar
+from typing import TYPE_CHECKING, Callable, List, Optional, Tuple
 
 from ...abc import GuildChannel
 from ...components import ChannelSelectMenu
 from ...enums import ComponentType
-from ...interactions import ClientT
 from ...utils import MISSING
-from ..item import ItemCallbackType
-from ..view import View
 from .base import SelectBase, SelectValuesBase
 
 if TYPE_CHECKING:
@@ -22,10 +19,9 @@ if TYPE_CHECKING:
     from ...state import ConnectionState
     from ...types.components import ChannelSelectMenu as ChannelSelectMenuPayload
     from ...types.interactions import ComponentInteractionData
+    from .._types import ItemCallbackType, ViewT_co
 
 __all__ = ("ChannelSelect", "channel_select", "ChannelSelectValues")
-
-V_co = TypeVar("V_co", bound="View", covariant=True)
 
 
 class ChannelSelectValues(SelectValuesBase):
@@ -37,7 +33,7 @@ class ChannelSelectValues(SelectValuesBase):
         return [v for v in self.data if isinstance(v, GuildChannel)]
 
 
-class ChannelSelect(SelectBase, Generic[V_co]):
+class ChannelSelect(SelectBase[ViewT_co]):
 
     """Represents a UI channel select menu.
 
@@ -152,7 +148,8 @@ def channel_select(
     row: Optional[int] = None,
     channel_types: List[ChannelType] = MISSING,
 ) -> Callable[
-    [ItemCallbackType[ChannelSelect[V_co], ClientT]], ItemCallbackType[ChannelSelect[V_co], ClientT]
+    [ItemCallbackType[ChannelSelect[ViewT_co]]],
+    ItemCallbackType[ChannelSelect[ViewT_co]],
 ]:
     """A decorator that attaches a channel select menu to a component.
 
@@ -190,7 +187,9 @@ def channel_select(
         A list of channel types that can be selected in this menu.
     """
 
-    def decorator(func: ItemCallbackType) -> ItemCallbackType:
+    def decorator(
+        func: ItemCallbackType[ChannelSelect[ViewT_co]],
+    ) -> ItemCallbackType[ChannelSelect[ViewT_co]]:
         if not asyncio.iscoroutinefunction(func):
             raise TypeError("Select function must be a coroutine function")
 

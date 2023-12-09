@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 from collections import UserList
-from typing import TYPE_CHECKING, List, Optional, Tuple, TypeVar, Union
+from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 
 from ...components import SelectMenu
 from ...enums import ComponentType
@@ -14,7 +14,7 @@ from ...role import Role
 from ...state import ConnectionState
 from ...user import User
 from ...utils import MISSING
-from ..item import Item
+from ..item import ViewItem
 
 __all__ = ("SelectBase",)
 
@@ -23,13 +23,8 @@ if TYPE_CHECKING:
 
     from ...abc import GuildChannel
     from ...types.components import SelectMenu as SelectMenuPayload
-    from ...types.interactions import (
-        ComponentInteractionData,
-        ComponentInteractionResolved,
-    )
-    from ..view import View
-
-V_co = TypeVar("V_co", bound="View", covariant=True)
+    from ...types.interactions import ComponentInteractionData, ComponentInteractionResolved
+    from .._types import ViewT_co
 
 
 class SelectValuesBase(UserList):
@@ -67,7 +62,7 @@ class SelectValuesBase(UserList):
         return [o.id for o in self.data]
 
 
-class SelectBase(Item[V_co]):
+class SelectBase(ViewItem[ViewT_co]):
     """Represents a UI select menu without any options.
 
     This is usually represented as a drop down menu.
