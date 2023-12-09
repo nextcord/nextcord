@@ -28,6 +28,7 @@ from typing import (
 
 from . import utils
 from .activity import BaseActivity
+from .application_command import BaseApplicationCommand
 from .audit_logs import AuditLogEntry
 from .auto_moderation import AutoModerationActionExecution, AutoModerationRule
 from .channel import *
@@ -58,7 +59,7 @@ if TYPE_CHECKING:
     from asyncio import Future
 
     from .abc import MessageableChannel, PrivateChannel
-    from .application_command import BaseApplicationCommand
+    from .application_command import SlashApplicationSubcommand
     from .client import Client
     from .gateway import DiscordWebSocket
     from .guild import GuildChannel, VocalGuildChannel
@@ -536,9 +537,59 @@ class ConnectionState:
         return self._application_command_ids.get(command_id, None)
 
     def get_application_command_from_signature(
-        self, name: Optional[str], cmd_type: int, guild_id: Optional[int]
-    ) -> Optional[BaseApplicationCommand]:
-        return self._application_command_signatures.get((name, cmd_type, guild_id), None)
+        self,
+        *,
+        type: int,
+        qualified_name: str,
+        guild_id: Optional[int],
+        search_localizations: bool = False,
+    ) -> Optional[Union[BaseApplicationCommand, SlashApplicationSubcommand]]:
+        def get_parent_command(name: str, /) -> Optional[BaseApplicationCommand]:
+            found = self._application_command_signatures.get((name, type, guild_id))
+            if not search_localizations:
+                return found
+
+            for command in self._application_command_signatures.values():
+                if command.name_localizations and name in command.name_localizations.values():
+                    found = command
+                    break
+
+            return found
+
+        def find_children(
+            parent: Union[BaseApplicationCommand, SlashApplicationSubcommand], name: str, /
+        ) -> Optional[Union[BaseApplicationCommand, SlashApplicationSubcommand]]:
+            children: Dict[str, SlashApplicationSubcommand] = getattr(parent, "children", {})
+            if not children:
+                return parent
+
+            found = children.get(name)
+            if not search_localizations:
+                return found
+
+            subcommand: Union[BaseApplicationCommand, SlashApplicationSubcommand]
+            for subcommand in children.values():
+                if subcommand.name_localizations and name in subcommand.name_localizations.values():
+                    found = subcommand
+                    break
+
+            return found
+
+        parent: Optional[Union[BaseApplicationCommand, SlashApplicationSubcommand]] = None
+
+        if not qualified_name:
+            return None
+
+        if " " not in qualified_name:
+            return get_parent_command(qualified_name)
+
+        for command_name in qualified_name.split(" "):
+            if parent is None:
+                parent = get_parent_command(command_name)
+            else:
+                parent = find_children(parent, command_name)
+
+        return parent
 
     def get_guild_application_commands(
         self, guild_id: Optional[int] = None, rollout: bool = False
@@ -840,11 +891,24 @@ class ConnectionState:
                 data = await self.http.get_global_commands(self.application_id)
 
         for raw_response in data:
-            fixed_guild_id = int(temp) if (temp := raw_response.get("guild_id", None)) else None
             payload_type = raw_response["type"] if "type" in raw_response else 1
+            fixed_guild_id = raw_response.get("guild_id", None)
 
-            response_signature = (raw_response["name"], int(payload_type), fixed_guild_id)
-            if app_cmd := self.get_application_command_from_signature(*response_signature):
+            response_signature = {
+                "type": int(payload_type),
+                "qualified_name": raw_response["name"],
+                "guild_id": None if not fixed_guild_id else int(fixed_guild_id),
+            }
+            app_cmd = self.get_application_command_from_signature(**response_signature)
+            if app_cmd:
+                if not isinstance(app_cmd, BaseApplicationCommand):
+                    raise ValueError(
+                        (
+                            f".get_application_command_from_signature with kwargs: {response_signature} "
+                            f"returned {type(app_cmd)} but BaseApplicationCommand was expected."
+                        )
+                    )
+
                 if app_cmd.is_payload_valid(raw_response, guild_id):
                     if associate_known:
                         _log.debug(
