@@ -569,7 +569,6 @@ class ClientCog:
         error: :class:`ApplicationError`
             The error that happened.
         """
-        pass
 
     @_cog_special_method
     async def cog_application_command_before_invoke(self, interaction: Interaction) -> None:
