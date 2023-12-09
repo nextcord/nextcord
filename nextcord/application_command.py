@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 import sys
 import warnings
@@ -176,8 +177,8 @@ class CallbackWrapper:
         if isinstance(callback, (BaseApplicationCommand, SlashApplicationSubcommand)):
             callback.modify_callbacks.extend(wrapper.modify_callbacks)
             return callback
-        else:
-            return wrapper
+
+        return wrapper
 
     def __init__(self, callback: Union[Callable, CallbackWrapper], *args, **kwargs) -> None:
         # noinspection PyTypeChecker
@@ -317,7 +318,8 @@ class ApplicationCommandOption:
     def get_choices_localized_payload(self) -> List[Dict[str, Union[str, int, float, dict, None]]]:
         if self.choices is None:
             return []
-        elif isinstance(self.choices, dict):
+
+        if isinstance(self.choices, dict):
             choices = self.choices
         else:
             choices = {value: value for value in self.choices}
@@ -467,7 +469,6 @@ class OptionConverter(_CustomTypingMetaBase):
         option: :class:`BaseCommandOption`
             Command option that's being created.
         """
-        pass
 
 
 class Mentionable(OptionConverter):
@@ -482,11 +483,9 @@ class Mentionable(OptionConverter):
 
 class ClientCog:
     # TODO: I get it's a terrible name, I just don't want it to duplicate current Cog right now.
-    # __cog_application_commands__: List[ApplicationCommand]
-    # __cog_to_register__: List[ApplicationCommand]
     __cog_application_commands__: List[BaseApplicationCommand]
 
-    def __new__(cls, *args: Any, **kwargs: Any):
+    def __new__(cls, *_args: Any, **_kwargs: Any):
         new_cls = super(ClientCog, cls).__new__(cls)
         new_cls._read_application_commands()
         return new_cls
@@ -497,7 +496,7 @@ class ClientCog:
         """
         self.__cog_application_commands__ = []
         for base in reversed(self.__class__.__mro__):
-            for _, value in base.__dict__.items():
+            for value in base.__dict__.values():
                 is_static_method = isinstance(value, staticmethod)
                 if is_static_method:
                     value = value.__func__
@@ -585,7 +584,6 @@ class ClientCog:
         interaction: :class:`.Interaction`
             The invocation interaction.
         """
-        pass
 
     @_cog_special_method
     async def cog_application_command_after_invoke(self, interaction: Interaction) -> None:
@@ -600,7 +598,6 @@ class ClientCog:
         interaction: :class:`.Interaction`
             The invocation interaction.
         """
-        pass
 
 
 class MissingApplicationCommandParametersWarning(UserWarning):
@@ -616,8 +613,6 @@ class MissingApplicationCommandParametersWarning(UserWarning):
 
         warnings.simplefilter("ignore", MissingApplicationCommandParametersWarning)
     """
-
-    pass
 
 
 class CallbackMixin:
@@ -662,10 +657,11 @@ class CallbackMixin:
         """Invokes the callback, injecting ``self`` if available."""
         if self.callback is None:
             raise ValueError("Cannot call callback when it is not set.")
-        elif self.parent_cog:
+
+        if self.parent_cog:
             return self.callback(self.parent_cog, interaction, *args, **kwargs)
-        else:
-            return self.callback(interaction, *args, **kwargs)
+
+        return self.callback(interaction, *args, **kwargs)
 
     @property
     def error_name(self) -> str:
@@ -743,10 +739,8 @@ class CallbackMixin:
         func: :class:`ApplicationCheck`
             The function to remove from the checks.
         """
-        try:
+        with contextlib.suppress(ValueError):
             self.checks.remove(func)
-        except ValueError:
-            pass
 
         return self
 
@@ -846,7 +840,7 @@ class CallbackMixin:
                         category=MissingApplicationCommandParametersWarning,
                     )
 
-                for name, param in callback_params.items():
+                for param in callback_params.values():
                     if skip_counter:
                         skip_counter -= 1
                     else:
@@ -959,7 +953,6 @@ class CallbackMixin:
                 await before_invoke(interaction)
 
             try:
-                # await self.invoke_callback(interaction, *args, **kwargs)
                 await self(interaction, *args, **kwargs)
             except Exception as error:
                 state.dispatch(
@@ -1086,7 +1079,7 @@ class AutocompleteOptionMixin:
             # If there's a parent cog, there should be a self. Skip it too.
             skip_count += 1
 
-        for name, _ in signature(self.autocomplete_callback).parameters.items():
+        for name in signature(self.autocomplete_callback).parameters:
             if skip_count:
                 skip_count -= 1
             else:
@@ -1107,8 +1100,8 @@ class AutocompleteOptionMixin:
             return await self.autocomplete_callback(
                 self.parent_cog, interaction, option_value, **kwargs
             )
-        else:
-            return await self.autocomplete_callback(interaction, option_value, **kwargs)
+
+        return await self.autocomplete_callback(interaction, option_value, **kwargs)
 
 
 class AutocompleteCommandMixin:
@@ -1223,7 +1216,7 @@ class AutocompleteCommandMixin:
         #  earlier, right?
         for arg_name, callback in self._temp_autocomplete_callbacks.items():
             found = False
-            for _, option in self.options.items():
+            for option in self.options.values():
                 if option.functional_name == arg_name:
                     if option.autocomplete is None:
                         # If autocomplete isn't set, enable it for them.
@@ -1397,7 +1390,7 @@ class SlashOption(ApplicationCommandOption, _CustomTypingMetaBase):
 
 class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin):
     command: Union[SlashApplicationCommand, SlashApplicationSubcommand]
-    option_types: Dict[type, ApplicationCommandOptionType] = {
+    option_types: ClassVar[Dict[type, ApplicationCommandOptionType]] = {
         str: ApplicationCommandOptionType.string,
         int: ApplicationCommandOptionType.integer,
         bool: ApplicationCommandOptionType.boolean,
@@ -1419,7 +1412,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
     }
     """Maps Python annotations/typehints to Discord Application Command type values."""
 
-    channel_mapping: Dict[type, Tuple[ChannelType, ...]] = {
+    channel_mapping: ClassVar[Dict[type, Tuple[ChannelType, ...]]] = {
         CategoryChannel: (ChannelType.category,),
         DMChannel: (ChannelType.private,),
         ForumChannel: (ChannelType.forum,),
@@ -1460,7 +1453,8 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
 
         self.name = cmd_arg.name or parameter.name
         # Use the given name, or default to the parameter name.
-        # typehint_origin = typing.get_origin(parameter.annotation)  # TODO: Once Python 3.10 is standard, use this.
+        # typehint_origin = typing.get_origin(parameter.annotation)  # noqa: ERA001
+        # TODO: Once Python 3.10 is standard, use this.
         typehint_origin = typing_extensions.get_origin(parameter.annotation)
 
         annotation_type: ApplicationCommandOptionType
@@ -1528,8 +1522,9 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
                     )
 
             # Pyright gets upset at appending these lists together, but not upset when .extend is used?
-            # grouped_annotations: List[Union[type, Annotated[object, OptionConverter]]] = unpacked_annotations + \
-            #                                                                              literals
+            # grouped_annotations: List[Union[type, Annotated[object, OptionConverter]]] = (
+            #     unpacked_annotations + literals
+            # )  noqa: ERA001
             grouped_annotations: List[
                 Union[type, Annotated[Optional[OptionConverter], object], Type[None]]
             ] = []
@@ -1559,10 +1554,9 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
                             f"{self.error_name} | Annotation {anno} is incompatible with {found_type} \n| {typehint_origin}\n| {parameter.annotation}\n| {grouped_annotations}"
                         )
 
-                    if not (
-                        isinstance(anno, ApplicationCommandOptionType)
-                        or isinstance(anno, OptionConverter)
-                    ) and (channel_types := self.channel_mapping.get(anno)):
+                    if not (isinstance(anno, (ApplicationCommandOptionType, OptionConverter))) and (
+                        channel_types := self.channel_mapping.get(anno)
+                    ):
                         found_channel_types.extend(channel_types)
 
             annotation_type = found_type
@@ -1632,12 +1626,11 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         # noinspection PyProtectedMember
         if self._description is not None:
             return self._description
-        elif self.command._parsed_docstring and (
+        if self.command._parsed_docstring and (
             docstring := self.command._parsed_docstring["args"].get(self.functional_name)
         ):
             return docstring
-        else:
-            return DEFAULT_SLASH_DESCRIPTION
+        return DEFAULT_SLASH_DESCRIPTION
 
     @description.setter
     def description(self, value: str) -> None:
@@ -1658,23 +1651,26 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         # noinspection PyTypeChecker,PyUnboundLocalVariable
         if param_typing is self.parameter.empty:
             return ApplicationCommandOptionType.string
-        elif valid_type := self.option_types.get(param_typing, None):
-            return valid_type
-        elif (
-            # type(None) in typing.get_args(param_typing)  # TODO: Once Python 3.10 is standard, use this
-            type(None) in typing_extensions.get_args(param_typing)
-            and (
-                inner_type := find(
-                    lambda t: t is not type(None), typing_extensions.get_args(param_typing)
+
+        if (
+            # TODO: Once Python 3.10 is standard, use this
+            # type(None) in typing.get_args(param_typing)  # noqa: ERA001
+            (valid_type := self.option_types.get(param_typing, None))
+            or (
+                type(None) in typing_extensions.get_args(param_typing)
+                and (
+                    inner_type := find(
+                        lambda t: t is not type(None), typing_extensions.get_args(param_typing)
+                    )
                 )
+                and (valid_type := self.option_types.get(inner_type, None))
             )
-            and (valid_type := self.option_types.get(inner_type, None))
         ):
             return valid_type
-        else:
-            raise ValueError(
-                f"{self.error_name} Type `{param_typing}` isn't a supported typehint for Application Commands."
-            )
+
+        raise ValueError(
+            f"{self.error_name} Type `{param_typing}` isn't a supported typehint for Application Commands."
+        )
 
     def verify(self) -> bool:
         """This should run through :class:`SlashOption` variables and raise errors when conflicting data is given."""
@@ -1739,9 +1735,10 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
                 # a full member/user object yet so fall back to bot cache
                 value = None
                 data = cast(ApplicationCommandInteractionData, interaction.data)
-                if guild_id := data.get("guild_id"):
-                    if guild := state._guilds.get(int(guild_id)):
-                        value = guild.get_member(user_id)
+                if (guild_id := data.get("guild_id")) and (
+                    guild := state._guilds.get(int(guild_id))
+                ):
+                    value = guild.get_member(user_id)
 
                 if value is None:
                     # Either we aren't in a guild or
@@ -1771,8 +1768,10 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
                 # this looks messy but is too much effort to handle
                 # feel free to use typing.cast and if statements and raises
                 resolved_attachment_data = interaction.data["resolved"]["attachments"][value]  # type: ignore
-            except (AttributeError, ValueError, IndexError):
-                raise ValueError("Discord did not provide us interaction data for the attachment")
+            except (AttributeError, ValueError, IndexError) as e:
+                raise ValueError(
+                    "Discord did not provide us interaction data for the attachment"
+                ) from e
 
             value = Attachment(data=resolved_attachment_data, state=state)
         elif self.type is ApplicationCommandOptionType.mentionable:
@@ -1787,8 +1786,8 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             for converter in self.converters:
                 ret = await converter.convert(interaction, ret)
             return ret
-        else:
-            return value
+
+        return value
 
 
 class SlashCommandMixin(CallbackMixin):
@@ -1817,10 +1816,9 @@ class SlashCommandMixin(CallbackMixin):
     def description(self) -> str:
         if self._description is not None:
             return self._description
-        elif self._parsed_docstring and (docstring := self._parsed_docstring["description"]):
+        if self._parsed_docstring and (docstring := self._parsed_docstring["description"]):
             return docstring
-        else:
-            return DEFAULT_SLASH_DESCRIPTION
+        return DEFAULT_SLASH_DESCRIPTION
 
     def from_callback(
         self,
@@ -2117,12 +2115,12 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         """:class:`bool`: Returns ``True`` if this command is or should be registered to any guilds."""
         guild_only_ids = set(self.command_ids.keys())
         guild_only_ids.discard(None)
-        return True if (self.guild_ids_to_rollout or guild_only_ids) else False
+        return bool(self.guild_ids_to_rollout or guild_only_ids)
 
     @property
     def guild_ids(self) -> Set[int]:
         """Returns a :class:`set` containing all guild ID's this command is registered to."""
-        # TODO Is this worthwhile?
+        # TODO: Is this worthwhile?
         guild_only_ids = set(self.command_ids.keys())
         guild_only_ids.discard(None)
         # ignore explanation: Mypy says that guild_only_ids can contain None due to self.command_ids.keys() having
@@ -2137,20 +2135,12 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         guild: Union[:class:`int`, :class:`Guild`]
             Guild or Guild ID to add this command to roll out to.
         """
-        if isinstance(guild, Guild):
-            # I don't like doing `guild = guild.id` and this keeps it extendable.
-            guild_id = guild.id
-        else:
-            guild_id = guild
-
-        self.guild_ids_to_rollout.add(guild_id)
+        self.guild_ids_to_rollout.add(guild.id if isinstance(guild, Guild) else guild)
 
     @property
     def is_global(self) -> bool:
         """:class:`bool`: Returns ``True`` if this command is or should be a global command."""
-        return (
-            True if (self.force_global or not self.is_guild or None in self.command_ids) else False
-        )
+        return self.force_global or not self.is_guild or None in self.command_ids
 
     def get_signature(
         self, guild_id: Optional[int] = None
@@ -2219,8 +2209,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
                 else:
                     ret[locale] = name
             return ret
-        else:
-            return None
+        return None
 
     def get_description_localization_payload(self) -> Optional[dict]:
         if self.description_localizations:
@@ -2232,8 +2221,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
                 else:
                     ret[locale] = description
             return ret
-        else:
-            return None
+        return None
 
     def get_default_member_permissions_value(self) -> Optional[int]:
         if (
@@ -2241,8 +2229,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             or self.default_member_permissions is None
         ):
             return self.default_member_permissions
-        else:
-            return self.default_member_permissions.value
+        return self.default_member_permissions.value
 
     def get_payload(self, guild_id: Optional[int]) -> dict:
         """Makes an Application Command payload for this command to upsert to Discord with the given Guild ID.
@@ -2276,13 +2263,13 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
 
         if guild_id:  # Guild-command specific payload options.
             ret["guild_id"] = guild_id
-        else:  # Global command specific payload options.
-            if self.dm_permission is not None:
-                ret["dm_permission"] = self.dm_permission
-            else:
-                # Discord seems to send back the DM permission as True regardless if we sent it or not, so we send as
-                #  the default (True) to ensure payload parity for comparisons.
-                ret["dm_permission"] = True
+        # Global command specific payload options.
+        elif self.dm_permission is not None:
+            ret["dm_permission"] = self.dm_permission
+        else:
+            # Discord seems to send back the DM permission as True regardless if we sent it or not, so we send as
+            #  the default (True) to ensure payload parity for comparisons.
+            ret["dm_permission"] = True
 
         ret["nsfw"] = self.nsfw
 
@@ -2441,9 +2428,8 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
                 return _recursive_subcommand_check(
                     inter_options[0], found_opt
                 )  # If all of the above pass, recurse.
-            else:
-                # It isn't a subcommand (group), run normal option checks.
-                return _option_check(inter_options, cmd_options)
+
+            return _option_check(inter_options, cmd_options)
 
         def _option_check(inter_options: dict, cmd_options: dict) -> bool:
             """Checks if the two given command payloads have matching options.
@@ -2524,22 +2510,22 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         if not check_dictionary_values(our_payload, data, "name", "guild_id", "type"):  # type: ignore
             _log.debug("%s Failed basic dictionary check.", self.error_name)
             return False
-        else:
-            data_options = data.get("options")
-            payload_options = our_payload.get("options")
-            if data_options and payload_options:
-                return _recursive_subcommand_check(data, our_payload)  # type: ignore
-            elif data_options is None and payload_options is None:
-                return True  # User and Message commands don't have options.
-            else:
-                _log.debug(
-                    "%s Mismatch between data and payload options: %s vs %s",
-                    self.error_name,
-                    data_options,
-                    payload_options,
-                )
-                # There is a mismatch between the two, fail it.
-                return False
+
+        data_options = data.get("options")
+        payload_options = our_payload.get("options")
+        if data_options and payload_options:
+            return _recursive_subcommand_check(data, our_payload)  # type: ignore
+        if data_options is None and payload_options is None:
+            return True  # User and Message commands don't have options.
+
+        _log.debug(
+            "%s Mismatch between data and payload options: %s vs %s",
+            self.error_name,
+            data_options,
+            payload_options,
+        )
+        # There is a mismatch between the two, fail it.
+        return False
 
     def from_callback(
         self,
@@ -2711,8 +2697,7 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
                 else:
                     ret[locale] = name
             return ret
-        else:
-            return None
+        return None
 
     def get_description_localization_payload(self) -> Optional[dict]:
         if self.description_localizations:
@@ -2724,8 +2709,7 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
                 else:
                     ret[locale] = description
             return ret
-        else:
-            return None
+        return None
 
     @property
     def payload(self) -> dict:
@@ -3237,7 +3221,7 @@ def slash_command(
         if isinstance(func, BaseApplicationCommand):
             raise TypeError("Callback is already an application command.")
 
-        app_cmd = SlashApplicationCommand(
+        return SlashApplicationCommand(
             callback=func,
             name=name,
             name_localizations=name_localizations,
@@ -3249,7 +3233,6 @@ def slash_command(
             nsfw=nsfw,
             force_global=force_global,
         )
-        return app_cmd
 
     return decorator
 
@@ -3298,7 +3281,7 @@ def message_command(
         if isinstance(func, BaseApplicationCommand):
             raise TypeError("Callback is already an application command.")
 
-        app_cmd = MessageApplicationCommand(
+        return MessageApplicationCommand(
             callback=func,
             name=name,
             name_localizations=name_localizations,
@@ -3308,7 +3291,6 @@ def message_command(
             nsfw=nsfw,
             force_global=force_global,
         )
-        return app_cmd
 
     return decorator
 
@@ -3357,7 +3339,7 @@ def user_command(
         if isinstance(func, BaseApplicationCommand):
             raise TypeError("Callback is already an application command.")
 
-        app_cmd = UserApplicationCommand(
+        return UserApplicationCommand(
             callback=func,
             name=name,
             name_localizations=name_localizations,
@@ -3367,7 +3349,6 @@ def user_command(
             nsfw=nsfw,
             force_global=force_global,
         )
-        return app_cmd
 
     return decorator
 
@@ -3423,7 +3404,8 @@ def deep_dictionary_check(dict1: dict, dict2: dict) -> bool:
             and not deep_dictionary_check(dict1[key], dict2[key])
         ):
             return False
-        elif dict1[key] != dict2[key]:
+
+        if dict1[key] != dict2[key]:
             _log.debug(
                 "Dict1 and Dict2 values are not equal, not valid payload.\n Key: %s, values %s vs %s",
                 key,
@@ -3582,11 +3564,13 @@ def unpack_annotated(given_annotation: Any, resolve_list: Optional[list[type]] =
     if resolve_list is None:
         resolve_list = []
 
-    # origin = typing.get_origin(given_annotation)  # TODO: Once Python 3.10 is standard, use this.
+    # TODO: Once Python 3.10 is standard, use this.
+    # origin = typing.get_origin(given_annotation)  # noqa: ERA001
     origin = typing_extensions.get_origin(given_annotation)
     if origin is Annotated:
         located_annotation = MISSING
-        # arg_list = typing.get_args(given_annotation)  # TODO: Once Python 3.10 is standard, use this
+        # TODO: Once Python 3.10 is standard, use this
+        # arg_list = typing.get_args(given_annotation)  # noqa: ERA001
         arg_list = typing_extensions.get_args(given_annotation)
         for arg in reversed(arg_list[1:]):
             if arg in resolve_list or isinstance(arg, type) and issubclass(arg, OptionConverter):
@@ -3597,8 +3581,7 @@ def unpack_annotated(given_annotation: Any, resolve_list: Optional[list[type]] =
             located_annotation = arg_list[-1]
 
         return located_annotation
-    else:
-        return given_annotation
+    return given_annotation
 
 
 def unpack_annotation(
@@ -3625,7 +3608,8 @@ def unpack_annotation(
 
     type_ret = []
     literal_ret = []
-    # origin = typing.get_origin(given_annotation)  # TODO: Once Python 3.10 is standard, use this.
+    # TODO: Once Python 3.10 is standard, use this.
+    # origin = typing.get_origin(given_annotation)  # noqa: ERA001
     origin = typing_extensions.get_origin(given_annotation)
     if origin is None:
         # It doesn't have a fancy origin, just a normal type/object.

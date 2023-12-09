@@ -20,13 +20,13 @@ Please try your best not to ask questions in our issue tracker. Most of them don
 Please be aware of the following things when filing bug reports.
 
 1. Don't open duplicate issues. Please search your issue to see if it has been asked already. Duplicate issues will be closed.
-2. When filing a bug about exceptions, please include the *complete* traceback. Without the complete traceback the issue might be **unsolvable** and you will be asked to provide more information.
+2. When filing a bug about exceptions, please include the _complete_ traceback. Without the complete traceback the issue might be **unsolvable** and you will be asked to provide more information.
 3. Make sure to provide enough information to make the issue workable. The issue template will generally walk you through the process but they are enumerated here as well:
-    - A **summary** of your bug report. This is generally a quick sentence or two to describe the issue in human terms.
-    - Guidance on **how to reproduce the issue**. Ideally, this should have a small code sample that allows us to run and see the issue for ourselves to debug. **Please make sure that the token is not displayed**. If you cannot provide a code snippet, then let us know what the steps were, how often it happens, etc.
-    - Tell us **what you expected to happen**, that way we can meet that expectation.
-    - Tell us **what actually happens**. What ends up happening in reality? It's not helpful to say "it fails" or "it doesn't work". Say *how* it failed, do you get an exception? Does it hang? How are the expectations different from reality?
-    - Tell us **information about your environment**. What version of nextcord are you using? How was it installed? What operating system are you running on? These are valuable questions and information that we use.
+   - A **summary** of your bug report. This is generally a quick sentence or two to describe the issue in human terms.
+   - Guidance on **how to reproduce the issue**. Ideally, this should have a small code sample that allows us to run and see the issue for ourselves to debug. **Please make sure that the token is not displayed**. If you cannot provide a code snippet, then let us know what the steps were, how often it happens, etc.
+   - Tell us **what you expected to happen**, that way we can meet that expectation.
+   - Tell us **what actually happens**. What ends up happening in reality? It's not helpful to say "it fails" or "it doesn't work". Say _how_ it failed, do you get an exception? Does it hang? How are the expectations different from reality?
+   - Tell us **information about your environment**. What version of nextcord are you using? How was it installed? What operating system are you running on? These are valuable questions and information that we use.
 
 If the bug report is missing this information then it'll take us longer to fix the issue. We will probably ask for clarification, and barring that if no response was given then the issue will be closed.
 
@@ -45,15 +45,13 @@ Please use the following to get your contributions up to spec:
 
 ## Installing Development Dependencies Locally
 
-To install development dependencies locally, you can use the following command, prefixed with `py -m` or `python -m` if necessary.
+To install dependencies locally for development, we use [Poetry](https://python-poetry.org).
 
-```sh
-pip install -r requirements-dev.txt
-```
+[Install poetry](https://python-poetry.org/docs/#installation), install our plugin at `poetry self add "poetry-dynamic-versioning[plugin] @ git+https://github.com/nextcord/poetry-dynamic-versioning@master"`, then run `poetry install` to create a virtual environment.
 
 ## Code Style
 
-We use [Black](https://github.com/psf/black) for code formatting, [Isort](https://github.com/pycqa/isort) for import sorting, [Slotscheck](https://github.com/ariebovenberg/slotscheck) and several other [pre-commit hooks](https://github.com/pre-commit/pre-commit-hooks) for linting.
+We use [Black](https://github.com/psf/black) for code formatting, [Slotscheck](https://github.com/ariebovenberg/slotscheck), [Ruff](https://github.com/astral-sh/ruff) for linting + import sorting, and several other [pre-commit hooks](https://github.com/pre-commit/pre-commit-hooks) for linting.
 
 To run all of these but `slotscheck`, you can simply run `task lint` in the root of the project. To run `slotscheck`, you can run `task slotscheck`.
 
@@ -116,6 +114,7 @@ Co-Authored-By: Some Person <email@example.com>
 - **fix**: A bug fix
 - **perf**: A code change that improves performance
 - **refactor**: A code change that neither fixes a bug nor adds a feature
+- **removal**: A code change that removes user-facing code
 - **style**: Changes that do not affect the meaning of the code (white-space, formatting, etc)
 - **test**: Adding missing tests or correcting existing tests
 - **typing**: Changes that affect type annotations
@@ -147,8 +146,6 @@ Nextcord uses [Sphinx](https://www.sphinx-doc.org/en/master/) for documentation 
 
 ### Building the Docs
 
-To install the documentation dependencies, run `pip install -r docs/requirements.txt` in the root of the project.
-
 To build the docs that will autocompile on file changes, run `task docs` then open `http://localhost:8069` in your browser.
 
 ### Versioning
@@ -160,7 +157,7 @@ We use [`.. versionadded::`](https://www.sphinx-doc.org/en/master/usage/restruct
 
 These should not be used in methods in a new class, since the whole class is new.
 
-The current in-development version can be found in `nextcord/__init__.py` at `__version__`.
+The current in-development version can be found from the [repository's tags](https://github.com/nextcord/nextcord/tags).
 
 #### Versioning Example
 
@@ -219,7 +216,7 @@ class Guild(Hashable):
 
 We use [Roles](https://www.sphinx-doc.org/en/master/usage/restructuredtext/roles.html#roles) to link to other parts of documentation.
 
-`typing` is not linked to shorten the docstrings, and are simply described like this: ``List[:class:`str`]``.
+`typing` is not linked to shorten the docstrings, and are simply described like this: `` List[:class:`str`] ``.
 
 #### Links Example
 

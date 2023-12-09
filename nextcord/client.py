@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 import signal
 import sys
@@ -37,7 +38,13 @@ from .application_command import message_command, slash_command, user_command
 from .backoff import ExponentialBackoff
 from .channel import PartialMessageable, _threaded_channel_factory
 from .emoji import Emoji
-from .enums import ApplicationCommandType, ChannelType, InteractionType, Status, VoiceRegion
+from .enums import (
+    ApplicationCommandType,
+    ChannelType,
+    InteractionType,
+    Status,
+    VoiceRegion,
+)
 from .errors import *
 from .flags import ApplicationFlags, Intents
 from .gateway import *
@@ -67,7 +74,7 @@ if TYPE_CHECKING:
     from nextcord.types.checks import ApplicationCheck, ApplicationHook
 
     from .abc import GuildChannel, PrivateChannel, Snowflake, SnowflakeTime
-    from .application_command import BaseApplicationCommand, ClientCog
+    from .application_command import BaseApplicationCommand, ClientCog, SlashApplicationSubcommand
     from .asset import Asset
     from .channel import DMChannel
     from .enums import Locale
@@ -498,10 +505,8 @@ class Client:
         except asyncio.CancelledError:
             pass
         except Exception:
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self.on_error(event_name, *args, **kwargs)
-            except asyncio.CancelledError:
-                pass
 
     def _schedule_event(
         self,
@@ -563,7 +568,7 @@ class Client:
         overridden to have a different implementation.
         Check :func:`~nextcord.on_error` for more details.
         """
-        print(f"Ignoring exception in {event_method}", file=sys.stderr)
+        print(f"Ignoring exception in {event_method}", file=sys.stderr)  # noqa: T201
         traceback.print_exc()
 
     async def on_application_command_error(
@@ -588,7 +593,9 @@ class Client:
         if cog and cog.has_application_command_error_handler():
             return
 
-        print(f"Ignoring exception in command {interaction.application_command}:", file=sys.stderr)
+        print(  # noqa: T201
+            f"Ignoring exception in command {interaction.application_command}:", file=sys.stderr
+        )
         traceback.print_exception(
             type(exception), exception, exception.__traceback__, file=sys.stderr
         )
@@ -785,11 +792,9 @@ class Client:
         self.dispatch("close")
 
         for voice in self.voice_clients:
-            try:
+            # if an error happens during disconnects, disregard it.
+            with contextlib.suppress(Exception):
                 await voice.disconnect(force=True)
-            except Exception:
-                # if an error happens during disconnects, disregard it.
-                pass
 
         if self.ws is not None and self.ws.open:  # pyright: ignore
             await self.ws.close(code=1000)
@@ -861,7 +866,7 @@ class Client:
                 if not self.is_closed():
                     await self.close()
 
-        def stop_loop_on_completion(f) -> None:
+        def stop_loop_on_completion(_future) -> None:
             loop.stop()
 
         future = asyncio.ensure_future(runner(), loop=loop)
@@ -881,6 +886,8 @@ class Client:
             except KeyboardInterrupt:
                 # I am unsure why this gets raised here but suppress it anyway
                 return None
+
+        return None
 
     # properties
 
@@ -912,7 +919,7 @@ class Client:
 
         .. versionadded: 2.0
         """
-        if self._connection._status in set(state.value for state in Status):
+        if self._connection._status in {state.value for state in Status}:
             return Status(self._connection._status)
         return Status.online
 
@@ -1017,6 +1024,7 @@ class Client:
 
         if isinstance(channel, StageChannel):
             return channel.instance
+        return None
 
     def get_guild(self, id: int, /) -> Optional[Guild]:
         """Returns a guild with the given ID.
@@ -1238,7 +1246,7 @@ class Client:
         future = self.loop.create_future()
         if check is None:
 
-            def _check(*args) -> bool:
+            def _check(*_args) -> bool:
                 return True
 
             check = _check
@@ -2101,19 +2109,32 @@ class Client:
                 _log.debug(
                     "nextcord.Client: Interaction command not found, attempting to lazy load."
                 )
-                # _log.debug(f"nextcord.Client: %s", interaction.data)
-                response_signature = (
+                debug_response_signature = (
                     interaction.data["name"],
                     int(interaction.data["type"]),
                     interaction.guild_id,
                 )
-                _log.debug("nextcord.Client: %s", response_signature)
+                _log.debug("nextcord.Client: %s", debug_response_signature)
                 do_deploy = False
-                if app_cmd := self._connection.get_application_command_from_signature(
-                    interaction.data["name"],
-                    int(interaction.data["type"]),
-                    int(guild_id) if (guild_id := interaction.data.get("guild_id")) else None,
-                ):
+
+                guild_id = interaction.data.get("guild_id")
+                response_signature: Dict[str, Any] = {
+                    "type": int(interaction.data["type"]),
+                    "qualified_name": interaction.data["name"],
+                    "guild_id": None if not guild_id else int(guild_id),
+                }
+                app_cmd = self._connection.get_application_command_from_signature(
+                    **response_signature
+                )
+                if app_cmd:
+                    if not isinstance(app_cmd, BaseApplicationCommand):
+                        raise ValueError(
+                            (
+                                f".get_application_command_from_signature with kwargs: {response_signature} "
+                                f"returned {type(app_cmd)} but BaseApplicationCommand was expected."
+                            )
+                        )
+
                     _log.debug(
                         "nextcord.Client: Basic signature matches, checking against raw payload."
                     )
@@ -2176,32 +2197,48 @@ class Client:
         return self._connection.get_application_command(command_id)
 
     def get_application_command_from_signature(
-        self, name: str, cmd_type: Union[int, ApplicationCommandType], guild_id: Optional[int]
-    ) -> Optional[BaseApplicationCommand]:
+        self,
+        qualified_name: str,
+        *,
+        type: Union[int, ApplicationCommandType] = ApplicationCommandType.chat_input,
+        guild: Optional[Union[int, Snowflake]] = None,
+        search_localizations: bool = False,
+    ) -> Optional[Union[BaseApplicationCommand, SlashApplicationSubcommand]]:
         """Gets a locally stored application command object that matches the given signature.
+
+        .. versionadded:: 2.0
+
+        .. versionchanged:: 3.0
+            - Subcommands/Subcommand groups can now be retrieved with this method.
+            - ``name`` parameter was renamed to ``qualified_name`` and now accepts subcommands/subcommand groups separated by a space.
+            - ``cmd_type`` parameter was renamed to ``type``, defaults to :attr:`.ApplicationCommandType.chat_input` and is now a keyword-only parameter.
+            - ``guild_id`` parameter was renamed to ``guild`` with type Union[:class:`int`, :class:`~nextcord.abc.Snowflake`], defaults to ``None`` and is now a keyword-only parameter.
 
         Parameters
         ----------
-        name: :class:`str`
-            Name of the application command. Capital sensitive.
-        cmd_type: Union[:class:`int`, :class:`ApplicationCommandType`]
-            Type of application command.
-        guild_id: Optional[:class:`int`]
+        qualified_name: :class:`str`
+            Full name of the application command. Case sensitive.
+            Subcommands must be separated by a space, E.g, ``parent group subcommand``.
+        type: Union[:class:`int`, :class:`ApplicationCommandType`]
+            Type of application command. Defaults to :attr:`.ApplicationCommandType.chat_input`.
+        guild: Optional[Union[:class:`int`, :class:`~nextcord.abc.Snowflake`]]
             Guild ID of the signature. If set to ``None``, it will attempt to get the global signature.
+            Defaults to ``None``.
+        search_localizations: :class:`bool`
+            Whether to also search through the command's :attr:`~BaseApplicationCommand.name_localizations`. Defaults to ``False``.
+
+            .. versionadded:: 3.0
 
         Returns
         -------
-        command: Optional[:class:`BaseApplicationCommand`]
-            Application Command with the given signature. If no command with that signature is
-            found, returns ``None`` instead.
+        command: Optional[:class:`BaseApplicationCommand`, :class:`SlashApplicationSubcommand`]
+            Application Command with the given signature. If no command with that signature is found, ``None`` is returned instead.
         """
-        if isinstance(cmd_type, ApplicationCommandType):
-            actual_type = cmd_type.value
-        else:
-            actual_type = cmd_type
-
         return self._connection.get_application_command_from_signature(
-            name=name, cmd_type=actual_type, guild_id=guild_id
+            type=type.value if isinstance(type, ApplicationCommandType) else type,
+            qualified_name=qualified_name,
+            guild_id=None if not guild else int(guild.id if not isinstance(guild, int) else guild),
+            search_localizations=search_localizations,
         )
 
     def get_all_application_commands(self) -> Set[BaseApplicationCommand]:
@@ -2625,7 +2662,6 @@ class Client:
                     self.add_application_command(cmd, use_rollout=True, pre_remove=False)
 
     def add_cog(self, cog: ClientCog) -> None:
-        # cog.process_app_cmds()
         for app_cmd in cog.application_commands:
             self.add_application_command(app_cmd, use_rollout=True)
 
@@ -2905,10 +2941,8 @@ class Client:
             The function to remove from the global application checks.
         """
 
-        try:
+        with contextlib.suppress(ValueError):
             self._application_command_checks.remove(func)
-        except ValueError:
-            pass
 
     def application_command_check(self, func: ApplicationCheck) -> ApplicationCheck:
         """A decorator that adds a global applications command check to the client.
