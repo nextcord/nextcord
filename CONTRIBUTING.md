@@ -45,11 +45,9 @@ Please use the following to get your contributions up to spec:
 
 ## Installing Development Dependencies Locally
 
-To install development dependencies locally, you can use the following command, prefixed with `py -m` or `python -m` if necessary.
+To install dependencies locally for development, we use [Poetry](https://python-poetry.org).
 
-```sh
-pip install -r requirements-dev.txt
-```
+[Install poetry](https://python-poetry.org/docs/#installation), install our plugin at `poetry self add "poetry-dynamic-versioning[plugin] @ git+https://github.com/nextcord/poetry-dynamic-versioning@master"`, then run `poetry install` to create a virtual environment.
 
 ## Code Style
 
@@ -148,8 +146,6 @@ Nextcord uses [Sphinx](https://www.sphinx-doc.org/en/master/) for documentation 
 
 ### Building the Docs
 
-To install the documentation dependencies, run `pip install -r docs/requirements.txt` in the root of the project.
-
 To build the docs that will autocompile on file changes, run `task docs` then open `http://localhost:8069` in your browser.
 
 ### Versioning
@@ -161,7 +157,7 @@ We use [`.. versionadded::`](https://www.sphinx-doc.org/en/master/usage/restruct
 
 These should not be used in methods in a new class, since the whole class is new.
 
-The current in-development version can be found in `nextcord/__init__.py` at `__version__`.
+The current in-development version can be found from the [repository's tags](https://github.com/nextcord/nextcord/tags).
 
 #### Versioning Example
 
