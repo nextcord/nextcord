@@ -583,13 +583,15 @@ class Client:
 
         This only fires if you do not specify any listeners for command error.
         """
-        if interaction.application_command and interaction.application_command.has_error_handler():
+        if interaction.application_command is None:
+            return  # Not supposed to ever happen
+
+        if interaction.application_command.has_error_handler():
             return
 
-        # TODO: implement cog error handling
-        # cog = context.cog  # noqa: ERA001
-        # if cog and cog.has_error_handler():
-        #     return  # noqa: ERA001
+        cog = interaction.application_command.parent_cog
+        if cog and cog.has_application_command_error_handler():
+            return
 
         print(  # noqa: T201
             f"Ignoring exception in command {interaction.application_command}:", file=sys.stderr
