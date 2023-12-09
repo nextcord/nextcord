@@ -53,7 +53,7 @@ Brotli = { version = "*", optional = true, markers = "platform_python_implementa
 brotlicffi = { version = "*", optional = true, markers = "platform_python_implementation != 'CPython'" }
 
 [tool.poetry.group.dev.dependencies]
-pre-commit = "2.18.1"
+pre-commit = "3.5.0"
 taskipy = "1.10.3"
 slotscheck = "0.14.0"
 python-dotenv = "0.20.0"
