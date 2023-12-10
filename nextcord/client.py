@@ -1344,10 +1344,8 @@ class Client:
         name = func.__name__ if name is MISSING else name
 
         if name in self.extra_events:
-            try:
+            with contextlib.suppress(ValueError):
                 self.extra_events[name].remove(func)
-            except ValueError:
-                pass
 
     def listen(self, name: str = MISSING) -> Callable[[Coro], Coro]:
         """A decorator that registers another function as an external
