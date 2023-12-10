@@ -1,26 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -42,11 +20,11 @@ if TYPE_CHECKING:
     from .view import View
 
 I = TypeVar("I", bound="Item")
-V = TypeVar("V", bound="View", covariant=True)
+V_co = TypeVar("V_co", bound="View", covariant=True)
 ItemCallbackType = Callable[[Any, I, Interaction[ClientT]], Coroutine[Any, Any, Any]]
 
 
-class Item(Generic[V]):
+class Item(Generic[V_co]):
     """Represents the base UI item that all UI components inherit from.
 
     The current UI items supported are:
@@ -64,8 +42,8 @@ class Item(Generic[V]):
 
     __item_repr_attributes__: Tuple[str, ...] = ("row",)
 
-    def __init__(self):
-        self._view: Optional[V] = None
+    def __init__(self) -> None:
+        self._view: Optional[V_co] = None
         self._row: Optional[int] = None
         self._rendered_row: Optional[int] = None
         # This works mostly well but there is a gotcha with
@@ -123,11 +101,11 @@ class Item(Generic[V]):
         return 1
 
     @property
-    def view(self) -> Optional[V]:
+    def view(self) -> Optional[V_co]:
         """Optional[:class:`View`]: The underlying view for this item."""
         return self._view
 
-    async def callback(self, interaction: Interaction):
+    async def callback(self, interaction: Interaction) -> None:
         """|coro|
 
         The callback associated with this UI item.
@@ -139,4 +117,3 @@ class Item(Generic[V]):
         interaction: :class:`.Interaction`
             The interaction that triggered this UI item.
         """
-        pass

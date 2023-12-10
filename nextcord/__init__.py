@@ -4,17 +4,17 @@ Discord API Wrapper
 
 A basic wrapper for the Discord API.
 
-:copyright: (c) 2015-present Rapptz
-:copyright: (c) 2021-present tag-epic
+:copyright: (c) 2015-2021 Rapptz
+:copyright: (c) 2021-present Nextcord Developers
 :license: MIT, see LICENSE for more details.
-
 """
 
 __title__ = "nextcord"
-__author__ = "tag-epic & Rapptz"
+__author__ = "Nextcord Developers & Rapptz"
 __license__ = "MIT"
-__copyright__ = "Copyright 2015-present Rapptz & tag-epic"
-__version__ = "2.4.0a"
+__copyright__ = "Copyright 2015-2021 Rapptz & 2021-present Nextcord Developers"
+# Placeholder, modified by dynamic-versioning.
+__version__ = "0.0.0"
 
 __path__ = __import__("pkgutil").extend_path(__path__, __name__)
 
@@ -40,7 +40,7 @@ from .errors import *
 from .file import *
 from .flags import *
 from .guild import *
-from .health_check import *
+from .guild_preview import *
 from .integrations import *
 from .interactions import *
 from .invite import *
@@ -54,6 +54,7 @@ from .player import *
 from .raw_models import *
 from .reaction import *
 from .role import *
+from .role_connections import *
 from .scheduled_events import *
 from .shard import *
 from .stage_instance import *
@@ -73,8 +74,10 @@ class VersionInfo(NamedTuple):
     micro: int
     releaselevel: Literal["alpha", "beta", "candidate", "final"]
     serial: int
+    metadata: str
 
 
-version_info: VersionInfo = VersionInfo(major=2, minor=4, micro=0, releaselevel="alpha", serial=0)
+# Placeholder, modified by dynamic-versioning.
+version_info: VersionInfo = VersionInfo(0, 0, 0, "final", 0, "")
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())

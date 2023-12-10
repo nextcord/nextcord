@@ -1,26 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2021-present tag-epic
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -44,10 +22,10 @@ if TYPE_CHECKING:
     from .view import View
 
 
-V = TypeVar("V", bound="View", covariant=True)
+V_co = TypeVar("V_co", bound="View", covariant=True)
 
 
-class TextInput(Item[V]):
+class TextInput(Item[V_co]):
     """Represent a UI text input.
 
     .. versionadded:: 2.0
@@ -106,7 +84,7 @@ class TextInput(Item[V]):
         required: Optional[bool] = None,
         default_value: Optional[str] = None,
         placeholder: Optional[str] = None,
-    ):
+    ) -> None:
         self._provided_custom_id = custom_id is not MISSING
         custom_id = os.urandom(16).hex() if custom_id is MISSING else custom_id
         self._underlying = TextInputComponent._raw_construct(
@@ -151,7 +129,7 @@ class TextInput(Item[V]):
 
     @label.setter
     def label(self, value: str) -> None:
-        if value is None:
+        if value is None:  # pyright: ignore[reportUnnecessaryComparison]
             raise TypeError("label must cannot be None")
         self._underlying.label = str(value)
 
@@ -229,7 +207,6 @@ class TextInput(Item[V]):
             min_length=text_input.min_length,
             max_length=text_input.max_length,
             required=text_input.required,
-            # value=text_input.value,  # FIXME: figure out what this was
             placeholder=text_input.placeholder,
             row=None,
         )

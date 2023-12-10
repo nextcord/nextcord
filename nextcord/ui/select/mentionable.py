@@ -1,26 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2022-present tag-epic
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -30,6 +8,9 @@ from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, Type
 from ...components import MentionableSelectMenu
 from ...enums import ComponentType
 from ...interactions import ClientT
+from ...member import Member
+from ...role import Role
+from ...user import User
 from ...utils import MISSING
 from ..item import ItemCallbackType
 from ..view import View
@@ -39,16 +20,15 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from ...guild import Guild
-    from ...member import Member
-    from ...role import Role
     from ...state import ConnectionState
-    from ...types.components import MentionableSelectMenu as MentionableSelectMenuPayload
+    from ...types.components import (
+        MentionableSelectMenu as MentionableSelectMenuPayload,
+    )
     from ...types.interactions import ComponentInteractionData
-    from ...user import User
 
 __all__ = ("MentionableSelect", "mentionable_select", "MentionableSelectValues")
 
-V = TypeVar("V", bound="View", covariant=True)
+V_co = TypeVar("V_co", bound="View", covariant=True)
 
 
 class MentionableSelectValues(SelectValuesBase):
@@ -61,7 +41,7 @@ class MentionableSelectValues(SelectValuesBase):
 
     @property
     def users(self) -> List[User]:
-        """List[:class:`.User`]: A list of users that were selected."""
+        """List[:class:`nextcord.User`]: A list of users that were selected."""
         return [v for v in self.data if isinstance(v, User)]
 
     @property
@@ -70,7 +50,7 @@ class MentionableSelectValues(SelectValuesBase):
         return [v for v in self.data if isinstance(v, Role)]
 
 
-class MentionableSelect(SelectBase, Generic[V]):
+class MentionableSelect(SelectBase, Generic[V_co]):
 
     """Represents a UI mentionable select menu.
 
@@ -141,7 +121,7 @@ class MentionableSelect(SelectBase, Generic[V]):
 
     @property
     def values(self) -> MentionableSelectValues:
-        """:class:`.ui.MentionableSelectValues`: A list of Union[:class:`.Member`, :class:`.User`, :class:`.Role`] that have been selected by the user."""
+        """:class:`.ui.MentionableSelectValues`: A list of Union[:class:`.Member`, :class:`nextcord.User`, :class:`.Role`] that have been selected by the user."""
         return self._selected_values
 
     def to_component_dict(self) -> MentionableSelectMenuPayload:
@@ -178,8 +158,8 @@ def mentionable_select(
     disabled: bool = False,
     row: Optional[int] = None,
 ) -> Callable[
-    [ItemCallbackType[MentionableSelect[V], ClientT]],
-    ItemCallbackType[MentionableSelect[V], ClientT],
+    [ItemCallbackType[MentionableSelect[V_co], ClientT]],
+    ItemCallbackType[MentionableSelect[V_co], ClientT],
 ]:
     """A decorator that attaches a mentionable select menu to a component.
 

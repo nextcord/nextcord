@@ -1,26 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import asyncio
@@ -111,7 +89,6 @@ class AudioSource:
         Useful for clearing buffer data or processes after
         it is done playing audio.
         """
-        pass
 
     def __del__(self) -> None:
         self.cleanup()
@@ -152,7 +129,7 @@ class FFmpegAudio(AudioSource):
         executable: str = "ffmpeg",
         args: Any,
         **subprocess_kwargs: Any,
-    ):
+    ) -> None:
         piping = subprocess_kwargs.get("stdin") == subprocess.PIPE
         if piping and isinstance(source, str):
             raise TypeError(
@@ -380,12 +357,11 @@ class FFmpegOpusAudio(FFmpegAudio):
         bitrate: int = 128,
         codec: Optional[str] = None,
         executable: str = "ffmpeg",
-        pipe=False,
+        pipe: bool = False,
         stderr=None,
         before_options=None,
         options=None,
     ) -> None:
-
         args = []
         subprocess_kwargs = {
             "stdin": subprocess.PIPE if pipe else subprocess.DEVNULL,
@@ -560,7 +536,7 @@ class FFmpegOpusAudio(FFmpegAudio):
         except Exception:
             if not fallback:
                 _log.exception("Probe '%s' using '%s' failed", method, executable)
-                return  # type: ignore
+                return None, None
 
             _log.exception("Probe '%s' using '%s' failed, trying fallback", method, executable)
             try:
@@ -574,7 +550,7 @@ class FFmpegOpusAudio(FFmpegAudio):
         else:
             _log.info("Probe found codec=%s, bitrate=%s", codec, bitrate)
         finally:
-            return codec, bitrate
+            return codec, bitrate  # noqa: B012  # all exception are caught already
 
     @staticmethod
     def _probe_codec_native(
@@ -656,7 +632,7 @@ class PCMVolumeTransformer(AudioSource, Generic[AT]):
         The audio source is opus encoded.
     """
 
-    def __init__(self, original: AT, volume: float = 1.0):
+    def __init__(self, original: AT, volume: float = 1.0) -> None:
         if not isinstance(original, AudioSource):
             raise TypeError(f"Expected AudioSource not {original.__class__.__name__}.")
 
@@ -686,7 +662,7 @@ class PCMVolumeTransformer(AudioSource, Generic[AT]):
 class AudioPlayer(threading.Thread):
     DELAY: float = OpusEncoder.FRAME_LENGTH / 1000.0
 
-    def __init__(self, source: AudioSource, client: VoiceClient, *, after=None):
+    def __init__(self, source: AudioSource, client: VoiceClient, *, after=None) -> None:
         threading.Thread.__init__(self)
         self.daemon: bool = True
         self.source: AudioSource = source
@@ -767,7 +743,7 @@ class AudioPlayer(threading.Thread):
         elif error:
             msg = f"Exception in voice thread {self.name}"
             _log.exception(msg, exc_info=error)
-            print(msg, file=sys.stderr)
+            print(msg, file=sys.stderr)  # noqa: T201
             traceback.print_exception(type(error), error, error.__traceback__)
 
     def stop(self) -> None:

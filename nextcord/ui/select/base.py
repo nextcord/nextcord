@@ -1,27 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-2022 Rapptz
-Copyright (c) 2022-present tag-epic
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -46,14 +23,17 @@ if TYPE_CHECKING:
 
     from ...abc import GuildChannel
     from ...types.components import SelectMenu as SelectMenuPayload
-    from ...types.interactions import ComponentInteractionData, ComponentInteractionResolved
+    from ...types.interactions import (
+        ComponentInteractionData,
+        ComponentInteractionResolved,
+    )
     from ..view import View
 
-V = TypeVar("V", bound="View", covariant=True)
+V_co = TypeVar("V_co", bound="View", covariant=True)
 
 
 class SelectValuesBase(UserList):
-    def __init__(self):
+    def __init__(self) -> None:
         self.data: List[Union[Member, User, Role, GuildChannel]] = []
 
     @classmethod
@@ -87,7 +67,7 @@ class SelectValuesBase(UserList):
         return [o.id for o in self.data]
 
 
-class SelectBase(Item[V]):
+class SelectBase(Item[V_co]):
     """Represents a UI select menu without any options.
 
     This is usually represented as a drop down menu.

@@ -3,41 +3,24 @@
 ci:
   autofix_commit_msg: |
     style: auto fixes from pre-commit hooks
+  autoupdate_commit_msg: |
+    ci(pre-commit): autoupdate hook versions
 
 repos:
-  - repo: https://github.com/PyCQA/autoflake
-    rev: v1.7.7
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.6
     hooks:
-      - id: autoflake
-        name: Remove unused imports with autoflake.
-        args:
-          [
-            "--in-place",
-            "--remove-all-unused-imports",
-            "--ignore-init-module-imports",
-            "--ignore-pass-after-docstring",
-            "--exclude=discord/**",
-          ]
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
 
   - repo: https://github.com/psf/black
-    rev: 22.10.0
+    rev: 23.11.0
     hooks:
       - id: black
         name: Running black in all files.
 
-  - repo: https://github.com/pycqa/isort
-    rev: 5.10.1
-    hooks:
-      - id: isort
-        args: ["--profile", "black", "--extend-skip", "examples"]
-        name: Running isort in all files.
-      - id: isort
-        args: ["--profile", "black", "--thirdparty", "nextcord"]
-        name: Running isort in examples.
-        files: ^examples/
-
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.3.0
+    rev: v4.5.0
     hooks:
       - id: check-ast
         name: Check if python files are valid syntax for the ast parser
@@ -56,3 +39,17 @@ repos:
       - id: trailing-whitespace
         name: Check for trailing whitespace.
         args: [--markdown-linebreak-ext=md]
+
+  # Taken from numpy, for license info see scripts/autotyping.py
+  - repo: local
+    hooks:
+      - id: autotyping
+        name: Add repetitive type hints to the codebase.
+        entry: python -m scripts.autotyping
+        types_or: [python, pyi]
+        language: python
+        files: nextcord/
+        additional_dependencies:
+          - autotyping==22.9.0
+          - black==22.12.0
+          - libcst==0.4.9

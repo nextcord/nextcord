@@ -1,26 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -232,6 +210,7 @@ class Loop(Generic[LF]):
         """
         if self._seconds is not MISSING:
             return self._seconds
+        return None
 
     @property
     def minutes(self) -> Optional[float]:
@@ -242,6 +221,7 @@ class Loop(Generic[LF]):
         """
         if self._minutes is not MISSING:
             return self._minutes
+        return None
 
     @property
     def hours(self) -> Optional[float]:
@@ -252,6 +232,7 @@ class Loop(Generic[LF]):
         """
         if self._hours is not MISSING:
             return self._hours
+        return None
 
     @property
     def time(self) -> Optional[List[datetime.time]]:
@@ -262,6 +243,7 @@ class Loop(Generic[LF]):
         """
         if self._time is not MISSING:
             return self._time.copy()
+        return None
 
     @property
     def current_loop(self) -> int:
@@ -276,7 +258,7 @@ class Loop(Generic[LF]):
         """
         if self._task is MISSING:
             return None
-        elif self._task and self._task.done() or self._stop_next_iteration:
+        if self._task and self._task.done() or self._stop_next_iteration:
             return None
         return self._next_iteration
 
@@ -378,7 +360,7 @@ class Loop(Generic[LF]):
             The keyword arguments to use.
         """
 
-        def restart_when_over(fut: Any, *, args: Any = args, kwargs: Any = kwargs) -> None:
+        def restart_when_over(_fut: Any, *, args: Any = args, kwargs: Any = kwargs) -> None:
             self._task.remove_done_callback(restart_when_over)
             self.start(*args, **kwargs)
 
@@ -422,7 +404,7 @@ class Loop(Generic[LF]):
 
             This operation obviously cannot be undone!
         """
-        self._valid_exception = tuple()
+        self._valid_exception = ()
 
     def remove_exception_type(self, *exceptions: Type[BaseException]) -> bool:
         r"""Removes exception types from being handled during the reconnect logic.
@@ -463,9 +445,8 @@ class Loop(Generic[LF]):
         """
         return not bool(self._task.done()) if self._task is not MISSING else False
 
-    async def _error(self, *args: Any) -> None:
-        exception: Exception = args[-1]
-        print(
+    async def _error(self, exception: BaseException) -> None:
+        print(  # noqa: T201
             f"Unhandled exception in internal background task {self.coro.__name__!r}.",
             file=sys.stderr,
         )
@@ -549,7 +530,7 @@ class Loop(Generic[LF]):
         if not asyncio.iscoroutinefunction(coro):
             raise TypeError(f"Expected coroutine function, received {coro.__class__.__name__!r}.")
 
-        self._error = coro
+        self._error = coro  # type: ignore  # `self` messes with the type checker
         return coro
 
     def _get_next_sleep_time(self) -> datetime.datetime:
@@ -570,8 +551,7 @@ class Loop(Generic[LF]):
             self._time_index += 1
             if next_time > utcnow().timetz():
                 return datetime.datetime.combine(utcnow(), next_time)
-            else:
-                return datetime.datetime.combine(utcnow() + datetime.timedelta(days=1), next_time)
+            return datetime.datetime.combine(utcnow() + datetime.timedelta(days=1), next_time)
 
         next_date = self._last_iteration
         if next_time < next_date.timetz():
@@ -584,7 +564,7 @@ class Loop(Generic[LF]):
         # now kwarg should be a datetime.datetime representing the time "now"
         # to calculate the next time index from
 
-        # pre-condition: self._time is set
+        # pre-condition - self._time is set
         time_now = (now if now is not MISSING else utcnow().replace(microsecond=0)).timetz()
         for idx, time in enumerate(self._time):
             if time >= time_now:
@@ -622,8 +602,7 @@ class Loop(Generic[LF]):
                 )
             ret.append(t if t.tzinfo is not None else t.replace(tzinfo=utc))
 
-        ret = sorted(set(ret))  # de-dupe and sort times
-        return ret
+        return sorted(set(ret))  # de-dupe and sort times
 
     def change_interval(
         self,

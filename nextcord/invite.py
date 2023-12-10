@@ -1,30 +1,10 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, Optional, Union
+
+from nextcord.types.guild import GuildFeature
 
 from .appinfo import PartialAppInfo
 from .asset import Asset
@@ -96,7 +76,7 @@ class PartialInviteChannel:
 
     __slots__ = ("id", "name", "type")
 
-    def __init__(self, data: InviteChannelPayload):
+    def __init__(self, data: InviteChannelPayload) -> None:
         self.id: int = int(data["id"])
         self.name: str = data["name"]
         self.type: ChannelType = try_enum(ChannelType, data["type"])
@@ -168,11 +148,11 @@ class PartialInviteGuild:
         "description",
     )
 
-    def __init__(self, state: ConnectionState, data: InviteGuildPayload, id: int):
+    def __init__(self, state: ConnectionState, data: InviteGuildPayload, id: int) -> None:
         self._state: ConnectionState = state
         self.id: int = id
         self.name: str = data["name"]
-        self.features: List[str] = data.get("features", [])
+        self.features: List[GuildFeature] = data.get("features", [])
         self._icon: Optional[str] = data.get("icon")
         self._banner: Optional[str] = data.get("banner")
         self._splash: Optional[str] = data.get("splash")
@@ -346,7 +326,7 @@ class Invite(Hashable):
         data: InvitePayload | VanityInvitePayload,
         guild: Optional[Union[PartialInviteGuild, Guild]] = None,
         channel: Optional[Union[PartialInviteChannel, GuildChannel]] = None,
-    ):
+    ) -> None:
         self._state: ConnectionState = state
         self.max_age: Optional[int] = data.get("max_age")
         self.code: Optional[str] = data.get("code")
@@ -482,7 +462,7 @@ class Invite(Hashable):
         """
         return self.BASE + "/" + self.code if self.code else ""
 
-    async def delete(self, *, reason: Optional[str] = None):
+    async def delete(self, *, reason: Optional[str] = None) -> None:
         """|coro|
 
         Revokes the instant invite.

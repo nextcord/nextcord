@@ -1,26 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -75,7 +53,7 @@ class Colour:
 
     __slots__ = ("value",)
 
-    def __init__(self, value: int):
+    def __init__(self, value: int) -> None:
         if not isinstance(value, int):
             raise TypeError(f"Expected int parameter, received {value.__class__.__name__} instead.")
 
@@ -299,12 +277,15 @@ class Colour:
 
     @classmethod
     def dark_theme(cls) -> Self:
-        """A factory method that returns a :class:`Colour` with a value of ``0x36393F``.
+        """A factory method that returns a :class:`Colour` with a value of ``0x313338``.
         This will appear transparent on Discord's dark theme.
 
         .. versionadded:: 1.5
+
+        .. versionchanged:: 2.5
+            Colour was replaced by the new dark theme colour on the UI.
         """
-        return cls(0x36393F)
+        return cls(0x313338)
 
     @classmethod
     def fuchsia(cls) -> Self:

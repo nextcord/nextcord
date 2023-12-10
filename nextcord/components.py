@@ -1,30 +1,8 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar, Dict, List, Optional, Tuple, TypeVar, Union
+from typing import TYPE_CHECKING, ClassVar, List, Literal, Optional, Tuple, TypeVar, Union, cast
 
 from .enums import ButtonStyle, ComponentType, TextInputStyle, try_enum
 from .partial_emoji import PartialEmoji, _EmojiTag
@@ -86,7 +64,7 @@ class Component:
         The type of component.
     """
 
-    __slots__: Tuple[str, ...] = ("type",)
+    __slots__: Tuple[str, ...] = ()
 
     __repr_info__: ClassVar[Tuple[str, ...]]
     type: ComponentType
@@ -107,7 +85,7 @@ class Component:
                 setattr(self, slot, value)
         return self
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> ComponentPayload:
         raise NotImplementedError
 
 
@@ -128,19 +106,19 @@ class ActionRow(Component):
         The children components that this holds, if any.
     """
 
-    __slots__: Tuple[str, ...] = ("children",)
+    __slots__: Tuple[str, ...] = ("type", "children")
 
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
-    def __init__(self, data: ComponentPayload):
+    def __init__(self, data: ComponentPayload) -> None:
         self.type: ComponentType = try_enum(ComponentType, data["type"])
         self.children: List[Component] = [_component_factory(d) for d in data.get("components", [])]
 
     def to_dict(self) -> ActionRowPayload:
         return {
-            "type": int(self.type),
+            "type": cast(Literal[1], int(self.type)),
             "components": [child.to_dict() for child in self.children],
-        }  # type: ignore
+        }
 
 
 class Button(Component):
@@ -173,6 +151,7 @@ class Button(Component):
     """
 
     __slots__: Tuple[str, ...] = (
+        "type",
         "style",
         "custom_id",
         "url",
@@ -183,7 +162,7 @@ class Button(Component):
 
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
-    def __init__(self, data: ButtonComponentPayload):
+    def __init__(self, data: ButtonComponentPayload) -> None:
         self.type: ComponentType = try_enum(ComponentType, data["type"])
         self.style: ButtonStyle = try_enum(ButtonStyle, data["style"])
         self.custom_id: Optional[str] = data.get("custom_id")
@@ -246,7 +225,7 @@ class SelectMenuBase(Component):
 
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
-    def __init__(self, data: SelectMenuBasePayload):
+    def __init__(self, data: SelectMenuBasePayload) -> None:
         self.custom_id: str = data["custom_id"]
         self.disabled: bool = data.get("disabled", False)
         self.placeholder: Optional[str] = data.get("placeholder")
@@ -301,12 +280,12 @@ class StringSelectMenu(SelectMenuBase):
     """
 
     __slots__: Tuple[str, ...] = ("options",)
-
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
-    def __init__(self, data: SelectMenuPayload):
+    type: Literal[ComponentType.select] = ComponentType.select
+
+    def __init__(self, data: SelectMenuPayload) -> None:
         super().__init__(data)
-        self.type = ComponentType.select
         self.options: List[SelectOption] = [
             SelectOption.from_dict(option) for option in data.get("options", [])
         ]
@@ -354,12 +333,12 @@ class UserSelectMenu(SelectMenuBase):
     """
 
     __slots__: Tuple[str, ...] = ()
-
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
-    def __init__(self, data: UserSelectMenuPayload):
+    type: Literal[ComponentType.user_select] = ComponentType.user_select
+
+    def __init__(self, data: UserSelectMenuPayload) -> None:
         super().__init__(data)
-        self.type = ComponentType.user_select
 
     def to_dict(self) -> UserSelectMenuPayload:
         payload: UserSelectMenuPayload = {"type": self.type.value, **super().to_dict()}
@@ -397,12 +376,12 @@ class RoleSelectMenu(SelectMenuBase):
     """
 
     __slots__: Tuple[str, ...] = ()
-
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
-    def __init__(self, data: RoleSelectMenuPayload):
+    type: Literal[ComponentType.role_select] = ComponentType.role_select
+
+    def __init__(self, data: RoleSelectMenuPayload) -> None:
         super().__init__(data)
-        self.type = ComponentType.role_select
 
     def to_dict(self) -> RoleSelectMenuPayload:
         payload: RoleSelectMenuPayload = {"type": self.type.value, **super().to_dict()}
@@ -440,12 +419,12 @@ class MentionableSelectMenu(SelectMenuBase):
     """
 
     __slots__: Tuple[str, ...] = ()
-
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
-    def __init__(self, data: MentionableSelectMenuPayload):
+    type: Literal[ComponentType.mentionable_select] = ComponentType.mentionable_select
+
+    def __init__(self, data: MentionableSelectMenuPayload) -> None:
         super().__init__(data)
-        self.type = ComponentType.mentionable_select
 
     def to_dict(self) -> MentionableSelectMenuPayload:
         payload: MentionableSelectMenuPayload = {"type": self.type.value, **super().to_dict()}
@@ -485,12 +464,12 @@ class ChannelSelectMenu(SelectMenuBase):
     """
 
     __slots__: Tuple[str, ...] = ("channel_types",)
-
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
-    def __init__(self, data: ChannelSelectMenuPayload):
+    type: Literal[ComponentType.channel_select] = ComponentType.channel_select
+
+    def __init__(self, data: ChannelSelectMenuPayload) -> None:
         super().__init__(data)
-        self.type = ComponentType.channel_select
         self.channel_types: List[ChannelType] = [
             ChannelType(t) for t in data.get("channel_types", [])
         ]
@@ -569,10 +548,7 @@ class SelectOption:
         )
 
     def __str__(self) -> str:
-        if self.emoji:
-            base = f"{self.emoji} {self.label}"
-        else:
-            base = self.label
+        base = f"{self.emoji} {self.label}" if self.emoji else self.label
 
         if self.description:
             return f"{base}\n{self.description}"
@@ -610,8 +586,8 @@ class SelectOption:
 
 
 class TextInput(Component):
-
     __slots__: Tuple[str, ...] = (
+        "type",
         "style",
         "custom_id",
         "label",
@@ -624,7 +600,7 @@ class TextInput(Component):
 
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
-    def __init__(self, data: TextInputComponentPayload):
+    def __init__(self, data: TextInputComponentPayload) -> None:
         self.type: ComponentType = try_enum(ComponentType, data["type"])
         self.style: TextInputStyle = try_enum(
             TextInputStyle,
@@ -668,12 +644,11 @@ def _component_factory(data: ComponentPayload) -> Component:
     component_type = data["type"]
     if component_type == 1:
         return ActionRow(data)
-    elif component_type == 2:
+    if component_type == 2:
         return Button(data)  # type: ignore
-    elif component_type == 3:
+    if component_type == 3:
         return SelectMenu(data)  # type: ignore
-    elif component_type == 4:
+    if component_type == 4:
         return TextInput(data)  # type: ignore
-    else:
-        as_enum = try_enum(ComponentType, component_type)
-        return Component._raw_construct(type=as_enum)
+    as_enum = try_enum(ComponentType, component_type)
+    return Component._raw_construct(type=as_enum)

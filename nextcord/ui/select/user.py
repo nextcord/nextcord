@@ -1,26 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2022-present tag-epic
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -47,7 +25,7 @@ if TYPE_CHECKING:
 
 __all__ = ("UserSelect", "user_select", "UserSelectValues")
 
-V = TypeVar("V", bound="View", covariant=True)
+V_co = TypeVar("V_co", bound="View", covariant=True)
 
 
 class UserSelectValues(SelectValuesBase):
@@ -60,11 +38,11 @@ class UserSelectValues(SelectValuesBase):
 
     @property
     def users(self) -> List[User]:
-        """List[:class:`.User`]: A list of users that were selected."""
+        """List[:class:`nextcord.User`]: A list of users that were selected."""
         return [v for v in self.data if isinstance(v, User)]
 
 
-class UserSelect(SelectBase, Generic[V]):
+class UserSelect(SelectBase, Generic[V_co]):
     """Represents a UI user select menu.
 
     This is usually represented as a drop down menu.
@@ -133,7 +111,7 @@ class UserSelect(SelectBase, Generic[V]):
 
     @property
     def values(self) -> UserSelectValues:
-        """:class:`.ui.UserSelectValues`: A list of Union[:class:`.Member`, :class:`.User`] that have been selected by the user."""
+        """:class:`.ui.UserSelectValues`: A list of Union[:class:`.Member`, :class:`nextcord.User`] that have been selected by the user."""
         return self._selected_values
 
     def to_component_dict(self) -> UserSelectMenuPayload:
@@ -169,7 +147,9 @@ def user_select(
     max_values: int = 1,
     disabled: bool = False,
     row: Optional[int] = None,
-) -> Callable[[ItemCallbackType[UserSelect[V], ClientT]], ItemCallbackType[UserSelect[V], ClientT]]:
+) -> Callable[
+    [ItemCallbackType[UserSelect[V_co], ClientT]], ItemCallbackType[UserSelect[V_co], ClientT]
+]:
     """A decorator that attaches a user select menu to a component.
 
     The function being decorated should have three parameters, ``self`` representing

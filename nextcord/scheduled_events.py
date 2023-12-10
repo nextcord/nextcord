@@ -1,26 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2021-present tag-epic
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -240,13 +218,13 @@ class ScheduledEvent(Hashable):
         else:
             self.creator: Optional[User] = None
         self.name: str = data["name"]
-        self.description: str = data.get("description", "")
+        self.description: str = data.get("description") or ""
         self.start_time: datetime = parse_time(data["scheduled_start_time"])
         self.end_time: Optional[datetime] = parse_time(data.get("scheduled_end_time"))
         self.privacy_level: ScheduledEventPrivacyLevel = ScheduledEventPrivacyLevel(
             data["privacy_level"]
         )
-        self.metadata: EntityMetadata = EntityMetadata(**data.get("metadata", {}))
+        self.metadata: EntityMetadata = EntityMetadata(**(data["entity_metadata"] or {}))
         self.user_count: int = data.get("user_count", 0)
         self.channel: Optional[GuildChannel] = self._state.get_channel(  # type: ignore # who knows
             int(data.get("channel_id") or 0)

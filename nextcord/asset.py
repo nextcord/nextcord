@@ -1,26 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -114,9 +92,9 @@ class AssetMixin:
             if seek_begin:
                 fp.seek(0)
             return written
-        else:
-            with open(fp, "wb") as f:
-                return f.write(data)
+
+        with open(fp, "wb") as f:  # noqa: ASYNC101
+            return f.write(data)
 
     async def to_file(
         self,
@@ -216,7 +194,7 @@ class Asset(AssetMixin):
 
     BASE = "https://cdn.discordapp.com"
 
-    def __init__(self, state, *, url: str, key: str, animated: bool = False):
+    def __init__(self, state, *, url: str, key: str, animated: bool = False) -> None:
         self._state = state
         self._url = url
         self._animated = animated
@@ -332,7 +310,7 @@ class Asset(AssetMixin):
     def __len__(self) -> int:
         return len(self._url)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         shorten = self._url.replace(self.BASE, "")
         return f"<Asset url={shorten!r}>"
 
@@ -460,9 +438,8 @@ class Asset(AssetMixin):
         if self._animated:
             if format not in VALID_ASSET_FORMATS:
                 raise InvalidArgument(f"format must be one of {VALID_ASSET_FORMATS}")
-        else:
-            if format not in VALID_STATIC_FORMATS:
-                raise InvalidArgument(f"format must be one of {VALID_STATIC_FORMATS}")
+        elif format not in VALID_STATIC_FORMATS:
+            raise InvalidArgument(f"format must be one of {VALID_STATIC_FORMATS}")
 
         url = yarl.URL(self._url)
         path, _ = os.path.splitext(url.path)

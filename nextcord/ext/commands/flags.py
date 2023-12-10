@@ -1,26 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -223,9 +201,7 @@ def get_flags(
                 if flag.max_args is MISSING:
                     flag.max_args = -1
             elif origin is dict:
-                # typing.Dict[K, V]
-                # Equivalent to:
-                # typing.List[typing.Tuple[K, V]]
+                # typing.Dict[K, V] is equivalent to typing.List[typing.Tuple[K, V]]
                 flag.cast_to_dict = True
                 if flag.max_args is MISSING:
                     flag.max_args = -1
@@ -246,8 +222,8 @@ def get_flags(
         name = flag.name.casefold() if case_insensitive else flag.name
         if name in names:
             raise TypeError(f"{flag.name!r} flag conflicts with previous flag or alias.")
-        else:
-            names.add(name)
+
+        names.add(name)
 
         for alias in flag.aliases:
             # Validate alias is unique
@@ -256,8 +232,8 @@ def get_flags(
                 raise TypeError(
                     f"{flag.name!r} flag alias {alias!r} conflicts with previous flag or alias."
                 )
-            else:
-                names.add(alias)
+
+            names.add(alias)
 
         flags[flag.name] = flag
 
@@ -295,11 +271,10 @@ class FlagsMeta(type):
         try:
             if frame is None:
                 local_ns = {}
+            elif frame.f_back is None:
+                local_ns = frame.f_locals
             else:
-                if frame.f_back is None:
-                    local_ns = frame.f_locals
-                else:
-                    local_ns = frame.f_back.f_locals
+                local_ns = frame.f_back.f_locals
         finally:
             del frame
 
@@ -347,7 +322,7 @@ class FlagsMeta(type):
             aliases = {key.casefold(): value.casefold() for key, value in aliases.items()}
             regex_flags = re.IGNORECASE
 
-        keys = list(re.escape(k) for k in flags)
+        keys = [re.escape(k) for k in flags]
         keys.extend(re.escape(a) for a in aliases)
         keys = sorted(keys, key=lambda t: len(t), reverse=True)
 
@@ -430,17 +405,16 @@ async def convert_flag(ctx, argument: str, flag: Flag, annotation: Any = None) -
         if origin is tuple:
             if annotation.__args__[-1] is Ellipsis:
                 return await tuple_convert_all(ctx, argument, flag, annotation.__args__[0])
-            else:
-                return await tuple_convert_flag(ctx, argument, flag, annotation.__args__)
-        elif origin is list:
-            # typing.List[x]
+            return await tuple_convert_flag(ctx, argument, flag, annotation.__args__)
+        if origin is list:
+            # typing.List[x]  # noqa: ERA001
             annotation = annotation.__args__[0]
             return await convert_flag(ctx, argument, flag, annotation)
-        elif origin is Union and annotation.__args__[-1] is type(None):
-            # typing.Optional[x]
+        if origin is Union and annotation.__args__[-1] is type(None):
+            # typing.Optional[x]  # noqa: ERA001
             annotation = Union[annotation.__args__[:-1]]  # type: ignore
             return await run_converters(ctx, annotation, argument, param)
-        elif origin is dict:
+        if origin is dict:
             # typing.Dict[K, V] -> typing.Tuple[K, V]
             return await tuple_convert_flag(ctx, argument, flag, annotation.__args__)
 
@@ -604,14 +578,14 @@ class FlagConverter(metaclass=FlagsMeta):
                 values = arguments[name]
             except KeyError:
                 if flag.required:
-                    raise MissingRequiredFlag(flag)
+                    raise MissingRequiredFlag(flag) from None
+
+                if callable(flag.default):
+                    default = await maybe_coroutine(flag.default, ctx)
+                    setattr(self, flag.attribute, default)
                 else:
-                    if callable(flag.default):
-                        default = await maybe_coroutine(flag.default, ctx)
-                        setattr(self, flag.attribute, default)
-                    else:
-                        setattr(self, flag.attribute, flag.default)
-                    continue
+                    setattr(self, flag.attribute, flag.default)
+                continue
 
             if flag.max_args > 0 and len(values) > flag.max_args:
                 if flag.override:

@@ -1,28 +1,8 @@
-"""
-The MIT License (MIT)
+# SPDX-License-Identifier: MIT
 
-Copyright (c) 2021-present tag-epic
+from typing import Literal, Optional, TypedDict
 
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
-
-from typing import Literal, TypedDict
+from typing_extensions import NotRequired
 
 from .member import Member
 from .snowflake import Snowflake
@@ -40,19 +20,20 @@ class EntityMetadata(TypedDict, total=False):
 class ScheduledEvent(TypedDict):
     id: Snowflake
     guild_id: Snowflake
-    channel_id: Snowflake
+    channel_id: Optional[Snowflake]
+    creator_id: NotRequired[int]
     name: str
-    description: str
+    description: NotRequired[Optional[str]]
     scheduled_start_time: str
-    scheduled_end_time: str
+    scheduled_end_time: Optional[str]
     privacy_level: ScheduledEventPrivacyLevel
     status: ScheduledEventStatus
     entity_type: ScheduledEventEntityType
-    entity_id: Snowflake
-    entity_metadata: EntityMetadata
-    creator: User
-    user_count: int
-    image: str
+    entity_id: Optional[Snowflake]
+    entity_metadata: Optional[EntityMetadata]
+    creator: NotRequired[User]
+    user_count: NotRequired[int]
+    image: NotRequired[Optional[str]]
 
 
 class ScheduledEventUser(TypedDict):

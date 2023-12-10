@@ -1,34 +1,12 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from .errors import ExpectedClosingQuoteError, InvalidEndOfQuotedStringError, UnexpectedQuoteError
 
 # map from opening quotes to closing quotes
 _quotes = {
     '"': '"',
-    "‘": "’",
-    "‚": "‛",
+    "‘": "’",  # noqa: RUF001
+    "‚": "‛",  # noqa: RUF001
     "“": "”",
     "„": "‟",
     "⹂": "⹂",
@@ -37,10 +15,10 @@ _quotes = {
     "〝": "〞",
     "﹁": "﹂",
     "﹃": "﹄",
-    "＂": "＂",
+    "＂": "＂",  # noqa: RUF001
     "｢": "｣",
     "«": "»",
-    "‹": "›",
+    "‹": "›",  # noqa: RUF001
     "《": "》",
     "〈": "〉",
 }
@@ -48,7 +26,7 @@ _all_quotes = set(_quotes.keys()) | set(_quotes.values())
 
 
 class StringView:
-    def __init__(self, buffer):
+    def __init__(self, buffer) -> None:
         self.index = 0
         self.buffer = buffer
         self.end = len(buffer)
@@ -62,7 +40,7 @@ class StringView:
     def eof(self):
         return self.index >= self.end
 
-    def undo(self):
+    def undo(self) -> None:
         self.index = self.previous
 
     def skip_ws(self):
@@ -80,7 +58,7 @@ class StringView:
         self.index += pos
         return self.previous != self.index
 
-    def skip_string(self, string):
+    def skip_string(self, string) -> bool:
         strlen = len(string)
         if self.buffer[self.index : self.index + strlen] == string:
             self.previous = self.index
@@ -187,8 +165,9 @@ class StringView:
                 return "".join(result)
 
             result.append(current)
+        return None
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"<StringView pos: {self.index} prev: {self.previous} end: {self.end} eof: {self.eof}>"
         )

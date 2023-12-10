@@ -1,26 +1,4 @@
-"""
-The MIT License (MIT)
-
-Copyright (c) 2015-present Rapptz
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation
-the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
-"""
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -62,20 +40,21 @@ class BucketType(IntEnum):
     def get_key(self, msg: Message) -> Any:
         if self is BucketType.user:
             return msg.author.id
-        elif self is BucketType.guild:
+        if self is BucketType.guild:
             return (msg.guild or msg.author).id
-        elif self is BucketType.channel:
+        if self is BucketType.channel:
             return msg.channel.id
-        elif self is BucketType.member:
+        if self is BucketType.member:
             return ((msg.guild and msg.guild.id), msg.author.id)
-        elif self is BucketType.category:
+        if self is BucketType.category:
             return (msg.channel.category or msg.channel).id  # type: ignore
-        elif self is BucketType.role:
+        if self is BucketType.role:
             # we return the channel id of a private-channel as there are only roles in guilds
             # and that yields the same result as for a guild with only the @everyone role
             # NOTE: PrivateChannel doesn't actually have an id attribute but we assume we are
             # recieving a DMChannel or GroupChannel which inherit from PrivateChannel and do
             return (msg.channel if isinstance(msg.channel, PrivateChannel) else msg.author.top_role).id  # type: ignore
+        return None
 
     def __call__(self, msg: Message) -> Any:
         return self.get_key(msg)
@@ -175,6 +154,7 @@ class Cooldown:
 
         # we're not so decrement our tokens
         self._tokens -= 1
+        return None
 
     def reset(self) -> None:
         """Reset the cooldown to its initial state."""
@@ -252,8 +232,7 @@ class CooldownMapping:
         key = self._bucket_key(message)
         if key not in self._cache:
             bucket = self.create_bucket(message)
-            if bucket is not None:
-                self._cache[key] = bucket
+            self._cache[key] = bucket
         else:
             bucket = self._cache[key]
 
