@@ -164,7 +164,7 @@ class Modal:
         return self.__timeout_expiry
 
     def add_item(self, item: Item) -> Modal:
-        """Adds an item to the modal.
+        r"""Adds an item to the modal.
 
         Parameters
         ----------
