@@ -3,16 +3,19 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from .enums import EntitlementType, SKUType
 from .flags import SKUFlags
+from .mixins import Hashable
 from .object import Object
-from .types.entitlement import SKU as SKUPayload, Entitlement as EntitlementPayload
 from .utils import parse_time
 
+if TYPE_CHECKING:
+    from .types.entitlement import SKU as SKUPayload, Entitlement as EntitlementPayload
 
-class Entitlement(Object):
+
+class Entitlement(Hashable):
     """Represents a Discord premium entitlement. This class should not be initialized manually.
 
     Attributes
@@ -38,6 +41,18 @@ class Entitlement(Object):
 
     .. versionadded:: 3.0
     """
+
+    __slots__ = (
+        "id",
+        "sku_id",
+        "application_id",
+        "user_id",
+        "type",
+        "deleted",
+        "starts_at",
+        "ends_at",
+        "guild_id",
+    )
 
     def __init__(self, payload: EntitlementPayload) -> None:
         self.id: int = int(payload["id"])
@@ -74,6 +89,8 @@ class SKU(Object):
 
     .. versionadded:: 3.0
     """
+
+    __slots__ = ("id", "type", "application_id", "name", "slug", "flags")
 
     def __init__(self, payload: SKUPayload) -> None:
         self.id: int = int(payload["id"])
