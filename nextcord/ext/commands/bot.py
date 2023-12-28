@@ -892,7 +892,9 @@ class BotBase(GroupMixin):
         self._remove_module_references(lib.__name__)
         self._call_module_finalizers(lib, name)
 
-    def reload_extension(self, name: str, *, package: Optional[str] = None) -> None:
+    def reload_extension(
+        self, name: str, *, package: Optional[str] = None, extras: Optional[Dict[str, Any]] = None
+    ) -> None:
         """Atomically reloads an extension.
 
         This replaces the extension with the same extension, only refreshed. This is
@@ -912,6 +914,30 @@ class BotBase(GroupMixin):
             Defaults to ``None``.
 
             .. versionadded:: 1.7
+        extras: Optional[:class:`dict`]
+            A mapping of kwargs to values to be passed to your
+            cog's ``__init__`` method as keyword arguments.
+
+            Usage ::
+
+                # main.py
+                bot.load_extension("cogs.me_cog", extras={"keyword_arg": False})
+                bot.reload_extension("cogs.me_cog", extras={"keyword_arg": True})
+
+                # cogs/me_cog.py
+                class MeCog(commands.Cog):
+                    def __init__(self, bot, keyword_arg):
+                        self.bot = bot
+                        self.keyword_arg = keyword_arg
+
+                def setup(bot, **kwargs):
+                    bot.add_cog(MeCog(bot, **kwargs))
+
+                # Alternately
+                def setup(bot, keyword_arg):
+                    bot.add_cog(MeCog(bot, keyword_arg))
+
+            .. versionadded:: v3.0.0a
 
         Raises
         ------
@@ -925,6 +951,9 @@ class BotBase(GroupMixin):
             The extension does not have a setup function.
         ExtensionFailed
             The extension setup function had an execution error.
+        InvalidSetupArguments
+            ``reload_extension`` was given ``extras`` but the ``setup``
+            function did not take any additional arguments.
         """
 
         name = self._resolve_name(name, package)
@@ -943,7 +972,7 @@ class BotBase(GroupMixin):
             # Unload and then load the module...
             self._remove_module_references(lib.__name__)
             self._call_module_finalizers(lib, name)
-            self.load_extension(name)
+            self.load_extension(name, extras=extras)
         except Exception:
             # if the load failed, the remnants should have been
             # cleaned from the load_extension function call
