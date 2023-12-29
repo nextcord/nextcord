@@ -937,7 +937,7 @@ class BotBase(GroupMixin):
                 def setup(bot, keyword_arg):
                     bot.add_cog(MeCog(bot, keyword_arg))
 
-            .. versionadded:: v3.0.0a
+            .. versionadded:: v3.0
 
         Raises
         ------
