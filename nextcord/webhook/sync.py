@@ -1052,7 +1052,8 @@ class SyncWebhook(BaseWebhook):
         allowed_mentions: :class:`AllowedMentions`
             Controls the mentions being processed in this message.
             See :meth:`.abc.Messageable.send` for more information.
-
+        thread: :class:`~nextcord.abc.Snowflake`
+            The thread that the message to be edited is in.
         Raises
         ------
         HTTPException
