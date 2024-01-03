@@ -591,7 +591,7 @@ def handle_message_parameters(
         multipart[0]["value"] = utils.to_json(payload)
         payload = None
 
-    return ExecuteWebhookParameters(payload=payload, multipart=multipart, files=files, thread_id=thread_id)
+    return ExecuteWebhookParameters(payload=payload, multipart=multipart, files=files)
 
 
 async_context: ContextVar[AsyncWebhookAdapter] = ContextVar(
