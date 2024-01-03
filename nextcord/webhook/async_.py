@@ -332,7 +332,9 @@ class AsyncWebhookAdapter:
             webhook_token=token,
             message_id=message_id,
         )
-        return self.request(route, session, payload=payload, multipart=multipart, files=files, params=params)
+        return self.request(
+            route, session, payload=payload, multipart=multipart, files=files, params=params
+        )
 
     def delete_webhook_message(
         self,
@@ -1677,11 +1679,11 @@ class Webhook(BaseWebhook):
             The updated view to update this message with. If ``None`` is passed then
             the view is removed. The webhook must have state attached, similar to
             :meth:`send`.
-            
+
             .. versionadded:: 2.0
         thread: :class:`~nextcord.abc.Snowflake`
             The thread that the message to be edited is in.
-            
+
             .. versionadded:: ?.?
 
         Raises
@@ -1731,7 +1733,7 @@ class Webhook(BaseWebhook):
         thread_id: Optional[int] = None
         if thread is not MISSING:
             thread_id = thread.id
-            
+
         data = await adapter.edit_webhook_message(
             self.id,
             self.token,
