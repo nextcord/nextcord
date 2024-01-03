@@ -1677,10 +1677,12 @@ class Webhook(BaseWebhook):
             The updated view to update this message with. If ``None`` is passed then
             the view is removed. The webhook must have state attached, similar to
             :meth:`send`.
-
-            .. versionadded:: ?.?
+            
+            .. versionadded:: 2.0
         thread: :class:`~nextcord.abc.Snowflake`
             The thread that the message to be edited is in.
+            
+            .. versionadded:: ?.?
 
         Raises
         ------
