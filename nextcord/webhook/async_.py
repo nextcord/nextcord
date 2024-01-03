@@ -320,7 +320,11 @@ class AsyncWebhookAdapter:
         payload: Optional[Dict[str, Any]] = None,
         multipart: Optional[List[Dict[str, Any]]] = None,
         files: Optional[List[File]] = None,
+        thread_id: Optional[int] = None,
     ) -> Response[Message]:
+        params = {}
+        if thread_id:
+            params["thread_id"] = thread_id
         route = Route(
             "PATCH",
             "/webhooks/{webhook_id}/{webhook_token}/messages/{message_id}",
@@ -328,7 +332,7 @@ class AsyncWebhookAdapter:
             webhook_token=token,
             message_id=message_id,
         )
-        return self.request(route, session, payload=payload, multipart=multipart, files=files)
+        return self.request(route, session, payload=payload, multipart=multipart, files=files, params=params)
 
     def delete_webhook_message(
         self,
@@ -480,6 +484,7 @@ class ExecuteWebhookParameters(NamedTuple):
     payload: Optional[Dict[str, Any]]
     multipart: Optional[List[Dict[str, Any]]]
     files: Optional[List[File]]
+    thread_id: Optional[int]
 
 
 def handle_message_parameters(
@@ -586,7 +591,7 @@ def handle_message_parameters(
         multipart[0]["value"] = utils.to_json(payload)
         payload = None
 
-    return ExecuteWebhookParameters(payload=payload, multipart=multipart, files=files)
+    return ExecuteWebhookParameters(payload=payload, multipart=multipart, files=files, thread_id=thread_id)
 
 
 async_context: ContextVar[AsyncWebhookAdapter] = ContextVar(
@@ -1627,6 +1632,7 @@ class Webhook(BaseWebhook):
         files: List[File] = MISSING,
         attachments: List[Attachment] = MISSING,
         view: Optional[View] = MISSING,
+        thread: Snowflake = MISSING,
         allowed_mentions: Optional[AllowedMentions] = None,
     ) -> WebhookMessage:
         """|coro|
@@ -1673,7 +1679,9 @@ class Webhook(BaseWebhook):
             the view is removed. The webhook must have state attached, similar to
             :meth:`send`.
 
-            .. versionadded:: 2.0
+            .. versionadded:: ?.?
+        thread: :class:`~nextcord.abc.Snowflake`
+            The thread that the message to be edited is in.
 
         Raises
         ------
@@ -1719,6 +1727,10 @@ class Webhook(BaseWebhook):
             previous_allowed_mentions=previous_mentions,
         )
         adapter = async_context.get()
+        thread_id: Optional[int] = None
+        if thread is not MISSING:
+            thread_id = thread.id
+            
         data = await adapter.edit_webhook_message(
             self.id,
             self.token,
@@ -1727,6 +1739,7 @@ class Webhook(BaseWebhook):
             payload=params.payload,
             multipart=params.multipart,
             files=params.files,
+            thread_id=thread_id,
         )
 
         message = self._create_message(data)
