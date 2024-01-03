@@ -484,7 +484,6 @@ class ExecuteWebhookParameters(NamedTuple):
     payload: Optional[Dict[str, Any]]
     multipart: Optional[List[Dict[str, Any]]]
     files: Optional[List[File]]
-    thread_id: Optional[int]
 
 
 def handle_message_parameters(
