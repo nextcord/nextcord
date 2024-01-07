@@ -126,8 +126,6 @@ class UserInputError(CommandError):
     This inherits from :exc:`CommandError`.
     """
 
-    pass
-
 
 class CommandNotFound(CommandError):
     """Exception raised when a command is attempted to be invoked
@@ -176,8 +174,6 @@ class TooManyArguments(UserInputError):
     This inherits from :exc:`UserInputError`
     """
 
-    pass
-
 
 class BadArgument(UserInputError):
     """Exception raised when a parsing or conversion failure is encountered
@@ -186,16 +182,12 @@ class BadArgument(UserInputError):
     This inherits from :exc:`UserInputError`
     """
 
-    pass
-
 
 class CheckFailure(CommandError):
     """Exception raised when the predicates in :attr:`.Command.checks` have failed.
 
     This inherits from :exc:`CommandError`
     """
-
-    pass
 
 
 class CheckAnyFailure(CheckFailure):
@@ -246,8 +238,6 @@ class NotOwner(CheckFailure):
 
     This inherits from :exc:`CheckFailure`
     """
-
-    pass
 
 
 class ObjectNotFound(BadArgument):
@@ -546,8 +536,6 @@ class DisabledCommand(CommandError):
 
     This inherits from :exc:`CommandError`
     """
-
-    pass
 
 
 class CommandInvokeError(CommandError):
@@ -871,8 +859,6 @@ class ArgumentParsingError(UserInputError):
     i18n purposes.
     """
 
-    pass
-
 
 class UnexpectedQuoteError(ArgumentParsingError):
     """An exception raised when the parser encounters a quote mark inside a non-quoted string.
@@ -1054,8 +1040,6 @@ class FlagError(BadArgument):
 
     .. versionadded:: 2.0
     """
-
-    pass
 
 
 class TooManyFlags(FlagError):

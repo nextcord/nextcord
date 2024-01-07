@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import copy
 import inspect
 import itertools
@@ -27,6 +28,7 @@ from typing import (
 
 from . import utils
 from .activity import BaseActivity
+from .application_command import BaseApplicationCommand
 from .audit_logs import AuditLogEntry
 from .auto_moderation import AutoModerationActionExecution, AutoModerationRule
 from .channel import *
@@ -57,7 +59,7 @@ if TYPE_CHECKING:
     from asyncio import Future
 
     from .abc import MessageableChannel, PrivateChannel
-    from .application_command import BaseApplicationCommand
+    from .application_command import SlashApplicationSubcommand
     from .client import Client
     from .gateway import DiscordWebSocket
     from .guild import GuildChannel, VocalGuildChannel
@@ -186,6 +188,8 @@ class ConnectionState:
 
         self.allowed_mentions: Optional[AllowedMentions] = allowed_mentions
         self._chunk_requests: Dict[Union[int, str], ChunkRequest] = {}
+        self._chunk_tasks: Dict[Union[int, str], asyncio.Task[None]] = {}
+        self._background_tasks: Set[asyncio.Task] = set()
 
         if activity is not None:
             if not isinstance(activity, BaseActivity):
@@ -195,13 +199,7 @@ class ConnectionState:
         else:
             raw_activity = activity
 
-        if status:
-            if status is Status.offline:
-                raw_status = "invisible"
-            else:
-                raw_status = str(status)
-        else:
-            raw_status = None
+        raw_status = ("invisible" if status is Status.offline else str(status)) if status else None
 
         if not isinstance(intents, Intents):
             raise TypeError(f"intents parameter must be Intent not {type(intents)!r}")
@@ -539,9 +537,59 @@ class ConnectionState:
         return self._application_command_ids.get(command_id, None)
 
     def get_application_command_from_signature(
-        self, name: Optional[str], cmd_type: int, guild_id: Optional[int]
-    ) -> Optional[BaseApplicationCommand]:
-        return self._application_command_signatures.get((name, cmd_type, guild_id), None)
+        self,
+        *,
+        type: int,
+        qualified_name: str,
+        guild_id: Optional[int],
+        search_localizations: bool = False,
+    ) -> Optional[Union[BaseApplicationCommand, SlashApplicationSubcommand]]:
+        def get_parent_command(name: str, /) -> Optional[BaseApplicationCommand]:
+            found = self._application_command_signatures.get((name, type, guild_id))
+            if not search_localizations:
+                return found
+
+            for command in self._application_command_signatures.values():
+                if command.name_localizations and name in command.name_localizations.values():
+                    found = command
+                    break
+
+            return found
+
+        def find_children(
+            parent: Union[BaseApplicationCommand, SlashApplicationSubcommand], name: str, /
+        ) -> Optional[Union[BaseApplicationCommand, SlashApplicationSubcommand]]:
+            children: Dict[str, SlashApplicationSubcommand] = getattr(parent, "children", {})
+            if not children:
+                return parent
+
+            found = children.get(name)
+            if not search_localizations:
+                return found
+
+            subcommand: Union[BaseApplicationCommand, SlashApplicationSubcommand]
+            for subcommand in children.values():
+                if subcommand.name_localizations and name in subcommand.name_localizations.values():
+                    found = subcommand
+                    break
+
+            return found
+
+        parent: Optional[Union[BaseApplicationCommand, SlashApplicationSubcommand]] = None
+
+        if not qualified_name:
+            return None
+
+        if " " not in qualified_name:
+            return get_parent_command(qualified_name)
+
+        for command_name in qualified_name.split(" "):
+            if parent is None:
+                parent = get_parent_command(command_name)
+            else:
+                parent = find_children(parent, command_name)
+
+        return parent
 
     def get_guild_application_commands(
         self, guild_id: Optional[int] = None, rollout: bool = False
@@ -549,25 +597,23 @@ class ConnectionState:
         """Gets all commands that have the given guild ID. If guild_id is None, all guild commands are returned. if
         rollout is True, guild_ids_to_rollout is used.
         """
-        ret = []
-        for app_cmd in self.application_commands:
-            if (
-                guild_id is None
-                or guild_id in app_cmd.guild_ids
-                or (rollout and guild_id in app_cmd.guild_ids_to_rollout)
-            ):
-                ret.append(app_cmd)
-        return ret
+        return [
+            app_cmd
+            for app_cmd in self.application_commands
+            if guild_id is None
+            or guild_id in app_cmd.guild_ids
+            or (rollout and guild_id in app_cmd.guild_ids_to_rollout)
+        ]
 
     def get_global_application_commands(
         self, rollout: bool = False
     ) -> List[BaseApplicationCommand]:
         """Gets all commands that are registered globally. If rollout is True, is_global is used."""
-        ret = []
-        for app_cmd in self.application_commands:
-            if (rollout and app_cmd.is_global) or None in app_cmd.command_ids:
-                ret.append(app_cmd)
-        return ret
+        return [
+            app_cmd
+            for app_cmd in self.application_commands
+            if (rollout and app_cmd.is_global) or None in app_cmd.command_ids
+        ]
 
     def add_application_command(
         self,
@@ -622,8 +668,8 @@ class ConnectionState:
                 raise ValueError(
                     f"{command.error_name} You cannot add application commands with duplicate IDs."
                 )
-            else:
-                self._application_command_ids[command_id] = command
+
+            self._application_command_ids[command_id] = command
         # TODO: Add the command to guilds. Should it? Check if it does in the Guild add.
         self._application_commands.add(command)
 
@@ -699,10 +745,7 @@ class ConnectionState:
         """
         _log.debug("Beginning sync of all application commands.")
         self._get_client().add_all_application_commands()
-        if data is None:
-            data = {}
-        else:
-            data = data.copy()
+        data = {} if data is None else data.copy()
 
         if self.application_id is None:
             raise TypeError("Could not get the current application's id")
@@ -848,11 +891,24 @@ class ConnectionState:
                 data = await self.http.get_global_commands(self.application_id)
 
         for raw_response in data:
-            fixed_guild_id = int(temp) if (temp := raw_response.get("guild_id", None)) else None
             payload_type = raw_response["type"] if "type" in raw_response else 1
+            fixed_guild_id = raw_response.get("guild_id", None)
 
-            response_signature = (raw_response["name"], int(payload_type), fixed_guild_id)
-            if app_cmd := self.get_application_command_from_signature(*response_signature):
+            response_signature = {
+                "type": int(payload_type),
+                "qualified_name": raw_response["name"],
+                "guild_id": None if not fixed_guild_id else int(fixed_guild_id),
+            }
+            app_cmd = self.get_application_command_from_signature(**response_signature)
+            if app_cmd:
+                if not isinstance(app_cmd, BaseApplicationCommand):
+                    raise ValueError(
+                        (
+                            f".get_application_command_from_signature with kwargs: {response_signature} "
+                            f"returned {type(app_cmd)} but BaseApplicationCommand was expected."
+                        )
+                    )
+
                 if app_cmd.is_payload_valid(raw_response, guild_id):
                     if associate_known:
                         _log.debug(
@@ -1036,7 +1092,6 @@ class ConnectionState:
         except Exception as e:
             _log.error("Error registering command %s: %s", command.error_name, e)
             raise e
-        # response_id = int(raw_response["id"])
         command.parse_discord_response(self, raw_response)
         self.add_application_command(command, pre_remove=False)
 
@@ -1070,7 +1125,7 @@ class ConnectionState:
             self._application_command_ids.pop(command.command_ids[guild_id], None)
             self._application_command_signatures.pop(command.get_signature(guild_id), None)
 
-        except KeyError:
+        except KeyError as e:
             if guild_id:
                 _log.error(
                     "Could not globally unregister command %s "
@@ -1080,15 +1135,15 @@ class ConnectionState:
                 raise KeyError(
                     "This command cannot be globally unregistered, "
                     "as it is not registered in the provided guild."
-                )
-            else:
-                _log.error(
-                    "Could not globally unregister command %s as it is not a global command.",
-                    command.error_name,
-                )
-                raise KeyError(
-                    "This command cannot be globally unregistered, as it is not a global command."
-                )
+                ) from e
+
+            _log.error(
+                "Could not globally unregister command %s as it is not a global command.",
+                command.error_name,
+            )
+            raise KeyError(
+                "This command cannot be globally unregistered, as it is not a global command."
+            ) from e
 
         except Exception as e:
             _log.error("Error unregistering command %s: %s", command.error_name, e)
@@ -1169,11 +1224,10 @@ class ConnectionState:
                     if self._guild_needs_chunking(guild):
                         future = await self.chunk_guild(guild, wait=False)
                         states.append((guild, future))
+                    elif guild.unavailable is False:
+                        self.dispatch("guild_available", guild)
                     else:
-                        if guild.unavailable is False:
-                            self.dispatch("guild_available", guild)
-                        else:
-                            self.dispatch("guild_join", guild)
+                        self.dispatch("guild_join", guild)
 
             for guild, future in states:
                 try:
@@ -1191,10 +1245,9 @@ class ConnectionState:
                     self.dispatch("guild_join", guild)
 
             # remove the state
-            try:
+            # AttributeError: already been deleted somehow
+            with contextlib.suppress(AttributeError):
                 del self._ready_state
-            except AttributeError:
-                pass  # already been deleted somehow
 
         except asyncio.CancelledError:
             pass
@@ -1653,25 +1706,16 @@ class ConnectionState:
         if self.member_cache_flags.joined:
             guild._add_member(member)
 
-        try:
+        with contextlib.suppress(AttributeError):
             guild._member_count += 1
-        except AttributeError:
-            pass
 
         self.dispatch("member_join", member)
 
     def parse_guild_member_remove(self, data) -> None:
         guild = self._get_guild(int(data["guild_id"]))
         if guild is not None:
-            try:
+            with contextlib.suppress(AttributeError):
                 guild._member_count -= 1
-            except AttributeError:
-                pass
-
-            raw = RawMemberRemoveEvent(data)
-            user = User(state=self, data=data["user"])
-            raw.user = user
-            self.dispatch("raw_member_remove", raw)
 
             user_id = int(data["user"]["id"])
             member = guild.get_member(user_id)
@@ -1680,9 +1724,15 @@ class ConnectionState:
                 self.dispatch("member_remove", member)
         else:
             _log.debug(
-                "GUILD_MEMBER_REMOVE referencing an unknown guild ID: %s. Discarding.",
+                (
+                    "GUILD_MEMBER_REMOVE referencing an unknown guild ID: %s."
+                    "Falling back to raw data."
+                ),
                 data["guild_id"],
             )
+
+        raw = RawMemberRemoveEvent(data=data, state=self)
+        self.dispatch("raw_member_remove", raw)
 
     def parse_guild_member_update(self, data) -> None:
         guild = self._get_guild(int(data["guild_id"]))
@@ -1730,8 +1780,7 @@ class ConnectionState:
         before_emojis = guild.emojis
         for emoji in before_emojis:
             self._emojis.pop(emoji.id, None)
-        # guild won't be None here
-        guild.emojis = tuple(map(lambda d: self.store_emoji(guild, d), data["emojis"]))  # type: ignore
+        guild.emojis = tuple([self.store_emoji(guild, d) for d in data["emojis"]])
         self.dispatch("guild_emojis_update", guild, before_emojis, guild.emojis)
 
     def parse_guild_stickers_update(self, data) -> None:
@@ -1746,8 +1795,7 @@ class ConnectionState:
         before_stickers = guild.stickers
         for emoji in before_stickers:
             self._stickers.pop(emoji.id, None)
-        # guild won't be None here
-        guild.stickers = tuple(map(lambda d: self.store_sticker(guild, d), data["stickers"]))  # type: ignore
+        guild.stickers = tuple([self.store_sticker(guild, d) for d in data["stickers"]])
         self.dispatch("guild_stickers_update", guild, before_stickers, guild.stickers)
 
     def _get_create_guild(self, data):
@@ -1810,7 +1858,9 @@ class ConnectionState:
 
         # check if it requires chunking
         if self._guild_needs_chunking(guild):
-            asyncio.create_task(self._chunk_and_dispatch(guild, unavailable))
+            task = asyncio.create_task(self._chunk_and_dispatch(guild, unavailable))
+            self._chunk_tasks[guild.id] = task
+            task.add_done_callback(lambda _t: self._chunk_tasks.pop(guild.id, None))
             return
 
         # Dispatch available if newly available
@@ -2058,9 +2108,11 @@ class ConnectionState:
                 voice = self._get_voice_client(guild.id)
                 if voice is not None:
                     coro = voice.on_voice_state_update(data)
-                    asyncio.create_task(
+                    task = asyncio.create_task(
                         logging_coroutine(coro, info="Voice Protocol voice state update handler")
                     )
+                    self._background_tasks.add(task)
+                    task.add_done_callback(self._background_tasks.discard)
 
             member, before, after = guild._update_voice_state(data, channel_id)  # type: ignore
             after = copy.copy(after)
@@ -2089,9 +2141,11 @@ class ConnectionState:
         vc = self._get_voice_client(key_id)
         if vc is not None:
             coro = vc.on_voice_server_update(data)
-            asyncio.create_task(
+            task = asyncio.create_task(
                 logging_coroutine(coro, info="Voice Protocol voice server update handler")
             )
+            self._background_tasks.add(task)
+            task.add_done_callback(self._background_tasks.discard)
 
     def parse_typing_start(self, data) -> None:
         raw = RawTypingEvent(data)
@@ -2121,10 +2175,10 @@ class ConnectionState:
         if isinstance(channel, DMChannel):
             return channel.recipient or self.get_user(user_id)
 
-        elif isinstance(channel, (Thread, TextChannel)):
+        if isinstance(channel, (Thread, TextChannel)):
             return channel.guild.get_member(user_id)
 
-        elif isinstance(channel, GroupChannel):
+        if isinstance(channel, GroupChannel):
             return utils.find(lambda x: x.id == user_id, channel.recipients)
 
         return self.get_user(user_id)
@@ -2171,10 +2225,14 @@ class ConnectionState:
             if channel is not None:
                 return channel
 
+        return None
+
     def get_scheduled_event(self, id: int) -> Optional[ScheduledEvent]:
         for guild in self.guilds:
             if event := guild.get_scheduled_event(id):
                 return event
+
+        return None
 
     def create_message(
         self,
@@ -2196,7 +2254,7 @@ class ConnectionState:
             self.dispatch("guild_scheduled_event_create", event)
         else:
             _log.debug(
-                "GUILD_SCHEDULED_EVENT_CREATE referencing unknown guild " "ID: %s. Discarding.",
+                "GUILD_SCHEDULED_EVENT_CREATE referencing unknown guild ID: %s. Discarding.",
                 data["guild_id"],
             )
 
@@ -2208,12 +2266,12 @@ class ConnectionState:
                 self.dispatch("guild_scheduled_event_update", old, event)
             else:
                 _log.debug(
-                    "GUILD_SCHEDULED_EVENT_UPDATE referencing unknown event " "ID: %s. Discarding.",
+                    "GUILD_SCHEDULED_EVENT_UPDATE referencing unknown event ID: %s. Discarding.",
                     data["id"],
                 )
         else:
             _log.debug(
-                "GUILD_SCHEDULED_EVENT_UPDATE referencing unknown guild " "ID: %s. Discarding.",
+                "GUILD_SCHEDULED_EVENT_UPDATE referencing unknown guild ID: %s. Discarding.",
                 data["guild_id"],
             )
 
@@ -2224,12 +2282,12 @@ class ConnectionState:
                 self.dispatch("guild_scheduled_event_delete", event)
             else:
                 _log.debug(
-                    "GUILD_SCHEDULED_EVENT_DELETE referencing unknown event " "ID: %s. Discarding.",
+                    "GUILD_SCHEDULED_EVENT_DELETE referencing unknown event ID: %s. Discarding.",
                     data["id"],
                 )
         else:
             _log.debug(
-                "GUILD_SCHEDULED_EVENT_DELETE referencing unknown guild " "ID: %s. Discarding.",
+                "GUILD_SCHEDULED_EVENT_DELETE referencing unknown guild ID: %s. Discarding.",
                 data["guild_id"],
             )
 
@@ -2249,7 +2307,7 @@ class ConnectionState:
                 )
         else:
             _log.debug(
-                "GUILD_SCHEDULED_EVENT_USER_ADD referencing unknown" " guild ID: %s. Discarding.",
+                "GUILD_SCHEDULED_EVENT_USER_ADD referencing unknown guild ID: %s. Discarding.",
                 data["guild_id"],
             )
 
@@ -2298,10 +2356,7 @@ class ConnectionState:
         guild = self._get_guild(int(data["guild_id"]))
         user_id = None if data.get("user_id") is None else int(data["user_id"])
         user = self.get_user(user_id)
-        if user_id is None or user is None:
-            users = {}
-        else:
-            users = {user_id: user}
+        users = {} if user_id is None or user is None else {user_id: user}
 
         if guild is not None:
             entry = AuditLogEntry(auto_moderation_rules={}, users=users, data=data, guild=guild)
@@ -2416,10 +2471,9 @@ class AutoShardedConnectionState(ConnectionState):
             self.dispatch("shard_ready", shard_id)
 
         # remove the state
-        try:
+        # AttributeError if already been deleted somehow
+        with contextlib.suppress(AttributeError):
             del self._ready_state
-        except AttributeError:
-            pass  # already been deleted somehow
 
         # regular users cannot shard so we won't worry about it here.
 
