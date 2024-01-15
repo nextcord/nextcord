@@ -1415,6 +1415,9 @@ of :class:`enum.Enum`.
 .. autoclass:: ForumLayoutType
     :members:
 
+.. autoclass:: OnboardingPromptType
+    :members:
+
 .. autoclass:: AuditLogAction
     :members:
 

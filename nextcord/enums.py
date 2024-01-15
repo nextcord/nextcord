@@ -2039,8 +2039,15 @@ class ForumLayoutType(IntEnum):
 
 
 class OnboardingPromptType(IntEnum):
+    """Represents the type of :class:`OnboardingPrompt`.
+
+    .. versionadded:: 3.0
+    """
+
     multiple_choice = 0
+    """Displays the options as multiple choice."""
     dropdown = 1
+    """Displays the options in a dropdown menu."""
 
 
 T = TypeVar("T")
