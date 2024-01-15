@@ -1418,6 +1418,9 @@ of :class:`enum.Enum`.
 .. autoclass:: OnboardingPromptType
     :members:
 
+.. autoclass:: OnboardingMode
+    :members:
+
 .. autoclass:: AuditLogAction
     :members:
 

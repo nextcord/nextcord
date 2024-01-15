@@ -2164,7 +2164,7 @@ class Guild(Hashable):
     async def onboarding(self) -> Onboarding:
         """|coro|
 
-        Retrieves the :class:`Onboarding` for this guild.
+        Retrieves the onboarding for this guild.
 
         Raises
         ------
@@ -2176,9 +2176,65 @@ class Guild(Hashable):
         Returns
         -------
         :class:`Onboarding`
-            The :class:`Onboarding` object for this guild.
+            The onboarding object for this guild.
         """
         data = await self._state.http.get_onboarding(self.id)
+        return Onboarding(guild=self, data=data)
+
+    async def edit_onboarding(
+        self,
+        *,
+        reason: Optional[str] = None,
+        prompts: List[OnboardingPrompt] = MISSING,
+        default_channel_ids: List[Snowflake] = MISSING,
+        enabled: bool = MISSING,
+        mode: OnboardingMode = MISSING,
+    ) -> Onboarding:
+        """|coro|
+
+        Edits the onboarding of the guild.
+
+        You must have the :attr:`~Permissions.manage_guild` &
+        :attr:`~Permissions.manage_roles` permissions to use this.
+
+        .. versionadded:: 3.0
+
+        Parameters
+        ----------
+        reason: Optional[:class:`str`]
+            The reason for doing this action. Shows up on the audit log.
+        prompts: List[:class:`OnboardingPrompt`]
+            The screen's prompts.
+        default_channel_ids: List[:class:`int`]
+            The list of the IDs of channels that users are opted into immediately.
+        enabled: :class:`bool`
+            Whether this screen is enabled.
+        mode: :class:`OnboardingMode`
+            The criteria needed for onboarding to be enabled.
+
+        Raises
+        ------
+        Forbidden
+            You do not have permission to edit the onboarding.
+        HTTPException
+            Editing the onboarding failed.
+
+        Returns
+        -------
+        :class:`Onboarding`
+            The onboarding object for this guild.
+        """
+        payload = {}
+        if prompts is not MISSING:
+            payload["prompts"] = prompts
+        if default_channel_ids is not MISSING:
+            payload["default_channel_ids"] = default_channel_ids
+        if enabled is not MISSING:
+            payload["enabled"] = enabled
+        if mode is not MISSING:
+            payload["mode"] = mode
+
+        data = await self._state.http.modify_onboarding(self.id, reason=reason, payload=payload)
         return Onboarding(guild=self, data=data)
 
     def bans(
@@ -3303,51 +3359,6 @@ class Guild(Hashable):
             payload["enabled"] = enabled
 
         await self._state.http.edit_widget(self.id, payload=payload)
-
-    async def edit_onboarding(
-        self,
-        *,
-        reason: Optional[str] = None,
-        prompts: List[OnboardingPrompt] = MISSING,
-        default_channel_ids: List[Snowflake] = MISSING,
-        enabled: bool = MISSING,
-        mode: OnboardingMode = MISSING,
-    ):
-        """|coro|
-
-        Edits the onboarding of the guild.
-
-        You must have the :attr:`~Permissions.manage_guild` &
-        :attr:`~Permissions.manage_roles` permissions to use this.
-
-        .. versionadded:: 3.0
-
-        Parameters
-        ----------
-        reason
-        prompts
-        default_channel_ids
-        enabled
-        mode
-
-        Raises
-        ------
-        Forbidden
-            You do not have permission to edit the onboarding.
-        HTTPException
-            Editing the onboarding failed.
-        """
-        payload = {}
-        if prompts is not MISSING:
-            payload["prompts"] = prompts
-        if default_channel_ids is not MISSING:
-            payload["default_channel_ids"] = default_channel_ids
-        if enabled is not MISSING:
-            payload["enabled"] = enabled
-        if mode is not MISSING:
-            payload["mode"] = mode
-
-        return await self._state.http.modify_onboarding(self.id, reason=reason, payload=payload)
 
     async def chunk(self, *, cache: bool = True) -> Optional[List[Member]]:
         """|coro|
