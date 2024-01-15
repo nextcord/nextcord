@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, Optional
 
-from .enums import OnboardingPromptType, try_enum
+from .enums import OnboardingMode, OnboardingPromptType, try_enum
 from .partial_emoji import PartialEmoji
 
 if TYPE_CHECKING:
@@ -55,7 +55,7 @@ class OnboardingPromptOption:
         self.role_ids: List[int] = [int(r) for r in data["role_ids"]]
         self.emoji: PartialEmoji = PartialEmoji.from_dict(data["emoji"])
         self.title: str = data["title"]
-        self.description: Optional[str] = data["description"] if data["description"] else None
+        self.description: Optional[str] = data.get("description")
 
 
 class OnboardingPrompt:
@@ -117,6 +117,8 @@ class Onboarding:
         The list of the IDs of channels that users are opted into immediately.
     enabled: :class:`bool`
         Whether this screen is enabled.
+    mode: :class:`OnboardingMode`
+        The criteria needed for onboarding to be enabled.
     """
 
     __slots__ = (
@@ -125,6 +127,7 @@ class Onboarding:
         "prompts",
         "default_channel_ids",
         "enabled",
+        "mode",
     )
 
     def __init__(self, *, guild: Guild, data: OnboardingPayload) -> None:
@@ -133,3 +136,4 @@ class Onboarding:
         self.prompts: List[OnboardingPrompt] = [OnboardingPrompt(data=p) for p in data["prompts"]]
         self.default_channel_ids: list[int] = [int(c) for c in data["default_channel_ids"]]
         self.enabled: bool = bool(data["enabled"])
+        self.mode: OnboardingMode = try_enum(OnboardingMode, data["mode"])

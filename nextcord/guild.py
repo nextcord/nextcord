@@ -47,6 +47,7 @@ from .enums import (
     ContentFilter,
     NotificationLevel,
     NSFWLevel,
+    OnboardingMode,
     ScheduledEventEntityType,
     ScheduledEventPrivacyLevel,
     VerificationLevel,
@@ -56,7 +57,7 @@ from .enums import (
 )
 from .errors import ClientException, InvalidArgument, InvalidData
 from .flags import SystemChannelFlags
-from .guild_onboarding import Onboarding
+from .guild_onboarding import Onboarding, OnboardingPrompt
 from .integrations import Integration, _integration_factory
 from .invite import Invite
 from .iterators import AuditLogIterator, BanIterator, MemberIterator, ScheduledEventIterator
@@ -2169,8 +2170,6 @@ class Guild(Hashable):
         ------
         Forbidden
             You do not have proper permissions to get the information.
-        NotFound
-            This guild does not have an onboarding object.
         HTTPException
             An error occurred while fetching the information.
 
@@ -3304,6 +3303,51 @@ class Guild(Hashable):
             payload["enabled"] = enabled
 
         await self._state.http.edit_widget(self.id, payload=payload)
+
+    async def edit_onboarding(
+        self,
+        *,
+        reason: Optional[str] = None,
+        prompts: List[OnboardingPrompt] = MISSING,
+        default_channel_ids: List[Snowflake] = MISSING,
+        enabled: bool = MISSING,
+        mode: OnboardingMode = MISSING,
+    ):
+        """|coro|
+
+        Edits the onboarding of the guild.
+
+        You must have the :attr:`~Permissions.manage_guild` &
+        :attr:`~Permissions.manage_roles` permissions to use this.
+
+        .. versionadded:: 3.0
+
+        Parameters
+        ----------
+        reason
+        prompts
+        default_channel_ids
+        enabled
+        mode
+
+        Raises
+        ------
+        Forbidden
+            You do not have permission to edit the onboarding.
+        HTTPException
+            Editing the onboarding failed.
+        """
+        payload = {}
+        if prompts is not MISSING:
+            payload["prompts"] = prompts
+        if default_channel_ids is not MISSING:
+            payload["default_channel_ids"] = default_channel_ids
+        if enabled is not MISSING:
+            payload["enabled"] = enabled
+        if mode is not MISSING:
+            payload["mode"] = mode
+
+        return await self._state.http.modify_onboarding(self.id, reason=reason, payload=payload)
 
     async def chunk(self, *, cache: bool = True) -> Optional[List[Member]]:
         """|coro|

@@ -35,6 +35,7 @@ VerificationLevel = Literal[0, 1, 2, 3, 4]
 NSFWLevel = Literal[0, 1, 2, 3]
 PremiumTier = Literal[0, 1, 2, 3]
 PromptOptionTypes = Literal[0, 1]
+OnboardingMode = Literal[0, 1]
 GuildFeature = Literal[
     "AUTO_MODERATION",
     "ANIMATED_BANNER",
@@ -175,3 +176,4 @@ class Onboarding(TypedDict):
     prompts: List[OnboardingPrompt]
     default_channel_ids: List[Snowflake]
     enabled: bool
+    mode: OnboardingMode

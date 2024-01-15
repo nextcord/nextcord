@@ -1759,6 +1759,9 @@ class HTTPClient:
     def get_onboarding(self, guild_id: Snowflake) -> Response[guild.Onboarding]:
         return self.request(Route("GET", "/guilds/{guild_id}/onboarding", guild_id=guild_id))
 
+    def modify_onboarding(self, guild_id: Snowflake, *, reason: Optional[str] = None, payload: Dict[str, Any]) -> Response[guild.Onboarding]:
+        return self.request(Route("PUT", "/guilds/{guild_id}/onboarding", guild_id=guild_id), reason=reason, json=payload)
+
     # Invite management
 
     def create_invite(
