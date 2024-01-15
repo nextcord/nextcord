@@ -27,10 +27,13 @@ __all__ = (
     "SystemChannelFlags",
     "MessageFlags",
     "PublicUserFlags",
+    "MemberFlags",
     "Intents",
     "MemberCacheFlags",
     "ApplicationFlags",
     "ChannelFlags",
+    "AttachmentFlags",
+    "RoleFlags",
 )
 
 BF = TypeVar("BF", bound="BaseFlags")
@@ -67,13 +70,11 @@ class alias_flag_value(flag_value):
 
 def fill_with_flags(*, inverted: bool = False):
     def decorator(cls: Type[BF]):
-        # fmt: off
         cls.VALID_FLAGS = {
             name: value.flag
             for name, value in cls.__dict__.items()
             if isinstance(value, flag_value)
         }
-        # fmt: on
 
         if inverted:
             max_bits = max(cls.VALID_FLAGS.values()).bit_length()
@@ -514,6 +515,58 @@ class PublicUserFlags(BaseFlags):
     def all(self) -> List[UserFlags]:
         """List[:class:`UserFlags`]: Returns all public flags the user has."""
         return [public_flag for public_flag in UserFlags if self._has_flag(public_flag.value)]
+
+
+@fill_with_flags()
+class MemberFlags(BaseFlags):
+    r"""Wraps up the Discord Guild Member flags
+
+    .. versionadded:: 2.6
+
+    .. container:: operations
+
+        .. describe:: x == y
+
+            Checks if two MemberFlags are equal.
+
+        .. describe:: x != y
+
+            Checks if two MemberFlags are not equal.
+        .. describe:: hash(x)
+
+            Returns the flag's hash.
+        .. describe:: iter(x)
+
+            Returns an iterator of ``(name, value)`` pairs. This allows it
+            to be, for example, constructed as a dict or a list of pairs.
+            Note that aliases are not shown.
+
+    Attributes
+    -----------
+    value: :class:`int`
+        The raw value. You should query flags via the properties
+        rather than using this raw value.
+    """
+
+    @flag_value
+    def did_rejoin(self):
+        """:class:`bool`: Returns ``True`` if the member left and rejoined the :attr:`~nextcord.Guild`."""
+        return 1 << 0
+
+    @flag_value
+    def completed_onboarding(self):
+        """:class:`bool`: Returns ``True`` if the member has completed onboarding."""
+        return 1 << 1
+
+    @flag_value
+    def bypasses_verification(self):
+        """:class:`bool`: Returns ``True`` if the member can bypass the guild verification requirements."""
+        return 1 << 2
+
+    @flag_value
+    def started_onboarding(self):
+        """:class:`bool`: Returns ``True`` if the member has started onboarding."""
+        return 1 << 3
 
 
 @fill_with_flags()
@@ -1290,10 +1343,74 @@ class ApplicationFlags(BaseFlags):
         """:class:`bool`: Returns ``True`` if the application has registered global application commands."""
         return 1 << 23
 
-    @flag_value
-    def active(self):
-        """:class:`bool`: Returns ``True`` if the application is considered active. This means that it has had any global command executed in the past 30 days.
 
-        .. versionadded:: 2.4
-        """
-        return 1 << 24
+@fill_with_flags()
+class AttachmentFlags(BaseFlags):
+    r"""Wraps up the Discord Attachment flags.
+
+    .. container:: operations
+
+        .. describe:: x == y
+
+            Checks if two AttachmentFlags are equal.
+        .. describe:: x != y
+
+            Checks if two AttachmentFlags are not equal.
+        .. describe:: hash(x)
+
+            Return the flag's hash.
+        .. describe:: iter(x)
+
+            Returns an iterator of ``(name, value)`` pairs. This allows it
+            to be, for example, constructed as a dict or a list of pairs.
+            Note that aliases are not shown.
+
+    .. versionadded:: 2.6
+
+    Attributes
+    ----------
+    value: :class:`int`
+        The raw value. You should query flags via the properties
+        rather than using this raw value.
+    """
+
+    @flag_value
+    def is_remix(self):
+        """:class:`bool`: Returns ``True`` if the attachment has been edited using the remix feature on mobile."""
+        return 1 << 2
+
+
+@fill_with_flags()
+class RoleFlags(BaseFlags):
+    r"""Wraps up the Discord Guild Role Flags.
+
+    .. container:: operations
+
+        .. describe:: x == y
+
+            Checks if two RoleFlags are equal.
+        .. describe:: x != y
+
+            Checks if two RoleFlags are not equal.
+        .. describe:: hash(x)
+
+            Return the flag's hash.
+        .. describe:: iter(x)
+
+            Returns an iterator of ``(name, value)`` pairs. This allows it
+            to be, for example, constructed as a dict or a list of pairs.
+            Note that aliases are not shown.
+
+    .. versionadded:: 2.6
+
+    Attributes
+    ----------
+    value: :class:`int`
+        The raw value. You should query flags via the properties
+        rather than using this raw value.
+    """
+
+    @flag_value
+    def in_prompt(self):
+        """:class:`bool`: Returns ``True`` if the role can be selected in an onboarding prompt."""
+        return 1 << 0

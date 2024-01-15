@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import logging
 import re
@@ -32,7 +33,7 @@ from ..channel import PartialMessageable
 from ..enums import WebhookType, try_enum
 from ..errors import DiscordServerError, Forbidden, HTTPException, InvalidArgument, NotFound
 from ..flags import MessageFlags
-from ..http import Route
+from ..http import _USER_AGENT, Route
 from ..message import Attachment, Message
 from ..mixins import Hashable
 from ..user import BaseUser, User
@@ -107,7 +108,8 @@ class AsyncWebhookAdapter:
         auth_token: Optional[str] = None,
         params: Optional[Dict[str, Any]] = None,
     ) -> Any:
-        headers: Dict[str, str] = {}
+        # always ensure our user agent is being used
+        headers: Dict[str, str] = {"User-Agent": _USER_AGENT}
         files = files or []
         to_send: Optional[Union[str, aiohttp.FormData]] = None
         bucket = (route.webhook_id, route.webhook_token)
@@ -191,10 +193,11 @@ class AsyncWebhookAdapter:
 
                         if response.status == 403:
                             raise Forbidden(response, data)
-                        elif response.status == 404:
+
+                        if response.status == 404:
                             raise NotFound(response, data)
-                        else:
-                            raise HTTPException(response, data)
+
+                        raise HTTPException(response, data)
 
                 except OSError as e:
                     if attempt < 4 and e.errno in (54, 10054):
@@ -835,12 +838,12 @@ class WebhookMessage(Message):
 
             async def inner_call(delay: float = delay) -> None:
                 await asyncio.sleep(delay)
-                try:
+                with contextlib.suppress(HTTPException):
                     await self._state._webhook.delete_message(self.id)
-                except HTTPException:
-                    pass
 
-            asyncio.create_task(inner_call())
+            task = asyncio.create_task(inner_call())
+            self._background_tasks.add(task)
+            task.add_done_callback(self._background_tasks.discard)
         else:
             await self._state._webhook.delete_message(self.id)
 
@@ -1140,6 +1143,7 @@ class Webhook(BaseWebhook):
             "guild_id": channel.guild.id,
             "user": {
                 "username": user.name,
+                "global_name": user.global_name,
                 "discriminator": user.discriminator,
                 "id": user.id,
                 "avatar": user._avatar,
@@ -1512,8 +1516,6 @@ class Webhook(BaseWebhook):
         previous_mentions: Optional[AllowedMentions] = getattr(
             self._state, "allowed_mentions", None
         )
-        if content is None:
-            content = MISSING
 
         application_webhook = self.type is WebhookType.application
         if ephemeral and not application_webhook:

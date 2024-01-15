@@ -25,3 +25,4 @@ class User(PartialUser, total=False):
     flags: int
     premium_type: PremiumType
     public_flags: int
+    global_name: Optional[str]

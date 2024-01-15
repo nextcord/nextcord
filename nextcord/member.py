@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import datetime
 import itertools
 import sys
@@ -14,6 +15,7 @@ from .activity import ActivityTypes, create_activity
 from .asset import Asset
 from .colour import Colour
 from .enums import Status, try_enum
+from .flags import MemberFlags
 from .object import Object
 from .permissions import Permissions
 from .user import BaseUser, User, _UserTag
@@ -156,7 +158,7 @@ def flatten_user(cls):
             # However I'm not sure how I feel about "functions" returning properties
             # It probably breaks something in Sphinx.
             # probably a member function by now
-            def generate_function(x):
+            def generate_function(x, value):
                 # We want sphinx to properly show coroutine functions as coroutines
                 if asyncio.iscoroutinefunction(value):
 
@@ -171,7 +173,7 @@ def flatten_user(cls):
                 general.__name__ = x
                 return general
 
-            func = generate_function(attr)
+            func = generate_function(attr, value)
             func = utils.copy_doc(value)(func)
             setattr(cls, attr, func)
 
@@ -244,11 +246,13 @@ class Member(abc.Messageable, _UserTag):
         "_state",
         "_avatar",
         "_timeout",
+        "_flags",
     )
 
     if TYPE_CHECKING:
         name: str
         id: int
+        global_name: Optional[str]
         discriminator: str
         bot: bool
         system: bool
@@ -275,21 +279,23 @@ class Member(abc.Messageable, _UserTag):
         )
         self._roles: utils.SnowflakeList = utils.SnowflakeList(map(int, data["roles"]))
         self._client_status: Dict[Optional[str], str] = {None: "offline"}
-        self.activities: Tuple[ActivityTypes, ...] = tuple()
+        self.activities: Tuple[ActivityTypes, ...] = ()
         self.nick: Optional[str] = data.get("nick", None)
         self.pending: bool = data.get("pending", False)
         self._avatar: Optional[str] = data.get("avatar")
         self._timeout: Optional[datetime.datetime] = utils.parse_time(
             data.get("communication_disabled_until")
         )
+        self._flags: int = data.get("flags", 0)
 
     def __str__(self) -> str:
         return str(self._user)
 
     def __repr__(self) -> str:
         return (
-            f"<Member id={self._user.id} name={self._user.name!r} discriminator={self._user.discriminator!r}"
-            f" bot={self._user.bot} nick={self.nick!r} guild={self.guild!r}>"
+            f"<Member id={self._user.id} name={self._user.name!r} global_name={self._user.global_name!r}"
+            + (f" discriminator={self._user.discriminator!r}" if self.discriminator != "0" else "")
+            + f" bot={self._user.bot} nick={self.nick!r} guild={self.guild!r}>"
         )
 
     def __eq__(self, other: Any) -> bool:
@@ -314,6 +320,7 @@ class Member(abc.Messageable, _UserTag):
         self.nick = data.get("nick", None)
         self.pending = data.get("pending", False)
         self._timeout = utils.parse_time(data.get("communication_disabled_until"))
+        self._flags = data.get("flags", 0)
 
     @classmethod
     def _try_upgrade(
@@ -343,6 +350,7 @@ class Member(abc.Messageable, _UserTag):
         self._state = member._state
         self._avatar = member._avatar
         self._timeout = member._timeout
+        self._flags = member._flags
 
         # Reference will not be copied unless necessary by PRESENCE_UPDATE
         # See below
@@ -350,31 +358,27 @@ class Member(abc.Messageable, _UserTag):
         return self
 
     async def _get_channel(self):
-        ch = await self.create_dm()
-        return ch
+        return await self.create_dm()
 
     def _update(self, data: MemberPayload) -> None:
         # the nickname change is optional,
         # if it isn't in the payload then it didn't change
-        try:
+        with contextlib.suppress(KeyError):
             self.nick = data["nick"]
-        except KeyError:
-            pass
 
-        try:
+        with contextlib.suppress(KeyError):
             self.pending = data["pending"]
-        except KeyError:
-            pass
 
         self.premium_since = utils.parse_time(data.get("premium_since"))
         self._roles = utils.SnowflakeList(map(int, data["roles"]))
         self._avatar = data.get("avatar")
         self._timeout = utils.parse_time(data.get("communication_disabled_until"))
+        self._flags = data.get("flags", 0)
 
     def _presence_update(
         self, data: PartialPresenceUpdate, user: UserPayload
     ) -> Optional[Tuple[User, User]]:
-        self.activities = tuple(map(lambda x: create_activity(self._state, x), data["activities"]))
+        self.activities = tuple((create_activity(self._state, x) for x in data["activities"]))
         self._client_status = {
             sys.intern(key): sys.intern(value) for key, value in data.get("client_status", {}).items()  # type: ignore
         }
@@ -399,6 +403,7 @@ class Member(abc.Messageable, _UserTag):
             u.name, u._avatar, u.discriminator, u._public_flags = modified
             # Signal to dispatch on_user_update
             return to_return, u
+        return None
 
     @property
     def status(self) -> Union[Status, str]:
@@ -543,6 +548,15 @@ class Member(abc.Messageable, _UserTag):
         """
         if self.activities:
             return self.activities[0]
+        return None
+
+    @property
+    def flags(self) -> MemberFlags:
+        """:class:`MemberFlags`: Returns the member's flags.
+
+        .. versionadded:: 2.6
+        """
+        return MemberFlags._from_value(self._flags)
 
     def mentioned_in(self, message: Message) -> bool:
         """Checks if the member is mentioned in the specified message.
@@ -693,6 +707,8 @@ class Member(abc.Messageable, _UserTag):
         voice_channel: Optional[VocalGuildChannel] = MISSING,
         reason: Optional[str] = None,
         timeout: Optional[Union[datetime.datetime, datetime.timedelta]] = MISSING,
+        flags: MemberFlags = MISSING,
+        bypass_verification: bool = MISSING,
     ) -> Optional[Member]:
         """|coro|
 
@@ -700,21 +716,23 @@ class Member(abc.Messageable, _UserTag):
 
         Depending on the parameter passed, this requires different permissions listed below:
 
-        +---------------+--------------------------------------+
-        |   Parameter   |              Permission              |
-        +---------------+--------------------------------------+
-        | nick          | :attr:`Permissions.manage_nicknames` |
-        +---------------+--------------------------------------+
-        | mute          | :attr:`Permissions.mute_members`     |
-        +---------------+--------------------------------------+
-        | deafen        | :attr:`Permissions.deafen_members`   |
-        +---------------+--------------------------------------+
-        | roles         | :attr:`Permissions.manage_roles`     |
-        +---------------+--------------------------------------+
-        | voice_channel | :attr:`Permissions.move_members`     |
-        +---------------+--------------------------------------+
-        | timeout       | :attr:`Permissions.moderate_members` |
-        +---------------+--------------------------------------+
+        +---------------------+--------------------------------------+
+        |      Parameter      |              Permission              |
+        +---------------------+--------------------------------------+
+        | nick                | :attr:`Permissions.manage_nicknames` |
+        +---------------------+--------------------------------------+
+        | mute                | :attr:`Permissions.mute_members`     |
+        +---------------------+--------------------------------------+
+        | deafen              | :attr:`Permissions.deafen_members`   |
+        +---------------------+--------------------------------------+
+        | roles               | :attr:`Permissions.manage_roles`     |
+        +---------------------+--------------------------------------+
+        | voice_channel       | :attr:`Permissions.move_members`     |
+        +---------------------+--------------------------------------+
+        | timeout             | :attr:`Permissions.moderate_members` |
+        +---------------------+--------------------------------------+
+        | bypass_verification | :attr:`Permissions.moderate_members` |
+        +---------------------+--------------------------------------+
 
         All parameters are optional.
 
@@ -749,6 +767,15 @@ class Member(abc.Messageable, _UserTag):
             Set this to None to disable their timeout.
 
             .. versionadded:: 2.0
+        flags: :class:`~nextcord.MemberFlags`
+            The flags to set for this member.
+            Currently only :class:`~nextcord.MemberFlags.bypasses_verification` is able to be set.
+
+            .. versionadded:: 2.6
+        bypass_verification: :class:`bool`
+            Indicates if the member should be allowed to bypass the guild verification requirements.
+
+            .. versionadded:: 2.6
 
         Raises
         ------
@@ -799,9 +826,7 @@ class Member(abc.Messageable, _UserTag):
                 await http.edit_my_voice_state(guild_id, voice_state_payload)
             else:
                 if not suppress:
-                    voice_state_payload[
-                        "request_to_speak_timestamp"
-                    ] = datetime.datetime.utcnow().isoformat()
+                    voice_state_payload["request_to_speak_timestamp"] = utils.utcnow().isoformat()
                 await http.edit_voice_state(guild_id, self.id, voice_state_payload)
 
         if voice_channel is not MISSING:
@@ -824,9 +849,18 @@ class Member(abc.Messageable, _UserTag):
                 f"not {timeout.__class__.__name__}"
             )
 
+        if flags is MISSING:
+            flags = MemberFlags()
+        if bypass_verification is not MISSING:
+            flags.bypasses_verification = bypass_verification
+
+        if flags.value != 0:
+            payload["flags"] = flags.value
+
         if payload:
             data = await http.edit_member(guild_id, self.id, reason=reason, **payload)
             return Member(data=data, guild=self.guild, state=self._state)
+        return None
 
     async def request_to_speak(self) -> None:
         """|coro|
@@ -851,7 +885,7 @@ class Member(abc.Messageable, _UserTag):
         """
         payload = {
             "channel_id": self.voice.channel.id,  # type: ignore # should exist
-            "request_to_speak_timestamp": datetime.datetime.utcnow().isoformat(),
+            "request_to_speak_timestamp": utils.utcnow().isoformat(),
         }
 
         if self._state.self_id != self.id:
@@ -981,10 +1015,8 @@ class Member(abc.Messageable, _UserTag):
                 Object(id=r.id) for r in self.roles[1:]
             ]  # remove @everyone
             for role in roles:
-                try:
+                with contextlib.suppress(ValueError):
                     new_roles.remove(Object(id=role.id))
-                except ValueError:
-                    pass
 
             await self.edit(roles=new_roles, reason=reason)
         else:
