@@ -387,6 +387,7 @@ class Attachment(Hashable):
         """
         if self._waveform is not None:
             return array("B", [int(b) for b in base64.b64decode(self._waveform)])
+        return None
 
     def flags(self) -> AttachmentFlags:
         """Optional[:class:`AttachmentFlags`]: The avaliable flags that the attachment has.
