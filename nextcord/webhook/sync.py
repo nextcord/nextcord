@@ -22,7 +22,7 @@ from weakref import WeakValueDictionary
 from .. import utils
 from ..channel import PartialMessageable
 from ..errors import DiscordServerError, Forbidden, HTTPException, InvalidArgument, NotFound
-from ..http import Route
+from ..http import _USER_AGENT, Route
 from ..message import Attachment, Message
 from .async_ import BaseWebhook, _WebhookState, handle_message_parameters
 
@@ -90,7 +90,8 @@ class WebhookAdapter:
         auth_token: Optional[str] = None,
         params: Optional[Dict[str, Any]] = None,
     ) -> Any:
-        headers: Dict[str, str] = {}
+        # always ensure our user agent is being used
+        headers: Dict[str, str] = {"User-Agent": _USER_AGENT}
         files = files or []
         to_send: Optional[Union[str, Dict[str, Any]]] = None
         bucket = (route.webhook_id, route.webhook_token)
