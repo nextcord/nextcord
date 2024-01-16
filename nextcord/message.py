@@ -378,7 +378,7 @@ class Attachment(Hashable):
             result["waveform"] = self._waveform
         return result
 
-    @property
+    @utils.cached_property
     def waveform(self) -> Optional[array[int]]:
         """Optional[array[:class:`int`]]: The base64 decoded data representing a sampled waveform
         (currently for voice messages).
