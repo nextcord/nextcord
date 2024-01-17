@@ -17,7 +17,8 @@ __all__ = (
     "ClientException",
     "NoMoreItems",
     "GatewayNotFound",
-    "HTTPCancelled",
+    "HTTPInternalCancelled",
+    "HTTPInternalRatelimitLocked",
     "HTTPException",
     "Unauthorized",
     "Forbidden",
@@ -80,8 +81,15 @@ def _flatten_error_dict(d: Dict[str, Any], key: str = "") -> Dict[str, str]:
     return dict(items)
 
 
-class HTTPCancelled(DiscordException):
-    """Exception that's raised when an HTTP request is internally cancelled."""
+class HTTPInternalCancelled(DiscordException):
+    """Exception that's raised when an HTTP request is internally cancelled before the actual request is made."""
+
+
+class HTTPInternalRatelimitLocked(HTTPInternalCancelled):
+    """Exception that's raised when an internally tracked ratelimit, global or route, would be exceeded by the request.
+
+    Subclass of :exc:`HTTPInternalCancelled`
+    """
 
 
 class HTTPException(DiscordException):

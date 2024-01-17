@@ -34,8 +34,8 @@ from .errors import (
     DiscordServerError,
     Forbidden,
     GatewayNotFound,
-    HTTPCancelled,
     HTTPException,
+    HTTPInternalRatelimitLocked,
     InvalidArgument,
     LoginFailure,
     NotFound,
@@ -732,14 +732,18 @@ class HTTPClient:
                     "Path %s was called with retry_request=False while the global rate limit is locked.",
                     rate_limit_path,
                 )
-                raise HTTPCancelled("Global rate limit locked.")
+                raise HTTPInternalRatelimitLocked(
+                    "Request would exceed the global ratelimit and retries are disabled."
+                )
 
             if url_rate_limit.locked:
                 _log.info(
                     "Path %s was called with retry_request=False while the URL rate limit is locked.",
                     rate_limit_path,
                 )
-                raise HTTPCancelled("Route rate limit locked.")
+                raise HTTPInternalRatelimitLocked(
+                    "Request would exceed the route ratelimit and retries are disabled."
+                )
 
         # The loop is to allow migration to a different RateLimit if needed.
         # If we hit this loop max_retry_count times, something is wrong. Either we're migrating buckets way
