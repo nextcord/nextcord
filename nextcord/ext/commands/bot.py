@@ -14,6 +14,7 @@ import sys
 import traceback
 import types
 import warnings
+import time
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -1445,6 +1446,31 @@ class BotBase(GroupMixin):
     async def on_message(self, message) -> None:
         await self.process_commands(message)
 
+    async def login(self, token: str) -> None:
+        if self.reload:
+            self.loop.create_task(self._auto_reload())
+        await super().login(token=token)
+
+    async def _auto_reload(self) -> None:
+        """
+        To auto-reload the cog when it is modified :)
+        """
+
+        last = time.time()
+        while not self.is_closed():
+            t = time.time()
+
+            extensions = set()
+            for name, module in self.extensions.items():
+                file = module.__file__
+                if file and os.stat(file).st_mtime > last:
+                    extensions.add(name)
+
+            for name in extensions: 
+                self.reload_extension(name)
+
+            await asyncio.sleep(2)
+            last = t
 
 class Bot(BotBase, nextcord.Client):
     """Represents a discord bot.
@@ -1514,6 +1540,10 @@ class Bot(BotBase, nextcord.Client):
         the ``command_prefix`` is set to ``!``. Defaults to ``False``.
 
         .. versionadded:: 1.7
+    reload: :class:`bool`
+        Whether to allow the cog to be auto-reload when it is modified :)
+
+        .. versionadded:: 2.7 or 3.0?
     """
 
     def __init__(
