@@ -11,10 +11,10 @@ import importlib.util
 import inspect
 import os
 import sys
+import time
 import traceback
 import types
 import warnings
-import time
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -1466,11 +1466,12 @@ class BotBase(GroupMixin):
                 if file and os.stat(file).st_mtime > last:
                     extensions.add(name)
 
-            for name in extensions: 
+            for name in extensions:
                 self.reload_extension(name)
 
             await asyncio.sleep(2)
             last = t
+
 
 class Bot(BotBase, nextcord.Client):
     """Represents a discord bot.
