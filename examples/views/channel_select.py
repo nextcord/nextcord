@@ -1,5 +1,3 @@
-from config import token
-
 import nextcord
 from nextcord.ext import commands
 
@@ -62,4 +60,4 @@ async def text_channel_select(interaction):
     await interaction.send("Pick your favourite channels:", view=view)
 
 
-bot.run(token)
+bot.run("token")
