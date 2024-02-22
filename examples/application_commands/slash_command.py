@@ -1,4 +1,3 @@
-import nextcord
 from nextcord import Interaction, SlashOption
 from nextcord.ext import commands
 
@@ -27,5 +26,6 @@ async def enter_a_number(
         await interaction.response.send_message("No number was specified!", ephemeral=True)
     else:
         await interaction.response.send_message(f"You chose {number}!")
+
 
 bot.run("token")

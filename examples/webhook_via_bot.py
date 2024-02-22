@@ -1,6 +1,5 @@
-from nextcord import Interaction, Embed, Color
+from nextcord import Color, Embed, Interaction
 from nextcord.ext import commands
-
 
 webhook_id = 0
 client = commands.Bot()
@@ -17,7 +16,9 @@ async def on_ready():
 async def send_webhook(interaction: Interaction, title: str, description: str):
     if client.webhook is None:
         return
-    await client.webhook.send(embed=Embed(title=title, description=description, color=Color.green()))
+    await client.webhook.send(
+        embed=Embed(title=title, description=description, color=Color.green())
+    )
     await interaction.send("sent", ephemeral=True)
 
 

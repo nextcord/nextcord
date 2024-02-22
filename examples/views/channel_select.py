@@ -1,6 +1,7 @@
+from config import token
+
 import nextcord
 from nextcord.ext import commands
-from config import token
 
 
 class Channels(nextcord.ui.ChannelSelect):
@@ -22,7 +23,7 @@ class TextChannel(nextcord.ui.ChannelSelect):
             placeholder="Choose your favourite channel...",
             min_values=1,
             max_values=5,
-            channel_types=[nextcord.ChannelType.text]
+            channel_types=[nextcord.ChannelType.text],
         )
 
     async def callback(self, interaction: nextcord.Interaction):
