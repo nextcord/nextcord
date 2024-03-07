@@ -550,16 +550,17 @@ class HTTPClient:
         """{("METHOD", "Route.bucket", "auth string"): RateLimit} auth string may be None to indicate auth-less."""
 
     def _make_global_rate_limit(self, auth: Optional[str], max_per_second: int) -> GlobalRateLimit:
+        log_auth = _get_logging_auth(auth)
         _log.debug(
             "Creating global ratelimit for auth %s with max per second %s.",
-            _get_logging_auth(auth),
+            log_auth,
             max_per_second,
         )
         rate_limit = GlobalRateLimit(time_offset=self._time_offset)
         rate_limit.limit = max_per_second
         rate_limit.remaining = max_per_second
         rate_limit.reset_after = 1 + self._time_offset
-        rate_limit.bucket = f"Global {_get_logging_auth(auth) if auth else 'Unauthorized'}"
+        rate_limit.bucket = f"Global {log_auth if auth else 'Unauthorized'}"
 
         self._global_rate_limits[auth] = rate_limit
         return rate_limit
