@@ -74,7 +74,7 @@ if TYPE_CHECKING:
     from nextcord.types.checks import ApplicationCheck, ApplicationHook
 
     from .abc import GuildChannel, PrivateChannel, Snowflake, SnowflakeTime
-    from .application_command import BaseApplicationCommand, ClientCog
+    from .application_command import BaseApplicationCommand, ClientCog, SlashApplicationSubcommand
     from .asset import Asset
     from .channel import DMChannel
     from .enums import Locale
@@ -583,13 +583,15 @@ class Client:
 
         This only fires if you do not specify any listeners for command error.
         """
-        if interaction.application_command and interaction.application_command.has_error_handler():
+        if interaction.application_command is None:
+            return  # Not supposed to ever happen
+
+        if interaction.application_command.has_error_handler():
             return
 
-        # TODO: implement cog error handling
-        # cog = context.cog  # noqa: ERA001
-        # if cog and cog.has_error_handler():
-        #     return  # noqa: ERA001
+        cog = interaction.application_command.parent_cog
+        if cog and cog.has_application_command_error_handler():
+            return
 
         print(  # noqa: T201
             f"Ignoring exception in command {interaction.application_command}:", file=sys.stderr
@@ -2107,18 +2109,32 @@ class Client:
                 _log.debug(
                     "nextcord.Client: Interaction command not found, attempting to lazy load."
                 )
-                response_signature = (
+                debug_response_signature = (
                     interaction.data["name"],
                     int(interaction.data["type"]),
                     interaction.guild_id,
                 )
-                _log.debug("nextcord.Client: %s", response_signature)
+                _log.debug("nextcord.Client: %s", debug_response_signature)
                 do_deploy = False
-                if app_cmd := self._connection.get_application_command_from_signature(
-                    interaction.data["name"],
-                    int(interaction.data["type"]),
-                    int(guild_id) if (guild_id := interaction.data.get("guild_id")) else None,
-                ):
+
+                guild_id = interaction.data.get("guild_id")
+                response_signature: Dict[str, Any] = {
+                    "type": int(interaction.data["type"]),
+                    "qualified_name": interaction.data["name"],
+                    "guild_id": None if not guild_id else int(guild_id),
+                }
+                app_cmd = self._connection.get_application_command_from_signature(
+                    **response_signature
+                )
+                if app_cmd:
+                    if not isinstance(app_cmd, BaseApplicationCommand):
+                        raise ValueError(
+                            (
+                                f".get_application_command_from_signature with kwargs: {response_signature} "
+                                f"returned {type(app_cmd)} but BaseApplicationCommand was expected."
+                            )
+                        )
+
                     _log.debug(
                         "nextcord.Client: Basic signature matches, checking against raw payload."
                     )
@@ -2181,29 +2197,48 @@ class Client:
         return self._connection.get_application_command(command_id)
 
     def get_application_command_from_signature(
-        self, name: str, cmd_type: Union[int, ApplicationCommandType], guild_id: Optional[int]
-    ) -> Optional[BaseApplicationCommand]:
+        self,
+        qualified_name: str,
+        *,
+        type: Union[int, ApplicationCommandType] = ApplicationCommandType.chat_input,
+        guild: Optional[Union[int, Snowflake]] = None,
+        search_localizations: bool = False,
+    ) -> Optional[Union[BaseApplicationCommand, SlashApplicationSubcommand]]:
         """Gets a locally stored application command object that matches the given signature.
+
+        .. versionadded:: 2.0
+
+        .. versionchanged:: 3.0
+            - Subcommands/Subcommand groups can now be retrieved with this method.
+            - ``name`` parameter was renamed to ``qualified_name`` and now accepts subcommands/subcommand groups separated by a space.
+            - ``cmd_type`` parameter was renamed to ``type``, defaults to :attr:`.ApplicationCommandType.chat_input` and is now a keyword-only parameter.
+            - ``guild_id`` parameter was renamed to ``guild`` with type Union[:class:`int`, :class:`~nextcord.abc.Snowflake`], defaults to ``None`` and is now a keyword-only parameter.
 
         Parameters
         ----------
-        name: :class:`str`
-            Name of the application command. Capital sensitive.
-        cmd_type: Union[:class:`int`, :class:`ApplicationCommandType`]
-            Type of application command.
-        guild_id: Optional[:class:`int`]
+        qualified_name: :class:`str`
+            Full name of the application command. Case sensitive.
+            Subcommands must be separated by a space, E.g, ``parent group subcommand``.
+        type: Union[:class:`int`, :class:`ApplicationCommandType`]
+            Type of application command. Defaults to :attr:`.ApplicationCommandType.chat_input`.
+        guild: Optional[Union[:class:`int`, :class:`~nextcord.abc.Snowflake`]]
             Guild ID of the signature. If set to ``None``, it will attempt to get the global signature.
+            Defaults to ``None``.
+        search_localizations: :class:`bool`
+            Whether to also search through the command's :attr:`~BaseApplicationCommand.name_localizations`. Defaults to ``False``.
+
+            .. versionadded:: 3.0
 
         Returns
         -------
-        command: Optional[:class:`BaseApplicationCommand`]
-            Application Command with the given signature. If no command with that signature is
-            found, returns ``None`` instead.
+        command: Optional[:class:`BaseApplicationCommand`, :class:`SlashApplicationSubcommand`]
+            Application Command with the given signature. If no command with that signature is found, ``None`` is returned instead.
         """
-        actual_type = cmd_type.value if isinstance(cmd_type, ApplicationCommandType) else cmd_type
-
         return self._connection.get_application_command_from_signature(
-            name=name, cmd_type=actual_type, guild_id=guild_id
+            type=type.value if isinstance(type, ApplicationCommandType) else type,
+            qualified_name=qualified_name,
+            guild_id=None if not guild else int(guild.id if not isinstance(guild, int) else guild),
+            search_localizations=search_localizations,
         )
 
     def get_all_application_commands(self) -> Set[BaseApplicationCommand]:
