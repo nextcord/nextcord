@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 
-import nextcord.errors as nc_errors
+import nextcord.errors as nc_errors  # `import as` to prevent circular import
 
 
 class RecordingException(nc_errors.DiscordException):

@@ -13,7 +13,7 @@ from threading import Thread
 from time import perf_counter, sleep, time as clock_timestamp
 from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, Optional, Union
 
-import nextcord.voice_client as nc_vc
+import nextcord.voice_client as nc_vc  # `import as` to prevent circular import
 from nextcord.utils import MISSING
 
 from . import decrypter
@@ -1160,7 +1160,7 @@ class RecorderClient(nc_vc.VoiceClient):
                 time_tracker.write_remaining_silence(t, audio_data, self.tmp_type, self.guild.id)
             else:
                 logging.debug(
-                    "Unable to write periodic silence due to no `time_tracker` or no `guild`. "
+                    "Unable to write periodic silence due to no `time_tracker` or no `guild`."
                     "Silently ignored."
                 )
 
@@ -1169,6 +1169,8 @@ class RecorderClient(nc_vc.VoiceClient):
 
         if filters:
             return await audio_data.export(export_format, tmp_type, filters)
+
         if filters is MISSING:
             return await audio_data.export(export_format, tmp_type, self.filters)
+
         return await audio_data.export(export_format, tmp_type)

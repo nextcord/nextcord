@@ -11,7 +11,7 @@ from io import BufferedIOBase, BufferedRandom, BufferedWriter, BytesIO
 from platform import system
 from typing import TYPE_CHECKING, Dict, Optional, Union
 
-import nextcord.file as nc_file
+import nextcord.file as nc_file  # `import as` to prevent circular import
 
 from .errors import *
 from .opus import DecoderThread

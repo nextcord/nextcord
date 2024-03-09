@@ -8,7 +8,7 @@ from threading import Event, Thread
 from time import sleep
 from typing import TYPE_CHECKING, Dict
 
-import nextcord as nc
+import nextcord as nc  # `import as` to prevent circular import
 
 if TYPE_CHECKING:
     from .core import OpusFrame, RecorderClient
