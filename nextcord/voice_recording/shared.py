@@ -31,7 +31,6 @@ ffmpeg_formats = {
     Formats.MKA: ("mka", "matroska"),
     Formats.MKV: ("mkv", "matroska"),
     Formats.OGG: ("ogg", "ogg"),
-
     "mp3": ("mp3", "mp3"),
     "mp4": ("mp4", "mp4"),
     "m4a": ("m4a", "ipod"),

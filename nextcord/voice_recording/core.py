@@ -890,9 +890,7 @@ class RecorderClient(nc_vc.VoiceClient):
         return (
             discord_rtp  # original rtp at the saved timestamp
             + (abs(t - clocktime) * FRAME_SIZE * FPS)  # offset to the current timestamp
-            - (
-                FRAME_SIZE * min(self.latency * FPS, FPS)
-            )  # minus the latency (max 1s)
+            - (FRAME_SIZE * min(self.latency * FPS, FPS))  # minus the latency (max 1s)
         )
 
     def _decode_audio(self, data: bytes) -> None:

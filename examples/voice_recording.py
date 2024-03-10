@@ -1,16 +1,23 @@
 import asyncio
-import nextcord
 from io import BytesIO
-from nextcord.voice_recording import (
-    RecorderClient, Formats, AudioFile,
-    Silence, AudioData, get_ffmpeg_format,
-    AUDIO_CHANNELS, AUDIO_HZ
-)
-from typing import Optional, Union, Dict, List
-from nextcord.ext import commands
 from traceback import format_exc
+from typing import Dict, List, Optional, Union
+
+import nextcord
+from nextcord.ext import commands
+from nextcord.voice_recording import (
+    AUDIO_CHANNELS,
+    AUDIO_HZ,
+    AudioData,
+    AudioFile,
+    Formats,
+    RecorderClient,
+    Silence,
+    get_ffmpeg_format,
+)
 
 bot = commands.Bot()
+
 
 @bot.event
 async def on_ready():
@@ -21,11 +28,11 @@ async def on_ready():
 @bot.slash_command(
     description="Connect to your voice channel or a specified voice channel.",
     dm_permission=False,
-    default_member_permissions=8  # admins only
+    default_member_permissions=8,  # admins only
 )
 async def connect(
     interaction: nextcord.Interaction,
-    channel: Optional[Union[nextcord.VoiceChannel, nextcord.StageChannel]] = None
+    channel: Optional[Union[nextcord.VoiceChannel, nextcord.StageChannel]] = None,
 ):
     assert interaction.guild
     assert isinstance(interaction.user, nextcord.Member)
@@ -52,7 +59,7 @@ async def connect(
 @bot.slash_command(
     description="Start recording in the connected voice channel.",
     dm_permission=False,
-    default_member_permissions=8  # admins only
+    default_member_permissions=8,  # admins only
 )
 async def start_recording(interaction: nextcord.Interaction):
     assert interaction.guild
@@ -76,15 +83,14 @@ async def start_recording(interaction: nextcord.Interaction):
 formats = nextcord.SlashOption(
     name="export_format",
     description="The format to export the recordings in.",
-    choices=[e.name for e in Formats]
+    choices=[e.name for e in Formats],
 )
 
 
 # merging audio
 # TODO: move this to main lib
 def merge_audio(
-    audio_files: Dict[int, AudioFile],
-    format: Formats
+    audio_files: Dict[int, AudioFile], format: Formats
 ) -> Optional[Union[nextcord.File, AudioFile]]:
     try:
         import pydub  # pip install pydub
@@ -105,9 +111,9 @@ def merge_audio(
                 format=str(f.filename).rsplit(".", 1)[-1],
                 sample_width=AUDIO_CHANNELS,
                 frame_rate=AUDIO_HZ,
-                channels=AUDIO_CHANNELS
+                channels=AUDIO_CHANNELS,
             ),
-            f.starting_silence
+            f.starting_silence,
         )
         for f in audio_files.values()
     ]
@@ -137,12 +143,12 @@ def merge_audio(
 @bot.slash_command(
     description="Stop recording in the connected voice channel.",
     dm_permission=False,
-    default_member_permissions=8  # admins only
+    default_member_permissions=8,  # admins only
 )
 async def stop_recording(
     interaction: nextcord.Interaction,
     export_format: str = formats,
-    merge: bool = True  # requires pydub
+    merge: bool = True,  # requires pydub
 ):
     assert interaction.guild
     assert isinstance(interaction.user, nextcord.Member)
@@ -161,7 +167,7 @@ async def stop_recording(
         await interaction.response.defer()
         recordings = await voice_client.stop_recording(
             export_format=getattr(Formats, export_format),
-            write_remaining_silence=True  # makes sure the first track will fill length
+            write_remaining_silence=True,  # makes sure the first track will fill length
         )
         assert not isinstance(recordings, AudioData)
     except Exception:
@@ -173,9 +179,7 @@ async def stop_recording(
         return
 
     if not recordings:
-        await interaction.send(
-            "Export was unavailable."
-        )
+        await interaction.send("Export was unavailable.")
         return
 
     if merge:
@@ -186,15 +190,17 @@ async def stop_recording(
         assert file
 
         try:
-            await m.edit(content=f"Merged recordings for users <@{'> <@'.join(str(i) for i in recordings)}>", file=file)
+            await m.edit(
+                content=f"Merged recordings for users <@{'> <@'.join(str(i) for i in recordings)}>",
+                file=file,
+            )
         except Exception:
             print(format_exc())
             await m.edit(content="Merged filesize may have been too large to send.")
 
     try:
         await interaction.send(
-            f"Recording stopped in {voice_client.channel}",
-            files=list(recordings.values())
+            f"Recording stopped in {voice_client.channel}", files=list(recordings.values())
         )
     except Exception:
         print(format_exc())
