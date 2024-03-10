@@ -89,9 +89,7 @@ formats = nextcord.SlashOption(
 
 # merging audio
 # TODO: move this to main lib
-def merge_audio(
-    audio_files: Dict[int, AudioFile], format: Formats
-) -> Optional[nextcord.File]:
+def merge_audio(audio_files: Dict[int, AudioFile], format: Formats) -> Optional[nextcord.File]:
     try:
         import pydub  # pip install pydub
     except ImportError:
