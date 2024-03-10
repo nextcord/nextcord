@@ -172,7 +172,7 @@ async def stop_recording(
     except Exception:
         print(exc := format_exc())
         await interaction.send(
-            f"An error occured when exporting the recording\n" f"```\n{exc[:1900]}\n```"
+            f"An error occured when exporting the recording\n```\n{exc[:1900]}\n```"
         )
         return
 
@@ -198,7 +198,6 @@ async def stop_recording(
 
         else:
             await m.edit("There weren't enough tracks to require merging.")
-
 
     try:
         await interaction.send(
