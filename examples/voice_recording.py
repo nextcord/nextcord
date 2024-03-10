@@ -27,7 +27,8 @@ async def connect(
     interaction: nextcord.Interaction,
     channel: Optional[Union[nextcord.VoiceChannel, nextcord.StageChannel]] = None
 ):
-    assert interaction.guild and isinstance(interaction.user, nextcord.Member)
+    assert interaction.guild
+    assert isinstance(interaction.user, nextcord.Member)
 
     if interaction.guild.voice_client:
         await interaction.send("Voice is already connected.")
@@ -54,7 +55,8 @@ async def connect(
     default_member_permissions=8  # admins only
 )
 async def start_recording(interaction: nextcord.Interaction):
-    assert interaction.guild and isinstance(interaction.user, nextcord.Member)
+    assert interaction.guild
+    assert isinstance(interaction.user, nextcord.Member)
 
     voice_client = interaction.guild.voice_client
 
@@ -93,7 +95,7 @@ def merge_audio(
         return None
 
     if len(audio_files) == 1:
-        return tuple(audio_files.values())[0]
+        return next(iter(audio_files.values()))
 
     # format all AudioFiles into AudioSegments
     segments: List[tuple[pydub.AudioSegment, Optional[Silence]]] = [
@@ -111,7 +113,7 @@ def merge_audio(
     ]
 
     # get the first segment, which will have a starting silence of `None`
-    index, first_segment = [(i, seg[0]) for i, seg in enumerate(segments) if seg[1] is None][0]
+    index, first_segment = next(iter((i, seg[0]) for i, seg in enumerate(segments) if seg[1] is None))
     del segments[index]
 
     # merge
@@ -142,7 +144,8 @@ async def stop_recording(
     export_format: str = formats,
     merge: bool = True  # requires pydub
 ):
-    assert interaction.guild and isinstance(interaction.user, nextcord.Member)
+    assert interaction.guild
+    assert isinstance(interaction.user, nextcord.Member)
 
     voice_client = interaction.guild.voice_client
 
@@ -165,9 +168,7 @@ async def stop_recording(
         print(exc := format_exc())
         await interaction.send(
             f"An error occured when exporting the recording\n"
-            "```\n"
-            f"{exc[:1900]}"
-            "```"
+            f"```\n{exc[:1900]}\n```"
         )
         return
 
