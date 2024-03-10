@@ -97,11 +97,8 @@ def merge_audio(
     except ImportError:
         print("pydub is not installed. Install pydub with `pip install pydub`")
 
-    if not audio_files:
+    if not audio_files or len(audio_files) == 1:
         return None
-
-    if len(audio_files) == 1:
-        return next(iter(audio_files.values()))
 
     # format all AudioFiles into AudioSegments
     segments: List[tuple[pydub.AudioSegment, Optional[Silence]]] = [
@@ -188,16 +185,20 @@ async def stop_recording(
         file = await asyncio.get_running_loop().run_in_executor(  # run merge in executor to avoid blocking call
             None, merge_audio, recordings, getattr(Formats, export_format)
         )
-        assert file
 
-        try:
-            await m.edit(
-                content=f"Merged recordings for users <@{'> <@'.join(str(i) for i in recordings)}>",
-                file=file,
-            )
-        except Exception:
-            print(format_exc())
-            await m.edit(content="Merged filesize may have been too large to send.")
+        if file:
+            try:
+                await m.edit(
+                    content=f"Merged recordings for users <@{'> <@'.join(str(i) for i in recordings)}>",
+                    file=file,
+                )
+            except Exception:
+                print(format_exc())
+                await m.edit(content="Merged filesize may have been too large to send.")
+
+        else:
+            await m.edit("There weren't enough tracks to require merging.")
+
 
     try:
         await interaction.send(
