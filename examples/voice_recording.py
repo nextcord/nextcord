@@ -119,7 +119,9 @@ def merge_audio(
     ]
 
     # get the first segment, which will have a starting silence of `None`
-    index, first_segment = next(iter((i, seg[0]) for i, seg in enumerate(segments) if seg[1] is None))
+    index, first_segment = next(
+        iter((i, seg[0]) for i, seg in enumerate(segments) if seg[1] is None)
+    )
     del segments[index]
 
     # merge
@@ -173,8 +175,7 @@ async def stop_recording(
     except Exception:
         print(exc := format_exc())
         await interaction.send(
-            f"An error occured when exporting the recording\n"
-            f"```\n{exc[:1900]}\n```"
+            f"An error occured when exporting the recording\n" f"```\n{exc[:1900]}\n```"
         )
         return
 
