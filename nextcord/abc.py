@@ -1744,6 +1744,7 @@ class Connectable(Protocol):
         tmp_type: TmpType = MISSING,
         filters: Optional[RecordingFilter] = MISSING,
         periodic_write_seconds: Optional[int] = 5,
+        prevent_leakage: bool = False 
     ) -> T:
         """|coro|
 
@@ -1784,6 +1785,13 @@ class Connectable(Protocol):
             Setting this to None turns off periodic writes and may result
             in huge silence writes all at once causing the recording to
             be obstructed by the blocking write call.
+        prevent_leakage: Optional[:class:`bool`] = False
+            Attempts to prevent leekage of audio from the end of the previous recording
+            when starting a 2nd recording without reconnecting.
+            This oversight is due to discord sending more data after we stop
+            receiving from the socket.
+            Keep in mind this feature is unstable, and may cause the recording to start
+            late, but should only be up to a second late.
 
         Raises
         ------
@@ -1808,7 +1816,7 @@ class Connectable(Protocol):
         client = state._get_client()
         if recordable:
             voice = RecorderClient(
-                client, self, auto_deaf, tmp_type, filters, periodic_write_seconds
+                client, self, auto_deaf, tmp_type, filters, periodic_write_seconds, prevent_leakage
             )
         else:
             voice = cls(client, self)

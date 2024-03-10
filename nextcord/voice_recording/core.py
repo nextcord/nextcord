@@ -891,7 +891,7 @@ class RecorderClient(nc_vc.VoiceClient):
             discord_rtp  # original rtp at the saved timestamp
             + (abs(t - clocktime) * FRAME_SIZE * FPS)  # offset to the current timestamp
             - (
-                FRAME_SIZE * min(self.latency * 1000, 1000) / FRAME_SIZE
+                FRAME_SIZE * min(self.latency * FPS, FPS)
             )  # minus the latency (max 1s)
         )
 

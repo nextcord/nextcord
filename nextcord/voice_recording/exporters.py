@@ -62,16 +62,6 @@ ffmpeg_default_arg = (
 )
 
 
-ffmpeg_args = {
-    Formats.MP3: ("mp3", "mp3"),
-    Formats.MP4: ("mp4", "mp4"),
-    Formats.M4A: ("m4a", "ipod"),
-    Formats.MKA: ("mka", "matroska"),
-    Formats.MKV: ("mkv", "matroska"),
-    Formats.OGG: ("ogg", "ogg"),
-}
-
-
 def _read_and_delete(buffer: BufferedIOBase) -> bytes:
     buffer.seek(0)
     data: bytes = buffer.read()
@@ -134,8 +124,8 @@ class FFmpeg:
 
 def export_one_with_file_tmp(writer: AudioWriter, audio_format: Formats) -> AudioFile:
     return AudioFile(
-        _open_tmp_file(writer, FFmpeg.file_tmp_conv(ffmpeg_args[audio_format][1], writer)),
-        f"{writer.user_id}.{ffmpeg_args[audio_format][0]}",
+        _open_tmp_file(writer, FFmpeg.file_tmp_conv(ffmpeg_formats[audio_format][1], writer)),
+        f"{writer.user_id}.{ffmpeg_formats[audio_format][0]}",
         starting_silence=writer.starting_silence,
         force_close=True,
     )
@@ -150,8 +140,8 @@ def export_all_with_file_tmp(audio_data: AudioData, audio_format: Formats) -> Di
 
 def export_one_with_memory_tmp(writer: AudioWriter, audio_format: Formats) -> AudioFile:
     return AudioFile(
-        _write_in_memory(FFmpeg.memory_tmp_conv(ffmpeg_args[audio_format][1], writer)),
-        f"{writer.user_id}.{ffmpeg_args[audio_format][0]}",
+        _write_in_memory(FFmpeg.memory_tmp_conv(ffmpeg_formats[audio_format][1], writer)),
+        f"{writer.user_id}.{ffmpeg_formats[audio_format][0]}",
         starting_silence=writer.starting_silence,
         force_close=True,
     )

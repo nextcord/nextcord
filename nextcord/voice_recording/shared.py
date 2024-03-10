@@ -24,6 +24,28 @@ class Formats(Enum):
     WAV = 7
 
 
+ffmpeg_formats = {
+    Formats.MP3: ("mp3", "mp3"),
+    Formats.MP4: ("mp4", "mp4"),
+    Formats.M4A: ("m4a", "ipod"),
+    Formats.MKA: ("mka", "matroska"),
+    Formats.MKV: ("mkv", "matroska"),
+    Formats.OGG: ("ogg", "ogg"),
+
+    "mp3": ("mp3", "mp3"),
+    "mp4": ("mp4", "mp4"),
+    "m4a": ("m4a", "ipod"),
+    "mka": ("mka", "matroska"),
+    "mkv": ("mkv", "matroska"),
+    "ogg": ("ogg", "ogg"),
+}
+
+
+def get_ffmpeg_format(format):
+    """Attempts to transform the format to an ffmpeg format. Returns passed arg if failed."""
+    return (ffmpeg_formats.get(format) or (None, format))[1]
+
+
 def open_tmp_file(guild_id, user_id, mode):
     path = Path(f"{getcwd()}/{TMP_DIR}/{guild_id}.{user_id}.tmp")
 
