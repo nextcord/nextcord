@@ -1744,7 +1744,7 @@ class Connectable(Protocol):
         tmp_type: TmpType = MISSING,
         filters: Optional[RecordingFilter] = MISSING,
         periodic_write_seconds: Optional[int] = 5,
-        prevent_leakage: bool = False 
+        prevent_leakage: bool = False,
     ) -> T:
         """|coro|
 
