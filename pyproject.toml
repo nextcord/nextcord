@@ -1,3 +1,111 @@
+[tool.poetry]
+name = "nextcord"
+# Placeholder, modified by dynamic-versioning.
+version = "0.0.0"
+homepage = "https://github.com/nextcord/nextcord"
+documentation = "https://docs.nextcord.dev/"
+description = "A Python wrapper for the Discord API forked from discord.py"
+authors = ["Nextcord Developers <code@nextcord.dev>"]
+license = "MIT"
+readme = "README.rst"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Framework :: AsyncIO",
+    "Framework :: aiohttp",
+    "Topic :: Internet",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Utilities",
+    "Typing :: Typed",
+] # License and Version are added automatically by Poetry
+packages = [
+    { include = "nextcord" },
+    { include = "nextcord/types" },
+    { include = "nextcord/ui" },
+    { include = "nextcord/ui/select" },
+    { include = "nextcord/webhook" },
+    { include = "nextcord/ext/application_checks" },
+    { include = "nextcord/ext/commands" },
+    { include = "nextcord/ext/slash_utils" },
+    { include = "nextcord/ext/tasks" },
+]
+[tool.poetry.dependencies]
+python = "^3.8"
+aiohttp = "^3.8.0"
+typing_extensions = "^4.2.0"
+
+PyNaCl = { version = ">=1.3.0,<1.5", optional = true }
+orjson = { version = ">=3.5.4", optional = true }
+# There is currently no way to express passthrough extras in Poetry.
+# https://github.com/python-poetry/poetry/issues/834
+# https://github.com/aio-libs/aiohttp/blob/d0f7b75c04c2257eaa86ac80f30ec3f7088088ea/setup.cfg#L61-L66
+# speedups =
+#  # required c-ares (aiodns' backend) will not build on windows
+#  aiodns >= 1.1; sys_platform=="linux" or sys_platform=="darwin"
+#  Brotli; platform_python_implementation == 'CPython'
+#  brotlicffi; platform_python_implementation != 'CPython'
+aiodns = { version = ">1.1", optional = true, markers = "sys_platform == 'linux' or sys_platform == 'darwin'" }
+Brotli = { version = "*", optional = true, markers = "platform_python_implementation == 'CPython'" }
+# If brotlicffi is unsupported by an older aiohttp version, it will simply be ignored.
+brotlicffi = { version = "*", optional = true, markers = "platform_python_implementation != 'CPython'" }
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = "3.5.0"
+taskipy = "1.10.3"
+slotscheck = "0.14.0"
+python-dotenv = "0.20.0"
+pyright = "1.1.317"
+sphinx_autobuild = "2021.3.14"
+
+[tool.poetry.group.docs.dependencies]
+sphinx = "5.2.3"
+sphinxcontrib-trio = "1.1.2"
+sphinxcontrib-websupport = "^1.2.4"
+
+[tool.poetry.urls]
+"Documentation" = "https://docs.nextcord.dev/"
+"Issue tracker" = "https://github.com/nextcord/nextcord/issues"
+
+[tool.poetry.extras]
+voice = ["PyNaCl"]
+speed = ["orjson", "aiodns", "Brotli", "brotlicffi"]
+
+[tool.poetry-dynamic-versioning]
+enable = true
+vcs = "git"
+# If v2.6.0 tag -> 2.6.0
+# If v2.6.0 tag and not at tag -> 2.6.0+g{hash}
+# If v3.0.0a tag -> v3.0.0a0
+# If v3.0.0a tag and not at tag -> 3.0.0a{distance}+g{hash}
+format-jinja = """
+{%- if distance == 0 -%}
+    {{ serialize_pep440(base, stage, revision) }}
+{%- elif stage is none -%}
+    {{ serialize_pep440(base, stage, revision, metadata=["g"+commit]) }}
+{%- else -%}
+    {{ serialize_pep440(base, stage, distance, metadata=["g"+commit]) }}
+{%- endif -%}
+"""
+style = "pep440"
+strict = true
+
+[tool.poetry-dynamic-versioning.substitution]
+patterns = [
+    { value = "(^__version__\\s*(?::.*?)?=\\s*['\"])[^'\"]*(['\"])" },
+    { value = "(^version_info\\s*(?::.*?)?=\\s*\\S*?\\()[^)]*(\\))", mode = "version_info" },
+]
+
+[build-system]
+requires = [
+    "poetry-core>=1.0.0",
+    "poetry-dynamic-versioning @ https://github.com/ooliver1/poetry-dynamic-versioning/archive/f6952e5.zip",
+]
+build-backend = "poetry_dynamic_versioning.backend"
+
+
 # credit to https://github.com/disnakeDev/disnake/blob/master/pyproject.toml for config
 [tool.black]
 line-length = 100
