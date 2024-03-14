@@ -445,7 +445,7 @@ class GlobalRateLimit(RateLimit):
             self.remaining = 0
             if response.headers.get("X-RateLimit-Scope") == "global":
                 data = await response.json()
-                _log.debug(data)
+                _log.debug("%s", data)
                 if (retry_after := data.get("retry_after")) or (
                     retry_after := response.headers.get("Retry-After")
                 ):
@@ -522,7 +522,7 @@ class HTTPClient:
         max_global_requests: int = 50,
         time_offset: float = 0.0,
         default_auth: Optional[str] = None,
-        assume_unsync_clock: bool = False,  # TODO: Think about renaming this?
+        assume_unsync_clock: bool = False,
         proxy: Optional[str] = None,
         proxy_auth: Optional[aiohttp.BasicAuth] = None,
         dispatch: Callable,
@@ -921,9 +921,7 @@ class HTTPClient:
                                         "Path %s resulted in error 429, rate limit exceeded.",
                                         rate_limit_path,
                                     )
-                                    raise HTTPException(
-                                        response, ret
-                                    )  # TODO: Make actual HTTPRateLimit error?
+                                    raise HTTPException(response, ret)
                             elif response.status >= 500:
                                 raise DiscordServerError(response, ret)
                             else:
@@ -1026,7 +1024,6 @@ class HTTPClient:
         auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ):
-        # TODO: Look into how viable this function is here.
         # This doesn't actually have hard ratelimits it seems? Not in the headers at least. The default bucket should
         #  keep it at 1 every 1 second.
         data = {
