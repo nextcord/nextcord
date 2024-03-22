@@ -16,6 +16,7 @@ class BanEntry(NamedTuple):
     reason: Optional[str]
     user: "User"
 
+
 class BulkBan(NamedTuple):
     banned_users: List[Object]
     failed_users: List[Object]
