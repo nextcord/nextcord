@@ -310,7 +310,11 @@ class WebhookAdapter:
         payload: Optional[Dict[str, Any]] = None,
         multipart: Optional[List[Dict[str, Any]]] = None,
         files: Optional[List[File]] = None,
+        thread_id: Optional[int] = None,
     ):
+        params = {}
+        if thread_id:
+            params["thread_id"] = thread_id
         route = Route(
             "PATCH",
             "/webhooks/{webhook_id}/{webhook_token}/messages/{message_id}",
@@ -318,7 +322,9 @@ class WebhookAdapter:
             webhook_token=token,
             message_id=message_id,
         )
-        return self.request(route, session, payload=payload, multipart=multipart, files=files)
+        return self.request(
+            route, session, payload=payload, multipart=multipart, files=files, params=params
+        )
 
     def delete_webhook_message(
         self,
@@ -1048,7 +1054,8 @@ class SyncWebhook(BaseWebhook):
         allowed_mentions: :class:`AllowedMentions`
             Controls the mentions being processed in this message.
             See :meth:`.abc.Messageable.send` for more information.
-
+        thread: :class:`~nextcord.abc.Snowflake`
+            The thread that the message to be edited is in.
         Raises
         ------
         HTTPException
