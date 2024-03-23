@@ -27,7 +27,7 @@ from typing import (
 from . import abc, utils
 from .asset import Asset
 from .auto_moderation import AutoModerationRule, AutoModerationTriggerMetadata
-from .bans import BanEntry
+from .bans import BanEntry, BulkBan
 from .channel import (
     CategoryChannel,
     ForumChannel,
@@ -61,6 +61,7 @@ from .invite import Invite
 from .iterators import AuditLogIterator, BanIterator, MemberIterator, ScheduledEventIterator
 from .member import Member, VoiceState
 from .mixins import Hashable
+from .object import Object
 from .partial_emoji import PartialEmoji
 from .permissions import PermissionOverwrite
 from .role import Role
@@ -3078,6 +3079,41 @@ class Guild(Hashable):
             delete_message_seconds = 24 * 60 * 60
 
         await self._state.http.ban(user.id, self.id, delete_message_seconds, reason=reason)
+
+    async def bulk_ban(self, users: List[Snowflake], *, delete_message_seconds: int = 0) -> BulkBan:
+        """|coro|
+
+        Bans users from a guild in bulk. This has a limit of 200 users
+
+        The list of users must meet the :class:`abc.Snowflake` abc.
+
+        You must have the :attr:`~Permissions.ban_members` and :attr:`~Permissions.manage_guild` permissions to
+        do this.
+
+        Parameters
+        ----------
+        users: :class:`abc.Snowflake`
+            The users to ban from a guild.
+        delete_message_seconds: :class:`int`
+            The number of seconds worth of messages to delete from these users.
+            Can range from 0 to 604800 seconds (7 days).
+
+            Defaults to 0.
+
+        Returns
+        -------
+        :class:`BulkBan`
+            The failed and banned users in the form of :class:`Object`.
+        """
+
+        data = await self._state.http.bulk_ban(
+            self.id, [u.id for u in users], delete_message_seconds
+        )
+
+        banned_users = [Object(id=u) for u in data["banned_users"]]
+        failed_users = [Object(id=u) for u in data["failed_users"]]
+
+        return BulkBan(banned_users, failed_users)
 
     async def unban(self, user: Snowflake, *, reason: Optional[str] = None) -> None:
         """|coro|

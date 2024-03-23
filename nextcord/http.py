@@ -877,6 +877,17 @@ class HTTPClient:
 
         return self.request(r, params=params, reason=reason)
 
+    def bulk_ban(
+        self,
+        guild_id: Snowflake,
+        user_ids: List[Snowflake],
+        delete_message_seconds: int = 0,
+    ) -> Response[guild.BulkBan]:
+        r = Route("POST", "/guilds/{guild_id}/bulk-ban", guild_id=guild_id)
+        params = {"users_ids": user_ids, "delete_message_seconds": delete_message_seconds}
+
+        return self.request(r, params=params)
+
     def unban(
         self, user_id: Snowflake, guild_id: Snowflake, *, reason: Optional[str] = None
     ) -> Response[None]:
