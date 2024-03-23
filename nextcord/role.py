@@ -51,19 +51,19 @@ class RoleTags:
     subscription_listing_id: Optional[:class:`int`]
         The ID of the subscription listing that manages the role.
 
-        .. versionadded:: 2.4
+        .. versionadded:: 3.0
     premium_subscriber: :class:`bool`
         Whether the role is the premium subscriber, AKA "boost", role for the guild.
 
-        versionadded:: 2.4
+        versionadded:: 3.0
     available_for_purchase: :class:`bool`
         Whether the role is available for purchase.
 
-        .. versionadded:: 2.4
+        .. versionadded:: 3.0
     guild_connections: :class:`bool`
         Whether the role is a guild's linked role.
 
-        .. versionadded:: 2.4
+        .. versionadded:: 3.0
     """
 
     __slots__ = (

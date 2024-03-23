@@ -1520,7 +1520,7 @@ of :class:`enum.Enum`.
 
         The system message denoting that a role subscription was purchased.
 
-        .. versionadded:: 2.6
+        .. versionadded:: 3.0
 
 .. class:: UserFlags
 

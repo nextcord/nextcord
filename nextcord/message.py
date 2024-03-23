@@ -626,7 +626,7 @@ class MessageRoleSubscription:
 
     This is accessed through the :attr:`Message.role_subscription` attribute if the :attr:`Message.type` is :attr:`MessageType.role_subscription_purchase`.
 
-    .. versionadded:: 2.6
+    .. versionadded:: 3.0
 
     Attributes
     ----------
