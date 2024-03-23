@@ -120,6 +120,12 @@ class FFmpegAudio(AudioSource):
     :class:`FFmpegOpusAudio` work should subclass this.
 
     .. versionadded:: 1.3
+
+    Warnings
+    --------
+    As this wraps a subprocess call, ensure that
+    arguments such as ``executable`` are not
+    set from direct user input.
     """
 
     def __init__(
@@ -232,6 +238,11 @@ class FFmpegPCMAudio(FFmpegAudio):
         passed to the stdin of ffmpeg.
     executable: :class:`str`
         The executable name (and path) to use. Defaults to ``ffmpeg``.
+
+        .. warning::
+
+            As this wraps a subprocess call, ensure that
+            this argument is not set from direct user input.
     pipe: :class:`bool`
         If ``True``, denotes that ``source`` parameter will be passed
         to the stdin of ffmpeg. Defaults to ``False``.
@@ -333,6 +344,11 @@ class FFmpegOpusAudio(FFmpegAudio):
 
     executable: :class:`str`
         The executable name (and path) to use. Defaults to ``ffmpeg``.
+
+        .. warning::
+
+            As this wraps a subprocess call, ensure that
+            this argument is not set from direct user input.
     pipe: :class:`bool`
         If ``True``, denotes that ``source`` parameter will be passed
         to the stdin of ffmpeg. Defaults to ``False``.
