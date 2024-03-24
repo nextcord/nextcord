@@ -32,7 +32,7 @@ if TYPE_CHECKING:
     from .guild import Guild
     from .member import Member
     from .message import Message
-    from .scheduled_events import ScheduledEvent  # noqa: F401
+    from .scheduled_events import ScheduledEvent
     from .types.audit_log import AuditLog as AuditLogPayload
     from .types.guild import Ban as BanPayload, Guild as GuildPayload
     from .types.member import MemberWithUser
