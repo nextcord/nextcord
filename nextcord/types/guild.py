@@ -120,6 +120,7 @@ class Guild(_BaseGuildPreview):
     max_members: NotRequired[int]
     premium_subscription_count: NotRequired[int]
     max_video_channel_users: NotRequired[int]
+    max_stage_video_channel_users: NotRequired[int]
     stickers: NotRequired[List[GuildSticker]]
     premium_progress_bar_enabled: Optional[bool]
     safety_alerts_channel_id: Optional[Snowflake]
