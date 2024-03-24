@@ -148,11 +148,7 @@ async def history_iterator(
     channel = await messageable._get_channel()
     retrieve = 0
 
-    reverse: bool
-    if oldest_first is None:
-        reverse = after is not None
-    else:
-        reverse = oldest_first
+    reverse = after is not None if oldest_first is None else oldest_first
 
     checks: List[Callable[[MessagePayload], bool]] = []
     if around:
@@ -496,15 +492,9 @@ async def archived_thread_iterator(
     if before is None:
         converted_before = None
     elif isinstance(before, datetime.datetime):
-        if joined:
-            converted_before = str(time_snowflake(before, high=False))
-        else:
-            converted_before = before.isoformat()
+        converted_before = str(time_snowflake(before, high=False)) if joined else before.isoformat()
     else:
-        if joined:
-            converted_before = str(before.id)
-        else:
-            converted_before = snowflake_time(before.id).isoformat()
+        converted_before = str(before.id) if joined else snowflake_time(before.id).isoformat()
 
     def get_archive_timestamp(data: ThreadPayload) -> str:
         return data["thread_metadata"]["archive_timestamp"]
