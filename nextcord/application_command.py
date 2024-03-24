@@ -2559,33 +2559,6 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         """
         raise NotImplementedError
 
-    def check_against_raw_payload(
-        self, raw_payload: ApplicationCommandPayload, guild_id: Optional[int] = None
-    ) -> bool:
-        warnings.warn(
-            ".check_against_raw_payload() is deprecated, please use .is_payload_valid instead.",
-            stacklevel=2,
-            category=FutureWarning,
-        )
-        return self.is_payload_valid(raw_payload, guild_id)
-
-    def get_guild_payload(self, guild_id: int):
-        warnings.warn(
-            ".get_guild_payload is deprecated, use .get_payload(guild_id) instead.",
-            stacklevel=2,
-            category=FutureWarning,
-        )
-        return self.get_payload(guild_id)
-
-    @property
-    def global_payload(self) -> dict:
-        warnings.warn(
-            ".global_payload is deprecated, use .get_payload(None) instead.",
-            stacklevel=2,
-            category=FutureWarning,
-        )
-        return self.get_payload(None)
-
 
 class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, CallbackWrapperMixin):
     """Class representing a subcommand or subcommand group of a slash command."""
