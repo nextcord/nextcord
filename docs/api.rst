@@ -3436,6 +3436,10 @@ The following exceptions are thrown by the library.
 
 .. autoexception:: nextcord.opus.OpusNotLoaded
 
+.. autoexception:: HTTPInternalCancelled
+
+.. autoexception:: HTTPInternalRatelimitLocked
+
 .. autoexception:: ApplicationError
 
 .. autoexception:: ApplicationInvokeError
@@ -3465,6 +3469,8 @@ Exception Hierarchy
                 - :exc:`Forbidden`
                 - :exc:`NotFound`
                 - :exc:`DiscordServerError`
+            - :exc:`HTTPInternalCancelled`
+                - :exc:`HTTPInternalRatelimitLocked`
         - :exc:`ApplicationError`
             - :exc:`ApplicationInvokeError`
             - :exc:`ApplicationCheckFailure`
