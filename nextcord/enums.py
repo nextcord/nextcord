@@ -2040,7 +2040,7 @@ class ForumLayoutType(IntEnum):
 class InviteType(IntEnum):
     """Represents the type of an invite.
 
-    .. versionadded:: 3.10
+    .. versionadded:: 3.0
     """
 
     guild = 0
