@@ -149,14 +149,15 @@ class IncorrectBucket(DiscordException):
 
 
 class RateLimit:
-    """Used to time gate a large batch of requests to only allow X every Y seconds. Used via an async context manager.
+    """Used to time gate a large batch of Discord requests to only allow X every Y seconds.
+    Used via an async context manager.
 
     NOT THREAD SAFE.
 
     Parameters
     ----------
     time_offset: :class:`float`
-        Number in seconds to increase all timers by. Used for lag compensation.
+        Number in seconds to increase all timers by. Used for latency compensation.
     """
 
     _reset_ignore_threshold = 0.02  # Arbitrary number, feel free to tweak.
@@ -175,27 +176,29 @@ class RateLimit:
         """The estimate time between bucket resets. Found via reset if use_reset_timestamp is True, found with
         reset_after if False.
         """
-        self.reset_after: float = 1.0
+        self.reset_after: float = 1.0 + time_offset
         """Amount of seconds roughly until the rate limit will be reset."""
         self.bucket: Optional[str] = None
         """Name of the bucket, if it has one."""
 
         self._time_offset: float = time_offset
-        """Number in seconds to increase all timers by. Used for lag compensation."""
+        """Number in seconds to increase all timers by. Used for latency compensation."""
         self._use_reset_timestamp: bool = use_reset_timestamp
         """If the reset timestamp should be used for bucket resets. If False, the float reset_after is used."""
         self._first_update: bool = True
-        """If the next update to be ran will be the first."""
+        """If this ratelimit has never been updated before."""
         self._reset_remaining_task: Optional[asyncio.Task] = None
         """Holds the task object for resetting the remaining count."""
-        self._on_reset_event: asyncio.Event = asyncio.Event()
-        """Used to indicate when the rate limit is ready to be acquired."""
+        self._ratelimit_ready: asyncio.Event = asyncio.Event()
+        """Used to indicate when the rate limit is ready to be acquired. Set when ready, unset when the ratelimit
+        is hit.
+        """
         self._migrating: Optional[str] = None
         """When this RateLimit is being deprecated and acquiring requests need to migrate to a different RateLimit, this
         variable should be set to the different RateLimit/buckets string name.
         """
 
-        self._on_reset_event.set()
+        self._ratelimit_ready.set()
 
     @property
     def resetting(self) -> bool:
@@ -236,6 +239,9 @@ class RateLimit:
         else:
             # If requests come back out of order, it's possible that we could get a wrong amount remaining.
             # It's best to be pessimistic and assume it cannot go back up unless the reset task occurs.
+            # TODO: If a request is made before the ratelimit resets but we get the response back after it resets, the
+            #  pessimistic remaining will be incorrect, specifically too low. Perhaps have an internal ID of some sort
+            #  with requests sent that changes/increments each reset?
             self.remaining = (
                 int(x_remaining) if int(x_remaining) < self.remaining else self.remaining
             )
@@ -280,13 +286,13 @@ class RateLimit:
             self.start_reset_task()
 
         # If for whatever reason we have requests remaining but the reset event isn't set, set it.
-        if self.remaining > 0 and not self._on_reset_event.is_set():
+        if self.remaining > 0 and not self._ratelimit_ready.is_set():
             _log.debug(
                 "Bucket %s: Updated with remaining %s, setting reset event.",
                 self.bucket,
                 self.remaining,
             )
-            self._on_reset_event.set()
+            self._ratelimit_ready.set()
 
         # If this is our first update, indicate that all future updates aren't the first.
         if self._first_update:
@@ -324,8 +330,7 @@ class RateLimit:
         else:  # In reset_after seconds mode.
             seconds_until_reset = self._tracked_reset_time
 
-        loop = asyncio.get_running_loop()
-        self._reset_remaining_task = loop.create_task(self.reset_remaining(seconds_until_reset))
+        self._reset_remaining_task = asyncio.create_task(self.reset_remaining(seconds_until_reset))
 
     async def reset_remaining(self, time: float) -> None:
         """|coro|
@@ -340,7 +345,7 @@ class RateLimit:
         _log.debug("Bucket %s: Resetting after %s seconds.", self.bucket, time)
         await asyncio.sleep(time)
         self.remaining = self.limit
-        self._on_reset_event.set()
+        self._ratelimit_ready.set()
         _log.debug("Bucket %s: Reset, allowing requests to continue.", self.bucket)
 
     @property
@@ -352,7 +357,7 @@ class RateLimit:
         """Signals to acquiring requests, both present and future, that they need to migrate to a new bucket."""
         self._migrating = bucket
         self.remaining = self.limit
-        self._on_reset_event.set()
+        self._ratelimit_ready.set()
         _log.debug(
             "Bucket %s: Deprecating, acquiring requests will migrate to a new bucket.", bucket
         )
@@ -374,28 +379,28 @@ class RateLimit:
 
     async def acquire(self) -> bool:
         # If no more requests can be made but the event is set, clear it.
-        if self.locked and self._on_reset_event.is_set():
+        if self.locked and self._ratelimit_ready.is_set():
             _log.debug(
                 "Bucket %s: Hit the remaining request limit of %s, locking until reset.",
                 self.bucket,
                 self.limit,
             )
-            self._on_reset_event.clear()
+            self._ratelimit_ready.clear()
             if not self.resetting:
                 self.start_reset_task()
 
         # Waits in a loop for the event to be set, clearing the event as needed and looping.
-        while not self._on_reset_event.is_set():
+        while not self._ratelimit_ready.is_set():
             _log.debug("Bucket %s: Not set yet, waiting for it to be set.", self.bucket)
-            await self._on_reset_event.wait()
+            await self._ratelimit_ready.wait()
 
-            if self.locked and self._on_reset_event.is_set():
+            if self.locked and self._ratelimit_ready.is_set():
                 _log.debug(
                     "Bucket %s: Hit the remaining limit of %s, locking until reset.",
                     self.bucket,
                     self.limit,
                 )
-                self._on_reset_event.clear()
+                self._ratelimit_ready.clear()
                 if not self.resetting:
                     self.start_reset_task()
 
@@ -458,7 +463,7 @@ class GlobalRateLimit(RateLimit):
 
                     self.start_reset_task()
 
-            self._on_reset_event.clear()
+            self._ratelimit_ready.clear()
             if not self.resetting:
                 self.start_reset_task()
 
@@ -485,7 +490,7 @@ class HTTPClient:
         Discord by default only allows 50 requests per second, but if your bot has had its maximum increased, then
         increase this parameter.
     time_offset: :class:`float`
-        Amount of seconds added to all ratelimit timers for lag compensation.
+        Amount of seconds added to all ratelimit timers for latency compensation.
 
         Due to latency and Discord servers not perfectly time synced, having no offset can cause 429's to occur even
         with us following the reported X-RateLimit-Reset-After.
