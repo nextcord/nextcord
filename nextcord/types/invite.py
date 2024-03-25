@@ -42,8 +42,7 @@ class Invite(IncompleteInvite, total=False):
     target_application: PartialAppInfo
 
 
-class InviteWithCounts(Invite, _GuildPreviewUnique):
-    ...
+class InviteWithCounts(Invite, _GuildPreviewUnique): ...
 
 
 class GatewayInviteCreate(TypedDict):
