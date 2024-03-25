@@ -2046,7 +2046,7 @@ class InviteType(IntEnum):
     guild = 0
     """The invite is for a guild."""
     group_dm = 1
-    """The invite is for a group DM"""
+    """The invite is for a group DM."""
     friend = 2
     """The invite is for a Discord user."""
 
