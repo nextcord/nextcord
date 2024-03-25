@@ -51,7 +51,6 @@ class MentionableSelectValues(SelectValuesBase):
 
 
 class MentionableSelect(SelectBase, Generic[V_co]):
-
     """Represents a UI mentionable select menu.
 
     This is usually represented as a drop down menu.
