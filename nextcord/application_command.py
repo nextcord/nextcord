@@ -73,6 +73,12 @@ if TYPE_CHECKING:
     _CustomTypingMetaBase = Any
 else:
     _CustomTypingMetaBase = object
+    # `ellipsis` is a type-checking only variable. This assignment avoids ruff `F821`
+    # as this is defined at runtime now. Lowercase `ellipsis` is actually the type,
+    # `Ellipsis` is the object, but that doesn't really matter.
+    ellipsis = Ellipsis
+
+EllipsisType = type(Ellipsis)
 
 if sys.version_info >= (3, 10):
     from types import UnionType
@@ -113,11 +119,6 @@ DEFAULT_SLASH_DESCRIPTION = "No description provided."
 
 T = TypeVar("T")
 FuncT = TypeVar("FuncT", bound=Callable[..., Any])
-# As nextcord.types exist, we cannot import types
-if TYPE_CHECKING:
-    EllipsisType = ellipsis  # noqa: F821
-else:
-    EllipsisType = type(Ellipsis)
 
 
 def _cog_special_method(func: FuncT) -> FuncT:
@@ -1134,7 +1135,7 @@ class AutocompleteCommandMixin:
         self,
         state: ConnectionState,
         interaction: Interaction,
-        option_data: Optional[List[Dict[str, Any]]] = None,
+        option_data: Optional[List[ApplicationCommandInteractionDataOption]] = None,
     ) -> None:
         """|coro|
         Calls the autocomplete callback with the given interaction and option data.
@@ -1144,7 +1145,7 @@ class AutocompleteCommandMixin:
                 raise ValueError("Discord did not provide us interaction data")
 
             # pyright does not want to lose typeddict specificity but we do not care here
-            option_data = interaction.data.get("options", {})  # type: ignore
+            option_data = interaction.data.get("options")
 
             if not option_data:
                 raise ValueError("Discord did not provide us option data")
@@ -1187,11 +1188,11 @@ class AutocompleteCommandMixin:
                 ) and option.functional_name in uncalled_options:
                     uncalled_options.discard(option.functional_name)
                     kwargs[option.functional_name] = await option.handle_value(
-                        state, arg_data["value"], interaction
+                        state, arg_data.get("value"), interaction
                     )
                 elif arg_data["name"] == focused_option.name:
                     focused_option_value = await focused_option.handle_value(
-                        state, arg_data["value"], interaction
+                        state, arg_data.get("value"), interaction
                     )
 
             for option_name in uncalled_options:
@@ -3646,8 +3647,8 @@ class RangeMeta(type):
         value: Union[
             int,
             Tuple[int, int],
-            Tuple[int, EllipsisType],
-            Tuple[EllipsisType, int],
+            Tuple[int, ellipsis],
+            Tuple[ellipsis, int],
         ],
     ) -> Type[int]:
         ...
@@ -3658,8 +3659,8 @@ class RangeMeta(type):
         value: Union[
             float,
             Tuple[float, float],
-            Tuple[float, EllipsisType],
-            Tuple[EllipsisType, float],
+            Tuple[float, ellipsis],
+            Tuple[ellipsis, float],
         ],
     ) -> Type[float]:
         ...
@@ -3671,8 +3672,8 @@ class RangeMeta(type):
             float,
             Tuple[int, int],
             Tuple[float, float],
-            Tuple[Union[int, float], EllipsisType],
-            Tuple[EllipsisType, Union[int, float]],
+            Tuple[Union[int, float], ellipsis],
+            Tuple[ellipsis, Union[int, float]],
         ],
     ) -> Type[Union[int, float]]:
         class Inner(Range, OptionConverter):
@@ -3698,14 +3699,14 @@ class RangeMeta(type):
             min_value = None
             max_value = value
 
-        if min_value is None or isinstance(min_value, EllipsisType):
+        if min_value is None or min_value is Ellipsis:
             Inner.min = None
         elif isinstance(min_value, (int, float)):
             Inner.min = min_value
         else:
             raise TypeError("Range min must be int or float.")
 
-        if isinstance(max_value, EllipsisType):
+        if max_value is Ellipsis:
             Inner.max = None
         elif isinstance(max_value, (int, float)):
             Inner.max = max_value
@@ -3748,8 +3749,8 @@ class StringMeta(type):
         value: Union[
             int,
             Tuple[int, int],
-            Tuple[int, EllipsisType],
-            Tuple[EllipsisType, int],
+            Tuple[int, ellipsis],
+            Tuple[ellipsis, int],
         ],
     ) -> Type[str]:
         class Inner(String, OptionConverter):
@@ -3782,7 +3783,7 @@ class StringMeta(type):
         else:
             raise TypeError("String min must be int.")
 
-        if isinstance(max_value, EllipsisType):
+        if max_value is Ellipsis:
             Inner.max = None
         elif isinstance(max_value, int):
             Inner.max = max_value

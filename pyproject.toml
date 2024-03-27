@@ -57,7 +57,7 @@ pre-commit = "3.5.0"
 taskipy = "1.10.3"
 slotscheck = "0.14.0"
 python-dotenv = "0.20.0"
-pyright = "1.1.317"
+pyright = "1.1.333"
 sphinx_autobuild = "2021.3.14"
 
 [tool.poetry.group.docs.dependencies]
@@ -141,6 +141,7 @@ ignore = ["examples"]
 pythonVersion = "3.8"
 
 # https://github.com/microsoft/pyright/blob/main/docs/configuration.md
+disableBytesTypePromotions = true
 reportInvalidStringEscapeSequence = false
 reportPropertyTypeMismatch = true
 reportDuplicateImport = true

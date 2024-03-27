@@ -49,6 +49,7 @@ has_nacl: bool
 
 try:
     import nacl.secret
+    import nacl.utils
 
     has_nacl = True
 except ImportError:
@@ -526,7 +527,7 @@ class VoiceClient(VoiceProtocol):
 
     def _encrypt_xsalsa20_poly1305_suffix(self, header: bytes, data) -> bytes:
         box = nacl.secret.SecretBox(bytes(self.secret_key))
-        nonce = nacl.utils.random(nacl.secret.SecretBox.NONCE_SIZE)  # type: ignore
+        nonce = nacl.utils.random(nacl.secret.SecretBox.NONCE_SIZE)
 
         return header + box.encrypt(bytes(data), nonce).ciphertext + nonce
 
