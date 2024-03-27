@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import asyncio
-import audioop
 import io
 import json
 import logging
@@ -13,6 +12,7 @@ import sys
 import threading
 import time
 import traceback
+import warnings
 from typing import IO, TYPE_CHECKING, Any, Callable, Generic, Optional, Tuple, TypeVar, Union
 
 from .enums import SpeakingState
@@ -25,6 +25,10 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from .voice_client import VoiceClient
+
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", DeprecationWarning)
+    import audioop
 
 
 AT = TypeVar("AT", bound="AudioSource")

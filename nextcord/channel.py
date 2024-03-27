@@ -75,6 +75,7 @@ if TYPE_CHECKING:
         DMChannel as DMChannelPayload,
         ForumChannel as ForumChannelPayload,
         ForumTag as ForumTagPayload,
+        ForumTagCreate as ForumTagCreatePayload,
         GroupDMChannel as GroupChannelPayload,
         StageChannel as StageChannelPayload,
         TextChannel as TextChannelPayload,
@@ -3062,9 +3063,8 @@ class ForumTag:
         return f"{type(self).__name__} {inner}"
 
     @property
-    def payload(self) -> ForumTagPayload:
-        data: ForumTagPayload = {
-            "id": str(self.id),
+    def payload(self) -> ForumTagCreatePayload:
+        data: ForumTagCreatePayload = {
             "name": self.name,
             "moderated": self.moderated,
         }
