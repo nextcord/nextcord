@@ -10,7 +10,6 @@ from types import TracebackType
 from typing import (
     TYPE_CHECKING,
     Any,
-    Callable,
     ClassVar,
     Coroutine,
     Dict,
@@ -18,6 +17,7 @@ from typing import (
     List,
     Literal,
     Optional,
+    Protocol,
     Sequence,
     Tuple,
     Type,
@@ -76,7 +76,11 @@ if TYPE_CHECKING:
     from .types.snowflake import Snowflake, SnowflakeList
 
     T = TypeVar("T")
-    BE = TypeVar("BE", bound=BaseException)
+
+    class DispatchProtocol(Protocol):
+        def __call__(self, event: str, *args: Any) -> None:
+            ...
+
     Response = Coroutine[Any, Any, T]
 
 
@@ -187,7 +191,7 @@ class RateLimit:
         """If the reset timestamp should be used for bucket resets. If False, the float reset_after is used."""
         self._first_update: bool = True
         """If this ratelimit has never been updated before."""
-        self._reset_remaining_task: Optional[asyncio.Task] = None
+        self._reset_remaining_task: Optional[asyncio.Task[None]] = None
         """Holds the task object for resetting the remaining count."""
         self._ratelimit_ready: asyncio.Event = asyncio.Event()
         """Used to indicate when the rate limit is ready to be acquired. Set when ready, unset when the ratelimit
@@ -242,9 +246,7 @@ class RateLimit:
             # TODO: If a request is made before the ratelimit resets but we get the response back after it resets, the
             #  pessimistic remaining will be incorrect, specifically too low. Perhaps have an internal ID of some sort
             #  with requests sent that changes/increments each reset?
-            self.remaining = (
-                int(x_remaining) if int(x_remaining) < self.remaining else self.remaining
-            )
+            self.remaining = min(int(x_remaining), self.remaining)
 
         # Updates the datetime of the reset.
         x_reset = response.headers.get("X-RateLimit-Reset")
@@ -530,7 +532,7 @@ class HTTPClient:
         assume_unsync_clock: bool = False,
         proxy: Optional[str] = None,
         proxy_auth: Optional[aiohttp.BasicAuth] = None,
-        dispatch: Callable,
+        dispatch: DispatchProtocol,
     ) -> None:
         self.__session: aiohttp.ClientSession = MISSING  # filled in static_login
         self._connector = connector
@@ -631,7 +633,7 @@ class HTTPClient:
 
         return ret
 
-    def recreate(self) -> None:
+    async def recreate(self) -> None:
         if self.__session.closed:
             self.__session = aiohttp.ClientSession(
                 connector=self._connector,
@@ -728,7 +730,7 @@ class HTTPClient:
             route.bucket,
             _get_logging_auth(auth),
         )  # Only use this for logging.
-        ret: Union[Optional[str], dict] = None
+        ret: Union[Optional[str], Dict[str, Any]] = None
         response: Optional[aiohttp.ClientResponse] = None
 
         # If retry_request is False and any of the rate limits are locked, don't continue and raise immediately.
@@ -769,9 +771,9 @@ class HTTPClient:
                         url_rate_limit = temp
                         continue
 
-                    if files:
+                    if retry_count > 0 and files:
                         for f in files:
-                            f.reset(seek=retry_count)
+                            f.reset(seek=True)
 
                     if form:
                         form_data = aiohttp.FormData(quote_fields=False)

@@ -804,7 +804,7 @@ class Client:
         await self.http.close()
         self._ready.clear()
 
-    def clear(self) -> None:
+    async def clear(self) -> None:
         """Clears the internal state of the bot.
 
         After this, the bot can be considered "re-opened", i.e. :meth:`is_closed`
@@ -814,7 +814,7 @@ class Client:
         self._closed = False
         self._ready.clear()
         self._connection.clear()
-        self.http.recreate()
+        await self.http.recreate()
 
     async def start(self, token: str, *, reconnect: bool = True) -> None:
         """|coro|
