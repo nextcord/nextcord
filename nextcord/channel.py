@@ -2388,7 +2388,7 @@ class StageChannel(VocalGuildChannel, abc.Messageable):
         Requires :attr:`~.Permissions.manage_webhooks` permissions.
 
         .. versionadded:: 2.6
-        
+
         Raises
         ------
         Forbidden
