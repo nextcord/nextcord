@@ -1481,6 +1481,8 @@ class ForumChannel(abc.GuildChannel, Hashable):
 
         Requires :attr:`~.Permissions.manage_webhooks` permissions.
 
+        .. versionadded:: 2.6
+
         Raises
         ------
         Forbidden
@@ -1490,8 +1492,6 @@ class ForumChannel(abc.GuildChannel, Hashable):
         -------
         List[:class:`Webhook`]
             The webhooks for this channel.
-
-        .. versionadded:: 2.6
         """
 
         from .webhook import Webhook
@@ -2046,6 +2046,8 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
 
         Requires :attr:`~.Permissions.manage_webhooks` permissions.
 
+        .. versionadded:: 2.6
+
         Raises
         ------
         Forbidden
@@ -2055,8 +2057,6 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
         -------
         List[:class:`Webhook`]
             The webhooks for this channel.
-
-        .. versionadded:: 2.6
         """
 
         from .webhook import Webhook
@@ -2387,6 +2387,8 @@ class StageChannel(VocalGuildChannel, abc.Messageable):
 
         Requires :attr:`~.Permissions.manage_webhooks` permissions.
 
+        .. versionadded:: 2.6
+        
         Raises
         ------
         Forbidden
@@ -2396,8 +2398,6 @@ class StageChannel(VocalGuildChannel, abc.Messageable):
         -------
         List[:class:`Webhook`]
             The webhooks for this channel.
-
-        .. versionadded:: 2.6
         """
 
         from .webhook import Webhook
