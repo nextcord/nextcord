@@ -597,8 +597,8 @@ class DiscordWebSocket:
             if msg.type is aiohttp.WSMsgType.TEXT or msg.type is aiohttp.WSMsgType.BINARY:
                 await self.received_message(msg.data)
             elif msg.type is aiohttp.WSMsgType.ERROR:
-                _log.debug("Received %s", msg)
-                raise msg.data
+                _log.debug("Received error %s", msg)
+                raise WebSocketClosure
             elif msg.type in (
                 aiohttp.WSMsgType.CLOSED,
                 aiohttp.WSMsgType.CLOSING,
