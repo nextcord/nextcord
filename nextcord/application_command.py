@@ -45,9 +45,9 @@ from .enums import (
     ApplicationCommandOptionType,
     ApplicationCommandType,
     ChannelType,
-    Locale,
     IntegrationType,
-    InteractionContextType
+    InteractionContextType,
+    Locale,
 )
 from .errors import (
     ApplicationCheckFailure,
@@ -2394,7 +2394,9 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
                 return False
 
         # Default value for returned "integration_types" when not specified at registration is [0] (only guild_install)
-        if set(cmd_payload.get("integration_types", [0])) != set(raw_payload.get("integration_types", [0])):
+        if set(cmd_payload.get("integration_types", [0])) != set(
+            raw_payload.get("integration_types", [0])
+        ):
             _log.debug("Integration types between commands not equal, not valid payload.")
             return False
 

@@ -50,7 +50,7 @@ __all__ = (
     "RoleConnectionMetadataType",
     "ForumLayoutType",
     "IntegrationType",
-    "InteractionContextType"
+    "InteractionContextType",
 )
 
 
