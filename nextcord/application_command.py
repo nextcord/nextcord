@@ -2037,10 +2037,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         if dm_permission is not None:
             if contexts is not None:
                 raise ValueError("Cannot pass both contexts and dm_permission")
-            if dm_permission:
-                contexts = [InteractionContextType.bot_dm]
-            else:
-                contexts = []
+            contexts = [InteractionContextType.bot_dm] if dm_permission else []
             if integration_types is None or IntegrationType.guild_install in integration_types:
                 contexts.append(InteractionContextType.guild)
         self.contexts = contexts
