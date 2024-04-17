@@ -41,7 +41,14 @@ from .channel import (
     TextChannel,
     VoiceChannel,
 )
-from .enums import ApplicationCommandOptionType, ApplicationCommandType, ChannelType, Locale
+from .enums import (
+    ApplicationCommandOptionType,
+    ApplicationCommandType,
+    ChannelType,
+    Locale,
+    IntegrationType,
+    InteractionContextType
+)
 from .errors import (
     ApplicationCheckFailure,
     ApplicationCommandOptionMissing,
@@ -1953,6 +1960,8 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         nsfw: bool = False,
+        integration_types: Optional[Iterable[IntegrationType]] = None,
+        contexts: Optional[Iterable[InteractionContextType]] = None,
         parent_cog: Optional[ClientCog] = None,
         force_global: bool = False,
     ) -> None:
@@ -1982,6 +1991,10 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         dm_permission: :class:`bool`
             If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
             usable in DMs. Only for global commands, but will not error on guild.
+
+            .. warning::
+                This field is deprecated, use ``contexts`` instead.
+            .. deprecated:: 3.0
         default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
             Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
@@ -1990,6 +2003,14 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             Whether the command can only be used in age-restricted channels. Defaults to ``False``.
 
             .. versionadded:: 2.4
+        integration_types: Optional[Iterable[:class:`IntegrationType`]]
+            Where the command is available, only for globally-scoped commands. Defaults to ``guild_install``.
+
+            .. versionadded:: 3.0
+        contexts: Optional[Iterable[:class:`InteractionContextType`]]
+            Where the command can be used, only for globally-scoped commands. By default, all interaction context types included for new commands.
+
+            .. versionadded:: 3.0
         parent_cog: Optional[:class:`ClientCog`]
             ``ClientCog`` to forward to the callback as the ``self`` argument.
         force_global: :class:`bool`
@@ -2007,11 +2028,22 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         ] = description_localizations
         self.guild_ids_to_rollout: Set[int] = set(guild_ids) if guild_ids else set()
         self.use_default_guild_ids: bool = guild_ids is MISSING and not force_global
-        self.dm_permission: Optional[bool] = dm_permission
         self.default_member_permissions: Optional[
             Union[Permissions, int]
         ] = default_member_permissions
         self.nsfw: bool = nsfw
+        self.integration_types = integration_types
+
+        if dm_permission is not None:
+            if contexts is not None:
+                raise ValueError("Cannot pass both contexts and dm_permission")
+            if dm_permission:
+                contexts = [InteractionContextType.bot_dm]
+            else:
+                contexts = []
+            if integration_types is None or IntegrationType.guild_install in integration_types:
+                contexts.append(InteractionContextType.guild)
+        self.contexts = contexts
 
         self.force_global: bool = force_global
 
@@ -2263,14 +2295,14 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         if guild_id:  # Guild-command specific payload options.
             ret["guild_id"] = guild_id
         # Global command specific payload options.
-        elif self.dm_permission is not None:
-            ret["dm_permission"] = self.dm_permission
-        else:
-            # Discord seems to send back the DM permission as True regardless if we sent it or not, so we send as
-            #  the default (True) to ensure payload parity for comparisons.
-            ret["dm_permission"] = True
 
         ret["nsfw"] = self.nsfw
+
+        if self.integration_types is not None:
+            ret["integration_types"] = [x.value for x in self.integration_types]
+
+        if self.contexts is not None:
+            ret["contexts"] = [x.value for x in self.contexts]
 
         return ret
 
@@ -2332,7 +2364,6 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             "name",
             "name_localizations",
             "description_localizations",
-            "dm_permission",
             "nsfw",
         ):
             _log.debug("Failed check dictionary values, not valid payload.")
@@ -2361,6 +2392,24 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             if not found_correct_value:
                 _log.debug("Discord is missing an option we have, not valid payload.")
                 return False
+
+        # Default value for returned "integration_types" when not specified at registration is [0] (only guild_install)
+        if set(cmd_payload.get("integration_types", [0])) != set(raw_payload.get("integration_types", [0])):
+            _log.debug("Integration types between commands not equal, not valid payload.")
+            return False
+
+        # The API documentation mentions that "all interaction context types included for new commands".
+        # This field can sometimes be explicitly None, so we cannot use the default argument for get
+        raw_contexts = raw_payload.get("contexts")
+        cmd_contexts = cmd_payload.get("contexts")
+
+        if cmd_contexts is None:
+            if raw_contexts is not None:
+                _log.debug("Contexts between commands not equal, not valid payload.")
+                return False
+        elif raw_contexts is None or set(cmd_contexts) != set(raw_contexts):
+            _log.debug("Contexts between commands not equal, not valid payload.")
+            return False
 
         return True
 
@@ -2839,6 +2888,8 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         nsfw: bool = False,
+        integration_types: Optional[Iterable[IntegrationType]] = None,
+        contexts: Optional[Iterable[InteractionContextType]] = None,
         parent_cog: Optional[ClientCog] = None,
         force_global: bool = False,
     ) -> None:
@@ -2864,6 +2915,10 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
         dm_permission: :class:`bool`
             If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
             usable in DMs. Only for global commands.
+
+            .. warning::
+                This field is deprecated, use ``contexts`` instead.
+            .. deprecated:: 3.0
         default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
             Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
@@ -2876,6 +2931,14 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
                 Due to a discord limitation, this can only be set for the parent command in case of a subcommand.
 
             .. versionadded:: 2.4
+        integration_types: Optional[Iterable[:class:`IntegrationType`]]
+            Where the command is available, only for globally-scoped commands. Defaults to ``guild_install``.
+
+            .. versionadded:: 3.0
+        contexts: Optional[Iterable[:class:`InteractionContextType`]]
+            Where the command can be used, only for globally-scoped commands. By default, all interaction context types included for new commands.
+
+            .. versionadded:: 3.0
         parent_cog: Optional[:class:`ClientCog`]
             ``ClientCog`` to forward to the callback as the ``self`` argument.
         force_global: :class:`bool`
@@ -2893,6 +2956,8 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
             default_member_permissions=default_member_permissions,
             dm_permission=dm_permission,
             nsfw=nsfw,
+            integration_types=integration_types,
+            contexts=contexts,
             parent_cog=parent_cog,
             force_global=force_global,
         )
@@ -3013,6 +3078,8 @@ class UserApplicationCommand(BaseApplicationCommand):
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         nsfw: bool = False,
+        integration_types: Optional[Iterable[IntegrationType]] = None,
+        contexts: Optional[Iterable[InteractionContextType]] = None,
         parent_cog: Optional[ClientCog] = None,
         force_global: bool = False,
     ) -> None:
@@ -3033,6 +3100,10 @@ class UserApplicationCommand(BaseApplicationCommand):
         dm_permission: :class:`bool`
             If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
             usable in DMs. Only for global commands, but will not error on guild.
+
+            .. warning::
+                This field is deprecated, use ``contexts`` instead.
+            .. deprecated:: 3.0
         default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
             Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
@@ -3041,6 +3112,14 @@ class UserApplicationCommand(BaseApplicationCommand):
             Whether the command can only be used in age-restricted channels. Defaults to ``False``.
 
             .. versionadded:: 2.4
+        integration_types: Optional[Iterable[:class:`IntegrationType`]]
+            Where the command is available, only for globally-scoped commands. Defaults to ``guild_install``.
+
+            .. versionadded:: 3.0
+        contexts: Optional[Iterable[:class:`InteractionContextType`]]
+            Where the command can be used, only for globally-scoped commands. By default, all interaction context types included for new commands.
+
+            .. versionadded:: 3.0
         parent_cog: Optional[:class:`ClientCog`]
             ``ClientCog`` to forward to the callback as the ``self`` argument.
         force_global: :class:`bool`
@@ -3056,6 +3135,8 @@ class UserApplicationCommand(BaseApplicationCommand):
             dm_permission=dm_permission,
             default_member_permissions=default_member_permissions,
             nsfw=nsfw,
+            integration_types=integration_types,
+            contexts=contexts,
             parent_cog=parent_cog,
             force_global=force_global,
         )
@@ -3095,6 +3176,8 @@ class MessageApplicationCommand(BaseApplicationCommand):
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         nsfw: bool = False,
+        integration_types: Optional[Iterable[IntegrationType]] = None,
+        contexts: Optional[Iterable[InteractionContextType]] = None,
         parent_cog: Optional[ClientCog] = None,
         force_global: bool = False,
     ) -> None:
@@ -3115,6 +3198,10 @@ class MessageApplicationCommand(BaseApplicationCommand):
         dm_permission: :class:`bool`
             If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
             usable in DMs. Only for global commands, but will not error on guild.
+
+            .. warning::
+                This field is deprecated, use ``contexts`` instead.
+            .. deprecated:: 3.0
         default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
             Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
@@ -3123,6 +3210,14 @@ class MessageApplicationCommand(BaseApplicationCommand):
             Whether the command can only be used in age-restricted channels. Defaults to ``False``.
 
             .. versionadded:: 2.4
+        integration_types: Optional[Iterable[:class:`IntegrationType`]]
+            Where the command is available, only for globally-scoped commands. Defaults to ``guild_install``.
+
+            .. versionadded:: 3.0
+        contexts: Optional[Iterable[:class:`InteractionContextType`]]
+            Where the command can be used, only for globally-scoped commands. By default, all interaction context types included for new commands.
+
+            .. versionadded:: 3.0
         parent_cog: Optional[:class:`ClientCog`]
             ``ClientCog`` to forward to the callback as the ``self`` argument.
         force_global: :class:`bool`
@@ -3138,6 +3233,8 @@ class MessageApplicationCommand(BaseApplicationCommand):
             dm_permission=dm_permission,
             default_member_permissions=default_member_permissions,
             nsfw=nsfw,
+            integration_types=integration_types,
+            contexts=contexts,
             parent_cog=parent_cog,
             force_global=force_global,
         )
@@ -3174,6 +3271,8 @@ def slash_command(
     dm_permission: Optional[bool] = None,
     default_member_permissions: Optional[Union[Permissions, int]] = None,
     nsfw: bool = False,
+    integration_types: Optional[Iterable[IntegrationType]] = None,
+    contexts: Optional[Iterable[InteractionContextType]] = None,
     force_global: bool = False,
 ):
     """Creates a Slash application command from the decorated function.
@@ -3199,6 +3298,10 @@ def slash_command(
     dm_permission: :class:`bool`
         If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
         usable in DMs. Only for global commands, but will not error on guild.
+
+        .. warning::
+            This field is deprecated, use ``contexts`` instead.
+        .. deprecated:: 3.0
     default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
         Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
         example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
@@ -3211,6 +3314,14 @@ def slash_command(
             Due to a discord limitation, this can only be set for the parent command in case of a subcommand.
 
         .. versionadded:: 2.4
+    integration_types: Optional[Iterable[:class:`IntegrationType`]]
+        Where the command is available, only for globally-scoped commands. Defaults to ``guild_install``.
+
+        .. versionadded:: 3.0
+    contexts: Optional[Iterable[:class:`InteractionContextType`]]
+        Where the command can be used, only for globally-scoped commands. By default, all interaction context types included for new commands.
+
+        .. versionadded:: 3.0
     force_global: :class:`bool`
         If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still
         register to guilds. Has no effect if ``guild_ids`` are never set or added to.
@@ -3230,6 +3341,8 @@ def slash_command(
             dm_permission=dm_permission,
             default_member_permissions=default_member_permissions,
             nsfw=nsfw,
+            integration_types=integration_types,
+            contexts=contexts,
             force_global=force_global,
         )
 
@@ -3244,6 +3357,8 @@ def message_command(
     dm_permission: Optional[bool] = None,
     default_member_permissions: Optional[Union[Permissions, int]] = None,
     nsfw: bool = False,
+    integration_types: Optional[Iterable[IntegrationType]] = None,
+    contexts: Optional[Iterable[InteractionContextType]] = None,
     force_global: bool = False,
 ):
     """Creates a Message context command from the decorated function.
@@ -3263,6 +3378,10 @@ def message_command(
     dm_permission: :class:`bool`
         If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
         usable in DMs. Only for global commands, but will not error on guild.
+
+        .. warning::
+            This field is deprecated, use ``contexts`` instead.
+        .. deprecated:: 3.0
     default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
         Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
         example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
@@ -3271,6 +3390,14 @@ def message_command(
         Whether the command can only be used in age-restricted channels. Defaults to ``False``.
 
         .. versionadded:: 2.4
+    integration_types: Optional[Iterable[:class:`IntegrationType`]]
+        Where the command is available, only for globally-scoped commands. Defaults to ``guild_install``.
+
+        .. versionadded:: 3.0
+    contexts: Optional[Iterable[:class:`InteractionContextType`]]
+        Where the command can be used, only for globally-scoped commands. By default, all interaction context types included for new commands.
+
+        .. versionadded:: 3.0
     force_global: :class:`bool`
         If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still
         register to guilds. Has no effect if ``guild_ids`` are never set or added to.
@@ -3288,6 +3415,8 @@ def message_command(
             dm_permission=dm_permission,
             default_member_permissions=default_member_permissions,
             nsfw=nsfw,
+            integration_types=integration_types,
+            contexts=contexts,
             force_global=force_global,
         )
 
@@ -3302,6 +3431,8 @@ def user_command(
     dm_permission: Optional[bool] = None,
     default_member_permissions: Optional[Union[Permissions, int]] = None,
     nsfw: bool = False,
+    integration_types: Optional[Iterable[IntegrationType]] = None,
+    contexts: Optional[Iterable[InteractionContextType]] = None,
     force_global: bool = False,
 ):
     """Creates a User context command from the decorated function.
@@ -3321,6 +3452,10 @@ def user_command(
     dm_permission: :class:`bool`
         If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
         usable in DMs. Only for global commands, but will not error on guild.
+
+        .. warning::
+            This field is deprecated, use ``contexts`` instead.
+        .. deprecated:: 3.0
     default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
         Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
         example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
@@ -3329,6 +3464,14 @@ def user_command(
         Whether the command can only be used in age-restricted channels. Defaults to ``False``.
 
         .. versionadded:: 2.4
+    integration_types: Optional[Iterable[:class:`IntegrationType`]]
+        Where the command is available, only for globally-scoped commands. Defaults to ``guild_install``.
+
+        .. versionadded:: 3.0
+    contexts: Optional[Iterable[:class:`InteractionContextType`]]
+        Where the command can be used, only for globally-scoped commands. By default, all interaction context types included for new commands.
+
+        .. versionadded:: 3.0
     force_global: :class:`bool`
         If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still
         register to guilds. Has no effect if ``guild_ids`` are never set or added to.
@@ -3346,6 +3489,8 @@ def user_command(
             dm_permission=dm_permission,
             default_member_permissions=default_member_permissions,
             nsfw=nsfw,
+            integration_types=integration_types,
+            contexts=contexts,
             force_global=force_global,
         )
 

@@ -19,6 +19,8 @@ if TYPE_CHECKING:
 
 
 ApplicationCommandType = Literal[1, 2, 3]
+IntegrationType = Literal[0, 1]
+InteractionContextType = Literal[0, 1, 2]
 
 
 class ApplicationCommand(TypedDict):
@@ -34,6 +36,8 @@ class ApplicationCommand(TypedDict):
     default_permission: NotRequired[bool]
     dm_permission: NotRequired[bool]
     nsfw: NotRequired[bool]
+    integration_types: NotRequired[List[IntegrationType]]
+    contexts: NotRequired[List[InteractionContextType]]
     name_localizations: NotRequired[Dict[str, str]]
     description_localizations: NotRequired[Dict[str, str]]
 

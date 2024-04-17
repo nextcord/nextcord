@@ -49,6 +49,8 @@ __all__ = (
     "SortOrderType",
     "RoleConnectionMetadataType",
     "ForumLayoutType",
+    "IntegrationType",
+    "InteractionContextType"
 )
 
 
@@ -2035,6 +2037,32 @@ class ForumLayoutType(IntEnum):
     """Display posts as a list, more text focused."""
     gallery = 2
     """Display posts as a collection of posts with images, this is more image focused."""
+
+
+class IntegrationType(IntEnum):
+    """Where the :class:`BaseApplicationCommand` is available, only for globally-scoped commands
+
+    .. versionadded:: 3.0
+    """
+
+    guild_install = 0
+    """App is installable to servers"""
+    user_install = 1
+    """App is installable to users"""
+
+
+class InteractionContextType(IntEnum):
+    """Where the :class:`BaseApplicationCommand` can be used, only for globally-scoped commands
+
+    .. versionadded:: 3.0
+    """
+
+    guild = 0
+    """Interaction can be used within servers"""
+    bot_dm = 1
+    """Interaction can be used within DMs with the app's bot user"""
+    private_channel = 2
+    """Interaction can be used within Group DMs and DMs other than the app's bot user"""
 
 
 T = TypeVar("T")
