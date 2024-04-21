@@ -1025,6 +1025,7 @@ class SyncWebhook(BaseWebhook):
         files: List[File] = MISSING,
         attachments: List[Attachment] = MISSING,
         allowed_mentions: Optional[AllowedMentions] = None,
+        thread: Snowflake = MISSING,
     ) -> SyncWebhookMessage:
         """Edits a message owned by this webhook.
 
@@ -1087,6 +1088,9 @@ class SyncWebhook(BaseWebhook):
             previous_allowed_mentions=previous_mentions,
         )
         adapter: WebhookAdapter = _get_webhook_adapter()
+        thread_id: Optional[int] = None
+        if thread is not MISSING:
+            thread_id = thread.id
         data = adapter.edit_webhook_message(
             self.id,
             self.token,
@@ -1095,6 +1099,7 @@ class SyncWebhook(BaseWebhook):
             payload=params.payload,
             multipart=params.multipart,
             files=params.files,
+            thread_id=thread_id,
         )
         return self._create_message(data)
 
