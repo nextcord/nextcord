@@ -7,12 +7,29 @@ from __future__ import annotations
 import asyncio
 import contextlib
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Any, Dict, Generic, List, Optional, Set, Tuple, TypeVar, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Generic,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    TypeVar,
+    Union,
+)
 
 from . import utils
 from .channel import ChannelType, PartialMessageable
 from .embeds import Embed
-from .enums import InteractionResponseType, InteractionType, try_enum
+from .enums import (
+    IntegrationType,
+    InteractionContextType,
+    InteractionResponseType,
+    InteractionType,
+    try_enum,
+)
 from .errors import ClientException, HTTPException, InteractionResponded, InvalidArgument
 from .file import File
 from .flags import MessageFlags
@@ -147,6 +164,17 @@ class Interaction(Hashable, Generic[ClientT]):
         The attached data of the interaction. This is used to store any data you may need inside the interaction for convenience. This data will stay on the interaction, even after a :meth:`Interaction.application_command_before_invoke`.
     application_command: Optional[:class:`ApplicationCommand`]
         The application command that handled the interaction.
+    authorizing_integration_owners: Optional[Dict[:class:`IntegrationType`, :class:`int`]]
+        Mapping of installation contexts that the interaction was authorized for to related user or guild IDs.
+        You can find out about this field in the `official Discord documentation`__.
+
+        .. _DiscordDocs: https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-authorizing-integration-owners-object
+
+        .. versionadded:: 3.0
+    context: Optional[:class:`InteractionContextType`]
+        Context where the interaction was triggered from.
+
+        .. versionadded:: 3.0
     """
 
     __slots__: Tuple[str, ...] = (
@@ -162,6 +190,8 @@ class Interaction(Hashable, Generic[ClientT]):
         "guild_locale",
         "token",
         "version",
+        "authorizing_integration_owners",
+        "context",
         "application_command",
         "attached",
         "_background_tasks",
@@ -231,6 +261,20 @@ class Interaction(Hashable, Generic[ClientT]):
                 )
             except KeyError:
                 pass
+
+        authorizing_integration_owners = data.get("authorizing_integration_owners")
+        self.authorizing_integration_owners: Optional[Dict[IntegrationType, int]]
+        if authorizing_integration_owners is None:
+            self.authorizing_integration_owners = None
+        else:
+            self.authorizing_integration_owners = {
+                IntegrationType(int(integration_type)): int(details)
+                for integration_type, details in authorizing_integration_owners.items()
+            }
+
+        self.context: Optional[InteractionContextType] = (
+            InteractionContextType(data["context"]) if "context" in data else None
+        )
 
     @property
     def client(self) -> ClientT:

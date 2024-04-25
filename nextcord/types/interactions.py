@@ -198,6 +198,7 @@ class ModalSubmitInteractionData(TypedDict):
 InteractionData = Union[
     ApplicationCommandInteractionData, ComponentInteractionData, ModalSubmitInteractionData
 ]
+AuthorizingIntegrationOwners = Dict[str, Union[str, Literal[0]]]
 
 
 class Interaction(TypedDict):
@@ -215,6 +216,8 @@ class Interaction(TypedDict):
     locale: NotRequired[str]
     guild_locale: NotRequired[str]
     app_permissions: NotRequired[str]
+    authorizing_integration_owners: NotRequired[AuthorizingIntegrationOwners]
+    context: NotRequired[InteractionContextType]
 
 
 class InteractionApplicationCommandCallbackData(TypedDict, total=False):
@@ -240,6 +243,18 @@ class MessageInteraction(TypedDict):
     name: str
     user: User
     member: NotRequired[Member]
+
+
+class MessageInteractionMetadata(TypedDict):
+    id: Snowflake
+    type: InteractionType
+    user_id: Snowflake
+    user: User
+    authorizing_integration_owners: AuthorizingIntegrationOwners
+    name: NotRequired[str]
+    original_response_message_id: NotRequired[Snowflake]
+    interacted_message_id: NotRequired[Snowflake]
+    triggering_interaction_metadata: NotRequired[MessageInteractionMetadata]
 
 
 class EditApplicationCommand(TypedDict):
