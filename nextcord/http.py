@@ -607,7 +607,7 @@ class HTTPClient:
         ----------
         original_headers: :class:`dict`[:class:`str`, :class:`str`]
             Headers to make a shallow copy of.
-        auth: :class:`str` | `None` | `MISSING`
+        auth: Optional[:class:`str`]
             Authorization string to use. Will not auto-format given tokens. For example, a bot token must be provided
             as "Bot <bot token>". If set to `None`, no authorization header will be added. If left unset, the default
             auth string will be used. (if the default is not set, no auth will be used.)
@@ -681,7 +681,7 @@ class HTTPClient:
             repackaged into a multipart form.
         form: Optional[Iterable[:class:`dict`[:class:`str`, `Any`]]]
             pass
-        auth: :class:`str` | `None` | `MISSING`
+        auth: Optional[:class:`str`]
             Authorization string to use. Will not auto-format given tokens. For example, a bot token must be provided
             as "Bot <bot token>". If set to `None`, no authorization will be used. If left unset, the default
             auth will be used. (if the default is not set, no auth will be used.)
