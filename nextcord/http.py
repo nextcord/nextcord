@@ -450,20 +450,17 @@ class GlobalRateLimit(RateLimit):
             # Oh dear, we hit the rate limit.
             _log.warning("Global rate limit 429 encountered, setting remaining to 0.")
             self.remaining = 0
-            if response.headers.get("X-RateLimit-Scope") == "global":
-                data = await response.json()
-                _log.debug("%s", data)
-                if (retry_after := data.get("retry_after")) or (
-                    retry_after := response.headers.get("Retry-After")
-                ):
-                    _log.debug(
-                        "Got global retry_after, resetting global after %s seconds", retry_after
-                    )
-                    self.reset_after = float(retry_after) + self._time_offset
-                    if self.resetting:
-                        self._reset_remaining_task.cancel()  # pyright: ignore [reportOptionalMemberAccess]
+            data = await response.json()
+            _log.debug("%s", data)
+            if (retry_after := data.get("retry_after")) or (
+                retry_after := response.headers.get("Retry-After")
+            ):
+                _log.debug("Got global retry_after, resetting global after %s seconds", retry_after)
+                self.reset_after = float(retry_after) + self._time_offset
+                if self.resetting:
+                    self._reset_remaining_task.cancel()  # pyright: ignore [reportOptionalMemberAccess]
 
-                    self.start_reset_task()
+                self.start_reset_task()
 
             self._ratelimit_ready.clear()
             if not self.resetting:
