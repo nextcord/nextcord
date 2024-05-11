@@ -518,7 +518,7 @@ class HTTPClient:
         The proxy url to connect to the Discord API with, if any.
     proxy_auth: Optional[:class:`aiohttp.BasicAuth`]
         The authentication to use in order to make a request to the proxy url. Not to be confused with ``default_auth``.
-    dispatch: :class:`Callable`
+    dispatch: :class:`DispatchProtocol`
         The dispatcher to use for rate limit events.
     """
 
@@ -655,9 +655,6 @@ class HTTPClient:
 
         return await self.__session.ws_connect(url, **kwargs)
 
-    # ruff: noqa: PLR0915
-    # Ruff says this is too many statements in a single function, but I'm not sure how to break it down while
-    #  maintaining readability. I suppose general purpose rules cannot be perfectly applied in every situation.
     async def request(
         self,
         route: Route,
@@ -857,82 +854,16 @@ class HTTPClient:
                         # even errors have text involved in them so this is safe to call
                         ret = await json_or_text(response)
 
-                        if response.status >= 400:
-                            # >= 500 was considered, but stuff like 501 and 505+ are not good to retry on.
-                            if response.status in {500, 502, 504}:
-                                if retry_request:
-                                    _log.info(
-                                        "Path %s encountered a Discord server issue, retrying.",
-                                        rate_limit_path,
-                                    )
-                                    await asyncio.sleep(1 + retry_count * 2)
-                                    should_retry = True
-                                else:
-                                    _log.info(
-                                        "Path %s encountered a Discord server issue.",
-                                        rate_limit_path,
-                                    )
-                                    raise DiscordServerError(response, ret)
-                            elif response.status == 401:
-                                _log.warning(
-                                    "Path %s resulted in error 401, rejected authorization?",
-                                    rate_limit_path,
-                                )
-                                raise Unauthorized(response, ret)
-                            elif response.status == 403:
-                                _log.warning(
-                                    "Path %s resulted in error 403, check your permissions?",
-                                    rate_limit_path,
-                                )
-                                raise Forbidden(response, ret)
-                            elif response.status == 404:
-                                _log.warning(
-                                    "Path %s resulted in error 404, check your path?",
-                                    rate_limit_path,
-                                )
-                                raise NotFound(response, ret)
-                            elif response.status == 429:
-                                if (
-                                    response.headers.get("X-RateLimit-Global") != "true"
-                                    and response.headers.get("X-RateLimit-Scope") != "global"
-                                ):
-                                    self._dispatch(
-                                        "http_ratelimit",
-                                        url_rate_limit.limit,
-                                        url_rate_limit.remaining,
-                                        url_rate_limit.reset_after,
-                                        url_rate_limit.bucket,
-                                        response.headers.get("X-RateLimit-Scope"),
-                                    )
-                                else:
-                                    self._dispatch(
-                                        "global_http_ratelimit", global_rate_limit.reset_after
-                                    )
-
-                                if not response.headers.get("Via") or isinstance(ret, str):
-                                    _log.error(
-                                        "Path %s resulted in what appears to be a CloudFlare ban, either a "
-                                        "large amount of errors recently happened and/or Nextcord has a bug."
-                                    )
-                                    # Banned by Cloudflare more than likely.
-                                    raise HTTPException(response, ret)
-
-                                if retry_request:
-                                    _log.warning(
-                                        "Path %s resulted in error 429, rate limit exceeded. Retrying.",
-                                        rate_limit_path,
-                                    )
-                                    should_retry = True
-                                else:
-                                    _log.warning(
-                                        "Path %s resulted in error 429, rate limit exceeded.",
-                                        rate_limit_path,
-                                    )
-                                    raise HTTPException(response, ret)
-                            elif response.status >= 500:
-                                raise DiscordServerError(response, ret)
-                            else:
-                                raise HTTPException(response, ret)
+                        # This will raise HTTP exceptions as needed.
+                        should_retry = await self._handle_http_response_errors(
+                            response=response,
+                            return_value=ret,
+                            rate_limit_path=rate_limit_path,
+                            retry_request=retry_request,
+                            retry_count=retry_count,
+                            url_rate_limit=url_rate_limit,
+                            global_rate_limit=global_rate_limit,
+                        )
 
             # This is handling exceptions from the request
             except OSError as e:
@@ -988,6 +919,118 @@ class HTTPClient:
                     raise HTTPException(response, ret)
 
         return ret
+
+    async def _handle_http_response_errors(
+        self,
+        response: aiohttp.ClientResponse,
+        return_value: Any,
+        rate_limit_path: Tuple[str, str, Optional[str]],
+        retry_request: bool,
+        retry_count: int,
+        url_rate_limit: RateLimit,
+        global_rate_limit: GlobalRateLimit,
+    ) -> bool:
+        """|coro|
+        This exists to make the main request function smaller and easier to work with.
+
+        I'm on a 1440p 21:9 monitor and even with PyCharm split into multiple panes, the request method with all of
+        this in it is absolutely huge.
+
+        Parameters
+        ----------
+        response: :class:`ClientResponse`
+            Response from Discord.
+        return_value: Any
+            Return value used in logging and error raising.
+        rate_limit_path: Tuple[str, str, Optional[str]]
+            Used for logging.
+        retry_request: :class:`bool`
+            Signals if the request should be retried.
+        retry_count: :class:`int`
+            Amount of times this request has been retried. Used in an asyncio.sleep()
+        Returns
+        -------
+        A bool value indicating if the request should be retried
+        """
+        should_retry = False
+
+        if response.status >= 400:
+            # >= 500 was considered, but stuff like 501 and 505+ are not good to retry on.
+            if response.status in {500, 502, 504}:
+                if retry_request:
+                    _log.info(
+                        "Path %s encountered a Discord server issue, retrying.",
+                        rate_limit_path,
+                    )
+                    await asyncio.sleep(1 + retry_count * 2)
+                    should_retry = True
+                else:
+                    _log.info(
+                        "Path %s encountered a Discord server issue.",
+                        rate_limit_path,
+                    )
+                    raise DiscordServerError(response, return_value)
+
+            elif response.status == 401:
+                _log.warning(
+                    "Path %s resulted in error 401, rejected authorization?",
+                    rate_limit_path,
+                )
+                raise Unauthorized(response, return_value)
+            elif response.status == 403:
+                _log.warning(
+                    "Path %s resulted in error 403, check your permissions?",
+                    rate_limit_path,
+                )
+                raise Forbidden(response, return_value)
+            elif response.status == 404:
+                _log.warning(
+                    "Path %s resulted in error 404, check your path?",
+                    rate_limit_path,
+                )
+                raise NotFound(response, return_value)
+            elif response.status == 429:
+                if (
+                    response.headers.get("X-RateLimit-Global") != "true"
+                    and response.headers.get("X-RateLimit-Scope") != "global"
+                ):
+                    self._dispatch(
+                        "http_ratelimit",
+                        url_rate_limit.limit,
+                        url_rate_limit.remaining,
+                        url_rate_limit.reset_after,
+                        url_rate_limit.bucket,
+                        response.headers.get("X-RateLimit-Scope"),
+                    )
+                else:
+                    self._dispatch("global_http_ratelimit", global_rate_limit.reset_after)
+
+                if not response.headers.get("Via") or isinstance(return_value, str):
+                    _log.error(
+                        "Path %s resulted in what appears to be a CloudFlare ban, either a "
+                        "large amount of errors recently happened and/or Nextcord has a bug."
+                    )
+                    # Banned by Cloudflare more than likely.
+                    raise HTTPException(response, return_value)
+
+                if retry_request:
+                    _log.warning(
+                        "Path %s resulted in error 429, rate limit exceeded. Retrying.",
+                        rate_limit_path,
+                    )
+                    should_retry = True
+                else:
+                    _log.warning(
+                        "Path %s resulted in error 429, rate limit exceeded.",
+                        rate_limit_path,
+                    )
+                    raise HTTPException(response, return_value)
+            elif response.status >= 500:
+                raise DiscordServerError(response, return_value)
+            else:
+                raise HTTPException(response, return_value)
+
+        return should_retry
 
     async def get_from_cdn(self, url: str) -> bytes:
         async with self.__session.get(url) as resp:
