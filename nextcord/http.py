@@ -548,7 +548,7 @@ class HTTPClient:
 
         self._buckets: dict[str, RateLimit] = {}
         """{"Discord bucket name": RateLimit}"""
-        self._global_rate_limits: dict[Optional[str], RateLimit] = {}
+        self._global_rate_limits: dict[Optional[str], GlobalRateLimit] = {}
         """{"Auth string": RateLimit}, None for auth-less ratelimit."""
         self._url_rate_limits: dict[tuple[str, str, Optional[str]], RateLimit] = {}
         """{("METHOD", "Route.bucket", "auth string"): RateLimit} auth string may be None to indicate auth-less."""
