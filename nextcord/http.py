@@ -113,9 +113,6 @@ def _get_logging_auth(auth: Optional[str]) -> str:
     if auth is None:
         return "None"
 
-    if len(auth) < 12:  # This shouldn't ever occur, but whatever.
-        return "[redacted]"
-
     return f"{auth[:12]}[redacted]"
 
 
