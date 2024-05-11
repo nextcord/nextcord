@@ -674,7 +674,7 @@ class HTTPClient:
             The files to provide with the JSON body of this request. If provided, the body of the request will be
             repackaged into a multipart form.
         form: Optional[Iterable[:class:`dict`[:class:`str`, `Any`]]]
-            pass
+            Multipart form data, will override the "data" kwarg if set.
         auth: Optional[:class:`str`]
             Authorization string to use. Will not auto-format given tokens. For example, a bot token must be provided
             as "Bot <bot token>". If set to `None`, no authorization will be used. If left unset, the default
