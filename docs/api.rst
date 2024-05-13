@@ -3466,6 +3466,7 @@ Exception Hierarchy
             - :exc:`NoMoreItems`
             - :exc:`GatewayNotFound`
             - :exc:`HTTPException`
+                - :exc:`Unauthorized`
                 - :exc:`Forbidden`
                 - :exc:`NotFound`
                 - :exc:`DiscordServerError`
