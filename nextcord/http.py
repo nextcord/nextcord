@@ -914,6 +914,9 @@ class HTTPClient:
 
         return ret
 
+    # This exists to make the main request function smaller and easier to work with.
+    # I'm on a 1440p 21:9 monitor and even with PyCharm split into multiple panes, the request method with all of
+    #  this in it is absolutely huge.
     async def _handle_http_response_errors(
         self,
         response: aiohttp.ClientResponse,
@@ -925,10 +928,9 @@ class HTTPClient:
         global_rate_limit: GlobalRateLimit,
     ) -> bool:
         """|coro|
-        This exists to make the main request function smaller and easier to work with.
-
-        I'm on a 1440p 21:9 monitor and even with PyCharm split into multiple panes, the request method with all of
-        this in it is absolutely huge.
+        Handles HTTP status codes received from Discord.
+        Raises exceptions and returns a bool indicating if the request should be retried with the given params and
+        response status code.
 
         Parameters
         ----------
