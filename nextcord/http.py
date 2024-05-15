@@ -694,7 +694,11 @@ class HTTPClient:
         )
         while not self.__session.closed:
             self._shed_ratelimits(threshold)
-            await asyncio.sleep(sleep_seconds)
+            try:
+                await asyncio.sleep(sleep_seconds)
+            except asyncio.CancelledError:
+                _log.debug("Detected task cancellation, breaking out of loop.")
+                break
 
         _log.debug(
             "Ending ratelimit shedding loop with sleep_seconds %s and threshold %s.",
@@ -1108,8 +1112,9 @@ class HTTPClient:
         self._url_rate_limits.clear()
         self._global_rate_limits.clear()
 
-        if self._ratelimit_shed_task is not None and self._ratelimit_shed_task.done():
+        if self._ratelimit_shed_task is not None and not self._ratelimit_shed_task.done():
             self._ratelimit_shed_task.cancel()
+            await self._ratelimit_shed_task
 
     # login management
 
