@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from types import TracebackType
 from typing import (
     TYPE_CHECKING,
@@ -514,6 +514,12 @@ class HTTPClient:
         The authentication to use in order to make a request to the proxy url. Not to be confused with ``default_auth``.
     dispatch: :class:`DispatchProtocol`
         The dispatcher to use for rate limit events.
+    ratelimit_shed_timer: Optional[:class:`int`]
+        Time in seconds between checks to see if a rate limit can be shed/removed from the cache. If set to `None`, the
+        rate limit shedding loop is never started and rate limits will be tracked forever. Cannot be a negative number.
+    ratelimit_shed_threshold: :class:`int`
+        Minimum time in seconds after a rate limit has been reset before shedding it. The higher the number, the longer
+        an unused rate limit will be kept. Should be greater or equal to 0.
     """
 
     def __init__(
@@ -527,6 +533,8 @@ class HTTPClient:
         proxy: Optional[str] = None,
         proxy_auth: Optional[aiohttp.BasicAuth] = None,
         dispatch: DispatchProtocol,
+        ratelimit_shed_timer: Optional[int] = 300,
+        ratelimit_shed_threshold: int = 600,
     ) -> None:
         self.__session: aiohttp.ClientSession = MISSING  # filled in static_login
         self._connector = connector
@@ -539,6 +547,9 @@ class HTTPClient:
         self._proxy = proxy
         self._proxy_auth: Optional[aiohttp.BasicAuth] = proxy_auth
         self._dispatch = dispatch
+        self._ratelimit_shed_timer = ratelimit_shed_timer
+        self._ratelimit_shed_threshold = ratelimit_shed_threshold
+        self._ratelimit_shed_task: Optional[asyncio.Task[None]] = None
 
         # to mitigate breaking changes
         self._user_agent: str = _USER_AGENT
@@ -549,6 +560,16 @@ class HTTPClient:
         """{"Auth string": RateLimit}, None for auth-less ratelimit."""
         self._url_rate_limits: dict[tuple[str, str, Optional[str]], RateLimit] = {}
         """{("METHOD", "Route.bucket", "auth string"): RateLimit} auth string may be None to indicate auth-less."""
+
+        if self._ratelimit_shed_timer is not None and self._ratelimit_shed_timer < 0:
+            raise ValueError(
+                f"Kwarg ratelimit_shed_timer must be 0 or greater, not {self._ratelimit_shed_timer}"
+            )
+        if self._ratelimit_shed_threshold < 0:
+            _log.warning(
+                "Kwarg ratelimit_shed_threshold is below zero (%s), strange or erroneous behavior may occur.",
+                self._ratelimit_shed_threshold,
+            )
 
     def _make_global_rate_limit(self, auth: Optional[str], max_per_second: int) -> GlobalRateLimit:
         log_auth = _get_logging_auth(auth)
@@ -628,11 +649,12 @@ class HTTPClient:
         return ret
 
     async def recreate(self) -> None:
-        if self.__session.closed:
+        if not self.__session or self.__session.closed:
             self.__session = aiohttp.ClientSession(
                 connector=self._connector,
                 ws_response_class=DiscordClientWebSocketResponse,
             )
+            await self._start_ratelimit_shedding_loop()
 
     async def ws_connect(self, url: str, *, compress: int = 0) -> Any:
         kwargs = {
@@ -648,6 +670,48 @@ class HTTPClient:
         }
 
         return await self.__session.ws_connect(url, **kwargs)
+
+    async def _start_ratelimit_shedding_loop(self) -> None:
+        if self._ratelimit_shed_task is not None and not self._ratelimit_shed_task.done():
+            self._ratelimit_shed_task.cancel()
+
+        if self._ratelimit_shed_timer is not None:
+            self._ratelimit_shed_task = asyncio.create_task(
+                self._ratelimit_shedding_loop(
+                    self._ratelimit_shed_timer, self._ratelimit_shed_threshold
+                )
+            )
+        else:
+            _log.debug(
+                "Tried to start ratelimit shedding loop, but the timer is set to None. Ignoring."
+            )
+
+    async def _ratelimit_shedding_loop(self, sleep_seconds: int, threshold: int) -> None:
+        _log.debug(
+            "Starting ratelimit shedding loop with sleep_seconds %s and threshold %s.",
+            sleep_seconds,
+            threshold,
+        )
+        while self.__session is not None and not self.__session.closed:
+            self._shed_ratelimits(threshold)
+            await asyncio.sleep(sleep_seconds)
+
+        _log.debug(
+            "Ending ratelimit shedding loop with sleep_seconds %s and threshold %s.",
+            sleep_seconds,
+            threshold,
+        )
+
+    def _shed_ratelimits(self, threshold: int) -> None:
+        time_to_compare = utils.utcnow() - timedelta(seconds=threshold)
+        old_len = len(self._url_rate_limits)
+        for key, value in self._url_rate_limits.copy().items():
+            if (value.reset is None or value.reset < time_to_compare) and not value.resetting:
+                self._url_rate_limits.pop(key)
+                _log.debug("Allowing bucket %s to be garbage collected.", value.bucket)
+
+        if old_len != (new_len := len(self._url_rate_limits)):
+            _log.info("Allowed %s rate limits to be garbage collected.", old_len - new_len)
 
     async def request(
         self,
@@ -690,10 +754,7 @@ class HTTPClient:
         A JSON payload response from Discord. They JSON payload's type will usually be a :class:`list` or :class:`dict`
         """
 
-        if not self.__session:
-            self.__session = aiohttp.ClientSession(
-                connector=self._connector, ws_response_class=DiscordClientWebSocketResponse
-            )
+        await self.recreate()
 
         headers = self._make_headers(kwargs.pop("headers", {}), auth=auth)
 
@@ -1043,6 +1104,12 @@ class HTTPClient:
     async def close(self) -> None:
         if self.__session:
             await self.__session.close()
+
+        self._url_rate_limits.clear()
+        self._global_rate_limits.clear()
+
+        if self._ratelimit_shed_task is not None and self._ratelimit_shed_task.done():
+            self._ratelimit_shed_task.cancel()
 
     # login management
 
