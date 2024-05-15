@@ -692,7 +692,7 @@ class HTTPClient:
             sleep_seconds,
             threshold,
         )
-        while self.__session is not None and not self.__session.closed:
+        while not self.__session.closed:
             self._shed_ratelimits(threshold)
             await asyncio.sleep(sleep_seconds)
 
