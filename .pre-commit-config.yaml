@@ -50,6 +50,6 @@ repos:
         language: python
         files: nextcord/
         additional_dependencies:
-          - autotyping==22.9.0
-          - black==22.12.0
-          - libcst==0.4.9
+          - autotyping==24.3.0
+          - black==23.12.1
+          - libcst==1.3.1
