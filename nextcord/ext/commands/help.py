@@ -6,7 +6,7 @@ import copy
 import functools
 import itertools
 import re
-from typing import Optional, TYPE_CHECKING, ClassVar, Dict
+from typing import TYPE_CHECKING, ClassVar, Dict, Optional
 
 import nextcord.utils
 
