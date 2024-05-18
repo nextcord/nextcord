@@ -167,7 +167,7 @@ class Quotation:
 
     @nextcord.utils.cached_slot_property("_cs_initial_quotations")
     def initial_quotations(self):
-        """Tuple[:class:`str`\, :class:`str`] The first quotation mapping provided."""
+        r"""Tuple[:class:`str`\, :class:`str`] The first quotation mapping provided."""
         return tuple(self._values.items())[0]
 
     @property
