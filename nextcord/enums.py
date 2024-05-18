@@ -2040,7 +2040,7 @@ class ForumLayoutType(IntEnum):
 
 
 class IntegrationType(IntEnum):
-    """Where the :class:`BaseApplicationCommand` is available, only for globally-scoped commands.
+    """Where a :class:`BaseApplicationCommand` is available, only for globally-scoped commands.
 
     .. versionadded:: 3.0
     """
@@ -2052,17 +2052,17 @@ class IntegrationType(IntEnum):
 
 
 class InteractionContextType(IntEnum):
-    """Where the :class:`BaseApplicationCommand` can be used, only for globally-scoped commands.
+    """Where a :class:`BaseApplicationCommand` can be used, only for globally-scoped commands, or where a :class:`Interaction` originates from.
 
     .. versionadded:: 3.0
     """
 
     guild = 0
-    """Interaction can be used within servers."""
+    """The :class:`BaseApplicationCommand` can be used within servers, or the :class:`Interaction` originates from a server."""
     bot_dm = 1
-    """Interaction can be used within DMs with the app's bot user."""
+    """The :class:`BaseApplicationCommand` can be used within DMs with the app's bot user, or the :class:`Interaction` originates from such DMs."""
     private_channel = 2
-    """Interaction can be used within Group DMs and DMs other than the app's bot user."""
+    """The :class:`BaseApplicationCommand` can be used within Group DMs and DMs other than the app's bot user, or the :class:`Interaction` originates from such channels."""
 
 
 T = TypeVar("T")
