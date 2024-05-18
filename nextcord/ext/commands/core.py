@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import datetime
 import functools
 import inspect
@@ -74,15 +75,11 @@ T = TypeVar("T")
 CogT = TypeVar("CogT", bound="Cog")
 CommandT = TypeVar("CommandT", bound="Command")
 ContextT = TypeVar("ContextT", bound="Context")
-# CHT = TypeVar('CHT', bound='Check')
 GroupT = TypeVar("GroupT", bound="Group")
 HookT = TypeVar("HookT", bound="Hook")
 ErrorT = TypeVar("ErrorT", bound="Error")
 
-if TYPE_CHECKING:
-    P = ParamSpec("P")
-else:
-    P = TypeVar("P")
+P = ParamSpec("P") if TYPE_CHECKING else TypeVar("P")
 
 
 def unwrap_function(function: Callable[..., Any]) -> Callable[..., Any]:
@@ -129,7 +126,7 @@ def wrap_callback(coro):
         except CommandError:
             raise
         except asyncio.CancelledError:
-            return
+            return None
         except Exception as exc:
             raise CommandInvokeError(exc) from exc
         return ret
@@ -147,7 +144,7 @@ def hooked_wrapped_callback(command, ctx, coro):
             raise
         except asyncio.CancelledError:
             ctx.command_failed = True
-            return
+            return None
         except Exception as exc:
             ctx.command_failed = True
             raise CommandInvokeError(exc) from exc
@@ -165,7 +162,7 @@ class _CaseInsensitiveDict(dict):
     def __contains__(self, k) -> bool:
         return super().__contains__(k.casefold())
 
-    def __delitem__(self, k):
+    def __delitem__(self, k) -> None:
         return super().__delitem__(k.casefold())
 
     def __getitem__(self, k):
@@ -279,7 +276,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
     """
     __original_kwargs__: Dict[str, Any]
 
-    def __new__(cls, *args: Any, **kwargs: Any) -> Self:
+    def __new__(cls, *_args: Any, **kwargs: Any) -> Self:
         # if you're wondering why this is done, it's because we need to ensure
         # we have a complete original copy of **kwargs even for classes that
         # mess with it by popping before delegating to the subclass __init__.
@@ -546,10 +543,8 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
             The function to remove from the checks.
         """
 
-        try:
+        with contextlib.suppress(ValueError):
             self.checks.remove(func)
-        except ValueError:
-            pass
 
     def update(self, **kwargs: Any) -> None:
         """Updates :class:`Command` instance with updated attribute.
@@ -575,8 +570,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         """
         if self.cog is not None:
             return await self.callback(self.cog, context, *args, **kwargs)  # type: ignore
-        else:
-            return await self.callback(context, *args, **kwargs)  # type: ignore
+        return await self.callback(context, *args, **kwargs)  # type: ignore
 
     def _ensure_assignment_on_copy(self, other: CommandT) -> CommandT:
         other._before_invoke = self._before_invoke
@@ -589,10 +583,8 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
             # _max_concurrency won't be None at this point
             other._max_concurrency = self._max_concurrency.copy()  # type: ignore
 
-        try:
+        with contextlib.suppress(AttributeError):
             other.on_error = self.on_error
-        except AttributeError:
-            pass
         return other
 
     def copy(self) -> Self:
@@ -612,8 +604,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
             kw.update(self.__original_kwargs__)
             copy = self.__class__(self.callback, **kw)
             return self._ensure_assignment_on_copy(copy)
-        else:
-            return self.copy()
+        return self.copy()
 
     async def dispatch_error(self, ctx: Context, error: Exception) -> None:
         ctx.command_failed = True
@@ -650,17 +641,17 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         if isinstance(converter, Greedy):
             if param.kind in (param.POSITIONAL_OR_KEYWORD, param.POSITIONAL_ONLY):
                 return await self._transform_greedy_pos(ctx, param, required, converter.converter)
-            elif param.kind == param.VAR_POSITIONAL:
+            if param.kind == param.VAR_POSITIONAL:
                 return await self._transform_greedy_var_pos(ctx, param, converter.converter)
-            else:
-                # if we're here, then it's a KEYWORD_ONLY param type
-                # since this is mostly useless, we'll helpfully transform Greedy[X]
-                # into just X and do the parsing that way.
-                converter = converter.converter
+
+            # if we're here, then it's a KEYWORD_ONLY param type
+            # since this is mostly useless, we'll helpfully transform Greedy[X]
+            # into just X and do the parsing that way.
+            converter = converter.converter
 
         if view.eof:
             if param.kind == param.VAR_POSITIONAL:
-                raise RuntimeError()  # break the loop
+                raise RuntimeError  # break the loop
             if required:
                 if self._is_typing_optional(param.annotation):
                     return None
@@ -675,17 +666,16 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         else:
             try:
                 argument = view.get_quoted_word()
-            except ArgumentParsingError as exc:
+            except ArgumentParsingError:
                 if self._is_typing_optional(param.annotation):
                     view.index = previous
                     return None
-                else:
-                    raise exc
+                raise
         view.previous = previous
 
         if argument is None:
             if param.kind == param.VAR_POSITIONAL:
-                raise RuntimeError()
+                raise RuntimeError
             if required:
                 if self._is_typing_optional(param.annotation):
                     return None
@@ -728,7 +718,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
             value = await run_converters(ctx, converter, argument, param)  # type: ignore
         except (CommandError, ArgumentParsingError):
             view.index = previous
-            raise RuntimeError() from None  # break loop
+            raise RuntimeError from None  # break loop
         else:
             return value
 
@@ -813,8 +803,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         parent = self.full_parent_name
         if parent:
             return parent + " " + self.name
-        else:
-            return self.name
+        return self.name
 
     def __str__(self) -> str:
         return self.qualified_name
@@ -848,7 +837,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
             except StopIteration:
                 raise nextcord.ClientException(
                     f'Callback for {self.name} command is missing "self" parameter.'
-                )
+                ) from None
 
         # next we have the 'ctx' as the next parameter
         try:
@@ -856,7 +845,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         except StopIteration:
             raise nextcord.ClientException(
                 f'Callback for {self.name} command is missing "ctx" parameter.'
-            )
+            ) from None
 
         for name, param in iterator:
             ctx.current_parameter = param
@@ -1198,8 +1187,8 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
                         else f"[{name}={param.default}]..."
                     )
                     continue
-                else:
-                    result.append(f"[{name}]")
+
+                result.append(f"[{name}]")
 
             elif param.kind == param.VAR_POSITIONAL:
                 if self.require_var_positional:
@@ -1483,7 +1472,7 @@ class GroupMixin(Generic[CogT]):
 
         def decorator(func: Callable[Concatenate[ContextT, P], Coro[Any]]) -> CommandT:
             kwargs.setdefault("parent", self)
-            result = command(name=name, cls=cls, *args, **kwargs)(func)
+            result = command(name, cls, *args, **kwargs)(func)
             self.add_command(result)
             return result  # type: ignore
             # pyright really doesnt know what typevars are
@@ -1536,7 +1525,7 @@ class GroupMixin(Generic[CogT]):
 
         def decorator(func: Callable[Concatenate[ContextT, P], Coro[Any]]) -> GroupT:
             kwargs.setdefault("parent", self)
-            result = group(name=name, cls=cls, *args, **kwargs)(func)
+            result = group(name, *args, cls=cls, **kwargs)(func)
             self.add_command(result)  # type: ignore
             return result  # type: ignore
 
@@ -2024,7 +2013,7 @@ def has_role(item: Union[int, str]) -> Callable[[T], T]:
 
     def predicate(ctx: Context) -> bool:
         if ctx.guild is None:
-            raise NoPrivateMessage()
+            raise NoPrivateMessage
 
         # ctx.guild is None doesn't narrow ctx.author to Member
         if isinstance(item, int):
@@ -2072,7 +2061,7 @@ def has_any_role(*items: Union[int, str]) -> Callable[[T], T]:
 
     def predicate(ctx) -> bool:
         if ctx.guild is None:
-            raise NoPrivateMessage()
+            raise NoPrivateMessage
 
         # ctx.guild is None doesn't narrow ctx.author to Member
         getter = functools.partial(nextcord.utils.get, ctx.author.roles)
@@ -2102,7 +2091,7 @@ def bot_has_role(item: int) -> Callable[[T], T]:
 
     def predicate(ctx) -> bool:
         if ctx.guild is None:
-            raise NoPrivateMessage()
+            raise NoPrivateMessage
 
         me = ctx.me
         if isinstance(item, int):
@@ -2132,7 +2121,7 @@ def bot_has_any_role(*items: int) -> Callable[[T], T]:
 
     def predicate(ctx) -> bool:
         if ctx.guild is None:
-            raise NoPrivateMessage()
+            raise NoPrivateMessage
 
         me = ctx.me
         getter = functools.partial(nextcord.utils.get, me.roles)
@@ -2150,10 +2139,7 @@ def _permission_check_wrapper(
     predicate: Check, name: str, perms: Dict[str, bool]
 ) -> Callable[[T], T]:
     def wrapper(func: Union[Command, CoroFunc]) -> Union[Command, CoroFunc]:
-        if isinstance(func, Command):
-            callback = func.callback
-        else:
-            callback = func
+        callback = func.callback if isinstance(func, Command) else func
 
         setattr(callback, name, perms)
         return check(predicate)(func)
@@ -2304,7 +2290,7 @@ def dm_only() -> Callable[[T], T]:
 
     def predicate(ctx: Context) -> bool:
         if ctx.guild is not None:
-            raise PrivateMessageOnly()
+            raise PrivateMessageOnly
         return True
 
     return check(predicate)
@@ -2321,7 +2307,7 @@ def guild_only() -> Callable[[T], T]:
 
     def predicate(ctx: Context) -> bool:
         if ctx.guild is None:
-            raise NoPrivateMessage()
+            raise NoPrivateMessage
         return True
 
     return check(predicate)

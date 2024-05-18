@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import copy
 from typing import (
     TYPE_CHECKING,
@@ -54,7 +55,15 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from .asset import Asset
-    from .channel import CategoryChannel, DMChannel, GroupChannel, PartialMessageable, TextChannel
+    from .channel import (
+        CategoryChannel,
+        DMChannel,
+        GroupChannel,
+        PartialMessageable,
+        StageChannel,
+        TextChannel,
+        VoiceChannel,
+    )
     from .client import Client
     from .embeds import Embed, EmbedData
     from .enums import InviteTarget
@@ -76,7 +85,9 @@ if TYPE_CHECKING:
     from .ui.view import View
     from .user import ClientUser
 
-    PartialMessageableChannel = Union[TextChannel, Thread, DMChannel, PartialMessageable]
+    PartialMessageableChannel = Union[
+        TextChannel, Thread, DMChannel, PartialMessageable, VoiceChannel, StageChannel
+    ]
     MessageableChannel = Union[PartialMessageableChannel, GroupChannel]
     SnowflakeTime = Union["Snowflake", datetime]
 
@@ -319,10 +330,8 @@ class GuildChannel:
         else:
             parent_id = parent and parent.id
 
-        try:
+        with contextlib.suppress(KeyError):
             options["rate_limit_per_user"] = options.pop("slowmode_delay")
-        except KeyError:
-            pass
 
         try:
             rtc_region = options.pop("rtc_region")
@@ -409,12 +418,10 @@ class GuildChannel:
                 raise InvalidArgument("type field must be of type ChannelType")
             options["type"] = ch_type.value
 
-        try:
+        with contextlib.suppress(KeyError):
             options["default_thread_rate_limit_per_user"] = options.pop(
                 "default_thread_slowmode_delay"
             )
-        except KeyError:
-            pass
 
         try:
             default_reaction = options.pop("default_reaction")
@@ -445,6 +452,7 @@ class GuildChannel:
 
         if options:
             return await self._state.http.edit_channel(self.id, reason=reason, **options)
+        return None
 
     def _fill_overwrites(self, data: GuildChannelPayload) -> None:
         self._overwrites = []
@@ -518,7 +526,7 @@ class GuildChannel:
         elif isinstance(obj, Role):
             predicate = lambda p: p.is_role()
         else:
-            predicate = lambda p: True
+            predicate = lambda _: True
 
         for overwrite in filter(predicate, self._overwrites):
             if overwrite.id == obj.id:
@@ -873,11 +881,10 @@ class GuildChannel:
                 raise InvalidArgument("No overwrite provided.")
             try:
                 overwrite = PermissionOverwrite(**permissions)
-            except (ValueError, TypeError):
-                raise InvalidArgument("Invalid permissions given to keyword arguments.")
-        else:
-            if len(permissions) > 0:
-                raise InvalidArgument("Cannot mix overwrite and keyword arguments.")
+            except (ValueError, TypeError) as e:
+                raise InvalidArgument("Invalid permissions given to keyword arguments.") from e
+        elif len(permissions) > 0:
+            raise InvalidArgument("Cannot mix overwrite and keyword arguments.")
 
         # TODO: wait for event
 
@@ -1071,34 +1078,28 @@ class GuildChannel:
             raise InvalidArgument("Only one of [before, after, end, beginning] can be used.")
 
         bucket = self._sorting_bucket
-        # fmt: off
         channels: List[GuildChannel]
         if category:
             parent_id = category.id
             channels = [
                 ch
                 for ch in self.guild.channels
-                if ch._sorting_bucket == bucket
-                and ch.category_id == parent_id
+                if ch._sorting_bucket == bucket and ch.category_id == parent_id
             ]
         else:
             parent_id = None
             channels = [
                 ch
                 for ch in self.guild.channels
-                if ch._sorting_bucket == bucket
-                and ch.category_id == self.category_id
+                if ch._sorting_bucket == bucket and ch.category_id == self.category_id
             ]
-        # fmt: on
 
         channels.sort(key=lambda c: (c.position, c.id))
 
-        try:
+        with contextlib.suppress(ValueError):
             # Try to remove ourselves from the channel list
-            channels.remove(self)
-        except ValueError:
             # If we're not there then it's probably due to not being in the category
-            pass
+            channels.remove(self)
 
         index = None
         if beginning:
@@ -1239,6 +1240,7 @@ class Messageable:
     - :class:`~nextcord.DMChannel`
     - :class:`~nextcord.GroupChannel`
     - :class:`~nextcord.VoiceChannel`
+    - :class:`~nextcord.StageChannel`
     - :class:`~nextcord.User`
     - :class:`~nextcord.Member`
     - :class:`~nextcord.ext.commands.Context`
@@ -1787,11 +1789,9 @@ class Connectable(Protocol):
         try:
             await voice.connect(timeout=timeout, reconnect=reconnect)
         except asyncio.TimeoutError:
-            try:
+            # we don't care if disconnect failed because connection failed
+            with contextlib.suppress(Exception):
                 await voice.disconnect(force=True)
-            except Exception:
-                # we don't care if disconnect failed because connection failed
-                pass
             raise  # re-raise
 
         return voice

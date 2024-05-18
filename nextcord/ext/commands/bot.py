@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import collections
 import collections.abc
+import contextlib
 import copy
 import importlib.util
 import inspect
@@ -67,7 +68,7 @@ CFT = TypeVar("CFT", bound="CoroFunc")
 CXT = TypeVar("CXT", bound="Context")
 
 
-def when_mentioned(bot: Union[Bot, AutoShardedBot], msg: Message) -> List[str]:
+def when_mentioned(bot: Union[Bot, AutoShardedBot], _msg: Message) -> List[str]:
     """A callable that implements a command prefix equivalent to being mentioned.
 
     These are meant to be passed into the :attr:`.Bot.command_prefix` attribute.
@@ -108,8 +109,7 @@ def when_mentioned_or(*prefixes: str) -> Callable[[Union[Bot, AutoShardedBot], M
 
     def inner(bot, msg):
         r = list(prefixes)
-        r = when_mentioned(bot, msg) + r
-        return r
+        return when_mentioned(bot, msg) + r
 
     return inner
 
@@ -135,8 +135,6 @@ class MissingMessageContentIntentWarning(UserWarning):
 
         warnings.simplefilter("ignore", commands.MissingMessageContentIntentWarning)
     """
-
-    pass
 
 
 _NonCallablePrefix = Union[str, Sequence[str]]
@@ -166,7 +164,7 @@ class BotBase(GroupMixin):
             case_insensitive=case_insensitive,
         )
 
-        self.command_prefix = command_prefix if command_prefix is not MISSING else tuple()
+        self.command_prefix = command_prefix if command_prefix is not MISSING else ()
         self.extra_events: Dict[str, List[CoroFunc]] = {}
         self.__cogs: Dict[str, Cog] = {}
         self.__extensions: Dict[str, types.ModuleType] = {}
@@ -226,16 +224,12 @@ class BotBase(GroupMixin):
     @nextcord.utils.copy_doc(nextcord.Client.close)
     async def close(self) -> None:
         for extension in tuple(self.__extensions):
-            try:
+            with contextlib.suppress(Exception):
                 self.unload_extension(extension)
-            except Exception:
-                pass
 
         for cog in tuple(self.__cogs):
-            try:
+            with contextlib.suppress(Exception):
                 self.remove_cog(cog)
-            except Exception:
-                pass
 
         await super().close()  # type: ignore
 
@@ -260,7 +254,7 @@ class BotBase(GroupMixin):
         if cog and cog.has_error_handler():
             return
 
-        print(f"Ignoring exception in command {context.command}:", file=sys.stderr)
+        print(f"Ignoring exception in command {context.command}:", file=sys.stderr)  # noqa: T201
         traceback.print_exception(
             type(exception), exception, exception.__traceback__, file=sys.stderr
         )
@@ -332,10 +326,8 @@ class BotBase(GroupMixin):
         """
         l = self._check_once if call_once else self._checks
 
-        try:
+        with contextlib.suppress(ValueError):
             l.remove(func)
-        except ValueError:
-            pass
 
     def check_once(self, func: CFT) -> CFT:
         r"""A decorator that adds a "call once" global check to the bot.
@@ -409,16 +401,16 @@ class BotBase(GroupMixin):
 
         if self.owner_id:
             return user.id == self.owner_id
-        elif self.owner_ids:
+        if self.owner_ids:
             return user.id in self.owner_ids
-        else:
-            app = await self.application_info()  # type: ignore
-            if app.team:
-                self.owner_ids = ids = {m.id for m in app.team.members}
-                return user.id in ids
-            else:
-                self.owner_id = owner_id = app.owner.id
-                return user.id == owner_id
+
+        app = await self.application_info()  # type: ignore
+        if app.team:
+            self.owner_ids = ids = {m.id for m in app.team.members}
+            return user.id in ids
+
+        self.owner_id = owner_id = app.owner.id
+        return user.id == owner_id
 
     def before_invoke(self, coro: CFT) -> CFT:
         """A decorator that registers a coroutine as a pre-invoke hook.
@@ -534,10 +526,8 @@ class BotBase(GroupMixin):
         name = func.__name__ if name is MISSING else name
 
         if name in self.extra_events:
-            try:
+            with contextlib.suppress(ValueError):
                 self.extra_events[name].remove(func)
-            except ValueError:
-                pass
 
     def listen(self, name: str = MISSING) -> Callable[[CFT], CFT]:
         """A decorator that registers another function as an external
@@ -669,7 +659,7 @@ class BotBase(GroupMixin):
 
         cog = self.__cogs.pop(name, None)
         if cog is None:
-            return
+            return None
 
         help_command = self._help_command
         if help_command and help_command.cog is cog:
@@ -715,14 +705,13 @@ class BotBase(GroupMixin):
 
     def _call_module_finalizers(self, lib: types.ModuleType, key: str) -> None:
         try:
-            func = getattr(lib, "teardown")
+            func = lib.teardown
         except AttributeError:
             pass
         else:
-            try:
+            with contextlib.suppress(Exception):
                 func(self)
-            except Exception:
-                pass
+
         finally:
             self.__extensions.pop(key, None)
             sys.modules.pop(key, None)
@@ -737,7 +726,7 @@ class BotBase(GroupMixin):
         key: str,
         extras: Optional[Dict[str, Any]] = None,
     ) -> None:
-        # precondition: key not in self.__extensions
+        # precondition - key not in self.__extensions
         lib = importlib.util.module_from_spec(spec)
         sys.modules[key] = lib
         try:
@@ -747,10 +736,10 @@ class BotBase(GroupMixin):
             raise errors.ExtensionFailed(key, e) from e
 
         try:
-            setup = getattr(lib, "setup")
+            setup = lib.setup
         except AttributeError:
             del sys.modules[key]
-            raise errors.NoEntryPointError(key)
+            raise errors.NoEntryPointError(key) from None
 
         params = inspect.signature(setup).parameters
         has_kwargs = len(params) > 1
@@ -758,14 +747,15 @@ class BotBase(GroupMixin):
         if extras is not None:
             if not has_kwargs:
                 raise errors.InvalidSetupArguments(key)
-            elif not isinstance(extras, dict):
+            if not isinstance(extras, dict):
                 raise errors.ExtensionFailed(key, TypeError("Expected 'extras' to be a dictionary"))
 
         extras = extras or {}
         try:
             if asyncio.iscoroutinefunction(setup):
                 try:
-                    asyncio.create_task(setup(self, **extras))
+                    # I don't want to deal with handling tasks with a niche feature.
+                    asyncio.create_task(setup(self, **extras))  # noqa: RUF006
                 except RuntimeError:
                     raise RuntimeError(
                         """
@@ -773,7 +763,7 @@ class BotBase(GroupMixin):
                     Please read our FAQ here:
                     https://docs.nextcord.dev/en/stable/faq.html#how-do-i-make-my-setup-function-a-coroutine-and-load-it
                     """
-                    )
+                    ) from None
             else:
                 setup(self, **extras)
         except Exception as e:
@@ -787,8 +777,8 @@ class BotBase(GroupMixin):
     def _resolve_name(self, name: str, package: Optional[str]) -> str:
         try:
             return importlib.util.resolve_name(name, package)
-        except ImportError:
-            raise errors.ExtensionNotFound(name)
+        except ImportError as e:
+            raise errors.ExtensionNotFound(name) from e
 
     def load_extension(
         self, name: str, *, package: Optional[str] = None, extras: Optional[Dict[str, Any]] = None
@@ -906,7 +896,9 @@ class BotBase(GroupMixin):
         self._remove_module_references(lib.__name__)
         self._call_module_finalizers(lib, name)
 
-    def reload_extension(self, name: str, *, package: Optional[str] = None) -> None:
+    def reload_extension(
+        self, name: str, *, package: Optional[str] = None, extras: Optional[Dict[str, Any]] = None
+    ) -> None:
         """Atomically reloads an extension.
 
         This replaces the extension with the same extension, only refreshed. This is
@@ -926,6 +918,30 @@ class BotBase(GroupMixin):
             Defaults to ``None``.
 
             .. versionadded:: 1.7
+        extras: Optional[:class:`dict`]
+            A mapping of kwargs to values to be passed to your
+            cog's ``__init__`` method as keyword arguments.
+
+            Usage ::
+
+                # main.py
+                bot.load_extension("cogs.me_cog", extras={"keyword_arg": False})
+                bot.reload_extension("cogs.me_cog", extras={"keyword_arg": True})
+
+                # cogs/me_cog.py
+                class MeCog(commands.Cog):
+                    def __init__(self, bot, keyword_arg):
+                        self.bot = bot
+                        self.keyword_arg = keyword_arg
+
+                def setup(bot, **kwargs):
+                    bot.add_cog(MeCog(bot, **kwargs))
+
+                # Alternately
+                def setup(bot, keyword_arg):
+                    bot.add_cog(MeCog(bot, keyword_arg))
+
+            .. versionadded:: v3.0
 
         Raises
         ------
@@ -939,6 +955,9 @@ class BotBase(GroupMixin):
             The extension does not have a setup function.
         ExtensionFailed
             The extension setup function had an execution error.
+        InvalidSetupArguments
+            ``reload_extension`` was given ``extras`` but the ``setup``
+            function did not take any additional arguments.
         """
 
         name = self._resolve_name(name, package)
@@ -957,7 +976,7 @@ class BotBase(GroupMixin):
             # Unload and then load the module...
             self._remove_module_references(lib.__name__)
             self._call_module_finalizers(lib, name)
-            self.load_extension(name)
+            self.load_extension(name, extras=extras)
         except Exception:
             # if the load failed, the remnants should have been
             # cleaned from the load_extension function call
@@ -1117,9 +1136,8 @@ class BotBase(GroupMixin):
             except Exception as e:
                 if stop_at_error:
                     raise e
-                else:
-                    # we print the exception instead of raising it because we want to continue loading extensions
-                    traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
+                # we print the exception instead of raising it because we want to continue loading extensions
+                traceback.print_exception(type(e), e, e.__traceback__, file=sys.stderr)
             else:
                 loaded_extensions.append(extension)
 
@@ -1258,7 +1276,7 @@ class BotBase(GroupMixin):
                 raise TypeError(
                     "command_prefix must be plain string, iterable of strings, or callable "
                     f"returning either of these, not {ret.__class__.__name__}"
-                )
+                ) from None
 
         return ret
 
@@ -1318,7 +1336,7 @@ class BotBase(GroupMixin):
                     raise TypeError(
                         "get_prefix must return either a string or a list of string, "
                         f"not {prefix.__class__.__name__}"
-                    )
+                    ) from None
 
                 # It's possible a bad command_prefix got us here.
                 for value in prefix:
@@ -1326,7 +1344,7 @@ class BotBase(GroupMixin):
                         raise TypeError(
                             "Iterable command_prefix or list returned from get_prefix must "
                             f"contain only strings, not {value.__class__.__name__}"
-                        )
+                        ) from None
 
                 # Getting here shouldn't happen
                 raise
@@ -1518,7 +1536,7 @@ class Bot(BotBase, nextcord.Client):
                 [Union[Bot, AutoShardedBot], Message],
                 Union[Awaitable[_NonCallablePrefix], _NonCallablePrefix],
             ],
-        ] = tuple(),
+        ] = (),
         help_command: Optional[HelpCommand] = MISSING,
         description: Optional[str] = None,
         *,
@@ -1610,7 +1628,7 @@ class AutoShardedBot(BotBase, nextcord.AutoShardedClient):
                 [Union[Bot, AutoShardedBot], Message],
                 Union[Awaitable[_NonCallablePrefix], _NonCallablePrefix],
             ],
-        ] = tuple(),
+        ] = (),
         help_command: Optional[HelpCommand] = MISSING,
         description: Optional[str] = None,
         *,
