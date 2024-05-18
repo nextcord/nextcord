@@ -295,8 +295,9 @@ class Invite(Hashable):
         The embedded application the invite targets, if any.
 
         .. versionadded:: 2.0
-    type: :class:`int`
+    type: :class:`InviteType`
         The type of invite.
+
         .. versionadded:: 3.0
     """
 
