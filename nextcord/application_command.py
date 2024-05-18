@@ -1960,8 +1960,8 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         nsfw: bool = False,
-        integration_types: Optional[Iterable[IntegrationType]] = None,
-        contexts: Optional[Iterable[InteractionContextType]] = None,
+        integration_types: Optional[Iterable[Union[IntegrationType, int]]] = None,
+        contexts: Optional[Iterable[Union[InteractionContextType, int]]] = None,
         parent_cog: Optional[ClientCog] = None,
         force_global: bool = False,
     ) -> None:
@@ -2003,11 +2003,11 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             Whether the command can only be used in age-restricted channels. Defaults to ``False``.
 
             .. versionadded:: 2.4
-        integration_types: Optional[Iterable[:class:`IntegrationType`]]
+        integration_types: Optional[Iterable[Union[:class:`IntegrationType`, :class:`int`]]]
             Where the command is available, only for globally-scoped commands. Defaults to ``guild_install``.
 
             .. versionadded:: 3.0
-        contexts: Optional[Iterable[:class:`InteractionContextType`]]
+        contexts: Optional[Iterable[Union[:class:`InteractionContextType`, :class:`int`]]]
             Where the command can be used, only for globally-scoped commands. By default, all interaction context types included for new commands.
 
             .. versionadded:: 3.0
@@ -2032,7 +2032,9 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             Union[Permissions, int]
         ] = default_member_permissions
         self.nsfw: bool = nsfw
-        self.integration_types = integration_types
+        self.integration_types = (
+            None if integration_types is None else [IntegrationType(x) for x in integration_types]
+        )
 
         if dm_permission is not None:
             if contexts is not None:
@@ -2040,7 +2042,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             contexts = [InteractionContextType.bot_dm] if dm_permission else []
             if integration_types is None or IntegrationType.guild_install in integration_types:
                 contexts.append(InteractionContextType.guild)
-        self.contexts = contexts
+        self.contexts = None if contexts is None else [InteractionContextType(x) for x in contexts]
 
         self.force_global: bool = force_global
 
@@ -2887,8 +2889,8 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         nsfw: bool = False,
-        integration_types: Optional[Iterable[IntegrationType]] = None,
-        contexts: Optional[Iterable[InteractionContextType]] = None,
+        integration_types: Optional[Iterable[Union[IntegrationType, int]]] = None,
+        contexts: Optional[Iterable[Union[InteractionContextType, int]]] = None,
         parent_cog: Optional[ClientCog] = None,
         force_global: bool = False,
     ) -> None:
@@ -2930,11 +2932,11 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
                 Due to a discord limitation, this can only be set for the parent command in case of a subcommand.
 
             .. versionadded:: 2.4
-        integration_types: Optional[Iterable[:class:`IntegrationType`]]
+        integration_types: Optional[Iterable[Union[:class:`IntegrationType`, :class:`int`]]]
             Where the command is available, only for globally-scoped commands. Defaults to ``guild_install``.
 
             .. versionadded:: 3.0
-        contexts: Optional[Iterable[:class:`InteractionContextType`]]
+        contexts: Optional[Iterable[Union[:class:`InteractionContextType`, :class:`int`]]]
             Where the command can be used, only for globally-scoped commands. By default, all interaction context types included for new commands.
 
             .. versionadded:: 3.0
@@ -3077,8 +3079,8 @@ class UserApplicationCommand(BaseApplicationCommand):
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         nsfw: bool = False,
-        integration_types: Optional[Iterable[IntegrationType]] = None,
-        contexts: Optional[Iterable[InteractionContextType]] = None,
+        integration_types: Optional[Iterable[Union[IntegrationType, int]]] = None,
+        contexts: Optional[Iterable[Union[InteractionContextType, int]]] = None,
         parent_cog: Optional[ClientCog] = None,
         force_global: bool = False,
     ) -> None:
@@ -3111,11 +3113,11 @@ class UserApplicationCommand(BaseApplicationCommand):
             Whether the command can only be used in age-restricted channels. Defaults to ``False``.
 
             .. versionadded:: 2.4
-        integration_types: Optional[Iterable[:class:`IntegrationType`]]
+        integration_types: Optional[Iterable[Union[:class:`IntegrationType`, :class:`int`]]]
             Where the command is available, only for globally-scoped commands. Defaults to ``guild_install``.
 
             .. versionadded:: 3.0
-        contexts: Optional[Iterable[:class:`InteractionContextType`]]
+        contexts: Optional[Iterable[Union[:class:`InteractionContextType`, :class:`int`]]]
             Where the command can be used, only for globally-scoped commands. By default, all interaction context types included for new commands.
 
             .. versionadded:: 3.0
@@ -3175,8 +3177,8 @@ class MessageApplicationCommand(BaseApplicationCommand):
         dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         nsfw: bool = False,
-        integration_types: Optional[Iterable[IntegrationType]] = None,
-        contexts: Optional[Iterable[InteractionContextType]] = None,
+        integration_types: Optional[Iterable[Union[IntegrationType, int]]] = None,
+        contexts: Optional[Iterable[Union[InteractionContextType, int]]] = None,
         parent_cog: Optional[ClientCog] = None,
         force_global: bool = False,
     ) -> None:
@@ -3209,11 +3211,11 @@ class MessageApplicationCommand(BaseApplicationCommand):
             Whether the command can only be used in age-restricted channels. Defaults to ``False``.
 
             .. versionadded:: 2.4
-        integration_types: Optional[Iterable[:class:`IntegrationType`]]
+        integration_types: Optional[Iterable[Union[:class:`IntegrationType`, :class:`int`]]]
             Where the command is available, only for globally-scoped commands. Defaults to ``guild_install``.
 
             .. versionadded:: 3.0
-        contexts: Optional[Iterable[:class:`InteractionContextType`]]
+        contexts: Optional[Iterable[Union[:class:`InteractionContextType`, :class:`int`]]]
             Where the command can be used, only for globally-scoped commands. By default, all interaction context types included for new commands.
 
             .. versionadded:: 3.0
@@ -3270,8 +3272,8 @@ def slash_command(
     dm_permission: Optional[bool] = None,
     default_member_permissions: Optional[Union[Permissions, int]] = None,
     nsfw: bool = False,
-    integration_types: Optional[Iterable[IntegrationType]] = None,
-    contexts: Optional[Iterable[InteractionContextType]] = None,
+    integration_types: Optional[Iterable[Union[IntegrationType, int]]] = None,
+    contexts: Optional[Iterable[Union[InteractionContextType, int]]] = None,
     force_global: bool = False,
 ):
     """Creates a Slash application command from the decorated function.
@@ -3313,11 +3315,11 @@ def slash_command(
             Due to a discord limitation, this can only be set for the parent command in case of a subcommand.
 
         .. versionadded:: 2.4
-    integration_types: Optional[Iterable[:class:`IntegrationType`]]
+    integration_types: Optional[Iterable[Union[:class:`IntegrationType`, :class:`int`]]]
         Where the command is available, only for globally-scoped commands. Defaults to ``guild_install``.
 
         .. versionadded:: 3.0
-    contexts: Optional[Iterable[:class:`InteractionContextType`]]
+    contexts: Optional[Iterable[Union[:class:`InteractionContextType`, :class:`int`]]]
         Where the command can be used, only for globally-scoped commands. By default, all interaction context types included for new commands.
 
         .. versionadded:: 3.0
@@ -3356,8 +3358,8 @@ def message_command(
     dm_permission: Optional[bool] = None,
     default_member_permissions: Optional[Union[Permissions, int]] = None,
     nsfw: bool = False,
-    integration_types: Optional[Iterable[IntegrationType]] = None,
-    contexts: Optional[Iterable[InteractionContextType]] = None,
+    integration_types: Optional[Iterable[Union[IntegrationType, int]]] = None,
+    contexts: Optional[Iterable[Union[InteractionContextType, int]]] = None,
     force_global: bool = False,
 ):
     """Creates a Message context command from the decorated function.
@@ -3389,11 +3391,11 @@ def message_command(
         Whether the command can only be used in age-restricted channels. Defaults to ``False``.
 
         .. versionadded:: 2.4
-    integration_types: Optional[Iterable[:class:`IntegrationType`]]
+    integration_types: Optional[Iterable[Union[:class:`IntegrationType`, :class:`int`]]]
         Where the command is available, only for globally-scoped commands. Defaults to ``guild_install``.
 
         .. versionadded:: 3.0
-    contexts: Optional[Iterable[:class:`InteractionContextType`]]
+    contexts: Optional[Iterable[Union[:class:`InteractionContextType`, :class:`int`]]]
         Where the command can be used, only for globally-scoped commands. By default, all interaction context types included for new commands.
 
         .. versionadded:: 3.0
@@ -3430,8 +3432,8 @@ def user_command(
     dm_permission: Optional[bool] = None,
     default_member_permissions: Optional[Union[Permissions, int]] = None,
     nsfw: bool = False,
-    integration_types: Optional[Iterable[IntegrationType]] = None,
-    contexts: Optional[Iterable[InteractionContextType]] = None,
+    integration_types: Optional[Iterable[Union[IntegrationType, int]]] = None,
+    contexts: Optional[Iterable[Union[InteractionContextType, int]]] = None,
     force_global: bool = False,
 ):
     """Creates a User context command from the decorated function.
@@ -3463,11 +3465,11 @@ def user_command(
         Whether the command can only be used in age-restricted channels. Defaults to ``False``.
 
         .. versionadded:: 2.4
-    integration_types: Optional[Iterable[:class:`IntegrationType`]]
+    integration_types: Optional[Iterable[Union[:class:`IntegrationType`, :class:`int`]]]
         Where the command is available, only for globally-scoped commands. Defaults to ``guild_install``.
 
         .. versionadded:: 3.0
-    contexts: Optional[Iterable[:class:`InteractionContextType`]]
+    contexts: Optional[Iterable[Union[:class:`InteractionContextType`, :class:`int`]]]
         Where the command can be used, only for globally-scoped commands. By default, all interaction context types included for new commands.
 
         .. versionadded:: 3.0
