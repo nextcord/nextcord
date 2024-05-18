@@ -268,12 +268,12 @@ class Interaction(Hashable, Generic[ClientT]):
             self.authorizing_integration_owners = None
         else:
             self.authorizing_integration_owners = {
-                IntegrationType(int(integration_type)): int(details)
+                try_enum(IntegrationType, int(integration_type)): int(details)
                 for integration_type, details in authorizing_integration_owners.items()
             }
 
         self.context: Optional[InteractionContextType] = (
-            InteractionContextType(data["context"]) if "context" in data else None
+            try_enum(InteractionContextType, data["context"]) if "context" in data else None
         )
 
     @property
