@@ -65,12 +65,15 @@ class ApplicationIntegrationTypeConfig:
         The scopes and permissions for this installation context.
     """
 
-    __slots__ = ("oauth2_install_params",)
+    __slots__ = (
+        "_oauth2_install_params",
+        "oauth2_install_params",
+    )
 
     def __init__(self, data: ApplicationIntegrationTypeConfigPayload) -> None:
-        install_params = data.get("oauth2_install_params")
+        self._oauth2_install_params = data.get("oauth2_install_params")
         self.oauth2_install_params: Optional[InstallParams] = (
-            InstallParams(install_params) if install_params else None
+            InstallParams(self._oauth2_install_params) if self._oauth2_install_params else None
         )
 
     def __repr__(self) -> str:
@@ -141,6 +144,7 @@ class AppInfo:
         "team",
         "terms_of_service_url",
         "privacy_policy_url",
+        "_integration_types_config",
         "integration_types_config",
     )
 
@@ -165,16 +169,16 @@ class AppInfo:
         self.terms_of_service_url: Optional[str] = data.get("terms_of_service_url")
         self.privacy_policy_url: Optional[str] = data.get("privacy_policy_url")
 
-        integration_types_config: Optional[IntegrationTypesConfigPayload] = data.get(
+        self._integration_types_config: Optional[IntegrationTypesConfigPayload] = data.get(
             "integration_types_config"
         )
         self.integration_types_config: Optional[
             Dict[IntegrationType, ApplicationIntegrationTypeConfig]
         ]
-        if integration_types_config:
+        if self._integration_types_config:
             self.integration_types_config = {
                 IntegrationType(int(integration_type)): ApplicationIntegrationTypeConfig(data)
-                for integration_type, data in integration_types_config.items()
+                for integration_type, data in self._integration_types_config.items()
             }
         else:
             self.integration_types_config = None
