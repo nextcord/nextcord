@@ -736,13 +736,7 @@ class MessageInteractionMetadata(Hashable):
         )
 
     def __repr__(self) -> str:
-        return (
-            f"<{self.__class__.__name__} id={self.id} type={self.type} user={self.user!r} "
-            f"authorizing_integration_owners={self.authorizing_integration_owners} name={self.name!r} "
-            f"original_response_message_id={self.original_response_message_id} "
-            f"interacted_message_id={self.interacted_message_id} "
-            f"triggering_interaction_metadata={self.triggering_interaction_metadata!r}>"
-        )
+        return f"<{self.__class__.__name__} id={self.id} type={self.type} user={self.user!r} name={self.name!r}"
 
     @property
     def created_at(self) -> datetime.datetime:
