@@ -389,7 +389,8 @@ class ClientUser(BaseUser):
             A :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`, or :class:`Asset`
             representing the image to upload. Could be ``None`` to denote no avatar.
         banner: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
-            The banner that you wish to change to. Passing ``None`` denotes no banner.
+            A :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`, or :class:`Asset`
+            representing the image to upload. Could be ``None`` to denote no banner.
 
         Raises
         ------
