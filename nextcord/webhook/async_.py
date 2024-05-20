@@ -33,7 +33,7 @@ from ..channel import PartialMessageable
 from ..enums import WebhookType, try_enum
 from ..errors import DiscordServerError, Forbidden, HTTPException, InvalidArgument, NotFound
 from ..flags import MessageFlags
-from ..http import Route
+from ..http import _USER_AGENT, Route
 from ..message import Attachment, Message
 from ..mixins import Hashable
 from ..user import BaseUser, User
@@ -108,7 +108,8 @@ class AsyncWebhookAdapter:
         auth_token: Optional[str] = None,
         params: Optional[Dict[str, Any]] = None,
     ) -> Any:
-        headers: Dict[str, str] = {}
+        # always ensure our user agent is being used
+        headers: Dict[str, str] = {"User-Agent": _USER_AGENT}
         files = files or []
         to_send: Optional[Union[str, aiohttp.FormData]] = None
         bucket = (route.webhook_id, route.webhook_token)
@@ -1151,12 +1152,12 @@ class Webhook(BaseWebhook):
 
         state = channel._state
         session = channel._state.http._HTTPClient__session
-        return cls(feed, session=session, state=state, token=state.http.token)
+        return cls(feed, session=session, state=state, token=state._get_client()._token)
 
     @classmethod
     def from_state(cls, data, state) -> Webhook:
         session = state.http._HTTPClient__session
-        return cls(data, session=session, state=state, token=state.http.token)
+        return cls(data, session=session, state=state, token=state._get_client()._token)
 
     async def fetch(self, *, prefer_auth: bool = True) -> Webhook:
         """|coro|
