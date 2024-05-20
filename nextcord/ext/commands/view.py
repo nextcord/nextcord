@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 
-from typing import Optional, Tuple, Type, overload
+from typing import Dict, Optional, Tuple, Type, overload
 
 from typing_extensions import Self
 
@@ -79,7 +79,7 @@ class Quotation:
         if start == "" or end == "":
             raise ValueError("Quotations must be an non-empty string.")
 
-        self._values: dict[str, str] = {start: end or start}
+        self._values: Dict[str, str] = {start: end or start}
         self._is_default: bool = False
 
     @classmethod
