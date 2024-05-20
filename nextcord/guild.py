@@ -71,7 +71,7 @@ from .threads import Thread, ThreadMember
 from .user import User
 from .widget import Widget
 
-__all__ = ("Guild",)
+__all__ = ("Guild", "AsyncGuild",)
 
 MISSING = utils.MISSING
 
@@ -83,7 +83,8 @@ if TYPE_CHECKING:
     from .application_command import BaseApplicationCommand
     from .auto_moderation import AutoModerationAction
     from .channel import ForumTag
-    from .enums import ForumLayoutType, SortOrderType
+    from .client import Client
+    from .enums import ForumLayoutType, SortOrderType, NSFWLevel
     from .file import File
     from .message import Attachment
     from .permissions import Permissions
@@ -112,6 +113,38 @@ if TYPE_CHECKING:
     VocalGuildChannel = Union[VoiceChannel, StageChannel]
     GuildChannel = Union[VoiceChannel, StageChannel, TextChannel, CategoryChannel, ForumChannel]
     ByCategoryItem = Tuple[Optional[CategoryChannel], List[GuildChannel]]
+
+
+class AsyncGuild:
+    _bot: Client
+    approximate_member_count: Optional[int]
+    approximate_presence_count: Optional[int]
+    id: int
+    mfa_level: MFALevel
+    name: str
+    nsfw_level: NSFWLevel
+    # owner: Optional[bool] # TODO: How is this handled? Returned if querying guilds someone is in?
+    owner_id: int
+
+    @classmethod
+    def from_guild_payload(cls, guild_payload: GuildPayload, *, bot: Client):
+        ret = cls()
+        ret._bot = bot
+
+        ret.approximate_member_count = guild_payload.get("approximate_member_count", None)
+        ret.approximate_presence_count = guild_payload.get("approximate_presence_count", None)
+        ret.id = int(guild_payload["id"])
+        ret.mfa_level = try_enum(MFALevel, guild_payload["mfa_level"])
+        ret.name = guild_payload["name"]
+        ret.nsfw_level = try_enum(NSFWLevel, guild_payload["nsfw_level"])
+        ret.owner_id = int(guild_payload["owner_id"])
+
+        return ret
+
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__} id={self.id} name={self.name}>"
+
+
 
 
 class _GuildLimit(NamedTuple):

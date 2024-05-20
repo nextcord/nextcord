@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import concurrent.futures
+import inspect
 import logging
 import struct
 import sys
@@ -547,7 +548,10 @@ class DiscordWebSocket:
         except KeyError:
             _log.debug("Unknown event %s.", event)
         else:
-            func(data)
+            if inspect.iscoroutinefunction(func):
+                await func(data)
+            else:
+                func(data)
 
         # remove the dispatched listeners
         removed = []

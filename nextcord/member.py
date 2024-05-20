@@ -10,7 +10,7 @@ import sys
 from operator import attrgetter
 from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Union
 
-from . import abc, utils
+from . import abc, utils, Client
 from .activity import ActivityTypes, create_activity
 from .asset import Asset
 from .colour import Colour
@@ -18,7 +18,7 @@ from .enums import Status, try_enum
 from .flags import MemberFlags
 from .object import Object
 from .permissions import Permissions
-from .user import BaseUser, User, _UserTag
+from .user import BaseUser, User, _UserTag, AsyncUser
 from .utils import MISSING
 
 __all__ = (
@@ -46,6 +46,14 @@ if TYPE_CHECKING:
     from .types.voice import VoiceState as VoiceStatePayload
 
     VocalGuildChannel = Union[VoiceChannel, StageChannel]
+
+
+class AsyncMember(AsyncUser):
+    nickname: Optional[str]
+
+    @classmethod
+    def from_payload(cls, payload: MemberPayload, *, bot: Client):
+
 
 
 class VoiceState:

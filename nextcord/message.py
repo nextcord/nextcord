@@ -44,6 +44,7 @@ if TYPE_CHECKING:
 
     from .abc import GuildChannel, MessageableChannel, PartialMessageableChannel, Snowflake
     from .channel import TextChannel
+    from .client import Client
     from .components import Component
     from .mentions import AllowedMentions
     from .role import Role
@@ -68,6 +69,7 @@ if TYPE_CHECKING:
     EmojiInputType = Union[Emoji, PartialEmoji, str]
 
 __all__ = (
+    "AsyncMessage",
     "Attachment",
     "Message",
     "PartialMessage",
@@ -75,6 +77,33 @@ __all__ = (
     "DeletedReferencedMessage",
     "MessageInteraction",
 )
+
+
+class AsyncMessage:
+    _bot: Client
+
+    # author: User  # This is rather awkward, the user object is typically included with the message, but we want cached
+    #  async stuff?
+    channel_id: int
+    content: str
+    id: int
+    type: MessageType
+
+    @classmethod
+    def from_message_payload(cls, payload: MessagePayload, *, bot: Client):
+        ret = cls()
+        ret._bot = bot
+
+        ret.channel_id = int(payload["channel_id"])
+        ret.content = payload["content"]
+        ret.id = int(payload["id"])
+        ret.type = try_enum(MessageType, payload["type"])
+
+        return ret
+
+    def __repr__(self) -> str:
+        name = self.__class__.__name__
+        return f"<{name} id={self.id} channel_id={self.channel_id} type={self.type}>"
 
 
 def convert_emoji_reaction(emoji):

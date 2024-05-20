@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from .channel import DMChannel
+    from .client import Client
     from .file import File
     from .guild import Guild
     from .message import Attachment, Message
@@ -26,9 +27,33 @@ if TYPE_CHECKING:
 
 
 __all__ = (
+    "AsyncUser",
     "User",
     "ClientUser",
 )
+
+
+class AsyncUser:
+    _bot: Client
+
+    _avatar: Optional[str]
+    discriminator: str
+    global_name: Optional[str]
+    id: int
+    username: str
+
+    @classmethod
+    def from_payload(cls, payload: UserPayload, *, bot: Client):
+        ret = cls()
+        ret._bot = bot
+
+        ret._avatar = payload["avatar"]
+        ret.discriminator = payload["discriminator"]
+        ret.global_name = payload["global_name"]
+        ret.id = int(payload["id"])
+        ret.username = payload["username"]
+
+        return ret
 
 
 class _UserTag:

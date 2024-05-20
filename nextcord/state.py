@@ -31,6 +31,7 @@ from .activity import BaseActivity
 from .application_command import BaseApplicationCommand
 from .audit_logs import AuditLogEntry
 from .auto_moderation import AutoModerationActionExecution, AutoModerationRule
+from .cache import BaseCache
 from .channel import *
 from .channel import _channel_factory
 from .emoji import Emoji
@@ -53,7 +54,7 @@ from .sticker import GuildSticker
 from .threads import Thread, ThreadMember
 from .ui.modal import Modal, ModalStore
 from .ui.view import View, ViewStore
-from .user import ClientUser, User
+from .user import ClientUser, User, AsyncUser
 
 if TYPE_CHECKING:
     from asyncio import Future
@@ -155,6 +156,7 @@ class ConnectionState:
         hooks: Dict[str, Callable],
         http: HTTPClient,
         loop: asyncio.AbstractEventLoop,
+        cache: BaseCache,
         max_messages: Optional[int] = 1000,
         application_id: Optional[int] = None,
         heartbeat_timeout: float = 60.0,
@@ -166,6 +168,7 @@ class ConnectionState:
         chunk_guilds_at_startup: bool = MISSING,
         member_cache_flags: MemberCacheFlags = MISSING,
     ) -> None:
+        self._cache = cache
         self.loop: asyncio.AbstractEventLoop = loop
         self.http: HTTPClient = http
         self.max_messages: Optional[int] = max_messages
@@ -1286,8 +1289,9 @@ class ConnectionState:
     def parse_resumed(self, data) -> None:
         self.dispatch("resumed")
 
-    def parse_message_create(self, data) -> None:
+    async def parse_message_create(self, data) -> None:
         channel, _ = self._get_guild_channel(data)
+        await self._cache.add_message(data)
         # channel would be the correct type here
         message = Message(channel=channel, data=data, state=self)  # type: ignore
         self.dispatch("message", message)
@@ -1297,8 +1301,9 @@ class ConnectionState:
         if channel and channel.__class__ in (TextChannel, ForumChannel, Thread, VoiceChannel):
             channel.last_message_id = message.id  # type: ignore
 
-    def parse_message_delete(self, data) -> None:
+    async def parse_message_delete(self, data) -> None:
         raw = RawMessageDeleteEvent(data)
+        await self._cache.remove_message(raw.message_id)
         found = self._get_message(raw.message_id)
         raw.cached_message = found
         self.dispatch("raw_message_delete", raw)
@@ -1306,7 +1311,7 @@ class ConnectionState:
             self.dispatch("message_delete", found)
             self._messages.remove(found)
 
-    def parse_message_delete_bulk(self, data) -> None:
+    async def parse_message_delete_bulk(self, data) -> None:
         raw = RawBulkMessageDeleteEvent(data)
         if self._messages:
             found_messages = [
@@ -1320,6 +1325,7 @@ class ConnectionState:
             self.dispatch("bulk_message_delete", found_messages)
             for msg in found_messages:
                 # self._messages won't be None here
+                await self._cache.remove_message(msg.id)
                 self._messages.remove(msg)  # type: ignore
 
     def parse_message_update(self, data) -> None:

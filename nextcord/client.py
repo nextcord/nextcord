@@ -36,6 +36,7 @@ from .activity import ActivityTypes, BaseActivity, create_activity
 from .appinfo import AppInfo
 from .application_command import message_command, slash_command, user_command
 from .backoff import ExponentialBackoff
+from .cache import BaseCache, MemoryCache
 from .channel import PartialMessageable, _threaded_channel_factory
 from .emoji import Emoji
 from .enums import (
@@ -48,13 +49,14 @@ from .enums import (
 from .errors import *
 from .flags import ApplicationFlags, Intents
 from .gateway import *
-from .guild import Guild
+from .guild import Guild, AsyncGuild
 from .guild_preview import GuildPreview
 from .http import HTTPClient
 from .interactions import Interaction
 from .invite import Invite
 from .iterators import GuildIterator
 from .mentions import AllowedMentions
+from .message import AsyncMessage
 from .object import Object
 from .stage_instance import StageInstance
 from .state import ConnectionState
@@ -62,9 +64,10 @@ from .sticker import GuildSticker, StandardSticker, StickerPack, _sticker_factor
 from .template import Template
 from .threads import Thread
 from .types.interactions import ApplicationCommandInteractionData
+from .typesheet import BaseTypeSheet, DefaultTypeSheet
 from .ui.modal import Modal
 from .ui.view import View
-from .user import ClientUser, User
+from .user import ClientUser, User, AsyncUser
 from .utils import MISSING
 from .voice_client import VoiceClient
 from .webhook import Webhook
@@ -287,11 +290,18 @@ class Client:
         rollout_update_known: bool = True,
         rollout_all_guilds: bool = False,
         default_guild_ids: Optional[List[int]] = None,
+        cache_class: Type[BaseCache] = MemoryCache,
+        cache_kwargs: Optional[Dict[str, Any]] = None,
+        typesheet_class: Type[BaseTypeSheet] = DefaultTypeSheet,
+        typesheet_kwargs: Optional[Dict[str, Any]] = None,
     ) -> None:
         # self.ws is set in the connect method
         self.ws: DiscordWebSocket = None  # type: ignore
         self.loop: asyncio.AbstractEventLoop = asyncio.get_event_loop() if loop is None else loop
         self._listeners: Dict[str, List[Tuple[asyncio.Future, Callable[..., bool]]]] = {}
+
+        self.typesheet: BaseTypeSheet = typesheet_class(self, **(typesheet_kwargs or {}))
+        self.cache: BaseCache = cache_class(**(cache_kwargs or {}))
 
         self.shard_id: Optional[int] = shard_id
         self.shard_count: Optional[int] = shard_count
@@ -375,6 +385,7 @@ class Client:
             hooks=self._hooks,
             http=self.http,
             loop=self.loop,
+            cache=self.cache,
             max_messages=max_messages,
             application_id=application_id,
             heartbeat_timeout=heartbeat_timeout,
@@ -1028,7 +1039,13 @@ class Client:
             return channel.instance
         return None
 
-    def get_guild(self, id: int, /) -> Optional[Guild]:
+    async def get_guild(self, guild_id: int, /) -> Optional[AsyncGuild]:
+        if guild_data := await self.cache.get_guild(guild_id):
+            return await self.typesheet.create_guild(guild_data)
+
+        return None
+
+    def __get_guild(self, id: int, /) -> Optional[Guild]:
         """Returns a guild with the given ID.
 
         Parameters
@@ -1043,7 +1060,19 @@ class Client:
         """
         return self._connection._get_guild(id)
 
-    def get_user(self, id: int, /) -> Optional[User]:
+    async def get_message(self, message_id: int) -> Optional[AsyncMessage]:
+        if message_data := await self.cache.get_message(message_id):
+            return await self.typesheet.create_message(message_data)
+
+        return None
+
+    async def get_user(self, user_id: int) -> Optional[AsyncUser]:
+        if user_data := await self.cache.get_user(user_id):
+            return await self.typesheet.create_user(user_data)
+
+        return None
+
+    def __get_user(self, id: int, /) -> Optional[User]:
         """Returns a user with the given ID.
 
         Parameters
