@@ -386,7 +386,7 @@ class Attachment(Hashable):
         .. versionadded:: 3.0
         """
         if self._waveform is not None:
-            return array("B", [int(b) for b in base64.b64decode(self._waveform)])
+            return array("B", base64.b64decode(self._waveform))
         return None
 
     def flags(self) -> AttachmentFlags:
