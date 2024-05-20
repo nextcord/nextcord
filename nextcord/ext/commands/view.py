@@ -113,28 +113,7 @@ class Quotation:
 
     @classmethod
     def defaults(cls: Type[Self]) -> Self:
-        """Creates a quotation from the default recognized pair of quotations.
-
-        The following are the defaults:
-            * ``''``
-            * ``""``
-            * ``‘‘``
-            * ``‚‛``
-            * ``“”``
-            * ``„‟``
-            * ``⹂⹂``
-            * ``「」``
-            * ``『』``
-            * ``〝〞``
-            * ``﹁﹂``
-            * ``﹃﹄``
-            * ``＂＂``
-            * ``｢｣``
-            * ``«»``
-            * ``‹›``
-            * ``《》``
-            * ``〈〉``
-        """
+        """Creates a quotation from the default recognized pair of quotations."""
         pairs = [
             ("'", "'"),
             ('"', '"'),
@@ -168,7 +147,7 @@ class Quotation:
     @nextcord.utils.cached_slot_property("_cs_initial_quotations")
     def initial_quotations(self):
         r"""Tuple[:class:`str`\, :class:`str`] The first quotation mapping provided."""
-        return tuple(self._values.items())[0]
+        return next(iter(self._values.items()))
 
     @property
     def is_default(self):
