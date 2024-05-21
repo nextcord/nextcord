@@ -1960,6 +1960,10 @@ class AutoModerationTriggerType(IntEnum):
     .. versionadded:: 2.3
     """
     member_profile = 6
+    """This rule checks if member profile contains words from a user defined list of keywords.
+    
+    .. versionadded:: 3.0
+    """
 
 
 class KeywordPresetType(IntEnum):
@@ -1994,6 +1998,10 @@ class AutoModerationActionType(IntEnum):
         This action type can only be used with the :attr:`Permissions.moderate_members` permission.
     """
     block_member_interaction = 4
+    """Prevents a member from using text, voice, or other interactions.
+    
+    .. versionadded:: 3.0
+    """
 
 
 class SortOrderType(IntEnum):
