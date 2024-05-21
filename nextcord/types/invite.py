@@ -12,7 +12,7 @@ from .guild import InviteGuild, _GuildPreviewUnique
 from .snowflake import Snowflake
 from .user import PartialUser
 
-InviteTargetType = Literal[1, 2]
+InviteTargetType = Literal[0, 1, 2]
 
 
 class _InviteMetadata(TypedDict, total=False):

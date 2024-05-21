@@ -13,7 +13,8 @@ __title__ = "nextcord"
 __author__ = "Nextcord Developers & Rapptz"
 __license__ = "MIT"
 __copyright__ = "Copyright 2015-2021 Rapptz & 2021-present Nextcord Developers"
-__version__ = "2.5.0"
+# Placeholder, modified by dynamic-versioning.
+__version__ = "0.0.0"
 
 __path__ = __import__("pkgutil").extend_path(__path__, __name__)
 
@@ -40,7 +41,6 @@ from .file import *
 from .flags import *
 from .guild import *
 from .guild_preview import *
-from .health_check import *
 from .integrations import *
 from .interactions import *
 from .invite import *
@@ -74,8 +74,10 @@ class VersionInfo(NamedTuple):
     micro: int
     releaselevel: Literal["alpha", "beta", "candidate", "final"]
     serial: int
+    metadata: str
 
 
-version_info: VersionInfo = VersionInfo(major=2, minor=5, micro=0, releaselevel="final", serial=0)
+# Placeholder, modified by dynamic-versioning.
+version_info: VersionInfo = VersionInfo(0, 0, 0, "final", 0, "")
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
