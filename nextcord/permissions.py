@@ -97,19 +97,13 @@ class Permissions(BaseFlags):
         """Returns ``True`` if self has the same or fewer permissions as other."""
         if isinstance(other, Permissions):
             return (self.value & other.value) == self.value
-        else:
-            raise TypeError(
-                f"cannot compare {self.__class__.__name__} with {other.__class__.__name__}"
-            )
+        raise TypeError(f"cannot compare {self.__class__.__name__} with {other.__class__.__name__}")
 
     def is_superset(self, other: Permissions) -> bool:
         """Returns ``True`` if self has the same or more permissions as other."""
         if isinstance(other, Permissions):
             return (self.value | other.value) == self.value
-        else:
-            raise TypeError(
-                f"cannot compare {self.__class__.__name__} with {other.__class__.__name__}"
-            )
+        raise TypeError(f"cannot compare {self.__class__.__name__} with {other.__class__.__name__}")
 
     def is_strict_subset(self, other: Permissions) -> bool:
         """Returns ``True`` if the permissions on other are a strict subset of those on self."""
@@ -334,7 +328,10 @@ class Permissions(BaseFlags):
 
     @flag_value
     def send_messages(self) -> int:
-        """:class:`bool`: Returns ``True`` if a user can send messages from all or specific text channels."""
+        """:class:`bool`: Returns ``True`` if a user can send messages from all or specific text channels.
+
+        This falls under ``Create Posts`` on the UI specifically for Forum Channels.
+        """
         return 1 << 11
 
     @flag_value
@@ -534,6 +531,8 @@ class Permissions(BaseFlags):
     @flag_value
     def send_messages_in_threads(self) -> int:
         """:class:`bool`: Returns ``True`` if a user can send messages in threads.
+
+        This falls under ``Send Messages in Posts`` on the UI specifically for Forum channels.
 
         .. versionadded:: 2.0
         """

@@ -17,7 +17,10 @@ __all__ = (
     "ClientException",
     "NoMoreItems",
     "GatewayNotFound",
+    "HTTPInternalCancelled",
+    "HTTPInternalRatelimitLocked",
     "HTTPException",
+    "Unauthorized",
     "Forbidden",
     "NotFound",
     "DiscordServerError",
@@ -40,8 +43,6 @@ class DiscordException(Exception):
     Ideally speaking, this could be caught to handle any exceptions raised from this library.
     """
 
-    pass
-
 
 class ClientException(DiscordException):
     """Exception that's raised when an operation in the :class:`Client` fails.
@@ -49,13 +50,9 @@ class ClientException(DiscordException):
     These are usually for exceptions that happened due to user input.
     """
 
-    pass
-
 
 class NoMoreItems(DiscordException):
     """Exception that is raised when an async iteration operation has no more items."""
-
-    pass
 
 
 class GatewayNotFound(DiscordException):
@@ -82,6 +79,17 @@ def _flatten_error_dict(d: Dict[str, Any], key: str = "") -> Dict[str, str]:
             items.append((new_key, v))
 
     return dict(items)
+
+
+class HTTPInternalCancelled(DiscordException):
+    """Exception that's raised when an HTTP request is internally cancelled before the actual request is made."""
+
+
+class HTTPInternalRatelimitLocked(HTTPInternalCancelled):
+    """Exception that's raised when an internally tracked ratelimit, global or route, would be exceeded by the request.
+
+    Subclass of :exc:`HTTPInternalCancelled`
+    """
 
 
 class HTTPException(DiscordException):
@@ -130,13 +138,18 @@ class HTTPException(DiscordException):
         super().__init__(fmt.format(self.response, self.code, self.text))
 
 
+class Unauthorized(HTTPException):
+    """Exception that's raised for when status code 401 occurs.
+
+    Subclass of :exc:`HTTPException`
+    """
+
+
 class Forbidden(HTTPException):
     """Exception that's raised for when status code 403 occurs.
 
     Subclass of :exc:`HTTPException`
     """
-
-    pass
 
 
 class NotFound(HTTPException):
@@ -144,8 +157,6 @@ class NotFound(HTTPException):
 
     Subclass of :exc:`HTTPException`
     """
-
-    pass
 
 
 class DiscordServerError(HTTPException):
@@ -156,15 +167,11 @@ class DiscordServerError(HTTPException):
     .. versionadded:: 1.5
     """
 
-    pass
-
 
 class InvalidData(ClientException):
     """Exception that's raised when the library encounters unknown
     or invalid data from Discord.
     """
-
-    pass
 
 
 class InvalidArgument(ClientException):
@@ -176,16 +183,12 @@ class InvalidArgument(ClientException):
     :exc:`DiscordException`.
     """
 
-    pass
-
 
 class LoginFailure(ClientException):
     """Exception that's raised when the :meth:`Client.login` function
     fails to log you in from improper credentials or some other misc.
     failure.
     """
-
-    pass
 
 
 class ConnectionClosed(ClientException):
@@ -307,10 +310,6 @@ class ApplicationCheckFailure(ApplicationError):
     This inherits from :exc:`ApplicationError`
     """
 
-    pass
-
 
 class ApplicationCommandOptionMissing(ApplicationError):
     """Raised when an option that's supposed to be part of an application command is missing on our end."""
-
-    pass

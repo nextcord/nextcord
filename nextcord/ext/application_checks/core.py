@@ -276,7 +276,7 @@ def has_role(item: Union[int, str]) -> AC:
 
     def predicate(interaction: Interaction) -> bool:
         if interaction.guild is None:
-            raise ApplicationNoPrivateMessage()
+            raise ApplicationNoPrivateMessage
 
         # interaction.guild is None doesn't narrow interaction.user to Member
         if isinstance(item, int):
@@ -319,7 +319,7 @@ def has_any_role(*items: Union[int, str]) -> AC:
 
     def predicate(interaction: Interaction) -> bool:
         if interaction.guild is None:
-            raise ApplicationNoPrivateMessage()
+            raise ApplicationNoPrivateMessage
 
         # interaction.guild is None doesn't narrow interaction.user to Member
         getter = functools.partial(nextcord.utils.get, interaction.user.roles)  # type: ignore
@@ -360,7 +360,7 @@ def bot_has_role(item: Union[int, str]) -> AC:
 
     def predicate(interaction: Interaction) -> bool:
         if interaction.guild is None:
-            raise ApplicationNoPrivateMessage()
+            raise ApplicationNoPrivateMessage
 
         me = interaction.guild.me
         if isinstance(item, int):
@@ -401,7 +401,7 @@ def bot_has_any_role(*items: Union[str, int]) -> AC:
 
     def predicate(interaction: Interaction) -> bool:
         if interaction.guild is None:
-            raise ApplicationNoPrivateMessage()
+            raise ApplicationNoPrivateMessage
 
         getter = functools.partial(nextcord.utils.get, interaction.guild.me.roles)
         if any(
@@ -416,10 +416,7 @@ def bot_has_any_role(*items: Union[str, int]) -> AC:
 
 def _permission_check_wrapper(predicate: ApplicationCheck, name: str, perms: Dict[str, bool]) -> AC:
     def wrapper(func) -> CheckWrapper:
-        if isinstance(func, CallbackWrapper):
-            callback = func.callback
-        else:
-            callback = func
+        callback = func.callback if isinstance(func, CallbackWrapper) else func
 
         setattr(callback, name, perms)
         return check(predicate)(func)  # type: ignore
@@ -469,7 +466,7 @@ def has_permissions(**perms: bool) -> AC:
         try:
             permissions = ch.permissions_for(interaction.user)  # type: ignore
         except AttributeError:
-            raise ApplicationNoPrivateMessage()
+            raise ApplicationNoPrivateMessage from None
 
         missing = [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
 
@@ -503,7 +500,7 @@ def bot_has_permissions(**perms: bool) -> AC:
         try:
             permissions = ch.permissions_for(me)  # type: ignore
         except AttributeError:
-            raise ApplicationNoPrivateMessage()
+            raise ApplicationNoPrivateMessage from None
 
         missing = [perm for perm, value in perms.items() if getattr(permissions, perm) != value]
 
@@ -602,7 +599,7 @@ def dm_only() -> AC:
 
     def predicate(interaction: Interaction) -> bool:
         if interaction.guild is not None:
-            raise ApplicationPrivateMessageOnly()
+            raise ApplicationPrivateMessageOnly
         return True
 
     return check(predicate)
@@ -629,7 +626,7 @@ def guild_only() -> AC:
 
     def predicate(interaction: Interaction) -> bool:
         if interaction.guild is None:
-            raise ApplicationNoPrivateMessage()
+            raise ApplicationNoPrivateMessage
         return True
 
     return check(predicate)
@@ -662,7 +659,7 @@ def is_owner() -> AC:
 
     async def predicate(interaction: Interaction) -> bool:
         if not hasattr(interaction.client, "is_owner"):
-            raise ApplicationCheckForBotOnly()
+            raise ApplicationCheckForBotOnly
 
         if not await interaction.client.is_owner(interaction.user):
             raise ApplicationNotOwner("You do not own this bot.")
