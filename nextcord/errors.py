@@ -17,7 +17,10 @@ __all__ = (
     "ClientException",
     "NoMoreItems",
     "GatewayNotFound",
+    "HTTPInternalCancelled",
+    "HTTPInternalRatelimitLocked",
     "HTTPException",
+    "Unauthorized",
     "Forbidden",
     "NotFound",
     "DiscordServerError",
@@ -78,6 +81,17 @@ def _flatten_error_dict(d: Dict[str, Any], key: str = "") -> Dict[str, str]:
     return dict(items)
 
 
+class HTTPInternalCancelled(DiscordException):
+    """Exception that's raised when an HTTP request is internally cancelled before the actual request is made."""
+
+
+class HTTPInternalRatelimitLocked(HTTPInternalCancelled):
+    """Exception that's raised when an internally tracked ratelimit, global or route, would be exceeded by the request.
+
+    Subclass of :exc:`HTTPInternalCancelled`
+    """
+
+
 class HTTPException(DiscordException):
     """Exception that's raised when an HTTP request operation fails.
 
@@ -122,6 +136,13 @@ class HTTPException(DiscordException):
             fmt += ": {2}"
 
         super().__init__(fmt.format(self.response, self.code, self.text))
+
+
+class Unauthorized(HTTPException):
+    """Exception that's raised for when status code 401 occurs.
+
+    Subclass of :exc:`HTTPException`
+    """
 
 
 class Forbidden(HTTPException):
