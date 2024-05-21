@@ -38,7 +38,7 @@ def main(argv: Sequence[str] | None = None) -> None:
     args = parser.parse_args(argv)
     if not args.paths:
         sys.exit(0)
-    output = subprocess.run(
+    subprocess.run(
         [
             "python",
             "-m",
@@ -48,8 +48,8 @@ def main(argv: Sequence[str] | None = None) -> None:
             *args.paths,
             "--aggressive",
         ],
+        check=True,
     )
-    sys.exit(output.returncode)
 
 
 if __name__ == "__main__":

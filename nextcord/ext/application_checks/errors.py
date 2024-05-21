@@ -228,8 +228,6 @@ class ApplicationNotOwner(ApplicationCheckFailure):
     This inherits from :exc:`~.ApplicationCheckFailure`
     """
 
-    pass
-
 
 class ApplicationNSFWChannelRequired(ApplicationCheckFailure):
     """Exception raised when a channel does not have the required NSFW setting.

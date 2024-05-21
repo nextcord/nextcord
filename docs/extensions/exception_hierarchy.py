@@ -10,7 +10,7 @@ def visit_exception_hierarchy_node(self, node):
     self.body.append(self.starttag(node, "div", CLASS="exception-hierarchy-content"))
 
 
-def depart_exception_hierarchy_node(self, node):
+def depart_exception_hierarchy_node(self, _node):
     self.body.append("</div>\n")
 
 
