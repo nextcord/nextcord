@@ -6,7 +6,7 @@ from typing_extensions import NotRequired
 
 from .snowflake import Snowflake
 
-AutoModerationEventType = Literal[1]
+AutoModerationEventType = Literal[1, 2]
 AutoModerationTriggerType = Literal[1, 2, 3, 4, 5, 6]
 KeywordPresetType = Literal[1, 2, 3]
 AutoModerationActionType = Literal[1, 2, 3, 4]
