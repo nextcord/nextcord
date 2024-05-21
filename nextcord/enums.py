@@ -1357,44 +1357,43 @@ class AuditLogAction(IntEnum):
         v = self.value
         if v == -1:  # pyright: ignore[reportUnnecessaryComparison]
             return "all"
-        elif v < 10:
+        if v < 10:
             return "guild"
-        elif v < 20:
+        if v < 20:
             return "channel"
-        elif v < 30:
+        if v < 30:
             return "user"
         if v < 40:
             return "role"
-        elif v < 50:
+        if v < 50:
             return "invite"
-        elif v < 60:
+        if v < 60:
             return "webhook"
-        elif v < 70:
+        if v < 70:
             return "emoji"
-        elif v == 73:
+        if v == 73:
             return "channel"
-        elif v < 80:
+        if v < 80:
             return "message"
-        elif v < 83:
+        if v < 83:
             return "integration"
-        elif v < 90:
+        if v < 90:
             return "stage_instance"
-        elif v < 93:
+        if v < 93:
             return "sticker"
-        elif v < 103:
+        if v < 103:
             return "event"
-        elif v < 113:
+        if v < 113:
             return "thread"
-        elif v < 122:
+        if v < 122:
             return "application_command_or_integration"
-        elif v < 140:
+        if v < 140:
             return None
-        elif v == 143:
+        if v == 143:
             return "user"
-        elif v < 143:
+        if v < 143:
             return "auto_moderation_rule"
-        else:
-            return None
+        return None
 
 
 class UserFlags(IntEnum):
@@ -1809,27 +1808,51 @@ class ButtonStyle(IntEnum):
     secondary = 2
     """Represents a grey button for secondary actions."""
     success = 3
+    """Represents a green button for success actions."""
     danger = 4
+    """Represents a red button for dangerous actions."""
     link = 5
+    """Represents a link button."""
 
     # Aliases
     blurple = 1
+    """An alias for :attr:`ButtonStyle.primary`."""
     grey = 2
+    """An alias for :attr:`ButtonStyle.secondary`."""
     gray = 2
+    """An alias for :attr:`ButtonStyle.secondary`."""
     green = 3
+    """An alias for :attr:`ButtonStyle.success`."""
     red = 4
+    """An alias for :attr:`ButtonStyle.danger`."""
     url = 5
+    """An alias for :attr:`ButtonStyle.link`."""
 
 
 class TextInputStyle(IntEnum):
+    """Represent the style of a text input component.
+
+    .. versionadded:: 2.0
+    """
+
     short = 1
+    """Represent a single line input."""
     paragraph = 2
+    """Represent a multi line input."""
 
 
 class StagePrivacyLevel(IntEnum):
+    """Represents a stage instance's privacy level.
+
+    .. versionadded:: 2.0
+    """
+
     public = 1
+    """The stage instance can be joined by external users."""
     closed = 2
+    """The stage instance can only be joined by members of the guild."""
     guild_only = 2
+    """An alias for :attr:`StagePrivacyLevel.closed`."""
 
 
 class NSFWLevel(IntEnum):
@@ -1860,9 +1883,13 @@ class NSFWLevel(IntEnum):
     """
 
     default = 0
+    """The guild has not been categorised yet."""
     explicit = 1
+    """The guild contains NSFW content."""
     safe = 2
+    """The guild does not contain any NSFW content."""
     age_restricted = 3
+    """The guild may contain NSFW content."""
 
 
 class ScheduledEventEntityType(IntEnum):
@@ -1921,16 +1948,18 @@ class AutoModerationTriggerType(IntEnum):
 
     keyword = 1
     """This rule checks if content contains words from a user defined list of keywords."""
+    member_update = 2
+    """A member sends or edits a message in the guild."""
     spam = 3
     """This rule checks if content represents generic spam."""
     keyword_preset = 4
     """This rule checks if content contains words from Discord pre-defined wordsets."""
     mention_spam = 5
-    member_profile = 6
     """This rule checks if the number of mentions in the message is more than the maximum allowed.
 
     .. versionadded:: 2.3
     """
+    member_profile = 6
 
 
 class KeywordPresetType(IntEnum):
