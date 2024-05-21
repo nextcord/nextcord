@@ -9,7 +9,7 @@ import time
 import traceback
 from functools import partial
 from itertools import groupby
-from typing import TYPE_CHECKING, Any, Callable, Dict, Iterator, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Dict, Iterator, List, Optional, Set, Tuple
 
 from ..components import Component
 from ..utils import MISSING
@@ -103,13 +103,14 @@ class Modal:
         self.__cancel_callback: Optional[Callable[[Modal], None]] = None
         self.__timeout_expiry: Optional[float] = None
         self.__timeout_task: Optional[asyncio.Task[None]] = None
+        self.__background_tasks: Set[asyncio.Task[None]] = set()
         self.__stopped: asyncio.Future[bool] = loop.create_future()
 
     async def __timeout_task_impl(self) -> None:
         while True:
             # Guard just in case someone changes the value of the timeout at runtime
             if self.timeout is None:
-                return
+                return None
 
             if self.__timeout_expiry is None:
                 return self._dispatch_timeout()
@@ -143,12 +144,11 @@ class Modal:
         return components
 
     def to_dict(self) -> Dict[str, Any]:
-        payload = {
+        return {
             "title": self.title,
             "custom_id": self.custom_id,
             "components": self.to_components(),
         }
-        return payload
 
     @property
     def _expires_at(self) -> Optional[float]:
@@ -170,6 +170,10 @@ class Modal:
         ----------
         item: :class:`Item`
             The item to add to the modal.
+
+            .. note::
+
+                The only items that are currently supported are :class:`TextInput`\s.
 
         Raises
         ------
@@ -225,14 +229,12 @@ class Modal:
             The interaction fired by the user.
 
         """
-        pass
 
     async def on_timeout(self) -> None:
         """|coro|
 
         A callback that is called when a modal's timeout elapses without being explicitly stopped.
         """
-        pass
 
     async def on_error(self, error: Exception, interaction: Interaction) -> None:
         """|coro|
@@ -251,7 +253,7 @@ class Modal:
         interaction: :class:`~nextcord.Interaction`
             The interaction that led to the failure.
         """
-        print(f"Ignoring exception in modal {self}:", file=sys.stderr)
+        print(f"Ignoring exception in modal {self}:", file=sys.stderr)  # noqa: T201
         traceback.print_exception(error.__class__, error, error.__traceback__, file=sys.stderr)
 
     async def _scheduled_task(self, interaction: Interaction):
@@ -289,16 +291,20 @@ class Modal:
         if self.__stopped.done():
             return
 
-        asyncio.create_task(self.on_timeout(), name=f"discord-ui-modal-timeout-{self.id}")
+        task = asyncio.create_task(self.on_timeout(), name=f"discord-ui-modal-timeout-{self.id}")
+        self.__background_tasks.add(task)
+        task.add_done_callback(self.__background_tasks.discard)
         self.__stopped.set_result(True)
 
     def _dispatch(self, interaction: Interaction) -> None:
         if self.__stopped.done():
             return
 
-        asyncio.create_task(
+        task = asyncio.create_task(
             self._scheduled_task(interaction), name=f"discord-ui-modal-dispatch-{self.id}"
         )
+        self.__background_tasks.add(task)
+        task.add_done_callback(self.__background_tasks.discard)
 
     def refresh(self, components: List[Component]) -> None:
         # This is pretty hacky at the moment
@@ -374,7 +380,7 @@ class Modal:
 
 class ModalStore:
     def __init__(self, state: ConnectionState) -> None:
-        # (user_id, custom_id): Modal
+        # (user_id, custom_id): Modal  # noqa: ERA001
         self._modals: Dict[Tuple[int | None, str], Modal] = {}
         self._state: ConnectionState = state
 

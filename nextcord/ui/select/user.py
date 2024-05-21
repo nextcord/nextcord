@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 
 __all__ = ("UserSelect", "user_select", "UserSelectValues")
 
-V = TypeVar("V", bound="View", covariant=True)
+V_co = TypeVar("V_co", bound="View", covariant=True)
 
 
 class UserSelectValues(SelectValuesBase):
@@ -38,11 +38,11 @@ class UserSelectValues(SelectValuesBase):
 
     @property
     def users(self) -> List[User]:
-        """List[:class:`.User`]: A list of users that were selected."""
+        """List[:class:`nextcord.User`]: A list of users that were selected."""
         return [v for v in self.data if isinstance(v, User)]
 
 
-class UserSelect(SelectBase, Generic[V]):
+class UserSelect(SelectBase, Generic[V_co]):
     """Represents a UI user select menu.
 
     This is usually represented as a drop down menu.
@@ -111,7 +111,7 @@ class UserSelect(SelectBase, Generic[V]):
 
     @property
     def values(self) -> UserSelectValues:
-        """:class:`.ui.UserSelectValues`: A list of Union[:class:`.Member`, :class:`.User`] that have been selected by the user."""
+        """:class:`.ui.UserSelectValues`: A list of Union[:class:`.Member`, :class:`nextcord.User`] that have been selected by the user."""
         return self._selected_values
 
     def to_component_dict(self) -> UserSelectMenuPayload:
@@ -147,7 +147,9 @@ def user_select(
     max_values: int = 1,
     disabled: bool = False,
     row: Optional[int] = None,
-) -> Callable[[ItemCallbackType[UserSelect[V], ClientT]], ItemCallbackType[UserSelect[V], ClientT]]:
+) -> Callable[
+    [ItemCallbackType[UserSelect[V_co], ClientT]], ItemCallbackType[UserSelect[V_co], ClientT]
+]:
     """A decorator that attaches a user select menu to a component.
 
     The function being decorated should have three parameters, ``self`` representing

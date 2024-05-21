@@ -6,7 +6,7 @@ import copy
 import functools
 import itertools
 import re
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar, Dict
 
 import nextcord.utils
 
@@ -215,7 +215,7 @@ class _HelpCommandImpl(Command):
             return result
 
     def _inject_into_cog(self, cog) -> None:
-        # Warning: hacky
+        # Warning - hacky
 
         # Make the cog think that get_commands returns this command
         # as well if we inject it without modifying __cog_commands__
@@ -281,7 +281,7 @@ class HelpCommand:
         ones passed in the :class:`.Command` constructor.
     """
 
-    MENTION_TRANSFORMS = {
+    MENTION_TRANSFORMS: ClassVar[Dict[str, str]] = {
         "@everyone": "@\u200beveryone",
         "@here": "@\u200bhere",
         r"<@!?[0-9]{17,22}>": "@deleted-user",
@@ -384,7 +384,11 @@ class HelpCommand:
         """
         command_name = self._command_impl.name
         ctx = self.context
-        if ctx is None or ctx.command is None or ctx.command.qualified_name != command_name:
+        if (
+            ctx is nextcord.utils.MISSING
+            or ctx.command is None
+            or ctx.command.qualified_name != command_name
+        ):
             return command_name
         return ctx.invoked_with
 
@@ -423,7 +427,7 @@ class HelpCommand:
 
         return f"{self.context.clean_prefix}{alias} {command.signature}"
 
-    def remove_mentions(self, string):
+    def remove_mentions(self, string: str):
         """Removes mentions from the string to prevent abuse.
 
         This includes ``@everyone``, ``@here``, member mentions and role mentions.
@@ -465,7 +469,7 @@ class HelpCommand:
         if cog is not None:
             self._command_impl._inject_into_cog(cog)
 
-    def command_not_found(self, string) -> str:
+    def command_not_found(self, string: str) -> str:
         """|maybecoro|
 
         A method called when a command is not found in the help command.
@@ -486,7 +490,7 @@ class HelpCommand:
         """
         return f'No command called "{string}" found.'
 
-    def subcommand_not_found(self, command, string) -> str:
+    def subcommand_not_found(self, command, string: str) -> str:
         """|maybecoro|
 
         A method called when a command did not have a subcommand requested in the help command.
@@ -654,9 +658,8 @@ class HelpCommand:
         error: :class:`CommandError`
             The error that was raised.
         """
-        pass
 
-    async def send_bot_help(self, mapping):
+    async def send_bot_help(self, mapping) -> None:
         """|coro|
 
         Handles the implementation of the bot command page in the help command.
@@ -683,9 +686,9 @@ class HelpCommand:
             The key of the mapping is the :class:`~.commands.Cog` that the command belongs to, or
             ``None`` if there isn't one, and the value is a list of commands that belongs to that cog.
         """
-        return None
+        return
 
-    async def send_cog_help(self, cog):
+    async def send_cog_help(self, cog) -> None:
         """|coro|
 
         Handles the implementation of the cog page in the help command.
@@ -711,9 +714,9 @@ class HelpCommand:
         cog: :class:`Cog`
             The cog that was requested for help.
         """
-        return None
+        return
 
-    async def send_group_help(self, group):
+    async def send_group_help(self, group) -> None:
         """|coro|
 
         Handles the implementation of the group page in the help command.
@@ -739,9 +742,9 @@ class HelpCommand:
         group: :class:`Group`
             The group that was requested for help.
         """
-        return None
+        return
 
-    async def send_command_help(self, command):
+    async def send_command_help(self, command) -> None:
         """|coro|
 
         Handles the implementation of the single command page in the help command.
@@ -777,7 +780,7 @@ class HelpCommand:
         command: :class:`Command`
             The command that was requested for help.
         """
-        return None
+        return
 
     async def prepare_help_command(self, ctx, command=None) -> None:
         """|coro|
@@ -801,7 +804,6 @@ class HelpCommand:
         command: Optional[:class:`str`]
             The argument passed to the help command.
         """
-        pass
 
     async def command_callback(self, ctx, *, command=None):
         """|coro|
@@ -862,8 +864,7 @@ class HelpCommand:
 
         if isinstance(cmd, Group):
             return await self.send_group_help(cmd)
-        else:
-            return await self.send_command_help(cmd)
+        return await self.send_command_help(cmd)
 
 
 class DefaultHelpCommand(HelpCommand):
@@ -916,7 +917,7 @@ class DefaultHelpCommand(HelpCommand):
 
         super().__init__(**options)
 
-    def shorten_text(self, text):
+    def shorten_text(self, text: str):
         """:class:`str`: Shortens text to fit into the :attr:`width`."""
         if len(text) > self.width:
             return text[: self.width - 3].rstrip() + "..."
@@ -930,7 +931,7 @@ class DefaultHelpCommand(HelpCommand):
             f"You can also type {self.context.clean_prefix}{command_name} category for more info on a category."
         )
 
-    def add_indented_commands(self, commands, *, heading, max_size=None) -> None:
+    def add_indented_commands(self, commands, *, heading, max_size: Optional[int] = None) -> None:
         """Indents a list of commands after the specified heading.
 
         The formatting is added to the :attr:`paginator`.
@@ -999,10 +1000,9 @@ class DefaultHelpCommand(HelpCommand):
         ctx = self.context
         if self.dm_help is True:
             return ctx.author
-        elif self.dm_help is None and len(self.paginator) > self.dm_help_threshold:
+        if self.dm_help is None and len(self.paginator) > self.dm_help_threshold:
             return ctx.author
-        else:
-            return ctx.channel
+        return ctx.channel
 
     async def prepare_help_command(self, ctx, command) -> None:
         self.paginator.clear()
@@ -1147,7 +1147,7 @@ class MinimalHelpCommand(HelpCommand):
     def get_command_signature(self, command) -> str:
         return f"{self.context.clean_prefix}{command.qualified_name} {command.signature}"
 
-    def get_ending_note(self):
+    def get_ending_note(self) -> None:
         """Return the help command's ending note. This is mainly useful to override for i18n purposes.
 
         The default implementation does nothing.
@@ -1157,7 +1157,7 @@ class MinimalHelpCommand(HelpCommand):
         :class:`str`
             The help command ending note.
         """
-        return None
+        return
 
     def add_bot_commands_formatting(self, commands, heading) -> None:
         """Adds the minified bot heading with commands to the output.
@@ -1246,10 +1246,9 @@ class MinimalHelpCommand(HelpCommand):
         ctx = self.context
         if self.dm_help is True:
             return ctx.author
-        elif self.dm_help is None and len(self.paginator) > self.dm_help_threshold:
+        if self.dm_help is None and len(self.paginator) > self.dm_help_threshold:
             return ctx.author
-        else:
-            return ctx.channel
+        return ctx.channel
 
     async def prepare_help_command(self, ctx, command) -> None:
         self.paginator.clear()
