@@ -49,7 +49,7 @@ from .enums import (
 from .errors import *
 from .flags import ApplicationFlags, Intents
 from .gateway import *
-from .guild import Guild, AsyncGuild
+from .guild import AsyncGuild, Guild
 from .guild_preview import GuildPreview
 from .http import HTTPClient
 from .interactions import Interaction
@@ -67,7 +67,7 @@ from .types.interactions import ApplicationCommandInteractionData
 from .typesheet import BaseTypeSheet, DefaultTypeSheet
 from .ui.modal import Modal
 from .ui.view import View
-from .user import ClientUser, User, AsyncUser
+from .user import AsyncUser, ClientUser, User
 from .utils import MISSING
 from .voice_client import VoiceClient
 from .webhook import Webhook

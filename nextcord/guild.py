@@ -47,6 +47,7 @@ from .enums import (
     ContentFilter,
     NotificationLevel,
     NSFWLevel,
+    MFALevel,
     ScheduledEventEntityType,
     ScheduledEventPrivacyLevel,
     VerificationLevel,
@@ -71,7 +72,10 @@ from .threads import Thread, ThreadMember
 from .user import User
 from .widget import Widget
 
-__all__ = ("Guild", "AsyncGuild",)
+__all__ = (
+    "Guild",
+    "AsyncGuild",
+)
 
 MISSING = utils.MISSING
 
@@ -84,7 +88,7 @@ if TYPE_CHECKING:
     from .auto_moderation import AutoModerationAction
     from .channel import ForumTag
     from .client import Client
-    from .enums import ForumLayoutType, SortOrderType, NSFWLevel
+    from .enums import ForumLayoutType, NSFWLevel, SortOrderType
     from .file import File
     from .message import Attachment
     from .permissions import Permissions
@@ -143,8 +147,6 @@ class AsyncGuild:
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} id={self.id} name={self.name}>"
-
-
 
 
 class _GuildLimit(NamedTuple):

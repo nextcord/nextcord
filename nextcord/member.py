@@ -7,10 +7,11 @@ import contextlib
 import datetime
 import itertools
 import sys
+from collections.abc import Sequence
 from operator import attrgetter
 from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Union
 
-from . import abc, utils, Client
+from . import abc, utils
 from .activity import ActivityTypes, create_activity
 from .asset import Asset
 from .colour import Colour
@@ -22,6 +23,7 @@ from .user import BaseUser, User, _UserTag, AsyncUser
 from .utils import MISSING
 
 __all__ = (
+    "AsyncMember",
     "VoiceState",
     "Member",
 )
@@ -31,6 +33,7 @@ if TYPE_CHECKING:
 
     from .abc import Snowflake
     from .channel import DMChannel, StageChannel, VoiceChannel
+    from .client import Client
     from .flags import PublicUserFlags
     from .guild import Guild
     from .message import Message
@@ -49,11 +52,25 @@ if TYPE_CHECKING:
 
 
 class AsyncMember(AsyncUser):
-    nickname: Optional[str]
+    guild_id: int
+    nick: Optional[str]
+    role_ids: Sequence[int]
 
     @classmethod
-    def from_payload(cls, payload: MemberPayload, *, bot: Client):
+    def from_member_payload(cls, payload: MemberPayload, guild_id: int, *, bot: Client):
+        ret: AsyncMember = cls.from_user_payload(payload["user"], bot=bot)
 
+        ret.guild_id = guild_id
+        ret.nick = payload.get("nick", None)
+        ret.role_ids = (int(role_id) for role_id in payload["roles"])
+
+        return ret
+
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__}>"
+
+    async def get_guild(self):
+        return await self._bot.get_guild(self.guild_id)
 
 
 class VoiceState:

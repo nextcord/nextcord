@@ -39,6 +39,7 @@ __all__ = (
     "ApplicationCommandType",
     "ApplicationCommandOptionType",
     "NSFWLevel",
+    "MFALevel",
     "ScheduledEventEntityType",
     "ScheduledEventPrivacyLevel",
     "ScheduledEventStatus",
@@ -1890,6 +1891,15 @@ class NSFWLevel(IntEnum):
     """The guild does not contain any NSFW content."""
     age_restricted = 3
     """The guild may contain NSFW content."""
+
+
+class MFALevel(IntEnum):
+    """Represents the MFA level of a guild."""
+
+    none = 0
+    """Guild has no MFA/2FA requirement for moderation actions."""
+    elevated = 1
+    """Guild has a 2FA requirement for moderation actions."""
 
 
 class ScheduledEventEntityType(IntEnum):

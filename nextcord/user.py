@@ -43,7 +43,7 @@ class AsyncUser:
     username: str
 
     @classmethod
-    def from_payload(cls, payload: UserPayload, *, bot: Client):
+    def from_user_payload(cls, payload: UserPayload, *, bot: Client):
         ret = cls()
         ret._bot = bot
 
@@ -54,6 +54,17 @@ class AsyncUser:
         ret.username = payload["username"]
 
         return ret
+
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__} id={self.id} global_name={self.global_name} username={self.username}>"
+
+    @property
+    def created_at(self) -> datetime:
+        """:class:`datetime.datetime`: Returns the user's creation time in UTC.
+
+        This is when the user's Discord account was created.
+        """
+        return snowflake_time(self.id)
 
 
 class _UserTag:

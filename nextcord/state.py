@@ -54,7 +54,7 @@ from .sticker import GuildSticker
 from .threads import Thread, ThreadMember
 from .ui.modal import Modal, ModalStore
 from .ui.view import View, ViewStore
-from .user import ClientUser, User, AsyncUser
+from .user import ClientUser, User
 
 if TYPE_CHECKING:
     from asyncio import Future
@@ -295,7 +295,7 @@ class ConnectionState:
         else:
             self._messages: Optional[Deque[Message]] = None
 
-    def process_chunk_requests(
+    async def process_chunk_requests(
         self, guild_id: int, nonce: Optional[str], members: List[Member], complete: bool
     ) -> None:
         removed = []
@@ -1261,7 +1261,7 @@ class ConnectionState:
         finally:
             self._ready_task = None
 
-    def parse_ready(self, data) -> None:
+    async def parse_ready(self, data) -> None:
         if self._ready_task is not None:
             self._ready_task.cancel()
 
@@ -1699,7 +1699,7 @@ class ConnectionState:
             else:
                 self.dispatch("thread_remove", thread)
 
-    def parse_guild_member_add(self, data) -> None:
+    async def parse_guild_member_add(self, data) -> None:
         guild = self._get_guild(int(data["guild_id"]))
         if guild is None:
             _log.debug(
@@ -1707,7 +1707,7 @@ class ConnectionState:
                 data["guild_id"],
             )
             return
-
+        await self._cache.add_member(data, int(data["guild_id"]))
         member = Member(guild=guild, data=data, state=self)
         if self.member_cache_flags.joined:
             guild._add_member(member)
@@ -1740,7 +1740,7 @@ class ConnectionState:
         raw = RawMemberRemoveEvent(data=data, state=self)
         self.dispatch("raw_member_remove", raw)
 
-    def parse_guild_member_update(self, data) -> None:
+    async def parse_guild_member_update(self, data) -> None:
         guild = self._get_guild(int(data["guild_id"]))
         user = data["user"]
         user_id = int(user["id"])
@@ -1750,6 +1750,8 @@ class ConnectionState:
                 data["guild_id"],
             )
             return
+
+        await self._cache.add_member(data, int(data["guild_id"]))
 
         member = guild.get_member(user_id)
         if member is not None:
@@ -1845,13 +1847,18 @@ class ConnectionState:
         else:
             self.dispatch("guild_join", guild)
 
-    def parse_guild_create(self, data) -> None:
+    async def parse_guild_create(self, data) -> None:
         unavailable = data.get("unavailable")
         if unavailable is True:
             # joined a guild with unavailable == True so..
             return
 
+        print(f"GUILD CREATE {data['id']}")
+
         guild = self._get_create_guild(data)
+        await self._cache.add_guild(data)
+        for mdata in data.get("members", []):
+            await self._cache.add_member(mdata, int(data["id"]))
 
         try:
             # Notify the on_ready state, if any, that this guild is complete.
@@ -1974,7 +1981,7 @@ class ConnectionState:
                 data["guild_id"],
             )
 
-    def parse_guild_members_chunk(self, data) -> None:
+    async def parse_guild_members_chunk(self, data) -> None:
         guild_id = int(data["guild_id"])
         guild = self._get_guild(guild_id)
         presences = data.get("presences", [])
@@ -1982,6 +1989,9 @@ class ConnectionState:
         # the guild won't be None here
         members = [Member(guild=guild, data=member, state=self) for member in data.get("members", [])]  # type: ignore
         _log.debug("Processed a chunk for %s members in guild ID %s.", len(members), guild_id)
+
+        for member in data.get("members", []):
+            await self._cache.add_member(member, guild_id)
 
         if presences:
             member_dict = {str(member.id): member for member in members}
@@ -1993,7 +2003,7 @@ class ConnectionState:
                     member._presence_update(presence, user)
 
         complete = data.get("chunk_index", 0) + 1 == data.get("chunk_count")
-        self.process_chunk_requests(guild_id, data.get("nonce"), members, complete)
+        await self.process_chunk_requests(guild_id, data.get("nonce"), members, complete)
 
     def parse_guild_integrations_update(self, data) -> None:
         guild = self._get_guild(int(data["guild_id"]))
@@ -2103,7 +2113,7 @@ class ConnectionState:
                 data["guild_id"],
             )
 
-    def parse_voice_state_update(self, data) -> None:
+    async def parse_voice_state_update(self, data) -> None:
         guild = self._get_guild(utils.get_as_snowflake(data, "guild_id"))
         channel_id = utils.get_as_snowflake(data, "channel_id")
         flags = self.member_cache_flags
@@ -2130,6 +2140,7 @@ class ConnectionState:
                         guild._remove_member(member)
                     elif channel_id is not None:
                         guild._add_member(member)
+                        await self._cache.add_member(data, int(data["guild_id"]))
 
                 self.dispatch("voice_state_update", member, before, after)
             else:
