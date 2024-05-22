@@ -2008,7 +2008,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
 
             .. versionadded:: 3.0
         contexts: Optional[Iterable[Union[:class:`InteractionContextType`, :class:`int`]]]
-            Where the command can be used, only for globally-scoped commands. By default, all interaction context types included for new commands.
+            Where the command can be used, only for globally-scoped commands. By default, all interaction context types are included for new commands.
 
             .. versionadded:: 3.0
         parent_cog: Optional[:class:`ClientCog`]
