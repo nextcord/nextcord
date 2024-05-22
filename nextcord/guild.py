@@ -3080,7 +3080,9 @@ class Guild(Hashable):
 
         await self._state.http.ban(user.id, self.id, delete_message_seconds, reason=reason)
 
-    async def bulk_ban(self, users: List[Snowflake], *, delete_message_seconds: Optional[int] = None) -> BulkBan:
+    async def bulk_ban(
+        self, users: List[Snowflake], *, delete_message_seconds: Optional[int] = None
+    ) -> BulkBan:
         """|coro|
 
         Bans a list of users. This is similar to :meth:`Guild.ban` except it bulk bans multiple users.
