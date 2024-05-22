@@ -736,7 +736,7 @@ class MessageInteractionMetadata(Hashable):
         )
 
     def __repr__(self) -> str:
-        return f"<{self.__class__.__name__} id={self.id} type={self.type} user={self.user!r} name={self.name!r}"
+        return f"<{self.__class__.__name__} id={self.id} type={self.type} user={self.user!r} name={self.name!r}>"
 
     @property
     def created_at(self) -> datetime.datetime:
