@@ -3083,16 +3083,14 @@ class Guild(Hashable):
     async def bulk_ban(self, users: List[Snowflake], *, delete_message_seconds: int = 0) -> BulkBan:
         """|coro|
 
-        Bans users from a guild in bulk. This has a limit of 200 users
-
-        The list of users must meet the :class:`abc.Snowflake` abc.
+        Bans a list of users. This is similar to :meth:`Guild.ban` except it bulk bans multiple users.
 
         You must have the :attr:`~Permissions.ban_members` and :attr:`~Permissions.manage_guild` permissions to
         do this.
 
         Parameters
         ----------
-        users: :class:`abc.Snowflake`
+        users: List[:class:`abc.Snowflake`]
             The users to ban from a guild.
         delete_message_seconds: :class:`int`
             The number of seconds worth of messages to delete from these users.
