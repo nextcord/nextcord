@@ -3080,7 +3080,7 @@ class Guild(Hashable):
 
         await self._state.http.ban(user.id, self.id, delete_message_seconds, reason=reason)
 
-    async def bulk_ban(self, users: List[Snowflake], *, delete_message_seconds: int = 0) -> BulkBan:
+    async def bulk_ban(self, users: List[Snowflake], *, delete_message_seconds: Optional[int] = None) -> BulkBan:
         """|coro|
 
         Bans a list of users. This is similar to :meth:`Guild.ban` except it bulk bans multiple users.
@@ -3092,7 +3092,7 @@ class Guild(Hashable):
         ----------
         users: List[:class:`abc.Snowflake`]
             The users to ban from a guild.
-        delete_message_seconds: :class:`int`
+        delete_message_seconds: Optional[:class:`int`]
             The number of seconds worth of messages to delete from these users.
             Can range from 0 to 604800 seconds (7 days).
 
@@ -3103,6 +3103,9 @@ class Guild(Hashable):
         :class:`BulkBan`
             The failed and banned users in the form of :class:`Object`.
         """
+
+        if delete_message_seconds is None:
+            delete_message_seconds = 0
 
         data = await self._state.http.bulk_ban(
             self.id, [u.id for u in users], delete_message_seconds
