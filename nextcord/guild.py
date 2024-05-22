@@ -521,7 +521,9 @@ class Guild(Hashable):
         self._large: Optional[bool] = None if member_count is None else self._member_count >= 250
 
         self.owner_id: Optional[int] = utils.get_as_snowflake(guild, "owner_id")
-        self.afk_channel: Optional[VocalGuildChannel] = self.get_channel(utils.get_as_snowflake(guild, "afk_channel_id"))  # type: ignore
+        self.afk_channel: Optional[VocalGuildChannel] = self.get_channel(
+            utils.get_as_snowflake(guild, "afk_channel_id")
+        )  # type: ignore
 
         for obj in guild.get("voice_states", []):
             self._update_voice_state(obj, int(obj["channel_id"]))
@@ -2817,8 +2819,7 @@ class Guild(Hashable):
         hoist: bool = ...,
         mentionable: bool = ...,
         icon: Optional[Union[str, bytes, Asset, Attachment, File]] = ...,
-    ) -> Role:
-        ...
+    ) -> Role: ...
 
     @overload
     async def create_role(
@@ -2831,8 +2832,7 @@ class Guild(Hashable):
         hoist: bool = ...,
         mentionable: bool = ...,
         icon: Optional[Union[str, bytes, Asset, Attachment, File]] = ...,
-    ) -> Role:
-        ...
+    ) -> Role: ...
 
     async def create_role(
         self,
@@ -3081,7 +3081,11 @@ class Guild(Hashable):
         await self._state.http.ban(user.id, self.id, delete_message_seconds, reason=reason)
 
     async def bulk_ban(
-        self, users: List[Snowflake], *, delete_message_seconds: Optional[int] = None
+        self,
+        users: List[Snowflake],
+        *,
+        delete_message_seconds: Optional[int] = None,
+        reason: Optional[str] = None,
     ) -> BulkBan:
         """|coro|
 
@@ -3116,7 +3120,10 @@ class Guild(Hashable):
             delete_message_seconds = 0
 
         data = await self._state.http.bulk_ban(
-            self.id, [u.id for u in users], delete_message_seconds
+            self.id,
+            [u.id for u in users],
+            delete_message_seconds,
+            reason=reason,
         )
 
         banned_users = [Object(id=u) for u in data["banned_users"]]
@@ -3947,9 +3954,9 @@ class Guild(Hashable):
         List[Union[:class:`Member`, :class:`User`]]
             List of :class:`Member` or :class:`User` objects that were mentioned in the string.
         """
-        get_member_or_user: Callable[
-            [int], Optional[Union[Member, User]]
-        ] = lambda id: self.get_member(id) or self._state.get_user(id)
+        get_member_or_user: Callable[[int], Optional[Union[Member, User]]] = (
+            lambda id: self.get_member(id) or self._state.get_user(id)
+        )
         it = filter(None, map(get_member_or_user, utils.parse_raw_mentions(text)))
         return utils.unique(it)
 
