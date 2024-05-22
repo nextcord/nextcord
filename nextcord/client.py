@@ -1300,6 +1300,8 @@ class Client:
     def add_listener(self, func: CoroFunc, name: str = MISSING) -> None:
         """The non decorator alternative to :meth:`.listen`.
 
+        .. versionadded:: 3.0
+
         Parameters
         ----------
         func: :ref:`coroutine <coroutine>`
@@ -1315,8 +1317,8 @@ class Client:
             async def on_ready(): pass
             async def my_message(message): pass
 
-            bot.add_listener(on_ready)
-            bot.add_listener(my_message, 'on_message')
+            client.add_listener(on_ready)
+            client.add_listener(my_message, 'on_message')
 
         """
         name = func.__name__ if name is MISSING else name
@@ -1331,6 +1333,8 @@ class Client:
 
     def remove_listener(self, func: CoroFunc, name: str = MISSING) -> None:
         """Removes a listener from the pool of listeners.
+
+        .. versionadded:: 3.0
 
         Parameters
         ----------
@@ -1353,6 +1357,8 @@ class Client:
         events from different places e.g. such as :func:`.on_ready`
 
         The functions being listened to must be a :ref:`coroutine <coroutine>`.
+
+        .. versionadded:: 3.0
 
         Example
         -------
