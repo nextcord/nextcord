@@ -3097,6 +3097,12 @@ class Guild(Hashable):
             Can range from 0 to 604800 seconds (7 days).
 
             Defaults to 0.
+        Raises
+        ------
+        Forbidden
+            You do not have the proper permissions to bulk ban.
+        HTTPException
+            Bulk banning failed.
 
         Returns
         -------
