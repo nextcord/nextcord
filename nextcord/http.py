@@ -1869,7 +1869,7 @@ class HTTPClient:
         delete_message_seconds: int = 0,
         reason: Optional[str] = None,
         *,
-        auth: Optional[str] = None,
+        auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[guild.BulkBan]:
         r = Route("POST", "/guilds/{guild_id}/bulk-ban", guild_id=guild_id)
