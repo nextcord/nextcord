@@ -3103,6 +3103,8 @@ class Guild(Hashable):
             Can range from 0 to 604800 seconds (7 days).
 
             Defaults to 0.
+        reason: Optional[:class:`str`]
+            The reason these users got banned.
         Raises
         ------
         Forbidden
