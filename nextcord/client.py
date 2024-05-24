@@ -56,6 +56,7 @@ from .interactions import Interaction
 from .invite import Invite
 from .iterators import GuildIterator
 from .mentions import AllowedMentions
+from .member import AsyncMember
 from .message import AsyncMessage
 from .object import Object
 from .stage_instance import StageInstance
@@ -1061,14 +1062,20 @@ class Client:
         return self._connection._get_guild(id)
 
     async def get_message(self, message_id: int) -> Optional[AsyncMessage]:
-        if message_data := await self.cache.get_message(message_id):
-            return await self.typesheet.create_message(message_data)
+        if message_payload := await self.cache.get_message(message_id):
+            return await self.typesheet.create_message(message_payload)
 
         return None
 
     async def get_user(self, user_id: int) -> Optional[AsyncUser]:
-        if user_data := await self.cache.get_user(user_id):
-            return await self.typesheet.create_user(user_data)
+        if user_payload := await self.cache.get_user(user_id):
+            return await self.typesheet.create_user(user_payload)
+
+        return None
+
+    async def get_member(self, member_id: int, guild_id: int) -> Optional[AsyncMember]:
+        if member_data := await self.cache.get_member(member_id, guild_id):
+            return await self.typesheet.create_member(member_data, guild_id)
 
         return None
 

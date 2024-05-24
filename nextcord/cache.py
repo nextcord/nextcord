@@ -105,7 +105,7 @@ class MemoryCache(BaseCache):
         self._members[(int(member_data["user"]["id"]), guild_id)] = member_data
 
     async def remove_member(self, member_id: int, guild_id: int) -> bool:
-        return self._members.pop((member_id, guild_id)) is not None
+        return self._members.pop((member_id, guild_id), None) is not None
 
     async def get_member(self, member_id: int, guild_id: int) -> Optional[MemberData]:
         return self._members.get((member_id, guild_id), None)

@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Any, Dict, Generic, List, Optional, Set, Tuple
 from . import utils
 from .channel import ChannelType, PartialMessageable
 from .embeds import Embed
-from .enums import InteractionResponseType, InteractionType, try_enum
+from .enums import InteractionResponseType, InteractionType, try_enum, Locale
 from .errors import ClientException, HTTPException, InteractionResponded, InvalidArgument
 from .file import File
 from .flags import MessageFlags
@@ -93,7 +93,7 @@ class InteractionAttached(dict):
         return f"<InteractionAttached {super().__repr__()}>"
 
 
-class Interaction(Hashable, Generic[ClientT]):
+class Interaction(Object, Hashable, Generic[ClientT]):
     """Represents a Discord interaction.
 
     An interaction happens when a user does an action that needs to
@@ -149,43 +149,53 @@ class Interaction(Hashable, Generic[ClientT]):
         The application command that handled the interaction.
     """
 
-    __slots__: Tuple[str, ...] = (
-        "id",
-        "type",
-        "guild_id",
-        "channel_id",
-        "data",
-        "application_id",
-        "message",
-        "user",
-        "locale",
-        "guild_locale",
-        "token",
-        "version",
-        "application_command",
-        "attached",
-        "_background_tasks",
-        "_permissions",
-        "_app_permissions",
-        "_state",
-        "_session",
-        "_original_message",
-        "_cs_response",
-        "_cs_followup",
-        "_cs_channel",
-    )
+    # __slots__: Tuple[str, ...] = (
+    #     "id",
+    #     "type",
+    #     "guild_id",
+    #     "channel_id",
+    #     "data",
+    #     "application_id",
+    #     "message",
+    #     "user",
+    #     "locale",
+    #     "guild_locale",
+    #     "token",
+    #     "version",
+    #     "application_command",
+    #     "attached",
+    #     "_background_tasks",
+    #     "_permissions",
+    #     "_app_permissions",
+    #     "_state",
+    #     "_session",
+    #     "_original_message",
+    #     "_cs_response",
+    #     "_cs_followup",
+    #     "_cs_channel",
+    # )
 
-    def __init__(self, *, data: InteractionPayload, state: ConnectionState) -> None:
-        self._state: ConnectionState = state
-        self._session: ClientSession = state.http._HTTPClient__session  # type: ignore
-        # TODO: this is so janky, accessing a hidden double attribute
-        self._original_message: Optional[InteractionMessage] = None
-        self.attached = InteractionAttached()
-        self.application_command: Optional[
-            Union[SlashApplicationSubcommand, BaseApplicationCommand]
-        ] = None
-        self._background_tasks: Set[asyncio.Task] = set()
-        self._from_data(data)
+    _background_tasks: set[asyncio.Task]
+    _bot: Client
+    _original_message: InteractionMessage | None
+    _session: ClientSession
+    _state: ConnectionState
+    application_command: SlashApplicationSubcommand | BaseApplicationCommand | None
+
+    guild_locale: Locale | None
+    locale: Locale | None
+
+    # def __init__(self, *, data: InteractionPayload, state: ConnectionState) -> None:
+    #     self._state: ConnectionState = state
+    #     self._session: ClientSession = state.http._HTTPClient__session  # type: ignore
+    #     # TODO: this is so janky, accessing a hidden double attribute
+    #     self._original_message: Optional[InteractionMessage] = None
+    #     self.attached = InteractionAttached()
+    #     self.application_command: Optional[
+    #         Union[SlashApplicationSubcommand, BaseApplicationCommand]
+    #     ] = None
+    #     self._background_tasks: Set[asyncio.Task] = set()
+    #     self._from_data(data)
 
     def _from_data(self, data: InteractionPayload) -> None:
         self.id: int = int(data["id"])
@@ -232,15 +242,67 @@ class Interaction(Hashable, Generic[ClientT]):
             except KeyError:
                 pass
 
+    @classmethod
+    async def from_interaction_payload(cls, payload: InteractionPayload, *, bot: Client):
+        ret = cls(int(payload["id"]))
+        ret._bot = bot
+        ret._state = bot._connection  # TODO: Remove
+        ret._session = bot.http._HTTPClient__session  # type: ignore  # TODO: Remove
+        # TODO: this is so janky, accessing a hidden double attribute
+        ret._original_message = None
+
+        ret.attached = InteractionAttached()
+        ret.application_command = None
+        ret._background_tasks = set()
+
+        ret.locale = try_enum(Locale, locale_val) if (locale_val := payload.get("locale")) else None
+        ret.guild_locale = (
+            try_enum(Locale, guild_locale)
+            if (guild_locale := payload.get("guild_locale"))
+            else None
+        )
+        ret.type = try_enum(InteractionType, payload["type"])
+        ret.data = payload.get("data")
+        ret.token = payload["token"]
+        ret.channel_id = int(channel_id) if (channel_id := payload.get("channel_id")) else None
+        ret.guild_id = int(guild_id) if (guild_id := payload.get("guild_id")) else None
+
+        ret._app_permissions = int(payload.get("app_permissions", 0))
+
+        ret.message = None
+        ret._permissions = 0
+        if message_payload := payload.get("message"):
+            ret.message = (
+                await ret._bot.get_message(message_id=int(message_payload["id"]))
+            ) or await bot.typesheet.create_message(message_payload)
+
+        ret.user = None
+        if ret.guild_id is not None and (member_payload := payload.get("member")):
+            member_id = int(member_payload["user"]["id"])
+            ret.user = (
+                await ret._bot.get_member(member_id, ret.guild_id)
+            ) or ret._bot.typesheet.create_member(member_payload, ret.guild_id)
+            ret._permissions = int(member_payload.get("permissions", 0))
+        elif user_payload := payload.get("user"):
+            ret.user = (await ret._bot.get_user(int(user_payload["id"]))) or (
+                await ret._bot.typesheet.create_user(user_payload)
+            )
+
+        return ret
+
     @property
     def client(self) -> ClientT:
         """:class:`Client`: The client that handled the interaction."""
         return self._state._get_client()  # type: ignore
 
-    @property
-    def guild(self) -> Optional[Guild]:
-        """Optional[:class:`Guild`]: The guild the interaction was sent from."""
-        return self._state and self._state._get_guild(self.guild_id)
+    # @property
+    # def guild(self) -> Optional[Guild]:
+    #     """Optional[:class:`Guild`]: The guild the interaction was sent from."""
+    #     return self._state and self._state._get_guild(self.guild_id)
+
+    async def get_guild(self) -> Guild | None:
+        """:class:`Guild` | `None`: The guild the interaction was sent from."""
+        return await self._bot.get_guild(self.guild_id)
 
     @property
     def created_at(self) -> datetime:

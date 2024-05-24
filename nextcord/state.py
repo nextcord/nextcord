@@ -1421,8 +1421,9 @@ class ConnectionState:
                 if reaction:
                     self.dispatch("reaction_clear_emoji", reaction)
 
-    def parse_interaction_create(self, data) -> None:
-        interaction = self._get_client().get_interaction(data=data)
+    async def parse_interaction_create(self, data) -> None:
+        # interaction = self._get_client().get_interaction(data=data)
+        interaction = await self._get_client().typesheet.create_interaction(data)
         if data["type"] == 3:  # interaction component
             custom_id = interaction.data["custom_id"]  # type: ignore
             component_type = interaction.data["component_type"]  # type: ignore
@@ -1431,7 +1432,6 @@ class ConnectionState:
             custom_id = interaction.data["custom_id"]  # type: ignore
             # key exists if type is 5 etc
             self._modal_store.dispatch(custom_id, interaction)
-
         self.dispatch("interaction", interaction)
 
     def parse_presence_update(self, data) -> None:
@@ -1853,8 +1853,6 @@ class ConnectionState:
             # joined a guild with unavailable == True so..
             return
 
-        print(f"GUILD CREATE {data['id']}")
-
         guild = self._get_create_guild(data)
         await self._cache.add_guild(data)
         for mdata in data.get("members", []):
@@ -2140,6 +2138,9 @@ class ConnectionState:
                         guild._remove_member(member)
                     elif channel_id is not None:
                         guild._add_member(member)
+
+                    if "user" in data:
+                        # TODO: Address this?
                         await self._cache.add_member(data, int(data["guild_id"]))
 
                 self.dispatch("voice_state_update", member, before, after)
