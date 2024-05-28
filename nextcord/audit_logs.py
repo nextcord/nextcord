@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -75,15 +76,15 @@ if TYPE_CHECKING:
     ]
 
 
-def _transform_permissions(entry: AuditLogEntry, data: str) -> Permissions:
+def _transform_permissions(_entry: AuditLogEntry, data: str) -> Permissions:
     return Permissions(int(data))
 
 
-def _transform_color(entry: AuditLogEntry, data: int) -> Colour:
+def _transform_color(_entry: AuditLogEntry, data: int) -> Colour:
     return Colour(data)
 
 
-def _transform_snowflake(entry: AuditLogEntry, data: Snowflake) -> int:
+def _transform_snowflake(_entry: AuditLogEntry, data: Snowflake) -> int:
     return int(data)
 
 
@@ -160,7 +161,7 @@ E = TypeVar("E", bound=enums.Enum)
 
 
 def _enum_transformer(enum: Type[E]) -> Callable[[AuditLogEntry, int], E]:
-    def _transform(entry: AuditLogEntry, data: int) -> E:
+    def _transform(_entry: AuditLogEntry, data: int) -> E:
         return enums.try_enum(enum, data)
 
     return _transform
@@ -169,8 +170,7 @@ def _enum_transformer(enum: Type[E]) -> Callable[[AuditLogEntry, int], E]:
 def _transform_type(entry: AuditLogEntry, data: int) -> Union[enums.ChannelType, enums.StickerType]:
     if entry.action.name.startswith("sticker_"):
         return enums.try_enum(enums.StickerType, data)
-    else:
-        return enums.try_enum(enums.ChannelType, data)
+    return enums.try_enum(enums.ChannelType, data)
 
 
 def _list_transformer(
@@ -185,7 +185,7 @@ def _list_transformer(
 
 
 def _transform_auto_moderation_action(
-    entry: AuditLogEntry, data: Optional[AutoModerationActionPayload]
+    _entry: AuditLogEntry, data: Optional[AutoModerationActionPayload]
 ) -> Optional[AutoModerationAction]:
     if data is None:
         return None
@@ -193,7 +193,7 @@ def _transform_auto_moderation_action(
 
 
 def _transform_auto_moderation_trigger_metadata(
-    entry: AuditLogEntry, data: Optional[AutoModerationTriggerMetadataPayload]
+    _entry: AuditLogEntry, data: Optional[AutoModerationTriggerMetadataPayload]
 ) -> Optional[AutoModerationTriggerMetadata]:
     if data is None:
         return None
@@ -287,7 +287,7 @@ class AuditLogChanges:
             if attr == "$add":
                 self._handle_role(self.before, self.after, entry, elem["new_value"])  # type: ignore
                 continue
-            elif attr == "$remove":
+            if attr == "$remove":
                 self._handle_role(self.after, self.before, entry, elem["new_value"])  # type: ignore
                 continue
 
@@ -340,7 +340,7 @@ class AuditLogChanges:
         elem: List[RolePayload],
     ) -> None:
         if not hasattr(first, "roles"):
-            setattr(first, "roles", [])
+            first.roles = []
 
         data = []
         g: Guild = entry.guild
@@ -355,7 +355,7 @@ class AuditLogChanges:
 
             data.append(role)
 
-        setattr(second, "roles", data)
+        second.roles = data
 
 
 class _AuditLogProxyMemberPrune:
@@ -607,10 +607,9 @@ class AuditLogEntry(Hashable):
         }
 
         obj = Invite(state=self._state, data=fake_payload, guild=self.guild, channel=changeset.channel)  # type: ignore
-        try:
+        with contextlib.suppress(AttributeError):
             obj.inviter = changeset.inviter
-        except AttributeError:
-            pass
+
         return obj
 
     def _convert_target_emoji(self, target_id: int) -> Union[Emoji, Object]:

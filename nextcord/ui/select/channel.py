@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 
 __all__ = ("ChannelSelect", "channel_select", "ChannelSelectValues")
 
-V = TypeVar("V", bound="View", covariant=True)
+V_co = TypeVar("V_co", bound="View", covariant=True)
 
 
 class ChannelSelectValues(SelectValuesBase):
@@ -37,7 +37,7 @@ class ChannelSelectValues(SelectValuesBase):
         return [v for v in self.data if isinstance(v, GuildChannel)]
 
 
-class ChannelSelect(SelectBase, Generic[V]):
+class ChannelSelect(SelectBase, Generic[V_co]):
 
     """Represents a UI channel select menu.
 
@@ -152,7 +152,7 @@ def channel_select(
     row: Optional[int] = None,
     channel_types: List[ChannelType] = MISSING,
 ) -> Callable[
-    [ItemCallbackType[ChannelSelect[V], ClientT]], ItemCallbackType[ChannelSelect[V], ClientT]
+    [ItemCallbackType[ChannelSelect[V_co], ClientT]], ItemCallbackType[ChannelSelect[V_co], ClientT]
 ]:
     """A decorator that attaches a channel select menu to a component.
 
