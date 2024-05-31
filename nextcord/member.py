@@ -205,8 +205,8 @@ def flatten_user(cls):
     return cls
 
 
-@flatten_user
-class Member(abc.Messageable, _UserTag):
+# @flatten_user  # TODO: Figure out what this actually does.
+class Member(Object, abc.Messageable, _UserTag):
     """Represents a Discord member to a :class:`Guild`.
 
     This implements a lot of the functionality of :class:`User`.
@@ -258,60 +258,132 @@ class Member(abc.Messageable, _UserTag):
         "Nitro boost" on the guild, if available. This could be ``None``.
     """
 
-    __slots__ = (
-        "_roles",
-        "joined_at",
-        "premium_since",
-        "activities",
-        "guild",
-        "pending",
-        "nick",
-        "_client_status",
-        "_user",
-        "_state",
-        "_avatar",
-        "_timeout",
-        "_flags",
-    )
+    # __slots__ = (
+    #     "_roles",
+    #     "joined_at",
+    #     "premium_since",
+    #     "activities",
+    #     "guild",
+    #     "pending",
+    #     "nick",
+    #     "_client_status",
+    #     "_user",
+    #     "_state",
+    #     "_avatar",
+    #     "_timeout",
+    #     "_flags",
+    # )
 
-    if TYPE_CHECKING:
-        name: str
-        id: int
-        global_name: Optional[str]
-        discriminator: str
-        bot: bool
-        system: bool
-        created_at: datetime.datetime
-        default_avatar: Asset
-        avatar: Optional[Asset]
-        dm_channel: Optional[DMChannel]
-        create_dm = User.create_dm
-        mutual_guilds: List[Guild]
-        public_flags: PublicUserFlags
-        banner: Optional[Asset]
-        accent_color: Optional[Colour]
-        accent_colour: Optional[Colour]
+    # if TYPE_CHECKING:
+    #     name: str
+    #     id: int
+    #     global_name: Optional[str]
+    #     discriminator: str
+    #     bot: bool
+    #     system: bool
+    #     created_at: datetime.datetime
+    #     default_avatar: Asset
+    #     avatar: Optional[Asset]
+    #     dm_channel: Optional[DMChannel]
+    #     create_dm = User.create_dm
+    #     mutual_guilds: List[Guild]
+    #     public_flags: PublicUserFlags
+    #     banner: Optional[Asset]
+    #     accent_color: Optional[Colour]
+    #     accent_colour: Optional[Colour]
 
-    def __init__(
-        self, *, data: MemberWithUserPayload, guild: Guild, state: ConnectionState
-    ) -> None:
-        self._state: ConnectionState = state
-        self._user: User = state.store_user(data["user"])
-        self.guild: Guild = guild
-        self.joined_at: Optional[datetime.datetime] = utils.parse_time(data.get("joined_at"))
-        self.premium_since: Optional[datetime.datetime] = utils.parse_time(
-            data.get("premium_since")
-        )
-        self._roles: utils.SnowflakeList = utils.SnowflakeList(map(int, data["roles"]))
-        self._client_status: Dict[Optional[str], str] = {None: "offline"}
-        self.activities: Tuple[ActivityTypes, ...] = ()
-        self.nick: Optional[str] = data.get("nick", None)
-        self.pending: bool = data.get("pending", False)
-        self._avatar: Optional[str] = data.get("avatar")
-        self._timeout: Optional[datetime.datetime] = utils.parse_time(
-            data.get("communication_disabled_until")
-        )
-        self._flags: int = data.get("flags", 0)
+    _bot: Client
+
+    activities: tuple[ActivityTypes]  # TODO: Is this the correct typing?
+    _avatar: str | None
+    _avatar_decoration_data: dict | None
+    _client_status: dict[str | None, str]
+    deaf: bool
+    _flags: int
+    guild_id: int
+    joined_at: datetime.datetime
+    mute: bool
+    nick: str | None
+    pending: str | None
+    _permissions: str | None
+    premium_since: datetime.datetime | None
+    role_ids: Sequence[int]
+    _timeout: datetime.datetime | None
+    _user: User
+
+    # def __init__(
+    #     self, *, data: MemberWithUserPayload, guild: Guild, state: ConnectionState
+    # ) -> None:
+    #     self._state: ConnectionState = state
+    #     self._user: User = state.store_user(data["user"])
+    #     self.guild: Guild = guild
+    #     self.joined_at: Optional[datetime.datetime] = utils.parse_time(data.get("joined_at"))
+    #     self.premium_since: Optional[datetime.datetime] = utils.parse_time(
+    #         data.get("premium_since")
+    #     )
+    #     self._roles: utils.SnowflakeList = utils.SnowflakeList(map(int, data["roles"]))
+    #     self._client_status: Dict[Optional[str], str] = {None: "offline"}
+    #     self.activities: Tuple[ActivityTypes, ...] = ()
+    #     self.nick: Optional[str] = data.get("nick", None)
+    #     self.pending: bool = data.get("pending", False)
+    #     self._avatar: Optional[str] = data.get("avatar")
+    #     self._timeout: Optional[datetime.datetime] = utils.parse_time(
+    #         data.get("communication_disabled_until")
+    #     )
+    #     self._flags: int = data.get("flags", 0)
+
+    @classmethod
+    async def from_member_payload(
+        cls,
+        member_payload: MemberWithUserPayload,
+        presence_payload: PartialPresenceUpdate | None,
+        guild_id: int,
+        *,
+        bot: Client,
+    ):
+        if presence_payload is None:
+            presence_payload = {}
+
+        ret = cls(id=int(member_payload["user"]["id"]))
+        ret._bot = bot
+
+        ret._avatar = member_payload.get("avatar")
+        # TODO: Make an object or something for this?
+        ret._avatar_decoration_data = member_payload.get("avatar_decoration_data")
+        ret.deaf = member_payload["deaf"]
+        ret._flags = member_payload.get("flags", 0)
+        ret.guild_id = guild_id
+        ret.joined_at = utils.parse_time(member_payload["joined_at"])
+        ret.mute = member_payload["mute"]
+        ret.nick = member_payload.get("nick")
+        ret.pending = member_payload.get("pending")
+        # TODO: total member permissions in the channel, included with interactions? Is this just a bitflag int?
+        ret._permissions = member_payload.get("permissions")
+        ret.premium_since = utils.parse_time(member_payload.get("premium_since"))
+        # TODO: The original used utils.SnowflakeList for performance, is that necessary?
+        ret.role_ids = {int(role_id) for role_id in member_payload["roles"]}
+        # TODO: Should this be renamed to communication_disabled_until?
+        ret._timeout = utils.parse_time(member_payload.get("communication_disabled_until"))
+        ret._user = await ret._bot.typesheet.create_user(member_payload["user"])
+
+        # TODO: Fix this using ConnectionState.
+        if presence_payload:
+            ret.activities = tuple(
+                (
+                    create_activity(ret._bot._connection, activity_data)
+                    for activity_data in presence_payload["activities"]
+                )
+            )
+            # TODO: wtf is this doing?
+            ret._client_status = {
+                sys.intern(key): sys.intern(value) for key, value in presence_payload.get("client_status", {}).items()
+            }
+            ret._client_status[None] = sys.intern(presence_payload["status"])
+        else:
+            ret.activities = tuple()
+            ret._client_status = {}
+
+        return ret
 
     def __str__(self) -> str:
         return str(self._user)
@@ -360,75 +432,75 @@ class Member(abc.Messageable, _UserTag):
             member_data["user"] = data  # type: ignore
             return cls(data=member_data, guild=guild, state=state)  # type: ignore
 
-    @classmethod
-    def _copy(cls, member: Self) -> Self:
-        self = cls.__new__(cls)  # to bypass __init__
-
-        self._roles = utils.SnowflakeList(member._roles, is_sorted=True)
-        self.joined_at = member.joined_at
-        self.premium_since = member.premium_since
-        self._client_status = member._client_status.copy()
-        self.guild = member.guild
-        self.nick = member.nick
-        self.pending = member.pending
-        self.activities = member.activities
-        self._state = member._state
-        self._avatar = member._avatar
-        self._timeout = member._timeout
-        self._flags = member._flags
-
-        # Reference will not be copied unless necessary by PRESENCE_UPDATE
-        # See below
-        self._user = member._user
-        return self
+    # @classmethod
+    # def _copy(cls, member: Self) -> Self:
+    #     self = cls.__new__(cls)  # to bypass __init__
+    #
+    #     self._roles = utils.SnowflakeList(member._roles, is_sorted=True)
+    #     self.joined_at = member.joined_at
+    #     self.premium_since = member.premium_since
+    #     self._client_status = member._client_status.copy()
+    #     self.guild = member.guild
+    #     self.nick = member.nick
+    #     self.pending = member.pending
+    #     self.activities = member.activities
+    #     self._state = member._state
+    #     self._avatar = member._avatar
+    #     self._timeout = member._timeout
+    #     self._flags = member._flags
+    #
+    #     # Reference will not be copied unless necessary by PRESENCE_UPDATE
+    #     # See below
+    #     self._user = member._user
+    #     return self
 
     async def _get_channel(self):
         return await self.create_dm()
 
-    def _update(self, data: MemberPayload) -> None:
-        # the nickname change is optional,
-        # if it isn't in the payload then it didn't change
-        with contextlib.suppress(KeyError):
-            self.nick = data["nick"]
+    # def _update(self, data: MemberPayload) -> None:
+    #     # the nickname change is optional,
+    #     # if it isn't in the payload then it didn't change
+    #     with contextlib.suppress(KeyError):
+    #         self.nick = data["nick"]
+    #
+    #     with contextlib.suppress(KeyError):
+    #         self.pending = data["pending"]
+    #
+    #     self.premium_since = utils.parse_time(data.get("premium_since"))
+    #     self._roles = utils.SnowflakeList(map(int, data["roles"]))
+    #     self._avatar = data.get("avatar")
+    #     self._timeout = utils.parse_time(data.get("communication_disabled_until"))
+    #     self._flags = data.get("flags", 0)
 
-        with contextlib.suppress(KeyError):
-            self.pending = data["pending"]
-
-        self.premium_since = utils.parse_time(data.get("premium_since"))
-        self._roles = utils.SnowflakeList(map(int, data["roles"]))
-        self._avatar = data.get("avatar")
-        self._timeout = utils.parse_time(data.get("communication_disabled_until"))
-        self._flags = data.get("flags", 0)
-
-    def _presence_update(
-        self, data: PartialPresenceUpdate, user: UserPayload
-    ) -> Optional[Tuple[User, User]]:
-        self.activities = tuple((create_activity(self._state, x) for x in data["activities"]))
-        self._client_status = {
-            sys.intern(key): sys.intern(value) for key, value in data.get("client_status", {}).items()  # type: ignore
-        }
-        self._client_status[None] = sys.intern(data["status"])
-
-        if len(user) > 1:
-            return self._update_inner_user(user)
-        return None
-
-    def _update_inner_user(self, user: UserPayload) -> Optional[Tuple[User, User]]:
-        u = self._user
-        original = (u.name, u._avatar, u.discriminator, u._public_flags)
-        # These keys seem to always be available
-        modified = (
-            user["username"],
-            user["avatar"],
-            user["discriminator"],
-            user.get("public_flags", 0),
-        )
-        if original != modified:
-            to_return = User._copy(self._user)
-            u.name, u._avatar, u.discriminator, u._public_flags = modified
-            # Signal to dispatch on_user_update
-            return to_return, u
-        return None
+    # def _presence_update(
+    #     self, data: PartialPresenceUpdate, user: UserPayload
+    # ) -> Optional[Tuple[User, User]]:
+    #     self.activities = tuple((create_activity(self._state, x) for x in data["activities"]))
+    #     self._client_status = {
+    #         sys.intern(key): sys.intern(value) for key, value in data.get("client_status", {}).items()  # type: ignore
+    #     }
+    #     self._client_status[None] = sys.intern(data["status"])
+    #
+    #     if len(user) > 1:
+    #         return self._update_inner_user(user)
+    #     return None
+    #
+    # def _update_inner_user(self, user: UserPayload) -> Optional[Tuple[User, User]]:
+    #     u = self._user
+    #     original = (u.name, u._avatar, u.discriminator, u._public_flags)
+    #     # These keys seem to always be available
+    #     modified = (
+    #         user["username"],
+    #         user["avatar"],
+    #         user["discriminator"],
+    #         user.get("public_flags", 0),
+    #     )
+    #     if original != modified:
+    #         to_return = User._copy(self._user)
+    #         u.name, u._avatar, u.discriminator, u._public_flags = modified
+    #         # Signal to dispatch on_user_update
+    #         return to_return, u
+    #     return None
 
     @property
     def status(self) -> Union[Status, str]:
@@ -886,7 +958,9 @@ class Member(abc.Messageable, _UserTag):
 
         if payload:
             data = await http.edit_member(guild_id, self.id, reason=reason, **payload)
-            return Member(data=data, guild=self.guild, state=self._state)
+            await self._bot.cache.add_member(data, self.guild_id)
+            # return await self._bot.typesheet.create_member(data, self.guild_id)
+            return await self._bot.get_member(self._user.id, self.guild_id)
         return None
 
     async def request_to_speak(self) -> None:

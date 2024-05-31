@@ -386,7 +386,7 @@ class Client:
             hooks=self._hooks,
             http=self.http,
             loop=self.loop,
-            cache=self.cache,
+            bot=self,
             max_messages=max_messages,
             application_id=application_id,
             heartbeat_timeout=heartbeat_timeout,
@@ -678,7 +678,9 @@ class Client:
         self._token = token.strip()
         data = await self.http.static_login(f"Bot {self._token}")
 
-        self._connection.user = ClientUser(state=self._connection, data=data)
+        # self._connection.user = ClientUser(state=self._connection, data=data)
+        # TODO: Convert to typesheet/normal user?
+        self._connection.user = await ClientUser.from_user_payload(data, bot=self)
 
     async def connect(self, *, reconnect: bool = True) -> None:
         """|coro|
@@ -1067,15 +1069,16 @@ class Client:
 
         return None
 
-    async def get_user(self, user_id: int) -> Optional[AsyncUser]:
+    async def get_user(self, user_id: int) -> Optional[User]:
         if user_payload := await self.cache.get_user(user_id):
             return await self.typesheet.create_user(user_payload)
 
         return None
 
-    async def get_member(self, member_id: int, guild_id: int) -> Optional[AsyncMember]:
+    async def get_member(self, member_id: int, guild_id: int) -> Optional[Member]:
         if member_data := await self.cache.get_member(member_id, guild_id):
-            return await self.typesheet.create_member(member_data, guild_id)
+            presence_data = await self.cache.get_presence(member_id, guild_id)
+            return await self.typesheet.create_member(member_data, presence_data, guild_id)
 
         return None
 

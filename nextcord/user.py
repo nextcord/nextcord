@@ -7,8 +7,9 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 from . import abc
 from .asset import Asset
 from .colour import Colour
-from .enums import DefaultAvatar
+from .enums import DefaultAvatar, Locale, try_enum
 from .flags import PublicUserFlags
+from .object import Object
 from .utils import MISSING, obj_to_base64_data, snowflake_time
 
 if TYPE_CHECKING:
@@ -72,39 +73,82 @@ class _UserTag:
     id: int
 
 
-class BaseUser(_UserTag):
-    __slots__ = (
-        "name",
-        "id",
-        "discriminator",
-        "_avatar",
-        "_banner",
-        "_accent_colour",
-        "bot",
-        "system",
-        "_public_flags",
-        "_state",
-        "global_name",
-    )
+class BaseUser(Object, _UserTag):
+    # __slots__ = (
+    #     "name",
+    #     "id",
+    #     "discriminator",
+    #     "_avatar",
+    #     "_banner",
+    #     "_accent_colour",
+    #     "bot",
+    #     "system",
+    #     "_public_flags",
+    #     "_state",
+    #     "global_name",
+    # )
+    #
+    # if TYPE_CHECKING:
+    #     name: str
+    #     id: int
+    #     discriminator: str
+    #     bot: bool
+    #     system: bool
+    #     global_name: Optional[str]
+    #     _state: ConnectionState
+    #     _avatar: Optional[str]
+    #     _banner: Optional[str]
+    #     _accent_colour: Optional[str]
+    #     _public_flags: int
 
-    if TYPE_CHECKING:
-        name: str
-        id: int
-        discriminator: str
-        bot: bool
-        system: bool
-        global_name: Optional[str]
-        _state: ConnectionState
-        _avatar: Optional[str]
-        _banner: Optional[str]
-        _accent_colour: Optional[str]
-        _public_flags: int
+    # def __init__(
+    #     self, *, state: ConnectionState, data: Union[PartialUserPayload, UserPayload]
+    # ) -> None:
+    #     self._state = state
+    #     self._update(data)
 
-    def __init__(
-        self, *, state: ConnectionState, data: Union[PartialUserPayload, UserPayload]
-    ) -> None:
-        self._state = state
-        self._update(data)
+    _bot: Client
+
+    _accent_colour: int | None
+    _avatar: str | None
+    _avatar_decoration_data: dict | None  # TODO: This isn't implemented? fix that.
+    _banner: str | None
+    bot: bool  # Docs say this is an optional field, but we have it hard set to bool.
+    discriminator: str
+    email: str | None
+    _flags: int | None  # TODO: This isn't implemented? Fix that.
+    global_name: str | None
+    locale: Locale | None
+    mfa_enabled: bool | None  # TODO: Should this be hard set to bool? The others are.
+    name: str  # TODO: Discord calls it "username", rename?
+    premium_type: int | None  # TODO: Make an enum for this?
+    _public_flags: int | None
+    system: bool  # Discord docs says that this is an optional field, but we have it hard set as bool.
+    verified: bool | None  # TODO: Should this be hard set to bool? The others are.
+
+    @classmethod
+    async def from_user_payload(cls, payload: UserPayload, *, bot: Client):
+        ret = cls(int(payload["id"]))
+        ret._bot = bot
+
+        ret._accent_colour = payload.get("accent_color")
+        ret._avatar = payload.get("avatar")
+        ret._avatar_decoration_data = payload.get("avatar_decoration_data")
+        ret._banner = payload.get("banner")
+        ret.bot = payload.get("bot", False)
+        ret.discriminator = payload["discriminator"]
+        ret.email = payload.get("email")
+        ret._flags = payload.get("flags")
+        ret.global_name = payload["global_name"]
+        ret.locale = try_enum(Locale, payload["locale"]) if "locale" in payload else None
+        ret.mfa_enabled = payload.get("mfa_enabled")
+        ret.name = payload["username"]
+        ret.premium_type = payload.get("premium_type")
+        ret._public_flags = payload.get("public_flags")
+        ret.system = payload.get("system", False)
+        ret.verified = payload.get("verified")
+
+        return ret
 
     def __repr__(self) -> str:
         return (
@@ -125,17 +169,17 @@ class BaseUser(_UserTag):
     def __hash__(self) -> int:
         return self.id >> 22
 
-    def _update(self, data: Union[PartialUserPayload, UserPayload]) -> None:
-        self.name = data["username"]
-        self.id = int(data["id"])
-        self.discriminator = data["discriminator"]
-        self._avatar = data["avatar"]
-        self._banner = data.get("banner", None)
-        self._accent_colour = data.get("accent_color", None)
-        self._public_flags = data.get("public_flags", 0)
-        self.bot = data.get("bot", False)
-        self.system = data.get("system", False)
-        self.global_name = data.get("global_name", None)
+    # def _update(self, data: Union[PartialUserPayload, UserPayload]) -> None:
+    #     self.name = data["username"]
+    #     self.id = int(data["id"])
+    #     self.discriminator = data["discriminator"]
+    #     self._avatar = data["avatar"]
+    #     self._banner = data.get("banner", None)
+    #     self._accent_colour = data.get("accent_color", None)
+    #     self._public_flags = data.get("public_flags", 0)
+    #     self.bot = data.get("bot", False)
+    #     self.system = data.get("system", False)
+    #     self.global_name = data.get("global_name", None)
 
     @classmethod
     def _copy(cls, user: Self) -> Self:
@@ -176,7 +220,7 @@ class BaseUser(_UserTag):
         If you want the avatar that a user has displayed, consider :attr:`display_avatar`.
         """
         if self._avatar is not None:
-            return Asset._from_avatar(self._state, self.id, self._avatar)
+            return Asset._from_avatar(self._bot._connection, self.id, self._avatar)
         return None
 
     @property
@@ -192,7 +236,7 @@ class BaseUser(_UserTag):
             avatar_index = (self.id >> 22) % len(DefaultAvatar)
         else:
             avatar_index = int(self.discriminator) % 5
-        return Asset._from_default_avatar(self._state, avatar_index)
+        return Asset._from_default_avatar(self._bot._connection, avatar_index)
 
     @property
     def display_avatar(self) -> Asset:
@@ -216,7 +260,7 @@ class BaseUser(_UserTag):
         """
         if self._banner is None:
             return None
-        return Asset._from_user_banner(self._state, self.id, self._banner)
+        return Asset._from_user_banner(self._bot._connection, self.id, self._banner)
 
     @property
     def accent_colour(self) -> Optional[Colour]:
@@ -363,7 +407,7 @@ class ClientUser(BaseUser):
         Specifies if the user has MFA turned on and working.
     """
 
-    __slots__ = ("locale", "_flags", "verified", "mfa_enabled", "__weakref__")
+    # __slots__ = ("locale", "_flags", "verified", "mfa_enabled", "__weakref__")
 
     if TYPE_CHECKING:
         verified: bool
@@ -371,8 +415,16 @@ class ClientUser(BaseUser):
         mfa_enabled: bool
         _flags: int
 
-    def __init__(self, *, state: ConnectionState, data: UserPayload) -> None:
-        super().__init__(state=state, data=data)
+    # def __init__(self, *, state: ConnectionState, data: UserPayload) -> None:
+    #     super().__init__(state=state, data=data)
+
+    @classmethod
+    async def from_user_payload(cls, payload: UserPayload, *, bot: Client) -> ClientUser:
+        ret = await super().from_user_payload(payload, bot=bot)
+
+        # TODO: Does this need to exist?
+
+        return ret
 
     def __repr__(self) -> str:
         return (
@@ -381,13 +433,13 @@ class ClientUser(BaseUser):
             + f" bot={self.bot} verified={self.verified} mfa_enabled={self.mfa_enabled}>"
         )
 
-    def _update(self, data: UserPayload) -> None:
-        super()._update(data)
-        # There's actually an Optional[str] phone field as well but I won't use it
-        self.verified = data.get("verified", False)
-        self.locale = data.get("locale")
-        self._flags = data.get("flags", 0)
-        self.mfa_enabled = data.get("mfa_enabled", False)
+    # def _update(self, data: UserPayload) -> None:
+    #     super()._update(data)
+    #     # There's actually an Optional[str] phone field as well but I won't use it
+    #     self.verified = data.get("verified", False)
+    #     self.locale = data.get("locale")
+    #     self._flags = data.get("flags", 0)
+    #     self.mfa_enabled = data.get("mfa_enabled", False)
 
     async def edit(
         self,
@@ -440,8 +492,9 @@ class ClientUser(BaseUser):
         if avatar is not MISSING:
             payload["avatar"] = await obj_to_base64_data(avatar)
 
-        data: UserPayload = await self._state.http.edit_profile(payload)
-        return ClientUser(state=self._state, data=data)
+        data: UserPayload = await self._bot.http.edit_profile(payload)
+        # return ClientUser(state=self._state, data=data)
+        return await ClientUser.from_user_payload(data, bot=self._bot)
 
 
 class User(BaseUser, abc.Messageable):
@@ -488,12 +541,15 @@ class User(BaseUser, abc.Messageable):
         Specifies if the user is a system user (i.e. represents Discord officially).
     """
 
-    __slots__ = ("_stored",)
+    # __slots__ = ("_stored",)
 
-    def __init__(
-        self, *, state: ConnectionState, data: Union[PartialUserPayload, UserPayload]
-    ) -> None:
-        super().__init__(state=state, data=data)
+    # def __init__(
+    #     self, *, state: ConnectionState, data: Union[PartialUserPayload, UserPayload]
+    # ) -> None:
+    #     super().__init__(state=state, data=data)
+    #     self._stored: bool = False
+    def __init__(self, id: int):
+        super().__init__(id)
         self._stored: bool = False
 
     def __repr__(self) -> str:
@@ -510,11 +566,11 @@ class User(BaseUser, abc.Messageable):
         except Exception:
             pass
 
-    @classmethod
-    def _copy(cls, user: User):
-        self = super()._copy(user)
-        self._stored = False
-        return self
+    # @classmethod
+    # def _copy(cls, user: User):
+    #     self = super()._copy(user)
+    #     self._stored = False
+    #     return self
 
     async def _get_channel(self) -> DMChannel:
         return await self.create_dm()

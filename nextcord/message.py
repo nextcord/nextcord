@@ -33,10 +33,12 @@ from .flags import AttachmentFlags, MessageFlags
 from .guild import Guild
 from .member import Member
 from .mixins import Hashable
+from .object import Object
 from .partial_emoji import PartialEmoji
 from .reaction import Reaction
 from .sticker import StickerItem
 from .threads import Thread
+from .user import AsyncUser
 from .utils import MISSING, escape_mentions
 
 if TYPE_CHECKING:
@@ -650,7 +652,7 @@ class MessageInteraction(Hashable):
 
 
 @flatten_handlers
-class Message(Hashable):
+class Message(Object, Hashable):
     r"""Represents a message from Discord.
 
     .. container:: operations
@@ -768,40 +770,40 @@ class Message(Hashable):
         The interaction data of a message, if applicable.
     """
 
-    __slots__ = (
-        "_state",
-        "_edited_timestamp",
-        "_cs_channel_mentions",
-        "_cs_raw_mentions",
-        "_cs_clean_content",
-        "_cs_raw_channel_mentions",
-        "_cs_raw_role_mentions",
-        "_cs_system_content",
-        "tts",
-        "content",
-        "channel",
-        "webhook_id",
-        "mention_everyone",
-        "embeds",
-        "id",
-        "interaction",
-        "mentions",
-        "author",
-        "attachments",
-        "nonce",
-        "pinned",
-        "role_mentions",
-        "type",
-        "flags",
-        "reactions",
-        "reference",
-        "application",
-        "activity",
-        "stickers",
-        "components",
-        "_background_tasks",
-        "guild",
-    )
+    # __slots__ = (
+    #     "_state",
+    #     "_edited_timestamp",
+    #     "_cs_channel_mentions",
+    #     "_cs_raw_mentions",
+    #     "_cs_clean_content",
+    #     "_cs_raw_channel_mentions",
+    #     "_cs_raw_role_mentions",
+    #     "_cs_system_content",
+    #     "tts",
+    #     "content",
+    #     "channel",
+    #     "webhook_id",
+    #     "mention_everyone",
+    #     "embeds",
+    #     "id",
+    #     "interaction",
+    #     "mentions",
+    #     "author",
+    #     "attachments",
+    #     "nonce",
+    #     "pinned",
+    #     "role_mentions",
+    #     "type",
+    #     "flags",
+    #     "reactions",
+    #     "reference",
+    #     "application",
+    #     "activity",
+    #     "stickers",
+    #     "components",
+    #     "_background_tasks",
+    #     "guild",
+    # )
 
     if TYPE_CHECKING:
         _HANDLERS: ClassVar[List[Tuple[str, Callable[..., None]]]]
@@ -819,8 +821,9 @@ class Message(Hashable):
         channel: MessageableChannel,
         data: MessagePayload,
     ) -> None:
+        super().__init__(id=int(data["id"]))
         self._state: ConnectionState = state
-        self.id: int = int(data["id"])
+        # self.id: int = int(data["id"])
         self.webhook_id: Optional[int] = utils.get_as_snowflake(data, "webhook_id")
         self.reactions: List[Reaction] = [
             Reaction(message=self, data=d) for d in data.get("reactions", [])
@@ -900,6 +903,36 @@ class Message(Hashable):
             if "interaction" in data
             else None
         )
+
+    @classmethod
+    async def from_message_payload(cls, payload: MessagePayload, *, bot: Client):
+        channel = bot.get_channel(int(payload["channel_id"]))
+        ret = cls(state=bot._connection, channel=channel, data=payload)
+        ret._bot = bot
+        return ret
+        # ret = cls(payload["id"])
+        # ret._bot = bot
+        #
+        # # TODO: The author can be a webhook object, see docs and implement it. It isn't specifically handled in NC yet?
+        # # ret.author = pass
+        # ret.channel_id = int(payload["channel_id"])
+        # ret.content = payload["content"]
+        # # TODO: This is an underscored variable that is directly accessed via a property. Why?
+        # ret._edited_timestamp = utils.parse_time(payload["edited_timestamp"])
+        # # TODO: Very optional, rarely appears. See docs and implement it. Doesn't exist in NC yet?
+        # # ret.mention_channels = pass
+        # ret.mention_everyone = payload["mention_everyone"]
+        # ret.mentions = [AsyncUser.from_user_payload(user_payload, bot=ret._bot) for user_payload in payload["mentions"]]
+        # # TODO: Discord calls it "mention_roles", but it just has the ID's and not the role objects. Is this name fine?
+        # ret.mention_role_ids = [int(role_id) for role_id in payload["mention_roles"]]
+        # # TODO: created_at is from the ID, but this timestamp is straight from Discord. Make created_at use this?
+        # ret.timestamp = utils.parse_time(payload["timestamp"])
+        # ret.tts = payload["tts"]
+        #
+        # return ret
+
+
+
 
     def __repr__(self) -> str:
         name = self.__class__.__name__
@@ -1019,11 +1052,14 @@ class Message(Hashable):
         self.nonce = value
 
     def _handle_author(self, author: UserPayload) -> None:
-        self.author = self._state.store_user(author)
-        if isinstance(self.guild, Guild):
-            found = self.guild.get_member(self.author.id)
-            if found is not None:
-                self.author = found
+        pass  # TODO: Jebus you just want the bot to work right now, don't you? You WILL have to fix this later.
+        #        Or work around it entirely /shrug.
+        #        NOTE: Despite commenting on this code, the bot still crashed.
+        # self.author = self._state.store_user(author)
+        # if isinstance(self.guild, Guild):
+        #     found = self.guild.get_member(self.author.id)
+        #     if found is not None:
+        #         self.author = found
 
     def _handle_member(self, member: MemberPayload) -> None:
         # The gateway now gives us full Member objects sometimes with the following keys

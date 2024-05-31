@@ -546,10 +546,11 @@ class Guild(Hashable):
 
         cache_joined = self._state.member_cache_flags.joined
         self_id = self._state.self_id
-        for mdata in guild.get("members", []):
-            member = Member(data=mdata, guild=self, state=state)  # type: ignore
-            if cache_joined or member.id == self_id:
-                self._add_member(member)
+        # TODO: Re-add this, you commented it because this function isn't async right now.
+        # for mdata in guild.get("members", []):
+        #     member = Member(data=mdata, guild=self, state=state)  # type: ignore
+        #     if cache_joined or member.id == self_id:
+        #         self._add_member(member)
 
         self._sync(guild)
         self._large: Optional[bool] = None if member_count is None else self._member_count >= 250
