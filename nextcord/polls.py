@@ -100,8 +100,6 @@ class PollAnswer:
     __slots__ = (
         "answer_id",
         "poll_media",
-        "to_dict",
-        "from_dict",
     )
 
     def __init__(self, *, answer_id: Optional[int] = None, poll_media: PollMedia) -> None:
@@ -133,7 +131,7 @@ class PollAnswerCount:
         The number of users who have voted for this option.
     """
 
-    __slots__ = ("id", "me_voted", "count", "to_dict")
+    __slots__ = ("id", "me_voted", "count")
 
     def __init__(self, data: PollAnswerCountPayload) -> None:
         self.id: int = data["id"]
@@ -164,7 +162,6 @@ class PollResults:
     __slots__ = (
         "is_finalized",
         "answer_counts",
-        "to_dict",
     )
 
     def __init__(self, data: PollResultsPayload) -> None:
@@ -188,7 +185,6 @@ class PollCreateRequest:
         "duration",
         "allow_multiselect",
         "layout_type",
-        "add_answer",
     )
     """
     A poll create request.
@@ -268,8 +264,6 @@ class Poll:
     """
 
     __slots__ = (
-        "__eq__",
-        "__init__",
         "message",
         "question",
         "_state",
