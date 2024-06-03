@@ -1516,8 +1516,7 @@ class Messageable:
         if file is not None and files is not None:
             raise InvalidArgument("Cannot pass both file and files parameter to send()")
 
-        if poll is not None:
-            poll_payload = poll.to_dict()
+        poll_payload = poll.to_dict() if poll else None
 
         if file is not None:
             if not isinstance(file, File):
@@ -1537,7 +1536,6 @@ class Messageable:
                     stickers=stickers_payload,
                     components=components,
                     flags=flag_value,
-                    poll=poll,
                 )
             finally:
                 file.close()
