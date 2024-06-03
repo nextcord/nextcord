@@ -3,16 +3,16 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING, List, Optional, Union
 
-from .emoji import Emoji
 from .enums import PollLayoutType, try_enum
 from .errors import InvalidArgument
-from .message import Message
 from .partial_emoji import PartialEmoji
-from .state import ConnectionState
 from .user import User
 from .utils import MISSING
 
 if TYPE_CHECKING:
+    from .emoji import Emoji
+    from .message import Message
+    from .state import ConnectionState
     from .types.polls import (
         Poll as PollData,
         PollAnswer as PollAnswerPayload,
@@ -66,8 +66,7 @@ class PollMedia:
             else:
                 self.emoji: Optional[PartialEmoji | Emoji] = emoji
         else:
-            # TODO: fix this but idk how to
-            self.emoji: Optional[PartialEmoji | Emoji] = emoji
+            self.emoji: Optional[PartialEmoji | Emoji] = emoji  # type: ignore -- pyright is weird?
 
     def to_dict(self) -> PollMediaPayload:
         payload: PollMediaPayload = {"text": self.text}
