@@ -32,7 +32,6 @@ from .iterators import HistoryIterator
 from .mentions import AllowedMentions
 from .partial_emoji import PartialEmoji
 from .permissions import PermissionOverwrite, Permissions
-from .polls import PollCreateRequest
 from .role import Role
 from .sticker import GuildSticker, StickerItem
 from .types.components import Component as ComponentPayload
@@ -71,6 +70,7 @@ if TYPE_CHECKING:
     from .guild import Guild
     from .member import Member
     from .message import Message, MessageReference, PartialMessage
+    from .polls import PollCreateRequest
     from .state import ConnectionState
     from .threads import Thread
     from .types.channel import (
