@@ -52,16 +52,16 @@ if TYPE_CHECKING:
     from .types.components import Component as ComponentPayload
     from .types.embed import Embed as EmbedPayload
     from .types.interactions import MessageInteraction as MessageInteractionPayload
-    from .types.member import Member as MemberPayload
-    from .types.member import UserWithMember as UserWithMemberPayload
-    from .types.message import Attachment as AttachmentPayload
-    from .types.message import Message as MessagePayload
-    from .types.message import MessageActivity as MessageActivityPayload
-    from .types.message import MessageApplication as MessageApplicationPayload
-    from .types.message import MessageReference as MessageReferencePayload
-    from .types.message import Reaction as ReactionPayload
-    from .types.threads import Thread as ThreadPayload
-    from .types.threads import ThreadArchiveDuration
+    from .types.member import Member as MemberPayload, UserWithMember as UserWithMemberPayload
+    from .types.message import (
+        Attachment as AttachmentPayload,
+        Message as MessagePayload,
+        MessageActivity as MessageActivityPayload,
+        MessageApplication as MessageApplicationPayload,
+        MessageReference as MessageReferencePayload,
+        Reaction as ReactionPayload,
+    )
+    from .types.threads import Thread as ThreadPayload, ThreadArchiveDuration
     from .types.user import User as UserPayload
     from .ui.view import View
     from .user import User
@@ -1346,7 +1346,8 @@ class Message(Hashable):
         allowed_mentions: Optional[AllowedMentions] = ...,
         view: Optional[View] = ...,
         file: Optional[File] = ...,
-    ) -> Message: ...
+    ) -> Message:
+        ...
 
     @overload
     async def edit(
@@ -1360,7 +1361,8 @@ class Message(Hashable):
         allowed_mentions: Optional[AllowedMentions] = ...,
         view: Optional[View] = ...,
         file: Optional[File] = ...,
-    ) -> Message: ...
+    ) -> Message:
+        ...
 
     @overload
     async def edit(
@@ -1374,7 +1376,8 @@ class Message(Hashable):
         allowed_mentions: Optional[AllowedMentions] = ...,
         view: Optional[View] = ...,
         files: Optional[List[File]] = ...,
-    ) -> Message: ...
+    ) -> Message:
+        ...
 
     @overload
     async def edit(
@@ -1388,7 +1391,8 @@ class Message(Hashable):
         allowed_mentions: Optional[AllowedMentions] = ...,
         view: Optional[View] = ...,
         files: Optional[List[File]] = ...,
-    ) -> Message: ...
+    ) -> Message:
+        ...
 
     async def edit(
         self,

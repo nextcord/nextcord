@@ -13,12 +13,14 @@ from .user import User
 from .utils import MISSING
 
 if TYPE_CHECKING:
-    from .types.polls import Poll as PollData
-    from .types.polls import PollAnswer as PollAnswerPayload
-    from .types.polls import PollAnswerCount as PollAnswerCountPayload
-    from .types.polls import PollCreateRequest as PollCreateRequestPayload
-    from .types.polls import PollMedia as PollMediaPayload
-    from .types.polls import PollResults as PollResultsPayload
+    from .types.polls import (
+        Poll as PollData,
+        PollAnswer as PollAnswerPayload,
+        PollAnswerCount as PollAnswerCountPayload,
+        PollCreateRequest as PollCreateRequestPayload,
+        PollMedia as PollMediaPayload,
+        PollResults as PollResultsPayload,
+    )
 
     # for reviewers: this typehint type is precedent in the nextcord codebase i.e.
     # https://github.com/nextcord/nextcord/blob/master/nextcord/message.py#L68
@@ -31,11 +33,7 @@ def resolve_emoji(emoji: EmojiInputType) -> str:
 
     if isinstance(emoji, PartialEmoji):
         # if this partial emoji has an ID, then it is a custom emoji. else it's an unicode emoji.
-        if id := emoji.id:
-            return str(id)
-        else:
-            return emoji.name
-
+        return str(emoji.id) if emoji.id else emoji.name
     if isinstance(emoji, str):
         return emoji
 
@@ -80,12 +78,10 @@ class PollMedia:
 
     @classmethod
     def from_dict(cls, data: PollMediaPayload) -> PollMedia:
-        if raw_emoji := data.get("emoji"):
-            # a PollMedia when sent will have emoji as a string.
-            # however when received it will be a raw PartialEmoji.
-            emoji = PartialEmoji.from_dict(raw_emoji)  # type: ignore[reportArgumentType]
-        else:
-            emoji = None
+        # a PollMedia when sent will have emoji as a string.
+        # however when received it will be a raw PartialEmoji.
+
+        emoji = PartialEmoji.from_dict(data["emoji"]) if "emoji" in data else None  # type: ignore[reportArgumentType]
 
         return cls(text=data["text"], emoji=emoji)
 
@@ -109,7 +105,7 @@ class PollAnswer:
         "from_dict",
     )
 
-    def __init__(self, *, answer_id: Optional[int] = None, poll_media: PollMedia):
+    def __init__(self, *, answer_id: Optional[int] = None, poll_media: PollMedia) -> None:
         self.answer_id: Optional[int] = answer_id
         self.poll_media: PollMedia = poll_media
 
@@ -140,7 +136,7 @@ class PollAnswerCount:
 
     __slots__ = ("id", "me_voted", "count", "to_dict")
 
-    def __init__(self, data: PollAnswerCountPayload):
+    def __init__(self, data: PollAnswerCountPayload) -> None:
         self.id: int = data["id"]
         self.me_voted: bool = data["me_voted"]
         self.count: int = data["count"]
@@ -305,9 +301,10 @@ class Poll:
 
     # TODO: implement this endpoint when I understand how to create an AsyncIterator propperly
 
-    async def get_answer_voters(self, answer_id: int) -> User: ...
+    async def get_answer_voters(self, answer_id: int) -> User:
+        ...
 
-    async def expire(self):
+    async def expire(self) -> None:
         """
         Immediately ends the poll. You cannot end polls from other users.
         """

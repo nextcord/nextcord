@@ -73,12 +73,16 @@ if TYPE_CHECKING:
     from .message import Message, MessageReference, PartialMessage
     from .state import ConnectionState
     from .threads import Thread
-    from .types.channel import Channel as ChannelPayload
-    from .types.channel import GuildChannel as GuildChannelPayload
-    from .types.channel import OverwriteType
-    from .types.channel import PermissionOverwrite as PermissionOverwritePayload
-    from .types.message import AllowedMentions as AllowedMentionsPayload
-    from .types.message import MessageReference as MessageReferencePayload
+    from .types.channel import (
+        Channel as ChannelPayload,
+        GuildChannel as GuildChannelPayload,
+        OverwriteType,
+        PermissionOverwrite as PermissionOverwritePayload,
+    )
+    from .types.message import (
+        AllowedMentions as AllowedMentionsPayload,
+        MessageReference as MessageReferencePayload,
+    )
     from .ui.view import View
     from .user import ClientUser
 
@@ -263,7 +267,8 @@ class GuildChannel:
 
         def __init__(
             self, *, state: ConnectionState, guild: Guild, data: GuildChannelPayload
-        ) -> None: ...
+        ) -> None:
+            ...
 
     def __str__(self) -> str:
         return self.name
@@ -773,7 +778,8 @@ class GuildChannel:
         *,
         overwrite: Optional[PermissionOverwrite] = ...,
         reason: Optional[str] = ...,
-    ) -> None: ...
+    ) -> None:
+        ...
 
     @overload
     async def set_permissions(
@@ -782,7 +788,8 @@ class GuildChannel:
         *,
         reason: Optional[str] = ...,
         **permissions: bool,
-    ) -> None: ...
+    ) -> None:
+        ...
 
     async def set_permissions(
         self,
@@ -955,7 +962,8 @@ class GuildChannel:
         category: Optional[Snowflake] = ...,
         sync_permissions: bool = ...,
         reason: Optional[str] = None,
-    ) -> None: ...
+    ) -> None:
+        ...
 
     @overload
     async def move(
@@ -966,7 +974,8 @@ class GuildChannel:
         category: Optional[Snowflake] = ...,
         sync_permissions: bool = ...,
         reason: Optional[str] = None,
-    ) -> None: ...
+    ) -> None:
+        ...
 
     @overload
     async def move(
@@ -977,7 +986,8 @@ class GuildChannel:
         category: Optional[Snowflake] = ...,
         sync_permissions: bool = ...,
         reason: Optional[str] = None,
-    ) -> None: ...
+    ) -> None:
+        ...
 
     @overload
     async def move(
@@ -988,7 +998,8 @@ class GuildChannel:
         category: Optional[Snowflake] = ...,
         sync_permissions: bool = ...,
         reason: Optional[str] = None,
-    ) -> None: ...
+    ) -> None:
+        ...
 
     async def move(
         self,
@@ -1261,7 +1272,8 @@ class Messageable:
         flags: Optional[MessageFlags] = ...,
         suppress_embeds: Optional[bool] = ...,
         poll: Optional[PollCreateRequest] = ...,
-    ) -> Message: ...
+    ) -> Message:
+        ...
 
     @overload
     async def send(
@@ -1281,7 +1293,8 @@ class Messageable:
         flags: Optional[MessageFlags] = ...,
         suppress_embeds: Optional[bool] = ...,
         poll: Optional[PollCreateRequest] = ...,
-    ) -> Message: ...
+    ) -> Message:
+        ...
 
     @overload
     async def send(
@@ -1301,7 +1314,8 @@ class Messageable:
         flags: Optional[MessageFlags] = ...,
         suppress_embeds: Optional[bool] = ...,
         poll: Optional[PollCreateRequest] = ...,
-    ) -> Message: ...
+    ) -> Message:
+        ...
 
     @overload
     async def send(
@@ -1321,7 +1335,8 @@ class Messageable:
         flags: Optional[MessageFlags] = ...,
         suppress_embeds: Optional[bool] = ...,
         poll: Optional[PollCreateRequest] = ...,
-    ) -> Message: ...
+    ) -> Message:
+        ...
 
     async def send(
         self,
@@ -1545,7 +1560,6 @@ class Messageable:
                     stickers=stickers_payload,
                     components=components,
                     flags=flag_value,
-                    poll=poll,
                 )
             finally:
                 for f in files:
@@ -1563,7 +1577,7 @@ class Messageable:
                 stickers=stickers_payload,
                 components=components,
                 flags=flag_value,
-                poll=poll,
+                poll=poll_payload,
             )
 
         ret = state.create_message(channel=channel, data=data)
