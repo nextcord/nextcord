@@ -12,6 +12,7 @@ from .embed import Embed
 from .emoji import PartialEmoji
 from .interactions import MessageInteraction
 from .member import Member, UserWithMember
+from .polls import Poll
 from .snowflake import Snowflake, SnowflakeList
 from .sticker import StickerItem
 from .user import User
@@ -100,6 +101,7 @@ class Message(TypedDict):
     referenced_message: NotRequired[Optional[Message]]
     interaction: NotRequired[MessageInteraction]
     components: NotRequired[List[Component]]
+    poll: NotRequired[Poll]
 
 
 AllowedMentionType = Literal["roles", "users", "everyone"]

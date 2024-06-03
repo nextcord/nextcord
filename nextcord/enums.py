@@ -2037,6 +2037,13 @@ class ForumLayoutType(IntEnum):
     """Display posts as a collection of posts with images, this is more image focused."""
 
 
+class PollLayoutType(IntEnum):
+    """The layout type of the poll."""
+
+    default = 1
+    """The default poll layout type."""
+
+
 T = TypeVar("T")
 
 

@@ -34,6 +34,7 @@ from .guild import Guild
 from .member import Member
 from .mixins import Hashable
 from .partial_emoji import PartialEmoji
+from .polls import Poll
 from .reaction import Reaction
 from .sticker import StickerItem
 from .threads import Thread
@@ -51,16 +52,16 @@ if TYPE_CHECKING:
     from .types.components import Component as ComponentPayload
     from .types.embed import Embed as EmbedPayload
     from .types.interactions import MessageInteraction as MessageInteractionPayload
-    from .types.member import Member as MemberPayload, UserWithMember as UserWithMemberPayload
-    from .types.message import (
-        Attachment as AttachmentPayload,
-        Message as MessagePayload,
-        MessageActivity as MessageActivityPayload,
-        MessageApplication as MessageApplicationPayload,
-        MessageReference as MessageReferencePayload,
-        Reaction as ReactionPayload,
-    )
-    from .types.threads import Thread as ThreadPayload, ThreadArchiveDuration
+    from .types.member import Member as MemberPayload
+    from .types.member import UserWithMember as UserWithMemberPayload
+    from .types.message import Attachment as AttachmentPayload
+    from .types.message import Message as MessagePayload
+    from .types.message import MessageActivity as MessageActivityPayload
+    from .types.message import MessageApplication as MessageApplicationPayload
+    from .types.message import MessageReference as MessageReferencePayload
+    from .types.message import Reaction as ReactionPayload
+    from .types.threads import Thread as ThreadPayload
+    from .types.threads import ThreadArchiveDuration
     from .types.user import User as UserPayload
     from .ui.view import View
     from .user import User
@@ -737,6 +738,8 @@ class Message(Hashable):
         The guild that the message belongs to, if applicable.
     interaction: Optional[:class:`MessageInteraction`]
         The interaction data of a message, if applicable.
+    poll: Optional[:class:`Poll`]
+        The poll included in a message, if applicable.
     """
 
     __slots__ = (
@@ -772,6 +775,7 @@ class Message(Hashable):
         "components",
         "_background_tasks",
         "guild",
+        "poll",
     )
 
     if TYPE_CHECKING:
@@ -870,6 +874,9 @@ class Message(Hashable):
             MessageInteraction(data=data["interaction"], guild=self.guild, state=self._state)
             if "interaction" in data
             else None
+        )
+        self.poll: Optional[Poll] = (
+            Poll(data=data["poll"], message=self, state=self._state) if "poll" in data else None
         )
 
     def __repr__(self) -> str:
@@ -1339,8 +1346,7 @@ class Message(Hashable):
         allowed_mentions: Optional[AllowedMentions] = ...,
         view: Optional[View] = ...,
         file: Optional[File] = ...,
-    ) -> Message:
-        ...
+    ) -> Message: ...
 
     @overload
     async def edit(
@@ -1354,8 +1360,7 @@ class Message(Hashable):
         allowed_mentions: Optional[AllowedMentions] = ...,
         view: Optional[View] = ...,
         file: Optional[File] = ...,
-    ) -> Message:
-        ...
+    ) -> Message: ...
 
     @overload
     async def edit(
@@ -1369,8 +1374,7 @@ class Message(Hashable):
         allowed_mentions: Optional[AllowedMentions] = ...,
         view: Optional[View] = ...,
         files: Optional[List[File]] = ...,
-    ) -> Message:
-        ...
+    ) -> Message: ...
 
     @overload
     async def edit(
@@ -1384,8 +1388,7 @@ class Message(Hashable):
         allowed_mentions: Optional[AllowedMentions] = ...,
         view: Optional[View] = ...,
         files: Optional[List[File]] = ...,
-    ) -> Message:
-        ...
+    ) -> Message: ...
 
     async def edit(
         self,

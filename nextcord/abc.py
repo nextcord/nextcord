@@ -32,6 +32,7 @@ from .iterators import HistoryIterator
 from .mentions import AllowedMentions
 from .partial_emoji import PartialEmoji
 from .permissions import PermissionOverwrite, Permissions
+from .polls import PollCreateRequest
 from .role import Role
 from .sticker import GuildSticker, StickerItem
 from .types.components import Component as ComponentPayload
@@ -72,16 +73,12 @@ if TYPE_CHECKING:
     from .message import Message, MessageReference, PartialMessage
     from .state import ConnectionState
     from .threads import Thread
-    from .types.channel import (
-        Channel as ChannelPayload,
-        GuildChannel as GuildChannelPayload,
-        OverwriteType,
-        PermissionOverwrite as PermissionOverwritePayload,
-    )
-    from .types.message import (
-        AllowedMentions as AllowedMentionsPayload,
-        MessageReference as MessageReferencePayload,
-    )
+    from .types.channel import Channel as ChannelPayload
+    from .types.channel import GuildChannel as GuildChannelPayload
+    from .types.channel import OverwriteType
+    from .types.channel import PermissionOverwrite as PermissionOverwritePayload
+    from .types.message import AllowedMentions as AllowedMentionsPayload
+    from .types.message import MessageReference as MessageReferencePayload
     from .ui.view import View
     from .user import ClientUser
 
@@ -266,8 +263,7 @@ class GuildChannel:
 
         def __init__(
             self, *, state: ConnectionState, guild: Guild, data: GuildChannelPayload
-        ) -> None:
-            ...
+        ) -> None: ...
 
     def __str__(self) -> str:
         return self.name
@@ -777,8 +773,7 @@ class GuildChannel:
         *,
         overwrite: Optional[PermissionOverwrite] = ...,
         reason: Optional[str] = ...,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     async def set_permissions(
@@ -787,8 +782,7 @@ class GuildChannel:
         *,
         reason: Optional[str] = ...,
         **permissions: bool,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     async def set_permissions(
         self,
@@ -961,8 +955,7 @@ class GuildChannel:
         category: Optional[Snowflake] = ...,
         sync_permissions: bool = ...,
         reason: Optional[str] = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     async def move(
@@ -973,8 +966,7 @@ class GuildChannel:
         category: Optional[Snowflake] = ...,
         sync_permissions: bool = ...,
         reason: Optional[str] = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     async def move(
@@ -985,8 +977,7 @@ class GuildChannel:
         category: Optional[Snowflake] = ...,
         sync_permissions: bool = ...,
         reason: Optional[str] = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     async def move(
@@ -997,8 +988,7 @@ class GuildChannel:
         category: Optional[Snowflake] = ...,
         sync_permissions: bool = ...,
         reason: Optional[str] = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     async def move(
         self,
@@ -1270,8 +1260,8 @@ class Messageable:
         view: Optional[View] = ...,
         flags: Optional[MessageFlags] = ...,
         suppress_embeds: Optional[bool] = ...,
-    ) -> Message:
-        ...
+        poll: Optional[PollCreateRequest] = ...,
+    ) -> Message: ...
 
     @overload
     async def send(
@@ -1290,8 +1280,8 @@ class Messageable:
         view: Optional[View] = ...,
         flags: Optional[MessageFlags] = ...,
         suppress_embeds: Optional[bool] = ...,
-    ) -> Message:
-        ...
+        poll: Optional[PollCreateRequest] = ...,
+    ) -> Message: ...
 
     @overload
     async def send(
@@ -1310,8 +1300,8 @@ class Messageable:
         view: Optional[View] = ...,
         flags: Optional[MessageFlags] = ...,
         suppress_embeds: Optional[bool] = ...,
-    ) -> Message:
-        ...
+        poll: Optional[PollCreateRequest] = ...,
+    ) -> Message: ...
 
     @overload
     async def send(
@@ -1330,8 +1320,8 @@ class Messageable:
         view: Optional[View] = ...,
         flags: Optional[MessageFlags] = ...,
         suppress_embeds: Optional[bool] = ...,
-    ) -> Message:
-        ...
+        poll: Optional[PollCreateRequest] = ...,
+    ) -> Message: ...
 
     async def send(
         self,
@@ -1351,6 +1341,7 @@ class Messageable:
         view: Optional[View] = None,
         flags: Optional[MessageFlags] = None,
         suppress_embeds: Optional[bool] = None,
+        poll: Optional[PollCreateRequest] = None,
     ):
         """|coro|
 
@@ -1430,6 +1421,8 @@ class Messageable:
             Whether to suppress embeds on this message.
 
             .. versionadded:: 2.4
+        poll: Optional[:class:`PollCreateRequest`]
+            The poll to send with this message.
 
         Raises
         ------
@@ -1508,6 +1501,9 @@ class Messageable:
         if file is not None and files is not None:
             raise InvalidArgument("Cannot pass both file and files parameter to send()")
 
+        if poll is not None:
+            poll_payload = poll.to_dict()
+
         if file is not None:
             if not isinstance(file, File):
                 raise InvalidArgument("file parameter must be File")
@@ -1526,6 +1522,7 @@ class Messageable:
                     stickers=stickers_payload,
                     components=components,
                     flags=flag_value,
+                    poll=poll,
                 )
             finally:
                 file.close()
@@ -1548,6 +1545,7 @@ class Messageable:
                     stickers=stickers_payload,
                     components=components,
                     flags=flag_value,
+                    poll=poll,
                 )
             finally:
                 for f in files:
@@ -1565,6 +1563,7 @@ class Messageable:
                 stickers=stickers_payload,
                 components=components,
                 flags=flag_value,
+                poll=poll,
             )
 
         ret = state.create_message(channel=channel, data=data)
