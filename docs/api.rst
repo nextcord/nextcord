@@ -1418,6 +1418,24 @@ of :class:`enum.Enum`.
 .. autoclass:: AuditLogAction
     :members:
 
+.. autoclass:: Poll
+   :members:
+
+.. autoclass:: PollMedia
+   :members:
+
+.. autoclass:: PollAnswer
+   :members:
+
+.. autoclass:: PollCreateRequest
+   :members:
+
+.. autoclass:: PollAnswerCount
+   :members:
+
+.. autoclass:: PollResults
+   :members:
+
 Async Iterator
 --------------
 
