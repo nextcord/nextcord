@@ -740,6 +740,8 @@ class Message(Hashable):
         The interaction data of a message, if applicable.
     poll: Optional[:class:`Poll`]
         The poll included in a message, if applicable.
+
+        .. versionadded:: 3.0
     """
 
     __slots__ = (

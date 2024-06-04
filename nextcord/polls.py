@@ -135,7 +135,7 @@ class PollAnswerCount:
         The number of users who have voted for this option.
     """
 
-    __slots__ = ("id", "me_voted", "count")
+    __slots__ = ("id", "me_voted", "count", "poll")
 
     def __init__(self, data: PollAnswerCountPayload, poll: Poll) -> None:
         self.poll: Poll = poll

@@ -1439,6 +1439,8 @@ class Messageable:
         poll: Optional[:class:`PollCreateRequest`]
             The poll to send with this message.
 
+            ..versionadded:: 3.0
+
         Raises
         ------
         ~nextcord.HTTPException
