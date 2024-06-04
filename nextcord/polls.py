@@ -10,6 +10,8 @@ from .user import User
 from .utils import MISSING
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from .emoji import Emoji
     from .message import Message
     from .state import ConnectionState
@@ -60,13 +62,9 @@ class PollMedia:
 
     def __init__(self, text: str, emoji: Optional[EmojiInputType] = None) -> None:
         self.text: str = text
-        if emoji:
-            if isinstance(emoji, str):
-                self.emoji: Optional[PartialEmoji | Emoji] = PartialEmoji.from_str(emoji)
-            else:
-                self.emoji: Optional[PartialEmoji | Emoji] = emoji
-        else:
-            self.emoji: Optional[PartialEmoji | Emoji] = emoji  # type: ignore -- pyright is weird?
+        self.emoji: Optional[PartialEmoji | Emoji] = emoji  # type: ignore[reportAttributeAccessIssue]
+        if isinstance(emoji, str):
+            self.emoji: Optional[PartialEmoji | Emoji] = PartialEmoji.from_str(emoji)
 
     def to_dict(self) -> PollMediaPayload:
         payload: PollMediaPayload = {"text": self.text}
@@ -76,7 +74,7 @@ class PollMedia:
         return payload
 
     @classmethod
-    def from_dict(cls, data: PollMediaPayload) -> PollMedia:
+    def from_dict(cls, data: PollMediaPayload) -> Self:
         # a PollMedia when sent will have emoji as a string.
         # however when received it will be a raw PartialEmoji.
 
@@ -114,7 +112,7 @@ class PollAnswer:
         return payload
 
     @classmethod
-    def from_dict(cls, data: PollAnswerPayload) -> PollAnswer:
+    def from_dict(cls, data: PollAnswerPayload) -> Self:
         # data['answer_id'] is always sent as part of Discord's HTTP/Gateway
         return cls(answer_id=data["answer_id"], poll_media=PollMedia.from_dict(data["poll_media"]))  # type: ignore[reportTypedDictNotRequiredAccess]
 
@@ -222,7 +220,7 @@ class PollCreateRequest:
             payload["layout_type"] = self.layout_type.value
         return payload
 
-    def add_answer(self, text: str, emoji: Optional[EmojiInputType] = None) -> PollCreateRequest:
+    def add_answer(self, text: str, emoji: Optional[EmojiInputType] = None) -> Self:
         """Add a choice i.e. answer to the poll.
         This function returns the class instance to allow for fluent-style chaining.
 

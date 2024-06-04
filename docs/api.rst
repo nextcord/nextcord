@@ -1418,24 +1418,8 @@ of :class:`enum.Enum`.
 .. autoclass:: AuditLogAction
     :members:
 
-.. autoclass:: Poll
-   :members:
-
-.. autoclass:: PollMedia
-   :members:
-
-.. autoclass:: PollAnswer
-   :members:
-
-.. autoclass:: PollCreateRequest
-   :members:
-
-.. autoclass:: PollAnswerCount
-   :members:
-
-.. autoclass:: PollResults
-   :members:
-
+.. autoclass:: PollLayoutType
+    :members:
 Async Iterator
 --------------
 
@@ -2832,6 +2816,54 @@ AutoModerationActionExecution
 
 .. autoclass:: AutoModerationActionExecution()
     :members:
+
+Poll
+~~~~
+
+.. attributetable:: Poll
+
+.. autoclass:: Poll()
+   :members:
+
+PollMedia
+~~~~~~~~~
+
+.. attributetable:: PollMedia
+
+.. autoclass:: PollMedia()
+   :members:
+
+PollAnswer
+~~~~~~~~~~
+
+.. attributetable:: PollAnswer
+
+.. autoclass:: PollAnswer()
+   :members:
+
+PollCreateRequest
+~~~~~~~~~~~~~~~~~
+
+.. attributetable:: PollCreateRequest
+
+.. autoclass:: PollCreateRequest()
+   :members:
+
+PollAnswerCount
+~~~~~~~~~~~~~~~
+
+.. attributetable:: PollAnswerCount
+
+.. autoclass:: PollAnswerCount()
+   :members:
+
+PollResults
+~~~~~~~~~~~
+
+.. attributetable:: PollResults
+
+.. autoclass:: PollResults()
+   :members:
 
 .. _discord_api_data:
 
