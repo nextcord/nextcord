@@ -827,6 +827,7 @@ class SyncWebhook(BaseWebhook):
         embeds: List[Embed] = MISSING,
         allowed_mentions: AllowedMentions = MISSING,
         wait: Literal[True],
+        thread_name: Optional[str] = None
     ) -> SyncWebhookMessage:
         ...
 
@@ -844,6 +845,7 @@ class SyncWebhook(BaseWebhook):
         embeds: List[Embed] = MISSING,
         allowed_mentions: AllowedMentions = MISSING,
         wait: Literal[False] = ...,
+        thread_name: Optional[str] = None
     ) -> None:
         ...
 
@@ -861,6 +863,7 @@ class SyncWebhook(BaseWebhook):
         allowed_mentions: AllowedMentions = MISSING,
         thread: Snowflake = MISSING,
         wait: bool = False,
+        thread_name: Optional[str] = None
     ) -> Optional[SyncWebhookMessage]:
         """Sends a message using the webhook.
 
@@ -910,6 +913,11 @@ class SyncWebhook(BaseWebhook):
 
             .. versionadded:: 2.0
 
+        thread_name:
+            Name of thread to create (requires the webhook channel to be a forum or media channel).
+
+            .. versionadded:: 3.0
+
         Raises
         ------
         HTTPException
@@ -949,11 +957,9 @@ class SyncWebhook(BaseWebhook):
             embeds=embeds,
             allowed_mentions=allowed_mentions,
             previous_allowed_mentions=previous_mentions,
+            thread_name=thread_name
         )
         adapter: WebhookAdapter = _get_webhook_adapter()
-        thread_id: Optional[int] = None
-        if thread is not MISSING:
-            thread_id = thread.id
 
         data = adapter.execute_webhook(
             self.id,
@@ -962,7 +968,7 @@ class SyncWebhook(BaseWebhook):
             payload=params.payload,
             multipart=params.multipart,
             files=params.files,
-            thread_id=thread_id,
+            thread_id=thread.id if thread else None,
             wait=wait,
         )
         if wait:
