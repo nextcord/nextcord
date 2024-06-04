@@ -981,3 +981,65 @@ class ScheduledEventUserIterator(_AsyncIterator["ScheduledEventUser"]):
                 self.limit -= len(data)
             self.after = Object(id=int(data[-1]["user"]["id"]))
         return data
+
+
+class AnswerVotersIterator(_AsyncIterator[Union["User", "Member"]]):
+    def __init__(
+        self,
+        message: Message,
+        answer_id: int,
+        after: Optional[Snowflake] = None,
+        limit: int = 100,
+    ) -> None:
+        self.message: Message = message
+        self.answer_id: int = answer_id
+        self.after: Optional[Snowflake] = after or OLDEST_OBJECT
+        self.limit: int = limit
+        self.state: ConnectionState = message._state
+        self.voters: asyncio.Queue[Union[User, Member]] = asyncio.Queue()
+
+    async def next(self) -> Union[User, Member]:
+        if self.voters.empty():
+            await self.fill_answer_voters()
+
+        try:
+            return self.voters.get_nowait()
+        except asyncio.QueueEmpty:
+            raise NoMoreItems from None
+
+    async def fill_answer_voters(self) -> None:
+        # for reviewers: this hack is precedent in nextcord codebase:
+        # https://github.com/nextcord/nextcord/blob/master/nextcord/iterators.py#L194
+
+        from .user import User
+
+        if self.limit > 0:
+            retrieve = self.limit if self.limit <= 100 else 100
+
+            after = self.after.id if self.after else None
+            data: List[PartialUserPayload] = cast(
+                List[PartialUserPayload],
+                self.state.http.get_answer_voters(
+                    self.message.channel.id,
+                    self.message.id,
+                    self.answer_id,
+                    after=after,
+                    limit=retrieve,
+                ),
+            )
+
+            if data:
+                self.limit -= retrieve
+                self.after = Object(id=int(data[-1]["id"]))
+
+            if self.message.guild is None or isinstance(self.message.guild, Object):
+                for element in reversed(data):
+                    await self.voters.put(User(state=self.state, data=element))
+            else:
+                for element in reversed(data):
+                    member_id = int(element["id"])
+                    member = self.message.guild.get_member(member_id)
+                    if member is not None:
+                        await self.voters.put(member)
+                    else:
+                        await self.voters.put(User(state=self.state, data=element))

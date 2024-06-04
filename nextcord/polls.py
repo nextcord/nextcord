@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING, List, Optional, Union
 
 from .enums import PollLayoutType, try_enum
 from .errors import InvalidArgument
+from .iterators import AnswerVotersIterator
 from .partial_emoji import PartialEmoji
-from .user import User
 from .utils import MISSING
 
 if TYPE_CHECKING:
@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 
     from .emoji import Emoji
     from .message import Message
+    from .snowflake import Snowflake
     from .state import ConnectionState
     from .types.polls import (
         Poll as PollData,
@@ -46,6 +47,7 @@ class PollMedia:
     """
     A common object that backs both the question and answer.
 
+    .. versionadded:: 3.0
     Attributes
     ----------
     text: Optional[:class:`str`]
@@ -87,6 +89,8 @@ class PollAnswer:
     """
     A choice to answer in a poll.
 
+    ..versionadded:: 3.0
+
     Attributes
     ----------
     answer_id: Optional[:class:`str`]
@@ -118,7 +122,9 @@ class PollAnswer:
 
 
 class PollAnswerCount:
-    """The answer count for a poll.
+    """The answer count for an answer in a poll.
+
+    .. versionadded:: 3.0
     Attributes
     ----------
     id: :class:`int`
@@ -131,10 +137,53 @@ class PollAnswerCount:
 
     __slots__ = ("id", "me_voted", "count")
 
-    def __init__(self, data: PollAnswerCountPayload) -> None:
+    def __init__(self, data: PollAnswerCountPayload, poll: Poll) -> None:
+        self.poll: Poll = poll
         self.id: int = data["id"]
         self.me_voted: bool = data["me_voted"]
         self.count: int = data["count"]
+
+    def voters(
+        self, *, limit: Optional[int] = None, after: Optional[Snowflake]
+    ) -> AnswerVotersIterator:
+        """Returns an :class:`AsyncIterator` representing the users who have voted for this option.
+
+        The ``after`` parameter must represent an user
+        and meet the :class:`abc.Snowflake` abc.
+
+        Examples
+        --------
+        Usage ::
+
+            # I do not actually recommend doing this.
+
+            async for voter in count.voters():
+                await channel.send(f"{voter} has voted with choice number {count.id}!")
+
+        Flattening into a list ::
+
+            voters = await count.voters().flatten()
+            # voters is now a list of User...
+            await channel.send("Those people have voted with choice number {count.id}: {'\n'.join(voters)}")
+
+        .. versionadded:: 3.0
+
+        Parameters
+        ----------
+
+        limit: Optional[:class:`int`]
+            The maximum number of results to return.
+            If not provided, returns all the users who
+            voted to the choice.
+        after: Optional[:class:`abc.Snowflake`]
+            For pagination, votes are sorted by member.
+        """
+        if limit is None:
+            limit = self.count
+
+        return AnswerVotersIterator(
+            message=self.poll.message, answer_id=self.id, after=after, limit=limit
+        )
 
     def to_dict(self) -> PollAnswerCountPayload:
         payload: PollAnswerCountPayload = {
@@ -149,24 +198,30 @@ class PollResults:
     """The result of the poll.
     This contains the numbers of vote for each answer.
 
+    .. versionadded:: 3.0
+
     Attributes
     ----------
     is_finalized: :class:`bool`
         Whether the votes has been precisely counted.
     answer_counts: List[:class:`PollAnswerCount`]
-        The counts for each answer
+        The counts for each answer.
+    poll: :class:`Poll`
+        The poll this poll result represents.
     """
 
     __slots__ = (
         "is_finalized",
         "answer_counts",
+        "poll",
     )
 
-    def __init__(self, data: PollResultsPayload) -> None:
+    def __init__(self, data: PollResultsPayload, poll: Poll) -> None:
         self.is_finalized: bool = data["is_finalized"]
         self.answer_counts: List[PollAnswerCount] = [
-            PollAnswerCount(answer_count) for answer_count in data["answer_counts"]
+            PollAnswerCount(answer_count, poll) for answer_count in data["answer_counts"]
         ]
+        self.poll: Poll = poll
 
     def to_dict(self) -> PollResultsPayload:
         payload: PollResultsPayload = {
@@ -187,6 +242,8 @@ class PollCreateRequest:
     """
     A poll create request.
     You must use this to create a poll.
+
+    .. versionadded:: 3.0
 
     Attributes
     ----------
@@ -287,13 +344,8 @@ class Poll:
         self.layout_type: PollLayoutType = try_enum(PollLayoutType, data["layout_type"])
 
         self.results: Optional[PollResults] = (
-            PollResults(data["results"]) if "results" in data else None
+            PollResults(data["results"], self) if "results" in data else None
         )
-
-    # TODO: implement this endpoint when I understand how to create an AsyncIterator propperly
-
-    async def get_answer_voters(self, answer_id: int) -> User:
-        ...
 
     async def expire(self) -> None:
         """

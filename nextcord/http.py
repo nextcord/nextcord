@@ -4766,7 +4766,7 @@ class HTTPClient:
         )
         return self.request(
             r,
-            json=params,
+            params=params,
             auth=auth,
             retry_request=retry_request,
         )
