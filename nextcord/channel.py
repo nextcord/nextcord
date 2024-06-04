@@ -1481,7 +1481,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
 
         Requires :attr:`~.Permissions.manage_webhooks` permissions.
 
-        .. versionadded:: 2.6
+        .. versionadded:: 3.0
 
         Raises
         ------
@@ -2046,7 +2046,7 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
 
         Requires :attr:`~.Permissions.manage_webhooks` permissions.
 
-        .. versionadded:: 2.6
+        .. versionadded:: 3.0
 
         Raises
         ------
@@ -2387,7 +2387,7 @@ class StageChannel(VocalGuildChannel, abc.Messageable):
 
         Requires :attr:`~.Permissions.manage_webhooks` permissions.
 
-        .. versionadded:: 2.6
+        .. versionadded:: 3.0
 
         Raises
         ------
