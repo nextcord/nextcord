@@ -12,9 +12,9 @@ from .utils import MISSING
 if TYPE_CHECKING:
     from typing_extensions import Self
 
+    from .abc import Snowflake
     from .emoji import Emoji
     from .message import Message
-    from .snowflake import Snowflake
     from .state import ConnectionState
     from .types.polls import (
         Poll as PollData,
