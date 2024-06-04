@@ -499,7 +499,7 @@ def handle_message_parameters(
     ephemeral: Optional[bool] = None,
     flags: Optional[MessageFlags] = None,
     suppress_embeds: Optional[bool] = None,
-    thread_name: Optional[str] = None
+    thread_name: Optional[str] = None,
 ) -> ExecuteWebhookParameters:
     if files is not MISSING and file is not MISSING:
         raise InvalidArgument("Cannot mix file and files keyword arguments.")
@@ -1362,7 +1362,7 @@ class Webhook(BaseWebhook):
         ephemeral: Optional[bool] = None,
         flags: Optional[MessageFlags] = None,
         suppress_embeds: Optional[bool] = None,
-        thread_name: Optional[str] = None
+        thread_name: Optional[str] = None,
     ) -> WebhookMessage:
         ...
 
@@ -1386,7 +1386,7 @@ class Webhook(BaseWebhook):
         ephemeral: Optional[bool] = None,
         flags: Optional[MessageFlags] = None,
         suppress_embeds: Optional[bool] = None,
-        thread_name: Optional[str] = None
+        thread_name: Optional[str] = None,
     ) -> None:
         ...
 
@@ -1409,7 +1409,7 @@ class Webhook(BaseWebhook):
         ephemeral: Optional[bool] = None,
         flags: Optional[MessageFlags] = None,
         suppress_embeds: Optional[bool] = None,
-        thread_name: Optional[str] = None
+        thread_name: Optional[str] = None,
     ) -> Optional[WebhookMessage]:
         """|coro|
 
@@ -1557,7 +1557,7 @@ class Webhook(BaseWebhook):
             previous_allowed_mentions=previous_mentions,
             flags=flags,
             suppress_embeds=suppress_embeds,
-            thread_name=thread_name
+            thread_name=thread_name,
         )
         adapter = async_context.get()
 

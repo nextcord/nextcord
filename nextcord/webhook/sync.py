@@ -827,7 +827,7 @@ class SyncWebhook(BaseWebhook):
         embeds: List[Embed] = MISSING,
         allowed_mentions: AllowedMentions = MISSING,
         wait: Literal[True],
-        thread_name: Optional[str] = None
+        thread_name: Optional[str] = None,
     ) -> SyncWebhookMessage:
         ...
 
@@ -845,7 +845,7 @@ class SyncWebhook(BaseWebhook):
         embeds: List[Embed] = MISSING,
         allowed_mentions: AllowedMentions = MISSING,
         wait: Literal[False] = ...,
-        thread_name: Optional[str] = None
+        thread_name: Optional[str] = None,
     ) -> None:
         ...
 
@@ -863,7 +863,7 @@ class SyncWebhook(BaseWebhook):
         allowed_mentions: AllowedMentions = MISSING,
         thread: Snowflake = MISSING,
         wait: bool = False,
-        thread_name: Optional[str] = None
+        thread_name: Optional[str] = None,
     ) -> Optional[SyncWebhookMessage]:
         """Sends a message using the webhook.
 
@@ -957,7 +957,7 @@ class SyncWebhook(BaseWebhook):
             embeds=embeds,
             allowed_mentions=allowed_mentions,
             previous_allowed_mentions=previous_mentions,
-            thread_name=thread_name
+            thread_name=thread_name,
         )
         adapter: WebhookAdapter = _get_webhook_adapter()
 
