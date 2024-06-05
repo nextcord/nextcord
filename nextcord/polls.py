@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from .abc import Snowflake
     from .message import Message
     from .state import ConnectionState
-    from .types.partial_emoji import PartialEmoji as PartialEmojiPayload
+    from .types.emoji import PartialEmoji as PartialEmojiPayload
     from .types.polls import (
         Poll as PollData,
         PollAnswer as PollAnswerPayload,
