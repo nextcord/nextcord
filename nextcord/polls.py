@@ -148,7 +148,6 @@ class PollAnswerCount:
     def __repr__(self) -> str:
         return (
             "<PollAnswerCount "
-            f"poll={self.poll!r} "
             f"id={self.id!r} "
             f"me_voted={self.me_voted!r} "
             f"count={self.count!r} "
@@ -239,7 +238,6 @@ class PollResults:
             "<PollResults "
             f"is_finalized={self.is_finalized!r} "
             f"answer_counts={self.answer_counts!r} "
-            f"poll={self.poll!r}"
             ">"
         )
 
