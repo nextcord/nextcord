@@ -39,6 +39,7 @@ def resolve_emoji(emoji: EmojiInputType) -> str:
     if isinstance(emoji, PartialEmoji):
         # if this partial emoji has an ID, then it is a custom emoji. else it's an unicode emoji.
         return str(emoji.id) if emoji.id else emoji.name
+        
     if isinstance(emoji, str):
         return emoji
 
