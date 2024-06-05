@@ -50,6 +50,7 @@ class PollMedia:
     A common object that backs both the question and answer.
 
     .. versionadded:: 3.0
+
     Attributes
     ----------
     text: Optional[:class:`str`]
@@ -95,7 +96,7 @@ class PollAnswer:
 
     Attributes
     ----------
-    answer_id: Optional[:class:`str`]
+    answer_id: Optional[:class:`int`]
         The answer ID of the answer.
     poll_media: Optional[:class:`PollMedia`]
         The poll media of the answer.
@@ -127,11 +128,12 @@ class PollAnswerCount:
     """The answer count for an answer in a poll.
 
     .. versionadded:: 3.0
+
     Attributes
     ----------
     id: :class:`int`
         The ID of the answer in question.
-    me_voted: :class:`int`
+    me_voted: :class:`bool`
         Whether the bot has voted for this option.
     count: :class:`int`
         The number of users who have voted for this option.
@@ -234,13 +236,6 @@ class PollResults:
 
 
 class PollCreateRequest:
-    __slots__ = (
-        "question",
-        "answers",
-        "duration",
-        "allow_multiselect",
-        "layout_type",
-    )
     """
     A poll create request.
     You must use this to create a poll.
@@ -253,6 +248,14 @@ class PollCreateRequest:
         The question of the poll. Current only `text` is supported.
 
     """
+
+    __slots__ = (
+        "question",
+        "answers",
+        "duration",
+        "allow_multiselect",
+        "layout_type",
+    )
 
     def __init__(
         self,
@@ -289,10 +292,6 @@ class PollCreateRequest:
             The text description of the choice.
         emoji: Optional[Union[:class:`PartialEmoji`, :class:`Emoji`, :class:`str`]]
             The emoji description of the choice.
-
-        Returns
-        -------
-        The poll create request object.
         """
         self.answers.append(PollAnswer(poll_media=PollMedia(text=text, emoji=emoji)))
         return self
@@ -301,6 +300,7 @@ class PollCreateRequest:
 class Poll:
     """A poll object.
 
+    .. versionadded:: 3.0
 
     Attributes
     ----------
