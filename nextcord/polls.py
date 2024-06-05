@@ -271,7 +271,15 @@ class PollCreateRequest:
     ----------
     question: :class:`PollMedia`
         The question of the poll. Current only `text` is supported.
-
+    duration: :class:`int`
+        The number of hours this poll should be open for.
+    allow_multiselect: :class:`bool`
+        Whether voters can select more than one choice.
+    answers: Optional[List[:class:`PollAnswer`]]
+        The answers to the poll.
+        If omitted then it must be added later through :func:`PollCreateRequest.add_answer`.
+    layout_type: Optional[:class:`PollLayoutType`]
+        The layout type of the poll. Defaults to :attr:`PollLayoutType.default`
     """
 
     __slots__ = (
@@ -296,13 +304,16 @@ class PollCreateRequest:
     def __init__(
         self,
         question: PollMedia,
-        answers: List[PollAnswer],
         duration: int,
         allow_multiselect: bool,
         layout_type: Optional[PollLayoutType] = MISSING,
+        answers: Optional[List[PollAnswer]] = None,
     ) -> None:
         self.question: PollMedia = question
-        self.answers: List[PollAnswer] = answers
+        if answers:
+            self.answers: List[PollAnswer] = answers
+        else:
+            self.answers: List[PollAnswer] = []
         self.duration: int = duration
         self.allow_multiselect: bool = allow_multiselect
         self.layout_type: Optional[PollLayoutType] = layout_type
