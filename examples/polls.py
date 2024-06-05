@@ -18,6 +18,7 @@ async def send_poll(ctx: commands.Context):
     poll.add_answer("Literature", "\U0001f4d6")
     poll.add_answer("Maths", "\U0001f522")
     poll.add_answer("Science", "\U0001f9ea")
+    await ctx.send(poll=poll)
 
 
 bot.run("token")

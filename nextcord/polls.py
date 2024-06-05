@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING, List, Optional, Union
 
+from .emoji import Emoji
 from .enums import PollLayoutType, try_enum
 from .errors import InvalidArgument
 from .iterators import AnswerVotersIterator
@@ -15,9 +16,9 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from .abc import Snowflake
-    from .emoji import Emoji
     from .message import Message
     from .state import ConnectionState
+    from .types.partial_emoji import PartialEmoji as PartialEmojiPayload
     from .types.polls import (
         Poll as PollData,
         PollAnswer as PollAnswerPayload,
@@ -32,16 +33,13 @@ if TYPE_CHECKING:
     EmojiInputType = Union[Emoji, PartialEmoji, str]
 
 
-def resolve_emoji(emoji: EmojiInputType) -> str:
+def resolve_emoji(emoji: Union[Emoji, PartialEmoji]) -> PartialEmojiPayload:
     if isinstance(emoji, Emoji):
-        return str(emoji.id)
+        return emoji._to_partial().to_dict()
 
     if isinstance(emoji, PartialEmoji):
         # if this partial emoji has an ID, then it is a custom emoji. else it's an unicode emoji.
-        return str(emoji.id) if emoji.id else emoji.name
-
-    if isinstance(emoji, str):
-        return emoji
+        return emoji.to_dict()
 
     raise InvalidArgument(f"Cannot parse `{emoji}` into an emoji to send.")
 
