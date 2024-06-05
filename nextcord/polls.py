@@ -35,11 +35,10 @@ if TYPE_CHECKING:
 
 def resolve_emoji(emoji: Union[Emoji, PartialEmoji]) -> PartialEmojiPayload:
     if isinstance(emoji, Emoji):
-        return emoji._to_partial().to_dict()
+        return emoji._to_partial().to_dict()  # type: ignore
 
     if isinstance(emoji, PartialEmoji):
-        # if this partial emoji has an ID, then it is a custom emoji. else it's an unicode emoji.
-        return emoji.to_dict()
+        return emoji.to_dict()  # type: ignore
 
     raise InvalidArgument(f"Cannot parse `{emoji}` into an emoji to send.")
 
