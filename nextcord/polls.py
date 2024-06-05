@@ -1,4 +1,4 @@
-# SPDX-Licene-Identifier: MIT
+# SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
@@ -65,6 +65,9 @@ class PollMedia:
         "emoji",
     )
 
+    def __repr__(self) -> str:
+        return f"<PollMedia text={self.text} emoji={self.emoji}>"
+
     def __init__(self, text: str, emoji: Optional[EmojiInputType] = None) -> None:
         self.text: str = text
         self.emoji: Optional[PartialEmoji | Emoji] = emoji  # type: ignore[reportAttributeAccessIssue]
@@ -107,6 +110,9 @@ class PollAnswer:
         "poll_media",
     )
 
+    def __repr__(self) -> str:
+        return f"<PollAnswer answer_id={self.answer_id!r} poll_media={self.poll_media!r}>"
+
     def __init__(self, *, answer_id: Optional[int] = None, poll_media: PollMedia) -> None:
         self.answer_id: Optional[int] = answer_id
         self.poll_media: PollMedia = poll_media
@@ -140,6 +146,16 @@ class PollAnswerCount:
     """
 
     __slots__ = ("id", "me_voted", "count", "poll")
+
+    def __repr__(self) -> str:
+        return (
+            "<PollAnswerCount "
+            f"poll={self.poll!r} "
+            f"id={self.id!r} "
+            f"me_voted={self.me_voted!r} "
+            f"count={self.count!r} "
+            ">"
+        )
 
     def __init__(self, data: PollAnswerCountPayload, poll: Poll) -> None:
         self.poll: Poll = poll
@@ -220,6 +236,15 @@ class PollResults:
         "poll",
     )
 
+    def __repr__(self) -> str:
+        return (
+            "<PollResults "
+            f"is_finalized={self.is_finalized!r} "
+            f"answer_counts={self.answer_counts!r} "
+            f"poll={self.poll!r}"
+            ">"
+        )
+
     def __init__(self, data: PollResultsPayload, poll: Poll) -> None:
         self.is_finalized: bool = data["is_finalized"]
         self.answer_counts: List[PollAnswerCount] = [
@@ -256,6 +281,17 @@ class PollCreateRequest:
         "allow_multiselect",
         "layout_type",
     )
+
+    def __repr__(self) -> str:
+        return (
+            "<PollCreateRequest "
+            f"question={self.question!r} "
+            f"answers={self.answers!r} "
+            f"duration={self.duration!r} "
+            f"allow_multiselect={self.allow_multiselect!r} "
+            f"layout_type={self.layout_type!r} "
+            ">"
+        )
 
     def __init__(
         self,
@@ -331,8 +367,26 @@ class Poll:
         "results",
     )
 
+    def __repr__(self) -> str:
+        return (
+            "<Poll "
+            f"message={self.message!r} "
+            f"question={self.question!r} "
+            f"answers={self.answers!r} "
+            f"expiry={self.expiry!r} "
+            f"allow_multiselect={self.allow_multiselect!r} "
+            f"layout_type={self.layout_type!r} "
+            f"results={self.results!r}"
+            ">"
+        )
+
     def __eq__(self, other) -> bool:
-        return self.message.id == other.message.id
+        return isinstance(other, self.__class__) and other.message.id == self.message.id
+
+    def __ne__(self, other) -> bool:
+        if isinstance(other, self.__class__):
+            return other.message.id != self.message.id
+        return True
 
     def __init__(self, data: PollData, *, message: Message, state: ConnectionState) -> None:
         self.message: Message = message
