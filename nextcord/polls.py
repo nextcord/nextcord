@@ -410,9 +410,14 @@ class Poll:
             PollResults(data["results"], self) if "results" in data else None
         )
 
-    async def expire(self) -> Message:
+    async def expire(self) -> None:
         """
         Immediately ends the poll. You cannot end polls from other users.
+
+        Returns
+        -------
+        :class:`Message`
+            The new updated message.
         """
         # circular imports
         from .message import Message

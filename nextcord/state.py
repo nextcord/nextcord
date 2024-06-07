@@ -2368,6 +2368,54 @@ class ConnectionState:
                 user,
             )
 
+    def parse_message_poll_vote_add(self, data) -> None:
+        message = self._get_message(int(data["message_id"]))
+        answer_id = data["answer_id"]
+        if message:
+            user = self.get_user(int(data["user_id"]))
+            if user:
+                self.dispatch(
+                    "message_poll_vote_add",
+                    message,
+                    answer_id,
+                    user,
+                )
+            else:
+                _log.debug(
+                    "message_poll_vote_add was not dispatched because the message (%r) and/or user (%r) are None ",
+                    message,
+                    user,
+                )
+        else:
+            _log.debug(
+                "message_poll_vote_add was not dispatched because the message (%r) are None ",
+                message,
+            )
+
+    def parse_message_poll_vote_remove(self, data) -> None:
+        message = self._get_message(int(data["message_id"]))
+        answer_id = data["answer_id"]
+        if message:
+            user = self.get_user(int(data["user_id"]))
+            if user:
+                self.dispatch(
+                    "message_poll_vote_remove",
+                    message,
+                    answer_id,
+                    user,
+                )
+            else:
+                _log.debug(
+                    "message_poll_vote_remove was not dispatched because the message (%r) and/or user (%r) are None ",
+                    message,
+                    user,
+                )
+        else:
+            _log.debug(
+                "message_poll_vote_remove was not dispatched because the message (%r) are None ",
+                message,
+            )
+
 
 class AutoShardedConnectionState(ConnectionState):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
