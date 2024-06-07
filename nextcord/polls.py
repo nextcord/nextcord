@@ -413,11 +413,6 @@ class Poll:
     async def expire(self) -> Message:
         """
         Immediately ends the poll. You cannot end polls from other users.
-
-        Returns
-        -------
-        :class:`Message`
-            The new updated message.
         """
         # circular imports
         from .message import Message

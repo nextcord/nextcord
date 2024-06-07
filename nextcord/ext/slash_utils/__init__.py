@@ -6,4 +6,5 @@ An extension module to provide utilities for slash commands.
 :license: MIT, see LICENSE for more details.
 """
 
+
 from .slash import describe

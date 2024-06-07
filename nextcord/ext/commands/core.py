@@ -261,7 +261,6 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
 
         .. versionadded:: 2.0.0
     """
-
     __original_kwargs__: Dict[str, Any]
 
     def __new__(cls, *_args: Any, **kwargs: Any) -> Self:

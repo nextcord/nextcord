@@ -429,7 +429,6 @@ class AuditLogEntry(Hashable):
         contains extra information. See :class:`AuditLogAction` for
         which actions have this field filled out.
     """
-
     extra: Union[
         _AuditLogProxyMemberPrune,
         _AuditLogProxyMemberMoveOrMessageDelete,
