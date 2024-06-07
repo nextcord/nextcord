@@ -1115,6 +1115,44 @@ class Intents(BaseFlags):
         """
         return (1 << 20) | (1 << 21)
 
+    @flag_value
+    def guild_message_polls(self) -> int:
+        """:class:`bool` Whether poll related events in guilds are enabled.
+
+        This corresponds to the following events:
+
+        - :func:`on_message_poll_vote_add` (guild only)
+        - :func:`on_message_poll_vote_remove` (guild only)
+
+        This does not correspond to any attributes or classes in the library in terms of cache.
+        """
+        return 1 << 24
+
+    @flag_value
+    def direct_message_polls(self) -> int:
+        """:class:`bool` Whether poll related events in guilds are enabled.
+
+        This corresponds to the following events:
+
+        - :func:`on_message_poll_vote_add` (DM only)
+        - :func:`on_message_poll_vote_remove` (DM only)
+
+        This does not correspond to any attributes or classes in the library in terms of cache.
+        """
+        return 1 << 25
+
+    @alias_flag_value
+    def polls(self) -> int:
+        """:class:`bool` Whether poll related events are enabled.
+
+        This corresponds to the following events:
+
+        - :func:`on_message_poll_vote_add`
+        - :func:`on_message_poll_vote_remove`
+
+        This does not correspond to any attributes or classes in the library in terms of cache."""
+        return (1 << 24) | (1 << 25)
+
 
 @fill_with_flags()
 class MemberCacheFlags(BaseFlags):
