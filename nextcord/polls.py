@@ -161,7 +161,7 @@ class PollAnswerCount:
         self.count: int = data["count"]
 
     def voters(
-        self, *, limit: Optional[int] = None, after: Optional[Snowflake]
+        self, *, limit: Optional[int] = None, after: Optional[Snowflake] = None
     ) -> AnswerVotersIterator:
         """Returns an :class:`AsyncIterator` representing the users who have voted for this option.
 
