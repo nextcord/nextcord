@@ -1019,7 +1019,7 @@ class AnswerVotersIterator(_AsyncIterator[Union["User", "Member"]]):
             after = self.after.id if self.after else None
             data: List[PartialUserPayload] = cast(
                 List[PartialUserPayload],
-                self.state.http.get_answer_voters(
+                await self.state.http.get_answer_voters(
                     self.message.channel.id,
                     self.message.id,
                     self.answer_id,
