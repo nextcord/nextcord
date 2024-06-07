@@ -1017,16 +1017,14 @@ class AnswerVotersIterator(_AsyncIterator[Union["User", "Member"]]):
             retrieve = self.limit if self.limit <= 100 else 100
 
             after = self.after.id if self.after else None
-            data: List[PartialUserPayload] = cast(
-                List[PartialUserPayload],
-                await self.state.http.get_answer_voters(
-                    self.message.channel.id,
-                    self.message.id,
-                    self.answer_id,
-                    after=after,
-                    limit=retrieve,
-                ),
+            response = await self.state.http.get_answer_voters(
+                self.message.channel.id,
+                self.message.id,
+                self.answer_id,
+                after=after,
+                limit=retrieve,
             )
+            data: List[PartialUserPayload] = cast(List[PartialUserPayload], response.get("users"))
 
             if data:
                 self.limit -= retrieve
