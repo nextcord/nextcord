@@ -81,10 +81,7 @@ class PollMedia:
 
     @classmethod
     def from_dict(cls, data: PollMediaPayload) -> Self:
-        # a PollMedia when sent will have emoji as a string.
-        # however when received it will be a raw PartialEmoji.
-
-        emoji = PartialEmoji.from_dict(data["emoji"]) if "emoji" in data else None  # type: ignore[reportArgumentType]
+        emoji = PartialEmoji.from_dict(data["emoji"]) if "emoji" in data else None
 
         return cls(text=data["text"], emoji=emoji)
 

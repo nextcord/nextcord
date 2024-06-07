@@ -1,4 +1,4 @@
-from typing import List, Literal, TypedDict, Union
+from typing import List, Literal, TypedDict
 
 from typing_extensions import NotRequired
 
@@ -9,7 +9,7 @@ LayoutType = Literal[1]
 
 class PollMedia(TypedDict):
     text: str
-    emoji: NotRequired[Union[PartialEmoji, str]]
+    emoji: NotRequired[PartialEmoji]
 
 
 class PollAnswer(TypedDict):
