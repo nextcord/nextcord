@@ -9,7 +9,6 @@ from .emoji import Emoji
 from .enums import PollLayoutType, try_enum
 from .errors import InvalidArgument
 from .iterators import AnswerVotersIterator
-from .message import Message
 from .partial_emoji import PartialEmoji
 from .utils import MISSING
 
@@ -17,6 +16,7 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from .abc import Snowflake
+    from .message import Message
     from .state import ConnectionState
     from .types.emoji import PartialEmoji as PartialEmojiPayload
     from .types.polls import (
@@ -419,6 +419,9 @@ class Poll:
         :class:`Message`
             The new updated message.
         """
+        # circular imports
+        from .message import Message
+
         message = await self._state.http.end_poll(
             channel_id=self.message.channel.id, message_id=self.message.id
         )
