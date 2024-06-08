@@ -90,7 +90,7 @@ class PollAnswer:
     """
     A choice to answer in a poll.
 
-    ..versionadded:: 3.0
+    .. versionadded:: 3.0
 
     Attributes
     ----------
@@ -178,7 +178,7 @@ class PollAnswerCount:
 
             voters = await count.voters().flatten()
             # voters is now a list of User...
-            await channel.send("Those people have voted with choice number {count.id}: {'\n'.join(voters)}")
+            await channel.send("Those people have voted with choice number {count.id}: {', '.join(voters)}")
 
         .. versionadded:: 3.0
 

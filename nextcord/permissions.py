@@ -556,6 +556,14 @@ class Permissions(BaseFlags):
         """
         return 1 << 40
 
+    @flag_value
+    def send_polls(self) -> int:
+        """:class:`bool`: Returns ``True`` if a user can send polls.
+
+        .. versionadded:: 3.0
+        """
+        return 1 << 49
+
 
 def _augment_from_permissions(cls):
     cls.VALID_NAMES = set(Permissions.VALID_FLAGS)
