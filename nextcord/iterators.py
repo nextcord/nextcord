@@ -1026,7 +1026,7 @@ class AnswerVotersIterator(_AsyncIterator[Union["User", "Member"]]):
             )
             data: List[PartialUserPayload] = cast(List[PartialUserPayload], response.get("users"))
 
-            if data:
+            if len(data) > 0:
                 self.limit -= retrieve
                 self.after = Object(id=int(data[-1]["id"]))
 
