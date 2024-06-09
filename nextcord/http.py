@@ -4754,7 +4754,7 @@ class HTTPClient:
         auth: Optional[str] = MISSING,
         retry_request: bool = True,
         **payload: Any,
-    ) -> Response[Dict[Literal["users"], user.User]]:
+    ) -> Response[Dict[Literal["users"], List[user.User]]]:
         valid_keys = ("after", "limit")
         params = {k: v for k, v in payload.items() if k in valid_keys}
         r = Route(
