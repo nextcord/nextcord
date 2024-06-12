@@ -83,29 +83,29 @@ __all__ = (
 
 class AsyncMessage:
     _bot: Client
-
-    # author: User  # This is rather awkward, the user object is typically included with the message, but we want cached
-    #  async stuff?
-    channel_id: int
-    content: str
-    id: int
-    type: MessageType
-
-    @classmethod
-    def from_message_payload(cls, payload: MessagePayload, *, bot: Client):
-        ret = cls()
-        ret._bot = bot
-
-        ret.channel_id = int(payload["channel_id"])
-        ret.content = payload["content"]
-        ret.id = int(payload["id"])
-        ret.type = try_enum(MessageType, payload["type"])
-
-        return ret
-
-    def __repr__(self) -> str:
-        name = self.__class__.__name__
-        return f"<{name} id={self.id} channel_id={self.channel_id} type={self.type}>"
+#
+#     # author: User  # This is rather awkward, the user object is typically included with the message, but we want cached
+#     #  async stuff?
+#     channel_id: int
+#     content: str
+#     id: int
+#     type: MessageType
+#
+#     @classmethod
+#     def from_message_payload(cls, payload: MessagePayload, *, bot: Client):
+#         ret = cls()
+#         ret._bot = bot
+#
+#         ret.channel_id = int(payload["channel_id"])
+#         ret.content = payload["content"]
+#         ret.id = int(payload["id"])
+#         ret.type = try_enum(MessageType, payload["type"])
+#
+#         return ret
+#
+#     def __repr__(self) -> str:
+#         name = self.__class__.__name__
+#         return f"<{name} id={self.id} channel_id={self.channel_id} type={self.type}>"
 
 
 def convert_emoji_reaction(emoji):
@@ -805,6 +805,15 @@ class Message(Object, Hashable):
     #     "guild",
     # )
 
+    author: User | Member  # TODO: Webhooks can be authors, add that to the typehint.
+    channel_id: int
+    content: str
+    _edited_timestamp: datetime.datetime | None
+    flags: MessageFlags
+    id: int
+    timestamp: datetime.datetime  # TODO: Just use created_at instead?
+    type: MessageType
+
     if TYPE_CHECKING:
         _HANDLERS: ClassVar[List[Tuple[str, Callable[..., None]]]]
         _CACHED_SLOTS: ClassVar[List[str]]
@@ -814,129 +823,129 @@ class Message(Object, Hashable):
         author: Union[User, Member]
         role_mentions: List[Role]
 
-    def __init__(
-        self,
-        *,
-        state: ConnectionState,
-        channel: MessageableChannel,
-        data: MessagePayload,
-    ) -> None:
-        super().__init__(id=int(data["id"]))
-        self._state: ConnectionState = state
-        # self.id: int = int(data["id"])
-        self.webhook_id: Optional[int] = utils.get_as_snowflake(data, "webhook_id")
-        self.reactions: List[Reaction] = [
-            Reaction(message=self, data=d) for d in data.get("reactions", [])
-        ]
-        self.attachments: List[Attachment] = [
-            Attachment(data=a, state=self._state) for a in data["attachments"]
-        ]
-        self.embeds: List[Embed] = [Embed.from_dict(a) for a in data["embeds"]]
-        self.application: Optional[MessageApplicationPayload] = data.get("application")
-        self.activity: Optional[MessageActivityPayload] = data.get("activity")
-        self.channel: MessageableChannel = channel
-        self._edited_timestamp: Optional[datetime.datetime] = utils.parse_time(
-            data["edited_timestamp"]
-        )
-        self.type: MessageType = try_enum(MessageType, data["type"])
-        self.pinned: bool = data["pinned"]
-        self.flags: MessageFlags = MessageFlags._from_value(data.get("flags", 0))
-        self.mention_everyone: bool = data["mention_everyone"]
-        self.tts: bool = data["tts"]
-        self.content: str = data["content"]
-        self.nonce: Optional[Union[int, str]] = data.get("nonce")
-        self.stickers: List[StickerItem] = [
-            StickerItem(data=d, state=state) for d in data.get("sticker_items", [])
-        ]
-        self.components: List[Component] = [
-            _component_factory(d) for d in data.get("components", [])
-        ]
-        self._background_tasks: Set[asyncio.Task[None]] = set()
-
-        try:
-            # if the channel doesn't have a guild attribute, we handle that
-            self.guild = channel.guild  # type: ignore
-        except AttributeError:
-            if getattr(channel, "type", None) not in (ChannelType.group, ChannelType.private):
-                self.guild = state._get_guild(utils.get_as_snowflake(data, "guild_id"))
-            else:
-                self.guild = None
-
-        if (
-            (thread_data := data.get("thread"))
-            and not self.thread
-            and isinstance(self.guild, Guild)
-        ):
-            self.guild._store_thread(thread_data)
-
-        try:
-            ref = data["message_reference"]
-        except KeyError:
-            self.reference = None
-        else:
-            self.reference = ref = MessageReference.with_state(state, ref)
-            try:
-                resolved = data["referenced_message"]
-            except KeyError:
-                pass
-            else:
-                if resolved is None:
-                    ref.resolved = DeletedReferencedMessage(ref)
-                else:
-                    # Right now the channel IDs match but maybe in the future they won't.
-                    if ref.channel_id == channel.id:
-                        chan = channel
-                    else:
-                        chan, _ = state._get_guild_channel(resolved)
-
-                    # the channel will be the correct type here
-                    ref.resolved = self.__class__(channel=chan, data=resolved, state=state)  # type: ignore
-
-        for handler in ("author", "member", "mentions", "mention_roles"):
-            try:
-                getattr(self, f"_handle_{handler}")(data[handler])
-            except KeyError:
-                continue
-
-        self.interaction: Optional[MessageInteraction] = (
-            MessageInteraction(data=data["interaction"], guild=self.guild, state=self._state)
-            if "interaction" in data
-            else None
-        )
+    # def __init__(
+    #     self,
+    #     *,
+    #     state: ConnectionState,
+    #     channel: MessageableChannel,
+    #     data: MessagePayload,
+    # ) -> None:
+    #     super().__init__(id=int(data["id"]))
+    #     self._state: ConnectionState = state
+    #     self._bot = state._bot
+    #     # self.id: int = int(data["id"])
+    #     self.webhook_id: Optional[int] = utils.get_as_snowflake(data, "webhook_id")
+    #     self.reactions: List[Reaction] = [
+    #         Reaction(message=self, data=d) for d in data.get("reactions", [])
+    #     ]
+    #     self.attachments: List[Attachment] = [
+    #         Attachment(data=a, state=self._state) for a in data["attachments"]
+    #     ]
+    #     self.embeds: List[Embed] = [Embed.from_dict(a) for a in data["embeds"]]
+    #     self.application: Optional[MessageApplicationPayload] = data.get("application")
+    #     self.activity: Optional[MessageActivityPayload] = data.get("activity")
+    #     self.channel: MessageableChannel = channel
+    #     self._edited_timestamp: Optional[datetime.datetime] = utils.parse_time(
+    #         data["edited_timestamp"]
+    #     )
+    #     self.type: MessageType = try_enum(MessageType, data["type"])
+    #     self.pinned: bool = data["pinned"]
+    #     self.flags: MessageFlags = MessageFlags._from_value(data.get("flags", 0))
+    #     self.mention_everyone: bool = data["mention_everyone"]
+    #     self.tts: bool = data["tts"]
+    #     self.content: str = data["content"]
+    #     self.nonce: Optional[Union[int, str]] = data.get("nonce")
+    #     self.stickers: List[StickerItem] = [
+    #         StickerItem(data=d, state=state) for d in data.get("sticker_items", [])
+    #     ]
+    #     self.components: List[Component] = [
+    #         _component_factory(d) for d in data.get("components", [])
+    #     ]
+    #     self._background_tasks: Set[asyncio.Task[None]] = set()
+    #
+    #     try:
+    #         # if the channel doesn't have a guild attribute, we handle that
+    #         self.guild = channel.guild  # type: ignore
+    #     except AttributeError:
+    #         if getattr(channel, "type", None) not in (ChannelType.group, ChannelType.private):
+    #             self.guild = state._get_guild(utils.get_as_snowflake(data, "guild_id"))
+    #         else:
+    #             self.guild = None
+    #
+    #     if (
+    #         (thread_data := data.get("thread"))
+    #         and not self.thread
+    #         and isinstance(self.guild, Guild)
+    #     ):
+    #         self.guild._store_thread(thread_data)
+    #
+    #     try:
+    #         ref = data["message_reference"]
+    #     except KeyError:
+    #         self.reference = None
+    #     else:
+    #         self.reference = ref = MessageReference.with_state(state, ref)
+    #         try:
+    #             resolved = data["referenced_message"]
+    #         except KeyError:
+    #             pass
+    #         else:
+    #             if resolved is None:
+    #                 ref.resolved = DeletedReferencedMessage(ref)
+    #             else:
+    #                 # Right now the channel IDs match but maybe in the future they won't.
+    #                 if ref.channel_id == channel.id:
+    #                     chan = channel
+    #                 else:
+    #                     chan, _ = state._get_guild_channel(resolved)
+    #
+    #                 # the channel will be the correct type here
+    #                 ref.resolved = self.__class__(channel=chan, data=resolved, state=state)  # type: ignore
+    #
+    #     for handler in ("author", "member", "mentions", "mention_roles"):
+    #         try:
+    #             getattr(self, f"_handle_{handler}")(data[handler])
+    #         except KeyError:
+    #             continue
+    #
+    #     self.interaction: Optional[MessageInteraction] = (
+    #         MessageInteraction(data=data["interaction"], guild=self.guild, state=self._state)
+    #         if "interaction" in data
+    #         else None
+    #     )
 
     @classmethod
     async def from_message_payload(cls, payload: MessagePayload, *, bot: Client):
-        channel = bot.get_channel(int(payload["channel_id"]))
-        ret = cls(state=bot._connection, channel=channel, data=payload)
+        # channel = bot.get_channel(int(payload["channel_id"]))
+        # ret = cls(state=bot._connection, channel=channel, data=payload)
+        ret = cls(id=int(payload["id"]))
         ret._bot = bot
+        ret._state = ret._bot._connection  # TODO: Remove this later, this is a patch to make commands.Context work.
+
+        user_data = payload["author"]
+        if (guild_id := payload.get("guild_id")) and (member_data := payload.get("member")):
+            guild_id = int(guild_id)
+            # This modifies the payload data, should this be a .copy()?
+            member_data["user"] = user_data
+            author = await ret._bot.typesheet.create_member(member_data, None, guild_id)
+        else:
+            author = await ret._bot.typesheet.create_user(user_data)
+
+        ret.author = author
+
+        ret.channel_id = int(payload["channel_id"])
+        ret.content = payload["content"]
+        ret._edited_timestamp = utils.parse_time(payload["edited_timestamp"])
+        ret.flags = MessageFlags._from_value(payload.get("flags", 0))
+        ret.id = int(payload["id"])
+        ret.timestamp = utils.parse_time(payload["timestamp"])
+        ret.type = try_enum(MessageType, payload["type"])
+
         return ret
-        # ret = cls(payload["id"])
-        # ret._bot = bot
-        #
-        # # TODO: The author can be a webhook object, see docs and implement it. It isn't specifically handled in NC yet?
-        # # ret.author = pass
-        # ret.channel_id = int(payload["channel_id"])
-        # ret.content = payload["content"]
-        # # TODO: This is an underscored variable that is directly accessed via a property. Why?
-        # ret._edited_timestamp = utils.parse_time(payload["edited_timestamp"])
-        # # TODO: Very optional, rarely appears. See docs and implement it. Doesn't exist in NC yet?
-        # # ret.mention_channels = pass
-        # ret.mention_everyone = payload["mention_everyone"]
-        # ret.mentions = [AsyncUser.from_user_payload(user_payload, bot=ret._bot) for user_payload in payload["mentions"]]
-        # # TODO: Discord calls it "mention_roles", but it just has the ID's and not the role objects. Is this name fine?
-        # ret.mention_role_ids = [int(role_id) for role_id in payload["mention_roles"]]
-        # # TODO: created_at is from the ID, but this timestamp is straight from Discord. Make created_at use this?
-        # ret.timestamp = utils.parse_time(payload["timestamp"])
-        # ret.tts = payload["tts"]
-        #
-        # return ret
-
-
-
 
     def __repr__(self) -> str:
         name = self.__class__.__name__
-        return f"<{name} id={self.id} channel={self.channel!r} type={self.type!r} author={self.author!r} flags={self.flags!r}>"
+        return f"<{name} id={self.id} channel_id={self.channel_id} type={self.type!r} author={self.author!r} flags={self.flags!r}>"
 
     def _try_patch(self, data, key, transform=None) -> None:
         try:
@@ -1199,6 +1208,7 @@ class Message(Object, Hashable):
     @property
     def edited_at(self) -> Optional[datetime.datetime]:
         """Optional[:class:`datetime.datetime`]: An aware UTC datetime object containing the edited time of the message."""
+        # TODO: Think about changing _edited_timestamp to edited_at and removing this property?
         return self._edited_timestamp
 
     @property

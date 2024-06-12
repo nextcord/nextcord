@@ -1298,7 +1298,8 @@ class ConnectionState:
         channel, _ = self._get_guild_channel(data)
         await self._bot.cache.add_message(data)
         # channel would be the correct type here
-        message = Message(channel=channel, data=data, state=self)  # type: ignore
+        # message = Message(channel=channel, data=data, state=self)  # type: ignore
+        message = await Message.from_message_payload(data, bot=self._bot)
         self.dispatch("message", message)
         if self._messages is not None:
             self._messages.append(message)
@@ -2216,7 +2217,8 @@ class ConnectionState:
         if member_data:
             guild = self._get_guild(raw.guild_id)
             if guild is not None:
-                raw.member = Member(data=member_data, guild=guild, state=self)
+                # raw.member = Member(data=member_data, guild=guild, state=self)
+                raw.member = await self._bot.typesheet.create_member(member_data, None, guild.id)
             else:
                 raw.member = None
         else:

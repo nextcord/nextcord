@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Protocol
 from .guild import AsyncGuild
 from .interactions import Interaction
 from .member import Member
-from .message import AsyncMessage
+from .message import Message
 from .user import User
 
 if TYPE_CHECKING:
@@ -41,7 +41,7 @@ class BaseTypeSheet(Protocol):
     ) -> Member:
         raise NotImplementedError
 
-    async def create_message(self, payload: MessagePayload) -> AsyncMessage:
+    async def create_message(self, payload: MessagePayload) -> Message:
         raise NotImplementedError
 
     async def create_user(self, payload: UserPayload) -> User:
@@ -58,8 +58,8 @@ class DefaultTypeSheet(BaseTypeSheet):
     async def create_member(self, member_payload: MemberPayload, presence_payload: PresencePayload | None, guild_id: int) -> Member:
         return await Member.from_member_payload(member_payload, presence_payload, guild_id, bot=self._bot)
 
-    async def create_message(self, payload: MessagePayload) -> AsyncMessage:
-        return AsyncMessage.from_message_payload(payload, bot=self._bot)
+    async def create_message(self, payload: MessagePayload) -> Message:
+        return await Message.from_message_payload(payload, bot=self._bot)
 
     async def create_user(self, payload: UserPayload) -> User:
         return await User.from_user_payload(payload, bot=self._bot)

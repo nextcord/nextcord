@@ -392,7 +392,7 @@ class Member(Object, abc.Messageable, _UserTag):
         return (
             f"<Member id={self._user.id} name={self._user.name!r} global_name={self._user.global_name!r}"
             + (f" discriminator={self._user.discriminator!r}" if self.discriminator != "0" else "")
-            + f" bot={self._user.bot} nick={self.nick!r} guild={self.guild!r}>"
+            + f" bot={self._user.bot} nick={self.nick!r} guild_id={self.guild_id}>"
         )
 
     def __eq__(self, other: Any) -> bool:
@@ -501,6 +501,14 @@ class Member(Object, abc.Messageable, _UserTag):
     #         # Signal to dispatch on_user_update
     #         return to_return, u
     #     return None
+
+    @property
+    def bot(self) -> bool:
+        return self._user.bot
+
+    @property
+    def discriminator(self) -> str:
+        return self._user.discriminator
 
     @property
     def status(self) -> Union[Status, str]:
