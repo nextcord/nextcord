@@ -8,7 +8,6 @@ import logging
 import signal
 import sys
 import traceback
-import warnings
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -2047,19 +2046,6 @@ class Client:
         """
         return self._connection.all_views()
 
-    @property
-    def persistent_views(self) -> List[View]:
-        """List[:class:`.View`]: A sequence of persistent views added to the client.
-
-        .. versionadded:: 2.0
-        """
-        warnings.warn(
-            ".persistent_views is deprecated, use .views instead.",
-            stacklevel=2,
-            category=FutureWarning,
-        )
-        return self.views()
-
     def views(self, *, persistent: bool = True) -> List[View]:
         """Returns all persistent or non-persistent views.
 
@@ -2366,6 +2352,11 @@ class Client:
         Syncs the locally added application commands with the Guild corresponding to the given ID, or syncs
         global commands if the guild_id is ``None``.
 
+        .. versionchanged:: 3.0
+            This replaces the now removed ``delete_unknown_application_commands``,
+            ``associate_application_commands``, ``update_application_commands``, and ``rollout_application_commands``
+            methods.
+
         Parameters
         ----------
         data: Optional[List[:class:`dict`]]
@@ -2412,6 +2403,9 @@ class Client:
 
         Running this for global or the same guild multiple times at once may cause unexpected or unstable behavior.
 
+        .. versionchanged:: 3.0
+            This replaces the now removed ``deploy_application_commands`` method.
+
         Parameters
         ----------
         data: Optional[List[:class:`dict`]]
@@ -2437,64 +2431,6 @@ class Client:
             delete_unknown=delete_unknown,
             update_known=update_known,
         )
-
-    async def deploy_application_commands(
-        self,
-        data: Optional[List[ApplicationCommandPayload]] = None,
-        *,
-        guild_id: Optional[int] = None,
-        associate_known: bool = True,
-        delete_unknown: bool = True,
-        update_known: bool = True,
-    ) -> None:
-        warnings.warn(
-            ".deploy_application_commands is deprecated, use .discover_application_commands instead.",
-            stacklevel=2,
-            category=FutureWarning,
-        )
-        await self.discover_application_commands(
-            data=data,
-            guild_id=guild_id,
-            associate_known=associate_known,
-            delete_unknown=delete_unknown,
-            update_known=update_known,
-        )
-
-    async def delete_unknown_application_commands(
-        self, data: Optional[List[ApplicationCommandPayload]] = None
-    ) -> None:
-        """Deletes unknown global commands."""
-        warnings.warn(
-            ".delete_unknown_application_commands is deprecated, use .sync_application_commands and set "
-            "kwargs in it instead.",
-            stacklevel=2,
-            category=FutureWarning,
-        )
-        await self._connection.delete_unknown_application_commands(data=data, guild_id=None)
-
-    async def associate_application_commands(
-        self, data: Optional[List[ApplicationCommandPayload]] = None
-    ) -> None:
-        """Associates global commands registered with Discord with locally added commands."""
-        warnings.warn(
-            ".associate_application_commands is deprecated, use .sync_application_commands and set "
-            "kwargs in it instead.",
-            stacklevel=2,
-            category=FutureWarning,
-        )
-        await self._connection.associate_application_commands(data=data, guild_id=None)
-
-    async def update_application_commands(
-        self, data: Optional[List[ApplicationCommandPayload]] = None
-    ) -> None:
-        """Updates global commands that have slightly changed with Discord."""
-        warnings.warn(
-            ".update_application_commands is deprecated, use .sync_application_commands and set "
-            "kwargs in it instead.",
-            stacklevel=2,
-            category=FutureWarning,
-        )
-        await self._connection.update_application_commands(data=data, guild_id=None)
 
     async def register_new_application_commands(
         self, data: Optional[List[ApplicationCommandPayload]] = None, guild_id: Optional[int] = None
@@ -2587,16 +2523,9 @@ class Client:
         This does not register commands with Discord. If you want that, use
         :meth:`~Client.sync_all_application_commands` instead.
 
+        .. versionchanged:: 3.0
+            This replaces the now removed ``add_startup_application_commands`` method.
         """
-        self._add_decorated_application_commands()
-        self.add_all_cog_commands()
-
-    def add_startup_application_commands(self) -> None:
-        warnings.warn(
-            ".add_startup_application_commands is deprecated, use .add_all_application_commands instead.",
-            stacklevel=2,
-            category=FutureWarning,
-        )
         self._add_decorated_application_commands()
         self.add_all_cog_commands()
 
@@ -2625,30 +2554,6 @@ class Client:
                 f"nextcord.Client: Forbidden error for {guild.name}|{guild.id}, is the commands Oauth scope "
                 f"enabled? {e}"
             )
-
-    async def rollout_application_commands(self) -> None:
-        """|coro|
-        Deploys global application commands and registers new ones if enabled.
-        """
-        warnings.warn(
-            ".rollout_application_commands is deprecated, use .sync_application_commands and set "
-            "kwargs in it instead.",
-            stacklevel=2,
-            category=FutureWarning,
-        )
-
-        if self.application_id is None:
-            raise TypeError("Could not get the current application's id")
-
-        global_payload = await self.http.get_global_commands(self.application_id)
-        await self.deploy_application_commands(
-            data=global_payload,
-            associate_known=self._rollout_associate_known,
-            delete_unknown=self._rollout_delete_unknown,
-            update_known=self._rollout_update_known,
-        )
-        if self._rollout_register_new:
-            await self.register_new_application_commands(data=global_payload)
 
     def _add_decorated_application_commands(self) -> None:
         for command in self._application_commands_to_add:
