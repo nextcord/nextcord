@@ -35,7 +35,7 @@ if TYPE_CHECKING:
 
 def resolve_emoji(emoji: Union[Emoji, PartialEmoji]) -> PartialEmojiPayload:
     if isinstance(emoji, Emoji):
-        return emoji._to_partial().to_dict()  # type: ignore
+        return typing.cast(PartialEmojiPayload, emoji._to_partial().to_dict())
 
     if isinstance(emoji, PartialEmoji):
         return emoji.to_dict()  # type: ignore
