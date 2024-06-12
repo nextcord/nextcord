@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TYPE_CHECKING, List, Optional, Union
+from typing import TYPE_CHECKING, List, Optional, Union, cast
 
 from .emoji import Emoji
 from .enums import PollLayoutType, try_enum
@@ -35,10 +35,10 @@ if TYPE_CHECKING:
 
 def resolve_emoji(emoji: Union[Emoji, PartialEmoji]) -> PartialEmojiPayload:
     if isinstance(emoji, Emoji):
-        return typing.cast(PartialEmojiPayload, emoji._to_partial().to_dict())
+        return cast(PartialEmojiPayload, emoji._to_partial().to_dict())
 
     if isinstance(emoji, PartialEmoji):
-        return emoji.to_dict()  # type: ignore
+        return cast(PartialEmojiPayload, emoji.to_dict())
 
     raise InvalidArgument(f"Cannot parse `{emoji}` into an emoji to send.")
 
@@ -63,14 +63,14 @@ class PollMedia:
         "emoji",
     )
 
-    def __repr__(self) -> str:
-        return f"<PollMedia text={self.text} emoji={self.emoji}>"
-
     def __init__(self, text: str, emoji: Optional[EmojiInputType] = None) -> None:
         self.text: str = text
         self.emoji: Optional[PartialEmoji | Emoji] = emoji  # type: ignore[reportAttributeAccessIssue]
         if isinstance(emoji, str):
             self.emoji: Optional[PartialEmoji | Emoji] = PartialEmoji.from_str(emoji)
+
+    def __repr__(self) -> str:
+        return f"<PollMedia text={self.text} emoji={self.emoji}>"
 
     def to_dict(self) -> PollMediaPayload:
         payload: PollMediaPayload = {"text": self.text}
@@ -105,12 +105,12 @@ class PollAnswer:
         "poll_media",
     )
 
-    def __repr__(self) -> str:
-        return f"<PollAnswer answer_id={self.answer_id!r} poll_media={self.poll_media!r}>"
-
     def __init__(self, *, answer_id: Optional[int] = None, poll_media: PollMedia) -> None:
         self.answer_id: Optional[int] = answer_id
         self.poll_media: PollMedia = poll_media
+
+    def __repr__(self) -> str:
+        return f"<PollAnswer answer_id={self.answer_id!r} poll_media={self.poll_media!r}>"
 
     def to_dict(self) -> PollAnswerPayload:
         payload: PollAnswerPayload = {"poll_media": self.poll_media.to_dict()}
@@ -142,6 +142,12 @@ class PollAnswerCount:
 
     __slots__ = ("id", "me_voted", "count", "poll")
 
+    def __init__(self, data: PollAnswerCountPayload, poll: Poll) -> None:
+        self.poll: Poll = poll
+        self.id: int = data["id"]
+        self.me_voted: bool = data["me_voted"]
+        self.count: int = data["count"]
+
     def __repr__(self) -> str:
         return (
             "<PollAnswerCount "
@@ -150,12 +156,6 @@ class PollAnswerCount:
             f"count={self.count!r} "
             ">"
         )
-
-    def __init__(self, data: PollAnswerCountPayload, poll: Poll) -> None:
-        self.poll: Poll = poll
-        self.id: int = data["id"]
-        self.me_voted: bool = data["me_voted"]
-        self.count: int = data["count"]
 
     def voters(
         self, *, limit: Optional[int] = None, after: Optional[Snowflake] = None
@@ -180,7 +180,6 @@ class PollAnswerCount:
             # voters is now a list of User...
             await channel.send("Those people have voted with choice number {count.id}: {', '.join(voters)}")
 
-        .. versionadded:: 3.0
 
         Parameters
         ----------
@@ -230,6 +229,13 @@ class PollResults:
         "poll",
     )
 
+    def __init__(self, data: PollResultsPayload, poll: Poll) -> None:
+        self.is_finalized: bool = data["is_finalized"]
+        self.answer_counts: List[PollAnswerCount] = [
+            PollAnswerCount(answer_count, poll) for answer_count in data["answer_counts"]
+        ]
+        self.poll: Poll = poll
+
     def __repr__(self) -> str:
         return (
             "<PollResults "
@@ -237,13 +243,6 @@ class PollResults:
             f"answer_counts={self.answer_counts!r} "
             ">"
         )
-
-    def __init__(self, data: PollResultsPayload, poll: Poll) -> None:
-        self.is_finalized: bool = data["is_finalized"]
-        self.answer_counts: List[PollAnswerCount] = [
-            PollAnswerCount(answer_count, poll) for answer_count in data["answer_counts"]
-        ]
-        self.poll: Poll = poll
 
     def to_dict(self) -> PollResultsPayload:
         payload: PollResultsPayload = {
@@ -283,6 +282,20 @@ class PollCreateRequest:
         "layout_type",
     )
 
+    def __init__(
+        self,
+        question: PollMedia,
+        duration: int,
+        allow_multiselect: bool,
+        layout_type: Optional[PollLayoutType] = MISSING,
+        answers: Optional[List[PollAnswer]] = None,
+    ) -> None:
+        self.question: PollMedia = question
+        self.answers: List[PollAnswer] = answers or []
+        self.duration: int = duration
+        self.allow_multiselect: bool = allow_multiselect
+        self.layout_type: Optional[PollLayoutType] = layout_type
+
     def __repr__(self) -> str:
         return (
             "<PollCreateRequest "
@@ -293,23 +306,6 @@ class PollCreateRequest:
             f"layout_type={self.layout_type!r} "
             ">"
         )
-
-    def __init__(
-        self,
-        question: PollMedia,
-        duration: int,
-        allow_multiselect: bool,
-        layout_type: Optional[PollLayoutType] = MISSING,
-        answers: Optional[List[PollAnswer]] = None,
-    ) -> None:
-        self.question: PollMedia = question
-        if answers:
-            self.answers: List[PollAnswer] = answers
-        else:
-            self.answers: List[PollAnswer] = []
-        self.duration: int = duration
-        self.allow_multiselect: bool = allow_multiselect
-        self.layout_type: Optional[PollLayoutType] = layout_type
 
     def to_dict(self) -> PollCreateRequestPayload:
         payload: PollCreateRequestPayload = {
@@ -371,6 +367,21 @@ class Poll:
         "results",
     )
 
+    def __init__(self, data: PollData, *, message: Message, state: ConnectionState) -> None:
+        self.message: Message = message
+        self._state: ConnectionState = state
+        self.question: PollMedia = PollMedia.from_dict(data["question"])
+        self.answers: List[PollAnswer] = [
+            PollAnswer.from_dict(poll_answer) for poll_answer in data["answers"]
+        ]
+        self.expiry: datetime = datetime.fromisoformat(data["expiry"])
+        self.allow_multiselect: bool = data["allow_multiselect"]
+        self.layout_type: PollLayoutType = try_enum(PollLayoutType, data["layout_type"])
+
+        self.results: Optional[PollResults] = (
+            PollResults(data["results"], self) if "results" in data else None
+        )
+
     def __repr__(self) -> str:
         return (
             "<Poll "
@@ -391,21 +402,6 @@ class Poll:
         if isinstance(other, self.__class__):
             return other.message.id != self.message.id
         return True
-
-    def __init__(self, data: PollData, *, message: Message, state: ConnectionState) -> None:
-        self.message: Message = message
-        self._state: ConnectionState = state
-        self.question: PollMedia = PollMedia.from_dict(data["question"])
-        self.answers: List[PollAnswer] = [
-            PollAnswer.from_dict(poll_answer) for poll_answer in data["answers"]
-        ]
-        self.expiry: datetime = datetime.fromisoformat(data["expiry"])
-        self.allow_multiselect: bool = data["allow_multiselect"]
-        self.layout_type: PollLayoutType = try_enum(PollLayoutType, data["layout_type"])
-
-        self.results: Optional[PollResults] = (
-            PollResults(data["results"], self) if "results" in data else None
-        )
 
     async def expire(self) -> Message:
         """
