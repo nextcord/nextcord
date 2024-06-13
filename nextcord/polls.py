@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, List, Optional, Union, cast
 
 from .emoji import Emoji
@@ -391,7 +391,8 @@ class Poll:
             f"expiry={self.expiry!r} "
             f"allow_multiselect={self.allow_multiselect!r} "
             f"layout_type={self.layout_type!r} "
-            f"results={self.results!r}"
+            f"results={self.results!r} "
+            f"expired={self.expired!r}"
             ">"
         )
 
@@ -419,6 +420,11 @@ class Poll:
             channel_id=self.message.channel.id, message_id=self.message.id
         )
         return Message(state=self._state, channel=self.message.channel, data=message)
+
+    @property
+    def expired(self) -> bool:
+        """:class:`bool`: Returns True if this poll has been closed."""
+        return self.expiry < datetime.now(tz=UTC)
 
     def to_dict(self) -> PollData:
         payload: PollData = {
