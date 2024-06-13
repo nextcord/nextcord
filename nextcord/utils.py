@@ -141,7 +141,7 @@ if TYPE_CHECKING:
 
     from typing_extensions import ParamSpec
 
-    from .abc import Snowflake
+    from .abc import Snowflake, SnowflakeTime
     from .asset import Asset
     from .invite import Invite
     from .message import Attachment
@@ -157,6 +157,7 @@ T = TypeVar("T")
 T_co = TypeVar("T_co", covariant=True)
 _Iter = Union[Iterator[T], AsyncIterator[T]]
 ArrayT = TypeVar("ArrayT", int, float, str)
+SnowflakeIntT = Union[int, Snowflake]
 
 
 class CachedSlotProperty(Generic[T, T_co]):
@@ -1277,3 +1278,56 @@ def parse_docstring(func: Callable[..., Any], max_chars: int = MISSING) -> Dict[
             args[arg.group("name")] = arg_description
 
     return {"description": description, "args": args}
+
+
+ReturnWhenT = TypeVar("ReturnWhenT", bound=type)
+
+
+@overload
+def _snowflake_or_int(
+    value: Literal[None],
+) -> None:
+    ...
+
+
+@overload
+def _snowflake_or_int(
+    value: int,
+) -> int:
+    ...
+
+
+@overload
+def _snowflake_or_int(
+    value: datetime.datetime,
+) -> datetime.datetime:
+    ...
+
+
+@overload
+def _snowflake_or_int(
+    value: Snowflake,
+) -> int:
+    ...
+
+
+@overload
+def _snowflake_or_int(
+    value: Optional[SnowflakeTime], return_when: Tuple[ReturnWhenT, ...]
+) -> Union[ReturnWhenT, int]:
+    ...
+
+
+def _snowflake_or_int(
+    value: Optional[SnowflakeTime], return_when: Optional[Tuple[ReturnWhenT, ...]] = None
+) -> Optional[Union[ReturnWhenT, int, datetime.datetime]]:
+    if not value:
+        return None
+
+    if return_when and isinstance(value, return_when):
+        return value  # type: ignore
+
+    if isinstance(value, Snowflake):
+        return value.id
+
+    return value
