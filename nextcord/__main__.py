@@ -26,7 +26,7 @@ def show_version() -> None:
     if version_info.releaselevel != "final":
         version = importlib.metadata.version("nextcord")
         if version:
-            entries.append(f"    - nextcord pkg_resources: ppv{version}")
+            entries.append(f"    - nextcord metadata: ppv{version}")
 
     entries.append(f"- aiohttp v{aiohttp.__version__}")
     uname = platform.uname()
