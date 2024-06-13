@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import TYPE_CHECKING, List, Optional, Union, cast
 
 from .emoji import Emoji
@@ -10,7 +10,7 @@ from .enums import PollLayoutType, try_enum
 from .errors import InvalidArgument
 from .iterators import AnswerVotersIterator
 from .partial_emoji import PartialEmoji
-from .utils import MISSING
+from .utils import MISSING, utcnow
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -424,7 +424,7 @@ class Poll:
     @property
     def expired(self) -> bool:
         """:class:`bool`: Returns True if this poll has been closed."""
-        return self.expiry < datetime.now(tz=UTC)
+        return self.expiry < utcnow()
 
     def to_dict(self) -> PollData:
         payload: PollData = {
