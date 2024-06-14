@@ -30,6 +30,7 @@ from .flags import ChannelFlags, MessageFlags
 from .invite import Invite
 from .iterators import HistoryIterator
 from .mentions import AllowedMentions
+from .message import MessageCall
 from .partial_emoji import PartialEmoji
 from .permissions import PermissionOverwrite, Permissions
 from .role import Role
@@ -1270,6 +1271,7 @@ class Messageable:
         view: Optional[View] = ...,
         flags: Optional[MessageFlags] = ...,
         suppress_embeds: Optional[bool] = ...,
+        call: Optional[MessageCall] = ...,
     ) -> Message:
         ...
 
@@ -1290,6 +1292,7 @@ class Messageable:
         view: Optional[View] = ...,
         flags: Optional[MessageFlags] = ...,
         suppress_embeds: Optional[bool] = ...,
+        call: Optional[MessageCall] = ...,
     ) -> Message:
         ...
 
@@ -1310,6 +1313,7 @@ class Messageable:
         view: Optional[View] = ...,
         flags: Optional[MessageFlags] = ...,
         suppress_embeds: Optional[bool] = ...,
+        call: Optional[MessageCall] = ...,
     ) -> Message:
         ...
 
@@ -1330,6 +1334,7 @@ class Messageable:
         view: Optional[View] = ...,
         flags: Optional[MessageFlags] = ...,
         suppress_embeds: Optional[bool] = ...,
+        call: Optional[MessageCall] = ...,
     ) -> Message:
         ...
 
@@ -1351,6 +1356,7 @@ class Messageable:
         view: Optional[View] = None,
         flags: Optional[MessageFlags] = None,
         suppress_embeds: Optional[bool] = None,
+        call: Optional[MessageCall] = None,
     ):
         """|coro|
 
@@ -1430,6 +1436,10 @@ class Messageable:
             Whether to suppress embeds on this message.
 
             .. versionadded:: 2.4
+        call: Optional[:class:`~MessageCall`]
+            The call associated with this message.
+
+            .. versionadded:: 3.0
 
         Raises
         ------
@@ -1526,6 +1536,7 @@ class Messageable:
                     stickers=stickers_payload,
                     components=components,
                     flags=flag_value,
+                    call=call
                 )
             finally:
                 file.close()
@@ -1548,6 +1559,7 @@ class Messageable:
                     stickers=stickers_payload,
                     components=components,
                     flags=flag_value,
+                    call=call
                 )
             finally:
                 for f in files:
@@ -1565,6 +1577,7 @@ class Messageable:
                 stickers=stickers_payload,
                 components=components,
                 flags=flag_value,
+                call=call
             )
 
         ret = state.create_message(channel=channel, data=data)

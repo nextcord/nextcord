@@ -22,6 +22,8 @@ from typing import (
     overload,
 )
 
+from nextcord.types.message import MessageCall
+
 from . import utils
 from .components import _component_factory
 from .embeds import Embed
@@ -37,7 +39,7 @@ from .partial_emoji import PartialEmoji
 from .reaction import Reaction
 from .sticker import StickerItem
 from .threads import Thread
-from .utils import MISSING, escape_mentions
+from .utils import MISSING, SnowflakeList, escape_mentions
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -57,6 +59,7 @@ if TYPE_CHECKING:
         Message as MessagePayload,
         MessageActivity as MessageActivityPayload,
         MessageApplication as MessageApplicationPayload,
+        MessageCall as MessageCallPayload,
         MessageReference as MessageReferencePayload,
         Reaction as ReactionPayload,
     )
@@ -619,6 +622,46 @@ class MessageInteraction(Hashable):
         """:class:`datetime.datetime`: The interaction's creation time in UTC."""
         return utils.snowflake_time(self.id)
 
+class MessageCall:
+    """Represents a message's call data.
+
+    .. versionadded:: 3.0
+
+    .. container:: operations
+
+        .. describe:: x == y
+
+            Checks if two message calls are equal.
+
+        .. describe:: x != y
+
+            Checks if two message calls are not equal.
+
+    Attributes
+    ----------
+    data: Dict[:class:`str`, Any]
+        The raw data from the call.
+    participants: List[:class:`~Snowflake`]
+        An array of snowflake users that participated in the call.
+    """
+
+    def __init__(self, *, data: MessageCallPayload, state: ConnectionState) -> None:
+        self._state: ConnectionState = state
+        self.data: MessageCallPayload = data
+
+        self._participants: SnowflakeList = SnowflakeList(map(int, data["participants"]))
+        self._ended_timestamp: Optional[datetime.datetime] = utils.parse_time(data.get("ended_timestamp"))
+
+    @property
+    def participants(self) -> List[Optional[User]]:
+        """List[Optional[:class:`~User`]]: The list of users that participated in the call."""
+        return [self._state.get_user(p) for p in self._participants]
+
+    @property
+    def ended_timestamp(self) -> Optional[datetime.datetime]:
+        """Optional[:class:`datetime.datetime`]: An aware UTC datetime object containing the time the call ended."""
+        return self._ended_timestamp
+
 
 @flatten_handlers
 class Message(Hashable):
@@ -737,10 +780,13 @@ class Message(Hashable):
         The guild that the message belongs to, if applicable.
     interaction: Optional[:class:`MessageInteraction`]
         The interaction data of a message, if applicable.
+    call: Optional[:class:`MessageCall`]
+        The call associated with the message.
     """
 
     __slots__ = (
         "_state",
+        "_call",
         "_edited_timestamp",
         "_cs_channel_mentions",
         "_cs_raw_mentions",
@@ -749,6 +795,7 @@ class Message(Hashable):
         "_cs_raw_role_mentions",
         "_cs_system_content",
         "tts",
+        "call",
         "content",
         "channel",
         "webhook_id",
@@ -820,6 +867,11 @@ class Message(Hashable):
             _component_factory(d) for d in data.get("components", [])
         ]
         self._background_tasks: Set[asyncio.Task[None]] = set()
+        self._call: MessageCallPayload | None = data.get("call")
+        if self._call is not None:
+            self.call: Optional[MessageCall] = MessageCall(state=state, data=self._call)
+        else:
+            self.call = None
 
         try:
             # if the channel doesn't have a guild attribute, we handle that
