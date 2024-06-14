@@ -3095,6 +3095,11 @@ class Guild(Hashable):
         HTTPException
             Bulk banning failed.
 
+            This may occur if all provided users failed to be banned due to the following reasons:
+
+            - The users are already banned
+            - You do not have the proper permissions to ban a user
+
         Returns
         -------
         :class:`BulkBan`
