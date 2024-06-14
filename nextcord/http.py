@@ -1250,7 +1250,6 @@ class HTTPClient:
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
         flags: Optional[int] = None,
-        call: Optional[message.MessageCall] = None,
     ) -> Dict[str, Any]:
         payload: Dict[str, Any] = {
             "tts": tts,
@@ -1283,9 +1282,6 @@ class HTTPClient:
         if flags is not None:
             payload["flags"] = flags
 
-        if call is not None:
-            payload["call"] = call
-
         return payload
 
     def send_message(
@@ -1302,7 +1298,6 @@ class HTTPClient:
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
         flags: Optional[int] = None,
-        call: Optional[message.MessageCall] = None,
         auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[message.Message]:
@@ -1318,7 +1313,6 @@ class HTTPClient:
             stickers=stickers,
             components=components,
             flags=flags,
-            call=call,
         )
 
         return self.request(
@@ -1357,7 +1351,6 @@ class HTTPClient:
         components: Optional[List[components.Component]] = None,
         attachments: Optional[List[Dict[str, Any]]] = None,
         flags: Optional[int] = None,
-        call: Optional[message.MessageCall] = None,
     ) -> List[Dict[str, Any]]:
         form: List[Dict[str, Any]] = []
 
@@ -1373,7 +1366,6 @@ class HTTPClient:
             stickers=stickers,
             components=components,
             flags=flags,
-            call=call,
         )
 
         if message_key is not None:
@@ -1417,7 +1409,6 @@ class HTTPClient:
         components: Optional[List[components.Component]] = None,
         attachments: Optional[List[Dict[str, Any]]] = None,
         flags: Optional[int] = None,
-        call: Optional[message.MessageCall] = None,
         auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[message.Message]:
@@ -1438,7 +1429,6 @@ class HTTPClient:
             components=components,
             attachments=attachments,
             flags=flags,
-            call=call,
         )
         return self.request(
             route,
@@ -1463,7 +1453,6 @@ class HTTPClient:
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
         flags: Optional[int] = None,
-        call: Optional[message.MessageCall] = None,
         auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[message.Message]:
@@ -1481,7 +1470,6 @@ class HTTPClient:
             stickers=stickers,
             components=components,
             flags=flags,
-            call=call,
             auth=auth,
             retry_request=retry_request,
         )
