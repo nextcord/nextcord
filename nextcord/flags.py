@@ -1117,7 +1117,7 @@ class Intents(BaseFlags):
 
     @flag_value
     def guild_message_polls(self) -> int:
-        """:class:`bool` Whether poll related events in guilds are enabled.
+        """:class:`bool`: Whether poll related events in guilds are enabled.
 
         This corresponds to the following events:
         - :func:`on_message_poll_vote_add` (guild only)
@@ -1129,7 +1129,7 @@ class Intents(BaseFlags):
 
     @flag_value
     def direct_message_polls(self) -> int:
-        """:class:`bool` Whether poll related events in guilds are enabled.
+        """:class:`bool`: Whether poll related events in guilds are enabled.
 
         This corresponds to the following events:
         - :func:`on_message_poll_vote_add` (DM only)
@@ -1141,7 +1141,7 @@ class Intents(BaseFlags):
 
     @alias_flag_value
     def polls(self) -> int:
-        """:class:`bool` Whether poll related events are enabled.
+        """:class:`bool`: Whether poll related events are enabled.
 
         This corresponds to the following events:
         - :func:`on_message_poll_vote_add`
