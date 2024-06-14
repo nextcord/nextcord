@@ -209,6 +209,7 @@ class PollAnswerCount:
 
 class PollResults:
     """The result of the poll.
+
     This contains the numbers of vote for each answer.
 
     .. versionadded:: 3.0

@@ -83,6 +83,7 @@ if TYPE_CHECKING:
         AllowedMentions as AllowedMentionsPayload,
         MessageReference as MessageReferencePayload,
     )
+    from .types.polls import PollCreateRequest as PollCreateRequestPayload
     from .ui.view import View
     from .user import ClientUser
 
@@ -1475,6 +1476,7 @@ class Messageable:
         stickers_payload: Optional[List[int]] = None
         reference_payload: Optional[MessageReferencePayload] = None
         allowed_mentions_payload: Optional[AllowedMentionsPayload] = None
+        poll_payload: Optional[PollCreateRequestPayload] = None
 
         if embed is not None and embeds is not None:
             raise InvalidArgument("Cannot pass both embed and embeds parameter to send()")
@@ -1518,7 +1520,8 @@ class Messageable:
         if file is not None and files is not None:
             raise InvalidArgument("Cannot pass both file and files parameter to send()")
 
-        poll_payload = poll.to_dict() if poll else None
+        if poll is not None:
+            poll_payload = poll.to_dict()
 
         if file is not None:
             if not isinstance(file, File):

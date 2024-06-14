@@ -1,11 +1,10 @@
 import nextcord
+from nextcord import PollCreateRequest, PollMedia
 from nextcord.ext import commands
 
 intents = nextcord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="$", intents=intents)
-
-from nextcord import PollCreateRequest, PollMedia
 
 
 @bot.command()

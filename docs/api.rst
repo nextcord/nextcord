@@ -2872,7 +2872,7 @@ PollCreateRequest
 
 .. attributetable:: PollCreateRequest
 
-.. autoclass:: PollCreateRequest()
+.. autoclass:: PollCreateRequest
    :members:
 
 PollAnswerCount

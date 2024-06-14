@@ -2382,13 +2382,13 @@ class ConnectionState:
                 )
             else:
                 _log.debug(
-                    "message_poll_vote_add was not dispatched because the message (%r) and/or user (%r) are None ",
+                    "message_poll_vote_add was not dispatched because the message (%r) and/or user (%r) are None",
                     message,
                     user,
                 )
         else:
             _log.debug(
-                "message_poll_vote_add was not dispatched because the message (%r) are None ",
+                "message_poll_vote_add was not dispatched because the message (%r) are None",
                 message,
             )
 
