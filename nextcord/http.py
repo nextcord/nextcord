@@ -1250,7 +1250,7 @@ class HTTPClient:
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
         flags: Optional[int] = None,
-        call: Optional[message.MessageCall] = None
+        call: Optional[message.MessageCall] = None,
     ) -> Dict[str, Any]:
         payload: Dict[str, Any] = {
             "tts": tts,
@@ -1318,7 +1318,7 @@ class HTTPClient:
             stickers=stickers,
             components=components,
             flags=flags,
-            call=call
+            call=call,
         )
 
         return self.request(
@@ -1438,7 +1438,7 @@ class HTTPClient:
             components=components,
             attachments=attachments,
             flags=flags,
-            call=call
+            call=call,
         )
         return self.request(
             route,

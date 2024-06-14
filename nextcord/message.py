@@ -622,6 +622,7 @@ class MessageInteraction(Hashable):
         """:class:`datetime.datetime`: The interaction's creation time in UTC."""
         return utils.snowflake_time(self.id)
 
+
 class MessageCall:
     """Represents a message's call data.
 
@@ -650,7 +651,9 @@ class MessageCall:
         self.data: MessageCallPayload = data
 
         self._participants: SnowflakeList = SnowflakeList(map(int, data["participants"]))
-        self._ended_timestamp: Optional[datetime.datetime] = utils.parse_time(data.get("ended_timestamp"))
+        self._ended_timestamp: Optional[datetime.datetime] = utils.parse_time(
+            data.get("ended_timestamp")
+        )
 
     @property
     def participants(self) -> List[Optional[User]]:

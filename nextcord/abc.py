@@ -1536,7 +1536,7 @@ class Messageable:
                     stickers=stickers_payload,
                     components=components,
                     flags=flag_value,
-                    call=call
+                    call=call,
                 )
             finally:
                 file.close()
@@ -1559,7 +1559,7 @@ class Messageable:
                     stickers=stickers_payload,
                     components=components,
                     flags=flag_value,
-                    call=call
+                    call=call,
                 )
             finally:
                 for f in files:
@@ -1577,7 +1577,7 @@ class Messageable:
                 stickers=stickers_payload,
                 components=components,
                 flags=flag_value,
-                call=call
+                call=call,
             )
 
         ret = state.create_message(channel=channel, data=data)
