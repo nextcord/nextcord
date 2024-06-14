@@ -3102,9 +3102,9 @@ class Guild(Hashable):
             delete_message_seconds = 0
 
         data = await self._state.http.bulk_ban(
-            self.id,
-            [u.id for u in users],
-            delete_message_seconds,
+            guild_id=self.id,
+            user_ids=[u.id for u in users],
+            delete_message_seconds=delete_message_seconds,
             reason=reason,
         )
 
