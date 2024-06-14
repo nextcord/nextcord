@@ -644,6 +644,8 @@ class MessageCall:
         An array of snowflake users that participated in the call.
     """
 
+    __slots__ = ("_state", "data", "_participants", "_ended_timestamp")
+
     def __init__(self, *, data: MessageCallPayload, state: ConnectionState) -> None:
         self._state: ConnectionState = state
         self.data: MessageCallPayload = data
