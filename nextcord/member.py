@@ -8,7 +8,7 @@ import datetime
 import itertools
 import sys
 from operator import attrgetter
-from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 from . import abc, utils
 from .activity import ActivityTypes, create_activity
@@ -643,7 +643,6 @@ class Member(abc.Messageable, _UserTag):
         self,
         *,
         delete_message_seconds: Optional[int] = None,
-        delete_message_days: Optional[Literal[0, 1, 2, 3, 4, 5, 6, 7]] = None,
         reason: Optional[str] = None,
     ) -> None:
         """|coro|
@@ -654,7 +653,6 @@ class Member(abc.Messageable, _UserTag):
             self,
             reason=reason,
             delete_message_seconds=delete_message_seconds,
-            delete_message_days=delete_message_days,
         )
 
     async def unban(self, *, reason: Optional[str] = None) -> None:
