@@ -2037,7 +2037,6 @@ class ForumLayoutType(IntEnum):
     """Display posts as a collection of posts with images, this is more image focused."""
 
 
-
 class InviteType(IntEnum):
     """Represents the type of an invite.
 
@@ -2050,15 +2049,16 @@ class InviteType(IntEnum):
     """The invite is for a group DM."""
     friend = 2
     """The invite is for a Discord user."""
+
+
 class PollLayoutType(IntEnum):
     """The layout type of the poll.
-    
+
     .. versionadded:: 3.0
     """
 
     default = 1
     """The default poll layout type."""
-
 
 
 T = TypeVar("T")
