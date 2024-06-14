@@ -22,8 +22,6 @@ from typing import (
     overload,
 )
 
-from nextcord.types.message import MessageCall
-
 from . import utils
 from .components import _component_factory
 from .embeds import Embed
