@@ -81,6 +81,7 @@ if TYPE_CHECKING:
     )
     from .types.message import (
         AllowedMentions as AllowedMentionsPayload,
+        MessageCall as MessageCallPayload,
         MessageReference as MessageReferencePayload,
     )
     from .ui.view import View
@@ -1475,6 +1476,10 @@ class Messageable:
         stickers_payload: Optional[List[int]] = None
         reference_payload: Optional[MessageReferencePayload] = None
         allowed_mentions_payload: Optional[AllowedMentionsPayload] = None
+        call_payload: Optional[MessageCallPayload] = None
+
+        if call is not None:
+            call_payload = call.data
 
         if embed is not None and embeds is not None:
             raise InvalidArgument("Cannot pass both embed and embeds parameter to send()")
@@ -1536,7 +1541,7 @@ class Messageable:
                     stickers=stickers_payload,
                     components=components,
                     flags=flag_value,
-                    call=call,
+                    call=call_payload,
                 )
             finally:
                 file.close()
@@ -1559,7 +1564,7 @@ class Messageable:
                     stickers=stickers_payload,
                     components=components,
                     flags=flag_value,
-                    call=call,
+                    call=call_payload,
                 )
             finally:
                 for f in files:
@@ -1577,7 +1582,7 @@ class Messageable:
                 stickers=stickers_payload,
                 components=components,
                 flags=flag_value,
-                call=call,
+                call=call_payload,
             )
 
         ret = state.create_message(channel=channel, data=data)
