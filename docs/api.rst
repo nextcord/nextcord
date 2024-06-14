@@ -2415,6 +2415,12 @@ MessageInteraction
 .. autoclass:: MessageInteraction()
     :members:
 
+MessageCall
+~~~~~~~~~~~
+
+.. autoclass:: MessageCall()
+    :members:
+
 Member
 ~~~~~~
 

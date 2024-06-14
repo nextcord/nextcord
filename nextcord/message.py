@@ -640,8 +640,6 @@ class MessageCall:
     ----------
     data: Dict[:class:`str`, Any]
         The raw data from the call.
-    participants: List[:class:`~Snowflake`]
-        An array of snowflake users that participated in the call.
     """
 
     __slots__ = ("_state", "data", "_participants", "_ended_timestamp")
