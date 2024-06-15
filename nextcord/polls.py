@@ -44,8 +44,7 @@ def resolve_emoji(emoji: Union[Emoji, PartialEmoji]) -> PartialEmojiPayload:
 
 
 class PollMedia:
-    """
-    A common object that backs both the question and answer.
+    """A common object that backs both the question and answer.
 
     .. versionadded:: 3.0
 
@@ -253,8 +252,8 @@ class PollResults:
 
 
 class PollCreateRequest:
-    """
-    A poll create request.
+    """A poll create request.
+
     You must use this to create a poll.
 
     .. versionadded:: 3.0
@@ -320,6 +319,7 @@ class PollCreateRequest:
 
     def add_answer(self, text: str, emoji: Optional[EmojiInputType] = None) -> Self:
         """Add a choice i.e. answer to the poll.
+
         This function returns the class instance to allow for fluent-style chaining.
 
         Parameters
