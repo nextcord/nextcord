@@ -32,6 +32,15 @@ if TYPE_CHECKING:
     # https://github.com/nextcord/nextcord/blob/master/nextcord/message.py#L68
     EmojiInputType = Union[Emoji, PartialEmoji, str]
 
+__all__ = (
+    "PollResults",
+    "PollMedia",
+    "Poll",
+    "PollAnswerCount",
+    "PollCreateRequest",
+    "PollAnswer",
+)
+
 
 def resolve_emoji(emoji: Union[Emoji, PartialEmoji]) -> PartialEmojiPayload:
     if isinstance(emoji, Emoji):
