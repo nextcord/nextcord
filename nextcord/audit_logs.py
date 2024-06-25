@@ -548,7 +548,7 @@ class AuditLogEntry(Hashable):
 
     @utils.cached_property
     def target(self) -> AuditTarget:
-        """:class:`Any`: The target that got changed.
+        """Any: The target that got changed.
         The exact type of this depends on the action being done.
         """
         try:
