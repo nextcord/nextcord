@@ -2072,9 +2072,9 @@ class OnboardingMode(IntEnum):
     """
 
     default = 0
-    """Only Default Channels are needed."""
+    """Only "Default Channels" are needed."""
     advanced = 1
-    """Default Channels & Questions are needed."""
+    """"Default Channels" & "Questions" are needed."""
 
 
 T = TypeVar("T")
