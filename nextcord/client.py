@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import logging
-import signal
 import sys
 import traceback
 from typing import (
@@ -828,7 +827,7 @@ class Client:
         await self.login(token)
         await self.connect(reconnect=reconnect)
 
-    def run(self, *args: Any, **kwargs: Any) -> None:
+    def run(self, *args, **kwargs) -> None:
         """A blocking call that abstracts away the event loop
         initialisation from you.
 
@@ -852,43 +851,20 @@ class Client:
             is blocking. That means that registration of events or anything being
             called after this function call will not execute until it returns.
         """
-        loop = self.loop
-
+        loop = self.loop  # TODO: Make this asyncio.new_event_loop() if self.loop is removed.
         try:
-            loop.add_signal_handler(signal.SIGINT, lambda: loop.stop())
-            loop.add_signal_handler(signal.SIGTERM, lambda: loop.stop())
-        except NotImplementedError:
-            pass
-
-        async def runner() -> None:
-            try:
-                await self.start(*args, **kwargs)
-            finally:
-                if not self.is_closed():
-                    await self.close()
-
-        def stop_loop_on_completion(_future) -> None:
-            loop.stop()
-
-        future = asyncio.ensure_future(runner(), loop=loop)
-        future.add_done_callback(stop_loop_on_completion)
-        try:
-            loop.run_forever()
+            loop.run_until_complete(self.start(*args, **kwargs))
         except KeyboardInterrupt:
-            _log.info("Received signal to terminate bot and event loop.")
+            _log.info("Received keyboard interrupt, closing.")
         finally:
-            future.remove_done_callback(stop_loop_on_completion)
-            _log.info("Cleaning up tasks.")
+            if not self.is_closed():
+                loop.run_until_complete(self.close())
+
+            # This will cancel all tasks in the loop, including any background loops or currently-awaiting listeners. If
+            #  the loop provided is being used by other tasks, this WILL cancel them. However, this IS the blocking
+            #  .run() function that starts the event loop and runs the bot for you. If people don't want other tasks to
+            #  be cancelled, then they can manually run start() and close().
             _cleanup_loop(loop)
-
-        if not future.cancelled():
-            try:
-                return future.result()
-            except KeyboardInterrupt:
-                # I am unsure why this gets raised here but suppress it anyway
-                return None
-
-        return None
 
     # properties
 
