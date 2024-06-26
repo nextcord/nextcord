@@ -371,6 +371,14 @@ class SpeakingState(IntEnum):
         return self.name
 
 
+class AnimationType(IntEnum):
+    premium = 0
+    basic = 1
+
+    def __str__(self) -> str:
+        return self.name
+
+
 class VerificationLevel(IntEnum):
     """Specifies a :class:`Guild`\'s verification level, which is the criteria in
     which a member must meet before being able to send messages to the guild.
