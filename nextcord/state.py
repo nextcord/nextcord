@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import copy
-import copy
 import inspect
 import itertools
 import logging
@@ -65,8 +64,10 @@ if TYPE_CHECKING:
     from .gateway import DiscordWebSocket
     from .guild import GuildChannel, VocalGuildChannel
     from .http import HTTPClient
-    from .types.activity import Activity as ActivityPayload
-    from .types.activity import PartialPresenceUpdate as PartialPresencePayload
+    from .types.activity import (
+        Activity as ActivityPayload,
+        PartialPresenceUpdate as PartialPresencePayload,
+    )
     from .types.channel import DMChannel as DMChannelPayload
     from .types.emoji import Emoji as EmojiPayload
     from .types.guild import Guild as GuildPayload
@@ -1476,7 +1477,9 @@ class ConnectionState:
 
         # TODO: Look at this and figure out if this is actually good?
         old_presence_data = await self._bot.cache.get_presence(member_id, guild_id)
-        old_member = await self._bot.typesheet.create_member(old_member_data, old_presence_data, guild_id)
+        old_member = await self._bot.typesheet.create_member(
+            old_member_data, old_presence_data, guild_id
+        )
         new_member = await self._bot.typesheet.create_member(new_member_data, data, guild_id)
 
         # user_update[0] is the old unmodified user object.
@@ -2044,6 +2047,8 @@ class ConnectionState:
                 member = member_dict.get(member_id)
                 if member is not None:
                     member._presence_update(presence, user)
+
+                await self._bot.cache.add_presence(presence)
 
         complete = data.get("chunk_index", 0) + 1 == data.get("chunk_count")
         await self.process_chunk_requests(guild_id, data.get("nonce"), members, complete)

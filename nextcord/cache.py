@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-from typing import Dict, Optional, Protocol, Tuple, TYPE_CHECKING
+import logging
 from collections.abc import Sequence
-
+from typing import TYPE_CHECKING, Dict, Optional, Protocol, Tuple
 
 if TYPE_CHECKING:
+    from .types.activity import PartialPresenceUpdate as PresencePayload
     from .types.guild import Guild as GuildPayload
     from .types.member import Member as MemberPayload
     from .types.message import Message as MessagePayload
-    from .types.activity import PartialPresenceUpdate as PresencePayload
     from .types.user import User as UserPayload
 
 __all__ = (
@@ -17,9 +17,12 @@ __all__ = (
     "NullCache",
 )
 
+_log = logging.getLogger(__name__)
+
 
 class BaseCache(Protocol):
     """A non-functional, NotImplemented cache class that any Nextcord and user made cache should subclass."""
+
     def __init__(self, **kwargs) -> None:
         pass
 
@@ -110,17 +113,26 @@ class MemoryCache(BaseCache):
 
     async def add_guild(self, guild_data: GuildPayload) -> None:
         self._guilds[int(guild_data["id"])] = guild_data
+        _log.debug("Added guild data with ID %s", guild_data["id"])
 
     async def get_guild(self, guild_id: int) -> Optional[GuildPayload]:
+        _log.debug("Attempting to retrieve guild data with ID %s", guild_id)
         return self._guilds.get(guild_id, None)
 
     async def get_guild_ids(self) -> Sequence[int]:
+        _log.debug("Getting all stored guild IDs.")
         return tuple(self._guilds.keys())
 
     async def add_member(self, member_data: MemberPayload, guild_id: int) -> None:
+        _log.debug(
+            "Adding member data with ID %s and guild ID %s.", member_data["user"]["id"], guild_id
+        )
         self._members[(int(member_data["user"]["id"]), guild_id)] = member_data
 
     async def remove_member(self, member_id: int, guild_id: int) -> bool:
+        _log.debug(
+            "Attempting to remove member data with ID %s and guild ID %s.", member_id, guild_id
+        )
         return self._members.pop((member_id, guild_id), None) is not None
 
     async def get_member(self, member_id: int, guild_id: int) -> Optional[MemberPayload]:
@@ -142,6 +154,11 @@ class MemoryCache(BaseCache):
         return tuple(self._messages.keys())
 
     async def add_presence(self, payload: PresencePayload) -> None:
+        _log.debug(
+            "Adding presence data for user with ID %s and guild ID %s.",
+            payload["user"]["id"],
+            payload["guild_id"],
+        )
         self._presences[(int(payload["user"]["id"]), int(payload["guild_id"]))] = payload
 
     async def remove_presence(self, member_id: int, guild_id: int) -> bool:
