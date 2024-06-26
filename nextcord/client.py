@@ -827,7 +827,7 @@ class Client:
         await self.login(token)
         await self.connect(reconnect=reconnect)
 
-    def run(self, *args, **kwargs) -> None:
+    def run(self, token: str, *, reconnect: bool = True) -> None:
         """A blocking call that abstracts away the event loop
         initialisation from you.
 
@@ -853,7 +853,7 @@ class Client:
         """
         loop = self.loop  # TODO: Make this asyncio.new_event_loop() if self.loop is removed.
         try:
-            loop.run_until_complete(self.start(*args, **kwargs))
+            loop.run_until_complete(self.start(token, reconnect=reconnect))
         except KeyboardInterrupt:
             _log.info("Received keyboard interrupt, closing.")
         finally:
