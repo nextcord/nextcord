@@ -2055,7 +2055,7 @@ class InviteType(IntEnum):
 
 class OnboardingPromptType(IntEnum):
     """Represents the type of :class:`OnboardingPrompt`.
-    
+
     .. versionadded:: 3.0
     """
 
