@@ -2039,9 +2039,23 @@ class ForumLayoutType(IntEnum):
     """Display posts as a collection of posts with images, this is more image focused."""
 
 
+class InviteType(IntEnum):
+    """Represents the type of an invite.
+
+    .. versionadded:: 3.0
+    """
+
+    guild = 0
+    """The invite is for a guild."""
+    group_dm = 1
+    """The invite is for a group DM."""
+    friend = 2
+    """The invite is for a Discord user."""
+
+
 class OnboardingPromptType(IntEnum):
     """Represents the type of :class:`OnboardingPrompt`.
-
+    
     .. versionadded:: 3.0
     """
 
