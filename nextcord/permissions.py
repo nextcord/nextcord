@@ -198,7 +198,7 @@ class Permissions(BaseFlags):
     def voice(cls) -> Self:
         """A factory method that creates a :class:`Permissions` with all
         "Voice" permissions from the official Discord UI set to ``True``."""
-        return cls(0b000000000000000100100100100000000000001111110000000000110000_0000)
+        return cls(0b0000000000000001001001001000000000000011111100000000001100000000)
 
     @classmethod
     def stage(cls) -> Self:
