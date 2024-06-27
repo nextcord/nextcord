@@ -4746,14 +4746,5 @@ class HTTPClient:
         auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[List[role_connections.ApplicationRoleConnectionMetadata]]:
-        r = Route(
-            "PUT",
-            "/channels/{channel_id}/voice-status",
-            channel_id=channel_id
-        )
-        return self.request(
-            r,
-            auth=auth,
-            retry_request=retry_request,
-            json={"status": status}
-        )
+        r = Route("PUT", "/channels/{channel_id}/voice-status", channel_id=channel_id)
+        return self.request(r, auth=auth, retry_request=retry_request, json={"status": status})

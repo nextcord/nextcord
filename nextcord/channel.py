@@ -1514,7 +1514,7 @@ class VocalGuildChannel(abc.Connectable, abc.GuildChannel, Hashable):
         "rtc_region",
         "video_quality_mode",
         "flags",
-        "status"
+        "status",
     )
 
     def __init__(
@@ -1755,7 +1755,7 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
         video_quality_mode: VideoQualityMode = ...,
         flags: ChannelFlags = ...,
         reason: Optional[str] = ...,
-        status: Optional[str] = ...
+        status: Optional[str] = ...,
     ) -> Optional[VoiceChannel]:
         ...
 
