@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, AsyncIterator, Dict, List, Optional, Tuple, Union
 
 from .abc import Snowflake
 from .asset import Asset
 from .enums import ScheduledEventPrivacyLevel
-from .iterators import ScheduledEventUserIterator
+from .iterators import scheduled_event_user_iterator
 from .mixins import Hashable
 from .utils import MISSING, obj_to_base64_data, parse_time
 
@@ -425,8 +425,10 @@ class ScheduledEvent(Hashable):
         with_member: bool = False,
         before: Optional[Snowflake] = None,
         after: Optional[Snowflake] = None,
-    ) -> ScheduledEventUserIterator:
-        """Fetch the users that are interested, returns an asyc iterator.
+    ) -> AsyncIterator[ScheduledEventUser]:
+        """|asynciter|
+
+        Fetch the users that are interested, returns an async iterator.
 
         Parameters
         ----------
@@ -444,6 +446,6 @@ class ScheduledEvent(Hashable):
         :class:`ScheduledEventUser`
             A full event user object
         """
-        return ScheduledEventUserIterator(
-            self.guild, self, limit=limit, with_member=with_member, before=before, after=after
+        return scheduled_event_user_iterator(
+            self.guild, self, limit=limit, before=before, after=after
         )
