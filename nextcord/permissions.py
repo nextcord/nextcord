@@ -197,7 +197,11 @@ class Permissions(BaseFlags):
     @classmethod
     def voice(cls) -> Self:
         """A factory method that creates a :class:`Permissions` with all
-        "Voice" permissions from the official Discord UI set to ``True``."""
+        "Voice" permissions from the official Discord UI set to ``True``.
+
+        .. versionchanged:: 3.0
+            Added :attr:`set_voice_channel_status` permission.
+        """
         return cls(0b0000000000000001001001001000000000000011111100000000001100000000)
 
     @classmethod

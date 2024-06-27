@@ -1690,7 +1690,9 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
         data: VoiceChannelPayload,
     ) -> None:
         super().__init__(state=state, guild=guild, data=data)
-        self.status: Optional[str] = None
+
+        # When the status is not set, it can sometimes be ''. However, None is more accurate.
+        self.status: Optional[str] = data.get("status") or None
 
     def __repr__(self) -> str:
         attrs = [
@@ -1710,8 +1712,6 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
     def _update(self, guild: Guild, data: VoiceChannelPayload) -> None:
         VocalGuildChannel._update(self, guild, data)
         self.last_message_id: Optional[int] = utils.get_as_snowflake(data, "last_message_id")
-
-        # When the status is not set, it can sometimes be ''. However, None is more accurate.
         self.status = data.get("status") or None
 
     async def _get_channel(self):

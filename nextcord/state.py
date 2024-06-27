@@ -2387,6 +2387,7 @@ class ConnectionState:
             data.get("status", None) or None
         )  # Again, sometimes we get an empty string '', it should be None.
         self.dispatch("voice_channel_status_update", channel, old_status, channel.status)
+        return None  # ruff makes me do this, idk why.
 
 
 class AutoShardedConnectionState(ConnectionState):
