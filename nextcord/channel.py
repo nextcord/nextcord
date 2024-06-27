@@ -1810,11 +1810,6 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
 
             .. versionadded:: 2.0
 
-        status: Optional[:class:`str`]
-            The new voice channel status.
-
-            .. versionadded:: 3.0
-
         Raises
         ------
         InvalidArgument
