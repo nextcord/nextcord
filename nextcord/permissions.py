@@ -155,7 +155,7 @@ class Permissions(BaseFlags):
            :attr:`use_external_stickers`, :attr:`send_messages_in_threads` and
            :attr:`request_to_speak` permissions.
         """
-        return cls(0b00000011111100000000001100000000)
+        return cls(0b111110110110011111101111111111101010001)
 
     @classmethod
     def general(cls) -> Self:

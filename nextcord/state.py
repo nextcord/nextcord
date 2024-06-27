@@ -2389,6 +2389,10 @@ class ConnectionState:
         self.dispatch("voice_channel_status_update", channel, old_status, channel.status)
         return None  # ruff makes me do this, idk why.
 
+    def parse_voice_channel_status_delete(self, data) -> None:
+        # I am not receiving this event? Not sure why, maybe they haven't added it yet.
+        raise NotImplementedError
+
 
 class AutoShardedConnectionState(ConnectionState):
     def __init__(self, *args: Any, **kwargs: Any) -> None:

@@ -1690,7 +1690,6 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
         data: VoiceChannelPayload,
     ) -> None:
         super().__init__(state=state, guild=guild, data=data)
-
         # When the status is not set, it can sometimes be ''. However, None is more accurate.
         self.status: Optional[str] = data.get("status") or None
 
