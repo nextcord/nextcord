@@ -4124,6 +4124,7 @@ class HTTPClient:
         *,
         type: InteractionResponseType,
         data: Optional[interactions.InteractionApplicationCommandCallbackData] = None,
+        files: Optional[Sequence[File]] = None
     ) -> Response[None]:
         r = Route(
             "POST",
@@ -4141,6 +4142,7 @@ class HTTPClient:
         return self.request(
             r,
             json=payload,
+            files=files
         )
 
     def get_original_interaction_response(

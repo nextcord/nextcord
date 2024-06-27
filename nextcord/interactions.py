@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Any, Dict, Generic, List, Optional, Set, Tuple
 from . import utils
 from .channel import ChannelType, PartialMessageable
 from .embeds import Embed
-from .enums import InteractionResponseType, InteractionType, try_enum
+from .enums import InteractionResponseType, InteractionType, try_enum, Locale
 from .errors import ClientException, HTTPException, InteractionResponded, InvalidArgument
 from .file import File
 from .flags import MessageFlags
@@ -95,7 +95,7 @@ class InteractionAttached(dict):
         return f"<InteractionAttached {super().__repr__()}>"
 
 
-class Interaction(Hashable, Generic[ClientT]):
+class Interaction(Object, Hashable, Generic[ClientT]):
     """Represents a Discord interaction.
 
     An interaction happens when a user does an action that needs to
@@ -131,7 +131,7 @@ class Interaction(Hashable, Generic[ClientT]):
     channel_id: Optional[:class:`int`]
         The channel ID the interaction was sent from.
     locale: Optional[:class:`str`]
-        The users locale.
+        The users' locale.
     guild_locale: Optional[:class:`str`]
         The guilds preferred locale, if invoked in a guild.
     application_id: :class:`int`
@@ -151,98 +151,177 @@ class Interaction(Hashable, Generic[ClientT]):
         The application command that handled the interaction.
     """
 
-    __slots__: Tuple[str, ...] = (
-        "id",
-        "type",
-        "guild_id",
-        "channel_id",
-        "data",
-        "application_id",
-        "message",
-        "user",
-        "locale",
-        "guild_locale",
-        "token",
-        "version",
-        "application_command",
-        "attached",
-        "_background_tasks",
-        "_permissions",
-        "_app_permissions",
-        "_state",
-        "_session",
-        "_original_message",
-        "_cs_response",
-        "_cs_followup",
-        "_cs_channel",
-    )
+    # __slots__: Tuple[str, ...] = (
+    #     "id",
+    #     "type",
+    #     "guild_id",
+    #     "channel_id",
+    #     "data",
+    #     "application_id",
+    #     "message",
+    #     "user",
+    #     "locale",
+    #     "guild_locale",
+    #     "token",
+    #     "version",
+    #     "application_command",
+    #     "attached",
+    #     "_background_tasks",
+    #     "_permissions",
+    #     "_app_permissions",
+    #     "_state",
+    #     "_session",
+    #     "_original_message",
+    #     "_cs_response",
+    #     "_cs_followup",
+    #     "_cs_channel",
+    # )
 
-    def __init__(self, *, data: InteractionPayload, state: ConnectionState) -> None:
-        self._state: ConnectionState = state
-        self._session: ClientSession = state.http._HTTPClient__session  # type: ignore
+    # placeholder text
+    _background_tasks: set[asyncio.Task]
+    _bot: Client
+    _original_message: InteractionMessage | None
+    _session: ClientSession
+    _state: ConnectionState
+    application_command: SlashApplicationSubcommand | BaseApplicationCommand | None
+    attached: InteractionAttached
+
+    # Payload-related fields
+    _app_permissions: int
+    application_id: int
+    channel_id: int | None
+    data: dict | None
+    guild_id: int
+    guild_locale: Locale | None
+    locale: Locale | None
+    message: Message
+    token: str
+    type: InteractionType
+    user: Member | User | None
+    version: int
+
+    # def __init__(self, *, data: InteractionPayload, state: ConnectionState) -> None:
+    #     self._state: ConnectionState = state
+    #     self._session: ClientSession = state.http._HTTPClient__session  # type: ignore
+    #     # TODO: this is so janky, accessing a hidden double attribute
+    #     self._original_message: Optional[InteractionMessage] = None
+    #     self.attached = InteractionAttached()
+    #     self.application_command: Optional[
+    #         Union[SlashApplicationSubcommand, BaseApplicationCommand]
+    #     ] = None
+    #     self._background_tasks: Set[asyncio.Task] = set()
+    #     self._from_data(data)
+
+    # def _from_data(self, data: InteractionPayload) -> None:
+    #     self.id: int = int(data["id"])
+    #     self.type: InteractionType = try_enum(InteractionType, data["type"])
+    #     self.data: Optional[InteractionData] = data.get("data")
+    #     self.token: str = data["token"]
+    #     self.version: int = data["version"]
+    #     self.channel_id: Optional[int] = utils.get_as_snowflake(data, "channel_id")
+    #     self.guild_id: Optional[int] = utils.get_as_snowflake(data, "guild_id")
+    #     self.application_id: int = int(data["application_id"])
+    #     self.locale: Optional[str] = data.get("locale")
+    #     self.guild_locale: Optional[str] = data.get("guild_locale")
+    #
+    #     self.message: Optional[Message]
+    #     try:
+    #         message = data["message"]
+    #         self.message = self._state._get_message(int(message["id"])) or Message(
+    #             state=self._state, channel=self.channel, data=message  # type: ignore
+    #         )
+    #     except KeyError:
+    #         self.message = None
+    #
+    #     self.user: Optional[Union[User, Member]] = None
+    #     self._app_permissions: int = int(data.get("app_permissions", 0))
+    #     self._permissions: int = 0
+    #
+    #     # TODO: there's a potential data loss here
+    #     if self.guild_id:
+    #         guild = self.guild or Object(id=self.guild_id)
+    #         try:
+    #             member = data["member"]
+    #         except KeyError:
+    #             pass
+    #         else:
+    #             cached_member = self.guild and self.guild.get_member(int(member["user"]["id"]))  # type: ignore # user key should be present here
+    #             self.user = cached_member or Member(state=self._state, guild=guild, data=member)  # type: ignore # user key should be present here
+    #             self._permissions = int(member.get("permissions", 0))
+    #     else:
+    #         try:
+    #             user = data["user"]
+    #             self.user = self._state.get_user(int(user["id"])) or User(
+    #                 state=self._state, data=user
+    #             )
+    #         except KeyError:
+    #             pass
+
+    @classmethod
+    async def from_interaction_payload(cls, payload: InteractionPayload, *, bot: Client):
+        ret = cls(int(payload["id"]))
+        ret._bot = bot
+        ret._state = bot._connection  # TODO: Modify references to this so it can be removed.
+        ret._session = bot.http._HTTPClient__session  # type: ignore
         # TODO: this is so janky, accessing a hidden double attribute
-        self._original_message: Optional[InteractionMessage] = None
-        self.attached = InteractionAttached()
-        self.application_command: Optional[
-            Union[SlashApplicationSubcommand, BaseApplicationCommand]
-        ] = None
-        self._background_tasks: Set[asyncio.Task] = set()
-        self._from_data(data)
+        # TODO: Make the webhook implementation rely on HTTPClient so this can be removed.
+        ret._original_message = None
 
-    def _from_data(self, data: InteractionPayload) -> None:
-        self.id: int = int(data["id"])
-        self.type: InteractionType = try_enum(InteractionType, data["type"])
-        self.data: Optional[InteractionData] = data.get("data")
-        self.token: str = data["token"]
-        self.version: int = data["version"]
-        self.channel_id: Optional[int] = utils.get_as_snowflake(data, "channel_id")
-        self.guild_id: Optional[int] = utils.get_as_snowflake(data, "guild_id")
-        self.application_id: int = int(data["application_id"])
-        self.locale: Optional[str] = data.get("locale")
-        self.guild_locale: Optional[str] = data.get("guild_locale")
+        ret.attached = InteractionAttached()
+        ret.application_command = None
+        ret._background_tasks = set()
 
-        self.message: Optional[Message]
-        try:
-            message = data["message"]
-            self.message = self._state._get_message(int(message["id"])) or Message(
-                state=self._state, channel=self.channel, data=message  # type: ignore
+        ret.locale = try_enum(Locale, locale_val) if (locale_val := payload.get("locale")) else None
+        ret.guild_locale = (
+            try_enum(Locale, guild_locale)
+            if (guild_locale := payload.get("guild_locale"))
+            else None
+        )
+        ret.type = try_enum(InteractionType, payload["type"])
+        ret.data = payload.get("data")
+        ret.token = payload["token"]
+        ret.version = payload["version"]
+        ret.channel_id = int(channel_id) if (channel_id := payload.get("channel_id")) else None
+        ret.guild_id = int(guild_id) if (guild_id := payload.get("guild_id")) else None
+        ret.application_id = int(payload["application_id"])
+
+        ret._app_permissions = int(payload.get("app_permissions", 0))
+
+        ret.message = None
+        ret._permissions = 0
+        if message_payload := payload.get("message"):
+            ret.message = (
+                await ret._bot.get_message(message_id=int(message_payload["id"]))
+            ) or await bot.typesheet.create_message(message_payload)
+
+        ret.user = None
+        if ret.guild_id is not None and (member_payload := payload.get("member")):
+            member_id = int(member_payload["user"]["id"])
+            ret.user = (
+                await ret._bot.get_member(member_id, ret.guild_id)
+            ) or ret._bot.typesheet.create_member(member_payload, None, ret.guild_id)
+            ret._permissions = int(member_payload.get("permissions", 0))
+        elif user_payload := payload.get("user"):
+            ret.user = (await ret._bot.get_user(int(user_payload["id"]))) or (
+                await ret._bot.typesheet.create_user(user_payload)
             )
-        except KeyError:
-            self.message = None
 
-        self.user: Optional[Union[User, Member]] = None
-        self._app_permissions: int = int(data.get("app_permissions", 0))
-        self._permissions: int = 0
-
-        # TODO: there's a potential data loss here
-        if self.guild_id:
-            guild = self.guild or Object(id=self.guild_id)
-            try:
-                member = data["member"]
-            except KeyError:
-                pass
-            else:
-                cached_member = self.guild and self.guild.get_member(int(member["user"]["id"]))  # type: ignore # user key should be present here
-                self.user = cached_member or Member(state=self._state, guild=guild, data=member)  # type: ignore # user key should be present here
-                self._permissions = int(member.get("permissions", 0))
-        else:
-            try:
-                user = data["user"]
-                self.user = self._state.get_user(int(user["id"])) or User(
-                    state=self._state, data=user
-                )
-            except KeyError:
-                pass
+        return ret
 
     @property
     def client(self) -> ClientT:
         """:class:`Client`: The client that handled the interaction."""
-        return self._state._get_client()  # type: ignore
+        # return self._state._get_client()  # type: ignore
+        return self._bot
 
-    @property
-    def guild(self) -> Optional[Guild]:
-        """Optional[:class:`Guild`]: The guild the interaction was sent from."""
-        return self._state and self._state._get_guild(self.guild_id)
+    # @property
+    # def guild(self) -> Optional[Guild]:
+    #     """Optional[:class:`Guild`]: The guild the interaction was sent from."""
+    #     return self._state and self._state._get_guild(self.guild_id)
+
+    async def get_guild(self) -> Guild | None:
+        """:class:`Guild` | `None`: Gets the guild the interaction was sent from."""
+        return self.guild_id and await self._bot.get_guild(self.guild_id)
 
     @property
     def created_at(self) -> datetime:
