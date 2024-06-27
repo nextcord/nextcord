@@ -1514,6 +1514,7 @@ class VocalGuildChannel(abc.Connectable, abc.GuildChannel, Hashable):
         "rtc_region",
         "video_quality_mode",
         "flags",
+        "status"
     )
 
     def __init__(
@@ -1549,6 +1550,7 @@ class VocalGuildChannel(abc.Connectable, abc.GuildChannel, Hashable):
         self.user_limit: int = data.get("user_limit")
         self.flags: ChannelFlags = ChannelFlags._from_value(data.get("flags", 0))
         self.nsfw: bool = data.get("nsfw", False)
+        self.status: Optional[str] = data.get("status")
         self._fill_overwrites(data)
 
     @property
@@ -1668,7 +1670,12 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
     flags: :class:`ChannelFlags`
         Extra features of the channel.
 
-        ..versionadded:: 2.1
+        .. versionadded:: 2.1
+
+    status: Optional[:class:`str`]
+        The voice channel status.
+
+        .. versionadded:: 3.0
     """
 
     __slots__ = (
@@ -1748,6 +1755,7 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
         video_quality_mode: VideoQualityMode = ...,
         flags: ChannelFlags = ...,
         reason: Optional[str] = ...,
+        status: Optional[str] = ...
     ) -> Optional[VoiceChannel]:
         ...
 
@@ -1801,6 +1809,11 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
             The camera video quality for the voice channel's participants.
 
             .. versionadded:: 2.0
+
+        status: Optional[:class:`str`]
+            The new voice channel status.
+
+            .. versionadded:: 3.0
 
         Raises
         ------
@@ -2063,6 +2076,24 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
 
         data = await self._state.http.channel_webhooks(self.id)
         return [Webhook.from_state(d, state=self._state) for d in data]
+
+    async def set_status(self, status: Optional[str]) -> None:
+        """|coro|
+
+        Set a voice channel's status.
+
+        Requires :attr:`~.Permissions.set_voice_channel_status` permissions.
+        Additionally, the :attr:`~.Permissions.manage_channels` if the current user is not connected to the voice.
+
+        .. versionadded:: 3.0
+
+        Parameters
+        ----------
+        status: Optional[:class:`str`]
+            New voice channel status (up to 500 characters).
+            None to remove the status.
+        """
+        await self._state.http.set_voice_channel_status(self.id, status=status)
 
 
 class StageChannel(VocalGuildChannel, abc.Messageable):

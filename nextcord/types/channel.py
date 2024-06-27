@@ -84,6 +84,7 @@ class VoiceChannel(_BaseGuildChannel):
     last_message_id: NotRequired[Optional[Snowflake]]
     rtc_region: NotRequired[Optional[str]]
     video_quality_mode: NotRequired[VideoQualityMode]
+    status: NotRequired[Optional[str]]
 
 
 class CategoryChannel(_BaseGuildChannel):
