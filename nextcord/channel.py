@@ -1514,7 +1514,6 @@ class VocalGuildChannel(abc.Connectable, abc.GuildChannel, Hashable):
         "rtc_region",
         "video_quality_mode",
         "flags",
-        "status",
     )
 
     def __init__(
@@ -1550,7 +1549,6 @@ class VocalGuildChannel(abc.Connectable, abc.GuildChannel, Hashable):
         self.user_limit: int = data.get("user_limit")
         self.flags: ChannelFlags = ChannelFlags._from_value(data.get("flags", 0))
         self.nsfw: bool = data.get("nsfw", False)
-        self.status: Optional[str] = data.get("status")
         self._fill_overwrites(data)
 
     @property
@@ -1681,7 +1679,18 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
     __slots__ = (
         "last_message_id",
         "nsfw",
+        "status",
     )
+
+    def __init__(
+        self,
+        *,
+        state: ConnectionState,
+        guild: Guild,
+        data: VoiceChannelPayload,
+    ):
+        super().__init__(state=state, guild=guild, data=data)
+        self.status: Optional[str] = None
 
     def __repr__(self) -> str:
         attrs = [
@@ -1689,6 +1698,7 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
             ("name", self.name),
             ("rtc_region", self.rtc_region),
             ("position", self.position),
+            ("status", self.status),
             ("bitrate", self.bitrate),
             ("video_quality_mode", self.video_quality_mode),
             ("user_limit", self.user_limit),
@@ -1700,6 +1710,9 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
     def _update(self, guild: Guild, data: VoiceChannelPayload) -> None:
         VocalGuildChannel._update(self, guild, data)
         self.last_message_id: Optional[int] = utils.get_as_snowflake(data, "last_message_id")
+
+        # When the status is not set, it can sometimes be ''. However, None is more accurate.
+        self.status = data.get("status") or None
 
     async def _get_channel(self):
         return self
@@ -2072,10 +2085,10 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
         data = await self._state.http.channel_webhooks(self.id)
         return [Webhook.from_state(d, state=self._state) for d in data]
 
-    async def set_status(self, status: Optional[str]) -> None:
+    async def set_status(self, status: Optional[str], *, reason: Optional[str] = None) -> None:
         """|coro|
 
-        Set a voice channel's status.
+        Sets a voice channel's status.
 
         Requires :attr:`~.Permissions.set_voice_channel_status` permissions.
         Additionally, the :attr:`~.Permissions.manage_channels` if the current user is not connected to the voice.
@@ -2087,8 +2100,17 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
         status: Optional[:class:`str`]
             New voice channel status (up to 500 characters).
             None to remove the status.
+        reason: Optional[:class:`str`]
+            The reason for changing the status. Shows up in the audit logs.
+
+        Raises
+        ------
+        Forbidden
+            You do not have proper permissions to set the status.
+        HTTPException
+            Setting the status failed.
         """
-        await self._state.http.set_voice_channel_status(self.id, status=status)
+        await self._state.http.set_voice_channel_status(self.id, status=status, reason=reason)
 
 
 class StageChannel(VocalGuildChannel, abc.Messageable):
