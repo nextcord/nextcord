@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import argparse
+import importlib.metadata
 import platform
 import sys
 from pathlib import Path
 
 import aiohttp
-import pkg_resources
 
 import nextcord
 
@@ -24,9 +24,9 @@ def show_version() -> None:
         "- nextcord v{0.major}.{0.minor}.{0.micro}-{0.releaselevel}".format(version_info)
     )
     if version_info.releaselevel != "final":
-        pkg = pkg_resources.get_distribution("nextcord")
-        if pkg:
-            entries.append(f"    - nextcord pkg_resources: v{pkg.version}")
+        version = importlib.metadata.version("nextcord")
+        if version:
+            entries.append(f"    - nextcord metadata: ppv{version}")
 
     entries.append(f"- aiohttp v{aiohttp.__version__}")
     uname = platform.uname()
@@ -161,7 +161,7 @@ _base_table.update((chr(i), None) for i in range(32))
 _translation_table = str.maketrans(_base_table)
 
 
-def to_path(parser, name, *, replace_spaces: bool = False):
+def to_path(parser, name: str, *, replace_spaces: bool = False):
     if isinstance(name, Path):
         return name
 

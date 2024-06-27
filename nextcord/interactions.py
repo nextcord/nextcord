@@ -52,6 +52,7 @@ __all__ = (
 if TYPE_CHECKING:
     from aiohttp import ClientSession
 
+    from .abc import MessageableChannel
     from .application_command import BaseApplicationCommand, SlashApplicationSubcommand
     from .channel import CategoryChannel, ForumChannel, StageChannel, TextChannel, VoiceChannel
     from .client import Client
@@ -60,6 +61,7 @@ if TYPE_CHECKING:
     from .state import ConnectionState
     from .threads import Thread
     from .types.interactions import Interaction as InteractionPayload, InteractionData
+    from .types.message import Message as MessagePayload
     from .ui.modal import Modal
     from .ui.view import View
 
@@ -396,8 +398,12 @@ class Interaction(Hashable, Generic[ClientT]):
             token=self.token,
             session=self._session,
         )
-        state = _InteractionMessageState(self, self._state)
-        message = InteractionMessage(state=state, channel=channel, data=data)  # type: ignore
+        message = InteractionMessage(
+            interaction=self,
+            state=self._state,
+            channel=channel,  # type: ignore
+            data=data,
+        )
         self._original_message = message
         return message
 
@@ -488,7 +494,12 @@ class Interaction(Hashable, Generic[ClientT]):
         )
 
         # The message channel types should always match
-        message = InteractionMessage(state=self._state, channel=self.channel, data=data)  # type: ignore
+        message = InteractionMessage(
+            interaction=self,
+            state=self._state,
+            channel=self.channel,  # type: ignore
+            data=data,
+        )
         if view and not view.is_finished() and view.prevent_update:
             self._state.store_view(view, message.id)
         return message
@@ -962,8 +973,7 @@ class InteractionResponse:
         if delete_after is not None:
             await self._parent.delete_original_message(delay=delete_after)
 
-        state = _InteractionMessageState(self._parent, self._parent._state)
-        return PartialInteractionMessage(state)
+        return PartialInteractionMessage(self._parent)
 
     async def send_modal(self, modal: Modal) -> None:
         """|coro|
@@ -1130,33 +1140,9 @@ class InteractionResponse:
         return state._get_message(message_id)
 
 
-class _InteractionMessageState:
-    __slots__ = ("_parent", "_interaction")
-
-    def __init__(self, interaction: Interaction, parent: ConnectionState) -> None:
-        self._interaction: Interaction = interaction
-        self._parent: ConnectionState = parent
-
-    def _get_guild(self, guild_id):
-        return self._parent._get_guild(guild_id)
-
-    def store_user(self, data):
-        return self._parent.store_user(data)
-
-    def create_user(self, data):
-        return self._parent.create_user(data)
-
-    @property
-    def http(self):
-        return self._parent.http
-
-    def __getattr__(self, attr):
-        return getattr(self._parent, attr)
-
-
 class _InteractionMessageMixin:
     __slots__ = ()
-    _state: _InteractionMessageState
+    _interaction: Interaction
 
     async def edit(
         self,
@@ -1219,7 +1205,7 @@ class _InteractionMessageMixin:
         :class:`InteractionMessage`
             The newly edited message.
         """
-        message = await self._state._interaction.edit_original_message(
+        message = await self._interaction.edit_original_message(
             content=content,
             embeds=embeds,
             embed=embed,
@@ -1256,7 +1242,7 @@ class _InteractionMessageMixin:
             Deleting the message failed.
         """
 
-        await self._state._interaction.delete_original_message(delay=delay)
+        await self._interaction.delete_original_message(delay=delay)
 
 
 class PartialInteractionMessage(_InteractionMessageMixin):
@@ -1295,8 +1281,8 @@ class PartialInteractionMessage(_InteractionMessageMixin):
         :class:`Interaction` that it is associated with but not that of the full :class:`InteractionMessage`.
     """
 
-    def __init__(self, state: _InteractionMessageState) -> None:
-        self._state = state
+    def __init__(self, interaction: Interaction) -> None:
+        self._interaction: Interaction = interaction
 
     async def fetch(self) -> InteractionMessage:
         """|coro|
@@ -1317,7 +1303,7 @@ class PartialInteractionMessage(_InteractionMessageMixin):
         InteractionMessage
             The original interaction response message.
         """
-        return await self._state._interaction.original_message()
+        return await self._interaction.original_message()
 
     @property
     def author(self) -> Optional[Union[Member, ClientUser]]:
@@ -1326,7 +1312,7 @@ class PartialInteractionMessage(_InteractionMessageMixin):
         If the interaction was in a guild, this is a :class:`Member` representing the client.
         Otherwise, this is a :class:`ClientUser`.
         """
-        return self.guild.me if self.guild else self._state._interaction.client.user
+        return self.guild.me if self.guild else self._interaction.client.user
 
     @property
     def channel(self) -> Optional[InteractionChannel]:
@@ -1335,29 +1321,28 @@ class PartialInteractionMessage(_InteractionMessageMixin):
         Note that due to a Discord limitation, DM channels are not resolved since there is
         no data to complete them. These are :class:`PartialMessageable` instead.
         """
-        return self._state._interaction.channel
+        return self._interaction.channel
 
     @property
     def guild(self) -> Optional[Guild]:
         """Optional[:class:`Guild`]: The guild the interaction was sent from."""
-        return self._state._interaction.guild
+        return self._interaction.guild
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} author={self.author!r} channel={self.channel!r} guild={self.guild!r}>"
 
     def __eq__(self, other: object) -> bool:
         return (
-            isinstance(other, PartialInteractionMessage)
-            and self._state._interaction == other._state._interaction
+            isinstance(other, PartialInteractionMessage) and self._interaction == other._interaction
         )
 
     def __ne__(self, other: object) -> bool:
         if isinstance(other, PartialInteractionMessage):
-            return self._state._interaction != other._state._interaction
+            return self._interaction != other._interaction
         return True
 
     def __hash__(self) -> int:
-        return hash(self._state._interaction)
+        return hash(self._interaction)
 
 
 class InteractionMessage(_InteractionMessageMixin, Message):
@@ -1371,3 +1356,14 @@ class InteractionMessage(_InteractionMessageMixin, Message):
 
     .. versionadded:: 2.0
     """
+
+    def __init__(
+        self,
+        *,
+        interaction: Interaction,
+        state: ConnectionState,
+        channel: MessageableChannel,
+        data: MessagePayload,
+    ) -> None:
+        super().__init__(state=state, channel=channel, data=data)
+        self._interaction: Interaction = interaction
