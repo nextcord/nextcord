@@ -4749,9 +4749,5 @@ class HTTPClient:
     ) -> Response[None]:
         r = Route("PUT", "/channels/{channel_id}/voice-status", channel_id=channel_id)
         return self.request(
-            r,
-            json={"status": status},
-            reason=reason,
-            auth=auth,
-            retry_request=retry_request
+            r, json={"status": status}, reason=reason, auth=auth, retry_request=retry_request
         )

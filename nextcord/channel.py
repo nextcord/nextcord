@@ -1688,7 +1688,7 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
         state: ConnectionState,
         guild: Guild,
         data: VoiceChannelPayload,
-    ):
+    ) -> None:
         super().__init__(state=state, guild=guild, data=data)
         self.status: Optional[str] = None
 
