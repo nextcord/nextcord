@@ -192,7 +192,7 @@ class Permissions(BaseFlags):
            Added :attr:`create_public_threads`, :attr:`create_private_threads`, :attr:`manage_threads`,
            :attr:`send_messages_in_threads` and :attr:`use_external_stickers` permissions.
         """
-        return cls(0b111110010000000000001111111100001000000)
+        return cls(0b100000000111110010000000000001111111100001000000)
 
     @classmethod
     def voice(cls) -> Self:
