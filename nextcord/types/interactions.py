@@ -198,7 +198,7 @@ class ModalSubmitInteractionData(TypedDict):
 InteractionData = Union[
     ApplicationCommandInteractionData, ComponentInteractionData, ModalSubmitInteractionData
 ]
-AuthorizingIntegrationOwners = Dict[str, Union[str]]
+AuthorizingIntegrationOwners = Dict[str, str]
 
 
 class Interaction(TypedDict):

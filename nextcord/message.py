@@ -705,7 +705,7 @@ class MessageInteractionMetadata(Hashable):
         self.type: int = data["type"]
 
         # No member data is provided, retrieve from cache if possible
-        self.user = None if guild is None else guild.get_member(self.user_id)
+        self.user = None if guild is None else guild.get_member(int(data["user"]["id"]))
         if self.user is None:
             self.user = self._state.create_user(data=data["user"])
 
