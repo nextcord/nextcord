@@ -658,8 +658,6 @@ class MessageInteractionMetadata(Hashable):
         The interaction's ID.
     type: :class:`InteractionType`
         The interaction type.
-    user_id: :class:`abc.Snowflake`
-        The ID of the user who invoked the interaction.
     user: Union[:class:`User`, :class:`Member`]
         The :class:`User` who invoked the interaction or :class:`Member` if the interaction
         occurred in a guild and that member is cached.
@@ -685,7 +683,6 @@ class MessageInteractionMetadata(Hashable):
         "data",
         "id",
         "type",
-        "user_id",
         "user",
         "authorizing_integration_owners",
         "name",
@@ -706,7 +703,6 @@ class MessageInteractionMetadata(Hashable):
         self.data: MessageInteractionMetadataPayload = data
         self.id: int = int(data["id"])
         self.type: int = data["type"]
-        self.user_id: int = int(data["user_id"])
 
         # No member data is provided, retrieve from cache if possible
         self.user = None if guild is None else guild.get_member(self.user_id)

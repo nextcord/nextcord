@@ -198,7 +198,7 @@ class ModalSubmitInteractionData(TypedDict):
 InteractionData = Union[
     ApplicationCommandInteractionData, ComponentInteractionData, ModalSubmitInteractionData
 ]
-AuthorizingIntegrationOwners = Dict[str, Union[str, Literal[0]]]
+AuthorizingIntegrationOwners = Dict[str, Union[str]]
 
 
 class Interaction(TypedDict):
@@ -248,7 +248,6 @@ class MessageInteraction(TypedDict):
 class MessageInteractionMetadata(TypedDict):
     id: Snowflake
     type: InteractionType
-    user_id: Snowflake
     user: User
     authorizing_integration_owners: AuthorizingIntegrationOwners
     name: NotRequired[str]
