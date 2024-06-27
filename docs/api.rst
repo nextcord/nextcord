@@ -1258,6 +1258,19 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     :param entry: The entry that was created.
     :type entry: :class:`AuditLogEntry`
 
+.. function:: on_voice_channel_status_update(channel, before, after)
+
+    Called when someone updates a :class:`VoiceChannel` status.
+
+    .. versionadded:: 3.0
+
+    :param channel: Channel on which the status was changed.
+    :type channel: :class:`VoiceChannel`
+    :param before: The old voice channel status.
+    :type before: Optional[:class:`str`]
+    :param after: The new voice channel status.
+    :type after: Optional[:class:`str`]
+
 .. _discord-api-utils:
 
 Utility Functions

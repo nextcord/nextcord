@@ -4737,3 +4737,17 @@ class HTTPClient:
             auth=auth,
             retry_request=retry_request,
         )
+
+    def set_voice_channel_status(
+        self,
+        channel_id: Snowflake,
+        *,
+        status: Optional[str] = None,
+        reason: Optional[str] = None,
+        auth: Optional[str] = MISSING,
+        retry_request: bool = True,
+    ) -> Response[None]:
+        r = Route("PUT", "/channels/{channel_id}/voice-status", channel_id=channel_id)
+        return self.request(
+            r, json={"status": status}, reason=reason, auth=auth, retry_request=retry_request
+        )

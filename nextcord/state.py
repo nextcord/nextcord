@@ -2368,6 +2368,31 @@ class ConnectionState:
                 user,
             )
 
+    def parse_voice_channel_status_update(self, data) -> None:
+        guild_id, channel_id = data["guild_id"], data["id"]
+        guild = self._get_guild(int(guild_id))
+        if guild is None:
+            return _log.debug(
+                "VOICE_CHANNEL_STATUS_UPDATE referencing unknown guild ID: %s. Discarding.",
+                guild_id,
+            )
+        channel = guild.get_channel(int(channel_id))
+        if not isinstance(channel, VoiceChannel):
+            return _log.debug(
+                "VOICE_CHANNEL_STATUS_UPDATE referencing unknown channel ID: %s. Discarding.",
+                channel_id,
+            )
+        old_status = channel.status
+        channel.status = (
+            data.get("status", None) or None
+        )  # Again, sometimes we get an empty string '', it should be None.
+        self.dispatch("voice_channel_status_update", channel, old_status, channel.status)
+        return None  # ruff makes me do this, idk why.
+
+    def parse_voice_channel_status_delete(self, data) -> None:
+        # I am not receiving this event? Not sure why, maybe they haven't added it yet.
+        raise NotImplementedError
+
 
 class AutoShardedConnectionState(ConnectionState):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
