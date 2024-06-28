@@ -98,7 +98,8 @@ class OnboardingPromptOption(Hashable):
         }
 
         if self.emoji is not None:
-            ret["emoji_id"] = self.emoji.id
+            if self.emoji.id is not None:
+                ret["emoji_id"] = self.emoji.id
             ret["emoji_name"] = self.emoji.name
             ret["emoji_animated"] = self.emoji.animated
 
