@@ -409,9 +409,7 @@ class Poll:
         return isinstance(other, self.__class__) and other.message.id == self.message.id
 
     def __ne__(self, other) -> bool:
-        if isinstance(other, self.__class__):
-            return other.message.id != self.message.id
-        return True
+        return isinstance(other, self.__class__) and other.message.id != self.message.id
 
     async def expire(self) -> Message:
         """
