@@ -73,9 +73,11 @@ class PollMedia:
 
     def __init__(self, text: str, emoji: Optional[EmojiInputType] = None) -> None:
         self.text: str = text
-        self.emoji: Optional[PartialEmoji | Emoji] = emoji  # type: ignore[reportAttributeAccessIssue]
+        self.emoji: Optional[PartialEmoji | Emoji]
         if isinstance(emoji, str):
-            self.emoji: Optional[PartialEmoji | Emoji] = PartialEmoji.from_str(emoji)
+            self.emoji = PartialEmoji.from_str(emoji)
+        else:
+            self.emoji = emoji
 
     def __repr__(self) -> str:
         return f"<PollMedia text={self.text} emoji={self.emoji}>"
