@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, List, Optional
 
 from .abc import Snowflake
 from .enums import OnboardingMode, OnboardingPromptType, try_enum
+from .mixins import Hashable
 from .object import Object
 from .partial_emoji import PartialEmoji
 
@@ -25,7 +26,7 @@ __all__ = (
 )
 
 
-class OnboardingPromptOption:
+class OnboardingPromptOption(Hashable):
     """Represents an option in a guild's onboarding prompt.
 
     Attributes
@@ -69,6 +70,9 @@ class OnboardingPromptOption:
         self.description: Optional[str] = description
         self.emoji: Optional[PartialEmoji] = emoji
 
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__} id={self.id} channels={self.channels} roles={self.roles} title={self.title}>"
+
     @classmethod
     def from_dict(cls, data: PromptOptionPayload) -> OnboardingPromptOption:
         channels: List[Snowflake] = [Object(id=o) for o in data["channel_ids"]]
@@ -98,7 +102,7 @@ class OnboardingPromptOption:
 
         return ret
 
-class OnboardingPrompt:
+class OnboardingPrompt(Hashable):
     """Represents a prompt for a guild's onboarding screen.
 
     Attributes
@@ -147,6 +151,9 @@ class OnboardingPrompt:
         self.single_select: bool = single_select
         self.required: bool = required
         self.in_onboarding: bool = in_onboarding
+
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__} id={self.id} type={self.type} title={self.title}>"
 
     @classmethod
     def from_dict(cls, data: PromptPayload) -> OnboardingPrompt:
@@ -210,3 +217,6 @@ class Onboarding:
         self.default_channel_ids: list[int] = [int(c) for c in data["default_channel_ids"]]
         self.enabled: bool = bool(data["enabled"])
         self.mode: OnboardingMode = try_enum(OnboardingMode, data["mode"])
+
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__} guild={self.guild} mode={self.mode} prompts={self.prompts}>"
