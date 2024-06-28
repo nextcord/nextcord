@@ -82,9 +82,13 @@ class OnboardingPromptOption(Hashable):
         title: str = data["title"]
         description: Optional[str] = data.get("description")
         raw_emoji = data.get("emoji")
-        emoji: Optional[PartialEmoji] = PartialEmoji.from_dict(raw_emoji) if raw_emoji is not None else None
+        emoji: Optional[PartialEmoji] = (
+            PartialEmoji.from_dict(raw_emoji) if raw_emoji is not None else None
+        )
 
-        self = cls(channels=channels, roles=roles, title=title, description=description, emoji=emoji)
+        self = cls(
+            channels=channels, roles=roles, title=title, description=description, emoji=emoji
+        )
         self.id = int(data["id"])
         return self
 
@@ -103,6 +107,7 @@ class OnboardingPromptOption(Hashable):
             ret["emoji_animated"] = self.emoji.animated
 
         return ret
+
 
 class OnboardingPrompt(Hashable):
     """Represents a prompt for a guild's onboarding screen.
@@ -162,15 +167,20 @@ class OnboardingPrompt(Hashable):
     @classmethod
     def from_dict(cls, data: PromptPayload) -> OnboardingPrompt:
         type = try_enum(OnboardingPromptType, data["type"])
-        options = [
-            OnboardingPromptOption.from_dict(o) for o in data["options"]
-        ]
+        options = [OnboardingPromptOption.from_dict(o) for o in data["options"]]
         title = data["title"]
         single_select = bool(data["single_select"])
         required = bool(data["required"])
         in_onboarding = bool(data["in_onboarding"])
 
-        self = cls(type=type, options=options, title=title, single_select=single_select, required=required, in_onboarding=in_onboarding)
+        self = cls(
+            type=type,
+            options=options,
+            title=title,
+            single_select=single_select,
+            required=required,
+            in_onboarding=in_onboarding,
+        )
         self.id = int(data["id"])
         return self
 
@@ -219,7 +229,9 @@ class Onboarding:
     def __init__(self, *, guild: Guild, data: OnboardingPayload) -> None:
         self.guild: Guild = guild
         self.guild_id: int = int(data["guild_id"])
-        self.prompts: List[OnboardingPrompt] = [OnboardingPrompt.from_dict(p) for p in data["prompts"]]
+        self.prompts: List[OnboardingPrompt] = [
+            OnboardingPrompt.from_dict(p) for p in data["prompts"]
+        ]
         self.default_channel_ids: list[int] = [int(c) for c in data["default_channel_ids"]]
         self.enabled: bool = bool(data["enabled"])
         self.mode: OnboardingMode = try_enum(OnboardingMode, data["mode"])
