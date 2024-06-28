@@ -172,14 +172,21 @@ class ModifiedOnboardingPromptOption(_BasePromptOption):
     emoji_animated: NotRequired[bool]
 
 
-class OnboardingPrompt(TypedDict):
+class _BasePrompt(TypedDict):
     id: Snowflake
     type: PromptOptionType
-    options: List[OnboardingPromptOption]
     title: str
     single_select: bool
     required: bool
     in_onboarding: bool
+
+
+class OnboardingPrompt(_BasePrompt):
+    options: List[OnboardingPromptOption]
+
+
+class ModifiedOnboardingPrompt(_BasePrompt):
+    options: List[ModifiedOnboardingPromptOption]
 
 
 class Onboarding(TypedDict):

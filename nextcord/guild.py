@@ -2185,7 +2185,7 @@ class Guild(Hashable):
         *,
         reason: Optional[str] = None,
         prompts: List[OnboardingPrompt] = MISSING,
-        default_channel_ids: List[Snowflake] = MISSING,
+        default_channels: Sequence[Snowflake] = MISSING,
         enabled: bool = MISSING,
         mode: OnboardingMode = MISSING,
     ) -> Onboarding:
@@ -2204,8 +2204,8 @@ class Guild(Hashable):
             The reason for doing this action. Shows up on the audit log.
         prompts: List[:class:`OnboardingPrompt`]
             The screen's prompts.
-        default_channel_ids: List[:class:`int`]
-            The list of the IDs of channels that users are opted into immediately.
+        default_channels: Sequence[:class:`~Snowflake`]
+            The list of channels that users are opted into immediately.
         enabled: :class:`bool`
             Whether this screen is enabled.
         mode: :class:`OnboardingMode`
@@ -2225,9 +2225,9 @@ class Guild(Hashable):
         """
         payload = {}
         if prompts is not MISSING:
-            payload["prompts"] = prompts
-        if default_channel_ids is not MISSING:
-            payload["default_channel_ids"] = default_channel_ids
+            payload["prompts"] = [p.to_dict() for p in prompts]
+        if default_channels is not MISSING:
+            payload["default_channel_ids"] = [c.id for c in default_channels]
         if enabled is not MISSING:
             payload["enabled"] = enabled
         if mode is not MISSING:
