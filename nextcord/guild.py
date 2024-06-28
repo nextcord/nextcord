@@ -2165,6 +2165,8 @@ class Guild(Hashable):
 
         Retrieves the onboarding for this guild.
 
+        .. versionadded:: 3.0
+
         Raises
         ------
         Forbidden
