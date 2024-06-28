@@ -105,24 +105,24 @@ class PollAnswer:
     ----------
     answer_id: Optional[:class:`int`]
         The answer ID of the answer.
-    poll_media: Optional[:class:`PollMedia`]
+    media: Optional[:class:`PollMedia`]
         The poll media of the answer.
     """
 
     __slots__ = (
         "answer_id",
-        "poll_media",
+        "media",
     )
 
     def __init__(self, *, answer_id: Optional[int] = None, poll_media: PollMedia) -> None:
         self.answer_id: Optional[int] = answer_id
-        self.poll_media: PollMedia = poll_media
+        self.media: PollMedia = poll_media
 
     def __repr__(self) -> str:
-        return f"<PollAnswer answer_id={self.answer_id!r} poll_media={self.poll_media!r}>"
+        return f"<PollAnswer answer_id={self.answer_id!r} poll_media={self.media!r}>"
 
     def to_dict(self) -> PollAnswerPayload:
-        payload: PollAnswerPayload = {"poll_media": self.poll_media.to_dict()}
+        payload: PollAnswerPayload = {"poll_media": self.media.to_dict()}
         if self.answer_id:
             payload["answer_id"] = self.answer_id
 
@@ -147,6 +147,8 @@ class PollAnswerCount:
         Whether the bot has voted for this option.
     count: :class:`int`
         The number of users who have voted for this option.
+    poll: :class:`Poll`
+        The poll this answer count object represents.
     """
 
     __slots__ = ("id", "me_voted", "count", "poll")
@@ -399,10 +401,6 @@ class Poll:
             f"message={self.message!r} "
             f"question={self.question!r} "
             f"answers={self.answers!r} "
-            f"expiry={self.expiry!r} "
-            f"allow_multiselect={self.allow_multiselect!r} "
-            f"layout_type={self.layout_type!r} "
-            f"results={self.results!r} "
             f"expired={self.expired!r}"
             ">"
         )

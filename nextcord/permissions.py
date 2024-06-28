@@ -191,6 +191,9 @@ class Permissions(BaseFlags):
         .. versionchanged:: 2.0
            Added :attr:`create_public_threads`, :attr:`create_private_threads`, :attr:`manage_threads`,
            :attr:`send_messages_in_threads` and :attr:`use_external_stickers` permissions.
+
+        .. versionchanged:: 3.0
+            Added :attr:`send_polls` permission.
         """
         return cls(0b100000000111110010000000000001111111100001000000)
 
