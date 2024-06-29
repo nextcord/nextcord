@@ -202,7 +202,7 @@ class CooldownMapping:
         return self._type
 
     @classmethod
-    def from_cooldown(cls, rate, per, type) -> Self:
+    def from_cooldown(cls, rate: float, per, type) -> Self:
         return cls(Cooldown(rate, per), type)
 
     def _bucket_key(self, msg: Message) -> Any:
