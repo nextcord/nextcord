@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, List, Optional, Set
 from .user import User
 
 if TYPE_CHECKING:
+    from .colour import Colour
     from .guild import Guild
     from .member import Member
     from .message import Message
@@ -168,7 +169,17 @@ class RawReactionActionEvent(_RawReprMixin):
         .. versionadded:: 1.3
     """
 
-    __slots__ = ("message_id", "user_id", "channel_id", "guild_id", "emoji", "event_type", "member")
+    __slots__ = (
+        "message_id",
+        "user_id",
+        "channel_id",
+        "guild_id",
+        "emoji",
+        "event_type",
+        "member",
+        "burst",
+        "burst_colors",
+    )
 
     def __init__(self, data: ReactionActionEvent, emoji: PartialEmoji, event_type: str) -> None:
         self.message_id: int = int(data["message_id"])
@@ -177,6 +188,14 @@ class RawReactionActionEvent(_RawReprMixin):
         self.emoji: PartialEmoji = emoji
         self.event_type: str = event_type
         self.member: Optional[Member] = None
+        self.burst: bool = data["burst"]
+
+        if _burst_colors := data.get("burst_colors"):
+            self.burst_colors: Optional[List[Colour]] = [
+                Colour(value=int(c.strip("#"))) for c in _burst_colors
+            ]
+        else:
+            self.burst_colors = None
 
         try:
             self.guild_id: Optional[int] = int(data["guild_id"])
