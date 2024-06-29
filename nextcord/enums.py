@@ -1185,6 +1185,15 @@ class AuditLogAction(IntEnum):
 
     .. versionadded:: 2.0
     """
+    application_command_permission_update = 121
+    """Permissions were updated for an application command.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`BaseApplicationCommand` or :class:`Object` with the ID of the command which
+    was updated.
+
+    .. versionadded:: 3.0
+    """
     auto_moderation_rule_create = 140
     """An auto moderation rule was created.
 
