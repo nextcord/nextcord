@@ -8,7 +8,7 @@ from nextcord.types.guild import GuildFeature
 
 from .appinfo import PartialAppInfo
 from .asset import Asset
-from .enums import ChannelType, InviteTarget, VerificationLevel, try_enum
+from .enums import ChannelType, InviteTarget, InviteType, VerificationLevel, try_enum
 from .mixins import Hashable
 from .object import Object
 from .utils import get_as_snowflake, parse_time, snowflake_time
@@ -296,6 +296,10 @@ class Invite(Hashable):
         The embedded application the invite targets, if any.
 
         .. versionadded:: 2.0
+    type: :class:`InviteType`
+        The type of invite.
+
+        .. versionadded:: 3.0
     """
 
     __slots__ = (
@@ -317,6 +321,7 @@ class Invite(Hashable):
         "target_application",
         "expires_at",
         "_flags",
+        "type",
     )
 
     BASE = "https://discord.gg"
@@ -330,6 +335,7 @@ class Invite(Hashable):
         channel: Optional[Union[PartialInviteChannel, GuildChannel]] = None,
     ) -> None:
         self._state: ConnectionState = state
+        self.type: InviteType = try_enum(InviteType, data.get("type"))
         self.max_age: Optional[int] = data.get("max_age")
         self.code: Optional[str] = data.get("code")
         self.guild: Optional[InviteGuildType] = self._resolve_guild(data.get("guild"), guild)
@@ -438,7 +444,7 @@ class Invite(Hashable):
 
     def __repr__(self) -> str:
         return (
-            f"<Invite code={self.code!r} guild={self.guild!r} "
+            f"<Invite type={self.type!r} code={self.code!r} guild={self.guild!r} "
             f"online={self.approximate_presence_count} "
             f"members={self.approximate_member_count}>"
         )
