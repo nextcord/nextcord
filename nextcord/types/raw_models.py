@@ -35,6 +35,8 @@ class ReactionActionEvent(TypedDict):
     emoji: PartialEmoji
     guild_id: NotRequired[Snowflake]
     member: NotRequired[Member]
+    burst: bool
+    burst_colors: NotRequired[List[str]]
 
 
 class ReactionClearEvent(TypedDict):
@@ -48,6 +50,7 @@ class ReactionClearEmojiEvent(TypedDict):
     message_id: int
     emoji: PartialEmoji
     guild_id: NotRequired[Snowflake]
+    burst: bool
 
 
 class IntegrationDeleteEvent(TypedDict):
