@@ -10,7 +10,7 @@ __all__ = ("Reaction",)
 
 if TYPE_CHECKING:
     from .abc import Snowflake
-    from .colour import Color
+    from .colour import Colour
     from .emoji import Emoji
     from .message import Message
     from .partial_emoji import PartialEmoji
@@ -119,7 +119,7 @@ class Reaction:
             data=data.get("count_details")
         )
 
-        self.burst_colors: List[Color] = [Color(value=c) for c in data.get("burst_colors")]
+        self.burst_colors: List[Colour] = [Colour(value=c) for c in data.get("burst_colors")]
 
     # TODO: typeguard
     def is_custom_emoji(self) -> bool:
