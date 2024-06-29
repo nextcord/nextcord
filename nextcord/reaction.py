@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, List, Optional, Union
 
 from .iterators import ReactionIterator
+from .utils import cached_property
 
 __all__ = ("Reaction",)
 
@@ -70,14 +71,6 @@ class Reaction:
     ----------
     emoji: Union[:class:`Emoji`, :class:`PartialEmoji`, :class:`str`]
         The reaction emoji. May be a custom emoji, or a unicode emoji.
-    burst_colours: List[:class:`Colour`]
-        The HEX colors used for a burst reaction.
-
-        .. versionadded:: 3.0
-    burst_colors: List[:class:`Colour`]
-        An alias of :attr:`.burst_colours`.
-
-        .. versionadded:: 3.0
     count: :class:`int`
         Number of times this reaction was made
     count_details: :class:`ReactionCountDetails`
@@ -99,9 +92,8 @@ class Reaction:
         "count",
         "emoji",
         "me",
+        "_burst_colours",
         "me_burst",
-        "burst_colours",
-        "burst_colors",
         "count_details",
     )
 
@@ -123,8 +115,7 @@ class Reaction:
             data=data.get("count_details")
         )
 
-        self.burst_colours: List[Colour] = [Colour(value=c) for c in data.get("burst_colors")]
-        self.burst_colors: List[Colour] = self.burst_colors
+        self._burst_colours: List[int] = data.get("burst_colors")
 
     # TODO: typeguard
     def is_custom_emoji(self) -> bool:
@@ -147,6 +138,22 @@ class Reaction:
 
     def __repr__(self) -> str:
         return f"<Reaction emoji={self.emoji!r} me={self.me} count={self.count}>"
+
+    @cached_property
+    def burst_colours(self) -> List[Colour]:
+        """List[:class:`Colour`]: The HEX colors used for a burst reaction.
+
+        .. versionadded:: 3.0
+        """
+        return [Colour(value=c) for c in self._burst_colours]
+
+    @property
+    def burst_colors(self) -> List[Colour]:
+        """List[:class:`Colour`]`: An alias of :attr:`.burst_colours`.
+
+        .. versionadded:: 3.0
+        """
+        return self.burst_colours
 
     async def remove(self, user: Snowflake) -> None:
         """|coro|
