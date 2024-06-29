@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any, List, Optional, Union
 
 from .iterators import ReactionIterator
 
@@ -10,10 +10,34 @@ __all__ = ("Reaction",)
 
 if TYPE_CHECKING:
     from .abc import Snowflake
+    from .colour import Color
     from .emoji import Emoji
     from .message import Message
     from .partial_emoji import PartialEmoji
-    from .types.message import Reaction as ReactionPayload
+    from .types.message import (
+        Reaction as ReactionPayload,
+        ReactionCountDetails as ReactionCountDetailsPayload,
+    )
+
+
+class ReactionCountDetails:
+    """Represents a reaction's count details.
+
+    Attributes
+    ----------
+    burst: :class:`int`
+        The amount of burst reactions.
+    normal: :class:`int`
+        The amount of normal reactions.
+
+    .. versionadded:: 3.0
+    """
+
+    __slots__ = ("burst", "normal")
+
+    def __init__(self, data: ReactionCountDetailsPayload) -> None:
+        self.burst = data.get("burst")
+        self.normal = data.get("normal")
 
 
 class Reaction:
@@ -46,15 +70,36 @@ class Reaction:
     ----------
     emoji: Union[:class:`Emoji`, :class:`PartialEmoji`, :class:`str`]
         The reaction emoji. May be a custom emoji, or a unicode emoji.
+    burst_colors: List[:class:`Color`]
+        The HEX colors used for a burst reaction.
+
+        .. versionadded:: 3.0
     count: :class:`int`
         Number of times this reaction was made
+    count_details: :class:`ReactionCountDetails`
+        The count details for this reaction.
+
+        .. versionadded:: 3.0
     me: :class:`bool`
         If the user sent this reaction.
+    me_burst: :class:`bool`
+        If the user sent a burst reaction.
+
+        .. versionadded:: 3.0
     message: :class:`Message`
         Message this reaction is for.
     """
 
-    __slots__ = ("message", "count", "emoji", "me")
+    __slots__ = (
+        "message",
+        "count",
+        "emoji",
+        "me",
+        "me_burst",
+        "burst_colors",
+        "burst_colors",
+        "count_details",
+    )
 
     def __init__(
         self,
@@ -69,6 +114,12 @@ class Reaction:
         )
         self.count: int = data.get("count", 1)
         self.me: bool = data.get("me")
+        self.me_burst: bool = data.get("me_burst")
+        self.count_details: ReactionCountDetails = ReactionCountDetails(
+            data=data.get("count_details")
+        )
+
+        self.burst_colors: List[Color] = [Color(value=c) for c in data.get("burst_colors")]
 
     # TODO: typeguard
     def is_custom_emoji(self) -> bool:
