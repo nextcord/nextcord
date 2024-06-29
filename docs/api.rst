@@ -2904,6 +2904,14 @@ ApplicationFlags
 .. autoclass:: ApplicationFlags
     :members:
 
+InviteFlags
+~~~~~~~~~~~
+
+.. attributetable:: InviteFlags
+
+.. autoclass:: InviteFlags
+    :members:
+
 RoleFlags
 ~~~~~~~~~
 
