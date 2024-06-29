@@ -194,6 +194,7 @@ class RawReactionActionEvent(_RawReprMixin):
             self.burst_colors: Optional[List[Colour]] = [
                 Colour(value=int(c.strip("#"))) for c in _burst_colors
             ]
+
         else:
             self.burst_colors = None
 

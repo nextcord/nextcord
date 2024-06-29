@@ -70,8 +70,12 @@ class Reaction:
     ----------
     emoji: Union[:class:`Emoji`, :class:`PartialEmoji`, :class:`str`]
         The reaction emoji. May be a custom emoji, or a unicode emoji.
-    burst_colors: List[:class:`Color`]
+    burst_colours: List[:class:`Colour`]
         The HEX colors used for a burst reaction.
+
+        .. versionadded:: 3.0
+    burst_colors: List[:class:`Colour`]
+        An alias of :attr:`.burst_colours`.
 
         .. versionadded:: 3.0
     count: :class:`int`
@@ -96,6 +100,7 @@ class Reaction:
         "emoji",
         "me",
         "me_burst",
+        "burst_colours",
         "burst_colors",
         "count_details",
     )
@@ -118,7 +123,8 @@ class Reaction:
             data=data.get("count_details")
         )
 
-        self.burst_colors: List[Colour] = [Colour(value=c) for c in data.get("burst_colors")]
+        self.burst_colours: List[Colour] = [Colour(value=c) for c in data.get("burst_colors")]
+        self.burst_colors: List[Colour] = self.burst_colors
 
     # TODO: typeguard
     def is_custom_emoji(self) -> bool:
