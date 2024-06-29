@@ -1933,6 +1933,11 @@ class AutoModerationEventType(IntEnum):
 
     message_send = 1
     """A member sends or edits a message in the guild."""
+    member_update = 2
+    """A member edits their profile.
+
+    .. versionadded:: 3.0
+    """
 
 
 class AutoModerationTriggerType(IntEnum):
@@ -1947,6 +1952,11 @@ class AutoModerationTriggerType(IntEnum):
 
     keyword = 1
     """This rule checks if content contains words from a user defined list of keywords."""
+    member_update = 2
+    """A member sends or edits a message in the guild.
+
+    .. versionadded:: 3.0
+    """
     spam = 3
     """This rule checks if content represents generic spam."""
     keyword_preset = 4
@@ -1955,6 +1965,11 @@ class AutoModerationTriggerType(IntEnum):
     """This rule checks if the number of mentions in the message is more than the maximum allowed.
 
     .. versionadded:: 2.3
+    """
+    member_profile = 6
+    """This rule checks if member profile contains words from a user defined list of keywords.
+
+    .. versionadded:: 3.0
     """
 
 
@@ -1988,6 +2003,11 @@ class AutoModerationActionType(IntEnum):
     .. note::
 
         This action type can only be used with the :attr:`Permissions.moderate_members` permission.
+    """
+    block_member_interaction = 4
+    """Prevents a member from using text, voice, or other interactions.
+
+    .. versionadded:: 3.0
     """
 
 
