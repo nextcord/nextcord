@@ -783,6 +783,8 @@ class Message(Hashable):
         The interaction data of a message, if applicable.
     call: Optional[:class:`MessageCall`]
         The call associated with the message.
+
+        .. versionadded:: 3.0
     """
 
     __slots__ = (
