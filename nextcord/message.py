@@ -870,11 +870,11 @@ class Message(Hashable):
             _component_factory(d) for d in data.get("components", [])
         ]
         self._background_tasks: Set[asyncio.Task[None]] = set()
-        self._call: MessageCallPayload | None = data.get("call")
-        if self._call is not None:
-            self.call: Optional[MessageCall] = MessageCall(state=state, data=self._call)
+
+        if _call := data.get("call"):
+            self.call: Optional[MessageCall] = MessageCall(state=state, data=_call)
         else:
-            self.call = None
+            self.call: Optional[MessageCall] = None
 
         try:
             # if the channel doesn't have a guild attribute, we handle that
