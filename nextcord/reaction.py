@@ -97,7 +97,6 @@ class Reaction:
         "me",
         "me_burst",
         "burst_colors",
-        "burst_colors",
         "count_details",
     )
 
