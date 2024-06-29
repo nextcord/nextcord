@@ -1932,8 +1932,12 @@ class AutoModerationEventType(IntEnum):
     """
 
     message_send = 1
-    member_update = 2
     """A member sends or edits a message in the guild."""
+    member_update = 2
+    """A member edits their profile.
+
+    .. versionadded:: 3.0
+    """
 
 
 class AutoModerationTriggerType(IntEnum):
