@@ -1057,6 +1057,9 @@ class SyncWebhook(BaseWebhook):
             See :meth:`.abc.Messageable.send` for more information.
         thread: :class:`~nextcord.abc.Snowflake`
             The thread that the message to be edited is in.
+            
+            .. versionadded:: 3.0
+            
         Raises
         ------
         HTTPException
