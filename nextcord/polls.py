@@ -407,9 +407,6 @@ class Poll:
     def __eq__(self, other) -> bool:
         return isinstance(other, self.__class__) and other.message.id == self.message.id
 
-    def __ne__(self, other) -> bool:
-        return isinstance(other, self.__class__) and other.message.id != self.message.id
-
     async def expire(self) -> Message:
         """
         Immediately ends the poll. You cannot end polls from other users.
