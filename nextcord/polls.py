@@ -194,7 +194,6 @@ class PollAnswerCount:
 
         Parameters
         ----------
-
         limit: Optional[:class:`int`]
             The maximum number of results to return.
             If not provided, returns all the users who
