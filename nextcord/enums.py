@@ -2051,6 +2051,16 @@ class InviteType(IntEnum):
     """The invite is for a Discord user."""
 
 
+class PollLayoutType(IntEnum):
+    """The layout type of the poll.
+
+    .. versionadded:: 3.0
+    """
+
+    default = 1
+    """The default poll layout type."""
+
+
 T = TypeVar("T")
 
 
