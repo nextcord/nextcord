@@ -1684,7 +1684,7 @@ class Webhook(BaseWebhook):
         thread: :class:`~nextcord.abc.Snowflake`
             The thread that the message to be edited is in.
 
-            .. versionadded:: ?.?
+            .. versionadded:: 3.0
 
         Raises
         ------
