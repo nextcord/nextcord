@@ -1418,6 +1418,12 @@ of :class:`enum.Enum`.
 .. autoclass:: AuditLogAction
     :members:
 
+.. autoclass:: IntegrationType
+    :members:
+
+.. autoclass:: InteractionContextType
+    :members:
+
 Async Iterator
 --------------
 
