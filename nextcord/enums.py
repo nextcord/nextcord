@@ -49,6 +49,7 @@ __all__ = (
     "SortOrderType",
     "RoleConnectionMetadataType",
     "ForumLayoutType",
+    "InviteType",
 )
 
 
