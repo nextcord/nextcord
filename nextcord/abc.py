@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import copy
+from abc import ABC, abstractmethod
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -1795,3 +1796,16 @@ class Connectable(Protocol):
             raise  # re-raise
 
         return voice
+
+
+class SupportsStr(ABC):
+    """An ABC with one abstract magic method ``__str__``.
+
+    This ABC is meant to be implemented by the user. This will allow the type checker to see if a class has implemented the ``__str__`` magic method.
+    """
+
+    __slots__ = ()
+
+    @abstractmethod
+    def __str__(self) -> str:
+        raise NotImplementedError
