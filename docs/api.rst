@@ -2222,6 +2222,13 @@ Connectable
 
 .. _discord_api_models:
 
+SupportsStr
+~~~~~~~~~~~
+
+.. attributetable:: nextcord.abc.SupportsStr
+
+.. autoclass:: nextcord.abc.SupportsStr()
+
 Discord Models
 --------------
 
