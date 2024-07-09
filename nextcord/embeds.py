@@ -12,6 +12,8 @@ from .colour import Colour
 if TYPE_CHECKING:
     from typing_extensions import Self
 
+    from .abc import SupportsStr
+
 __all__ = ("Embed",)
 
 
@@ -143,26 +145,29 @@ class Embed:
         *,
         colour: Optional[Union[int, Colour]] = None,
         color: Optional[Union[int, Colour]] = None,
-        title: Optional[Any] = None,
+        title: Optional[Union[SupportsStr, str]] = None,
         type: EmbedType = "rich",
-        url: Optional[Any] = None,
-        description: Optional[Any] = None,
+        url: Optional[Union[SupportsStr, str]] = None,
+        description: Optional[Union[SupportsStr, str]] = None,
         timestamp: Optional[datetime.datetime] = None,
     ) -> None:
         self.colour = colour if colour is not None else color
-        self.title = title
         self.type = type
-        self.url = url
-        self.description = description
 
-        if self.title is not None:
-            self.title = str(self.title)
+        if title is not None:
+            self.title = str(title)
+        else:
+            self.title = None
 
-        if self.description is not None:
-            self.description = str(self.description)
+        if description is not None:
+            self.description = str(description)
+        else:
+            self.description = None
 
-        if self.url is not None:
-            self.url = str(self.url)
+        if url is not None:
+            self.url = str(url)
+        else:
+            self.url = None
 
         if timestamp:
             self.timestamp = timestamp
@@ -307,7 +312,12 @@ class Embed:
         """
         return EmbedProxy(getattr(self, "_footer", {}))  # type: ignore
 
-    def set_footer(self, *, text: Optional[Any] = None, icon_url: Optional[Any] = None) -> Self:
+    def set_footer(
+        self,
+        *,
+        text: Optional[Union[SupportsStr, str]] = None,
+        icon_url: Optional[Union[SupportsStr, str]] = None,
+    ) -> Self:
         """Sets the footer for the embed content.
 
         This function returns the class instance to allow for fluent-style
@@ -315,9 +325,9 @@ class Embed:
 
         Parameters
         ----------
-        text: Optional[:class:`str`]
+        text: Optional[Union[:class:`abc.SupportsStr`, :class:`str`]]
             The footer text.
-        icon_url: Optional[:class:`str`]
+        icon_url: Optional[Union[:class:`abc.SupportsStr`, :class:`str`]]
             The URL of the footer icon. Only HTTP(S) is supported.
         """
 
@@ -358,7 +368,7 @@ class Embed:
         """
         return EmbedProxy(getattr(self, "_image", {}))  # type: ignore
 
-    def set_image(self, url: Optional[Any]) -> Self:
+    def set_image(self, url: Optional[Union[SupportsStr, str]]) -> Self:
         """Sets the image for the embed content.
 
         This function returns the class instance to allow for fluent-style
@@ -369,7 +379,7 @@ class Embed:
 
         Parameters
         ----------
-        url: Optional[:class:`str`]
+        url: Optional[Union[:class:`abc.SupportsStr`, :class:`str`]]
             The source URL for the image. Only HTTP(S) is supported.
         """
 
@@ -399,7 +409,7 @@ class Embed:
         """
         return EmbedProxy(getattr(self, "_thumbnail", {}))  # type: ignore
 
-    def set_thumbnail(self, url: Optional[Any]) -> Self:
+    def set_thumbnail(self, url: Optional[Union[SupportsStr, str]]) -> Self:
         """Sets the thumbnail for the embed content.
 
         This function returns the class instance to allow for fluent-style
@@ -410,7 +420,7 @@ class Embed:
 
         Parameters
         ----------
-        url: :class:`str`
+        url: Optional[Union[:class:`abc.SupportsStr`, :class:`str`]]
             The source URL for the thumbnail. Only HTTP(S) is supported.
         """
 
@@ -462,9 +472,9 @@ class Embed:
     def set_author(
         self,
         *,
-        name: Any,
-        url: Optional[Any] = None,
-        icon_url: Optional[Any] = None,
+        name: Union[SupportsStr, str],
+        url: Optional[Union[SupportsStr, str]] = None,
+        icon_url: Optional[Union[SupportsStr, str]] = None,
     ) -> Self:
         """Sets the author for the embed content.
 
@@ -473,11 +483,11 @@ class Embed:
 
         Parameters
         ----------
-        name: Optional[:class:`str`]
+        name: Optional[Union[:class:`abc.SupportsStr`, :class:`str`]]
             The name of the author.
-        url: Optional[:class:`str`]
+        url: Optional[Union[:class:`abc.SupportsStr`, :class:`str`]]
             The URL for the author.
-        icon_url: Optional[:class:`str`]
+        icon_url: Optional[Union[:class:`abc.SupportsStr`, :class:`str`]]
             The URL of the author icon. Only HTTP(S) is supported.
         """
 
@@ -516,7 +526,9 @@ class Embed:
         """
         return [EmbedProxy(d) for d in getattr(self, "_fields", [])]  # type: ignore
 
-    def add_field(self, *, name: Any, value: Any, inline: bool = True) -> Self:
+    def add_field(
+        self, *, name: Union[SupportsStr, str], value: Union[SupportsStr, str], inline: bool = True
+    ) -> Self:
         """Adds a field to the embed object.
 
         This function returns the class instance to allow for fluent-style
@@ -524,9 +536,9 @@ class Embed:
 
         Parameters
         ----------
-        name: :class:`str`
+        name: Union[:class:`abc.SupportsStr`, :class:`str`]
             The name of the field.
-        value: :class:`str`
+        value: Union[:class:`abc.SupportsStr`, :class:`str`]
             The value of the field.
         inline: :class:`bool`
             Whether the field should be displayed inline. Defaults to ``True``.
@@ -545,7 +557,14 @@ class Embed:
 
         return self
 
-    def insert_field_at(self, index: int, *, name: Any, value: Any, inline: bool = True) -> Self:
+    def insert_field_at(
+        self,
+        index: int,
+        *,
+        name: Union[SupportsStr, str],
+        value: Union[SupportsStr, str],
+        inline: bool = True,
+    ) -> Self:
         """Inserts a field before a specified index to the embed.
 
         This function returns the class instance to allow for fluent-style
@@ -557,9 +576,9 @@ class Embed:
         ----------
         index: :class:`int`
             The index of where to insert the field.
-        name: :class:`str`
+        name: Union[:class:`abc.SupportsStr`, :class:`str`]
             The name of the field.
-        value: :class:`str`
+        value: Union[:class:`abc.SupportsStr`, :class:`str`]
             The value of the field.
         inline: :class:`bool`
             Whether the field should be displayed inline. Defaults to ``True``.
@@ -615,7 +634,14 @@ class Embed:
 
         return self
 
-    def set_field_at(self, index: int, *, name: Any, value: Any, inline: bool = True) -> Self:
+    def set_field_at(
+        self,
+        index: int,
+        *,
+        name: Union[SupportsStr, str],
+        value: Union[SupportsStr, str],
+        inline: bool = True,
+    ) -> Self:
         """Modifies a field to the embed object.
 
         The index must point to a valid pre-existing field.
@@ -627,9 +653,9 @@ class Embed:
         ----------
         index: :class:`int`
             The index of the field to modify.
-        name: :class:`str`
+        name: Union[:class:`abc.SupportsStr`, :class:`str`]
             The name of the field.
-        value: :class:`str`
+        value: Union[:class:`abc.SupportsStr`, :class:`str`]
             The value of the field.
         inline: :class:`bool`
             Whether the field should be displayed inline.
