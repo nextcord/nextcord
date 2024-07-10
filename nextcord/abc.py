@@ -70,6 +70,7 @@ if TYPE_CHECKING:
     from .guild import Guild
     from .member import Member
     from .message import Message, MessageReference, PartialMessage
+    from .polls import PollCreateRequest
     from .state import ConnectionState
     from .threads import Thread
     from .types.channel import (
@@ -82,6 +83,7 @@ if TYPE_CHECKING:
         AllowedMentions as AllowedMentionsPayload,
         MessageReference as MessageReferencePayload,
     )
+    from .types.polls import PollCreateRequest as PollCreateRequestPayload
     from .ui.view import View
     from .user import ClientUser
 
@@ -1270,6 +1272,7 @@ class Messageable:
         view: Optional[View] = ...,
         flags: Optional[MessageFlags] = ...,
         suppress_embeds: Optional[bool] = ...,
+        poll: Optional[PollCreateRequest] = ...,
     ) -> Message:
         ...
 
@@ -1290,6 +1293,7 @@ class Messageable:
         view: Optional[View] = ...,
         flags: Optional[MessageFlags] = ...,
         suppress_embeds: Optional[bool] = ...,
+        poll: Optional[PollCreateRequest] = ...,
     ) -> Message:
         ...
 
@@ -1310,6 +1314,7 @@ class Messageable:
         view: Optional[View] = ...,
         flags: Optional[MessageFlags] = ...,
         suppress_embeds: Optional[bool] = ...,
+        poll: Optional[PollCreateRequest] = ...,
     ) -> Message:
         ...
 
@@ -1330,6 +1335,7 @@ class Messageable:
         view: Optional[View] = ...,
         flags: Optional[MessageFlags] = ...,
         suppress_embeds: Optional[bool] = ...,
+        poll: Optional[PollCreateRequest] = ...,
     ) -> Message:
         ...
 
@@ -1351,6 +1357,7 @@ class Messageable:
         view: Optional[View] = None,
         flags: Optional[MessageFlags] = None,
         suppress_embeds: Optional[bool] = None,
+        poll: Optional[PollCreateRequest] = None,
     ):
         """|coro|
 
@@ -1430,6 +1437,10 @@ class Messageable:
             Whether to suppress embeds on this message.
 
             .. versionadded:: 2.4
+        poll: Optional[:class:`PollCreateRequest`]
+            The poll to send with this message.
+
+            .. versionadded:: 3.0
 
         Raises
         ------
@@ -1465,6 +1476,7 @@ class Messageable:
         stickers_payload: Optional[List[int]] = None
         reference_payload: Optional[MessageReferencePayload] = None
         allowed_mentions_payload: Optional[AllowedMentionsPayload] = None
+        poll_payload: Optional[PollCreateRequestPayload] = None
 
         if embed is not None and embeds is not None:
             raise InvalidArgument("Cannot pass both embed and embeds parameter to send()")
@@ -1507,6 +1519,9 @@ class Messageable:
 
         if file is not None and files is not None:
             raise InvalidArgument("Cannot pass both file and files parameter to send()")
+
+        if poll is not None:
+            poll_payload = poll.to_dict()
 
         if file is not None:
             if not isinstance(file, File):
@@ -1565,6 +1580,7 @@ class Messageable:
                 stickers=stickers_payload,
                 components=components,
                 flags=flag_value,
+                poll=poll_payload,
             )
 
         ret = state.create_message(channel=channel, data=data)

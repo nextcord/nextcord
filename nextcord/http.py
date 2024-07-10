@@ -63,6 +63,7 @@ if TYPE_CHECKING:
         invite,
         member,
         message,
+        polls,
         role,
         role_connections,
         scheduled_events,
@@ -1250,6 +1251,7 @@ class HTTPClient:
         stickers: Optional[List[int]] = None,
         components: Optional[List[components.Component]] = None,
         flags: Optional[int] = None,
+        poll: Optional[polls.PollCreateRequest] = None,
     ) -> Dict[str, Any]:
         payload: Dict[str, Any] = {
             "tts": tts,
@@ -1282,6 +1284,9 @@ class HTTPClient:
         if flags is not None:
             payload["flags"] = flags
 
+        if poll is not None:
+            payload["poll"] = poll
+
         return payload
 
     def send_message(
@@ -1300,6 +1305,7 @@ class HTTPClient:
         flags: Optional[int] = None,
         auth: Optional[str] = MISSING,
         retry_request: bool = True,
+        poll: Optional[polls.PollCreateRequest] = None,
     ) -> Response[message.Message]:
         r = Route("POST", "/channels/{channel_id}/messages", channel_id=channel_id)
         payload = self.get_message_payload(
@@ -1313,6 +1319,7 @@ class HTTPClient:
             stickers=stickers,
             components=components,
             flags=flags,
+            poll=poll,
         )
 
         return self.request(
@@ -4734,6 +4741,52 @@ class HTTPClient:
             r,
             json=data,
             reason=reason,
+            auth=auth,
+            retry_request=retry_request,
+        )
+
+    def get_answer_voters(
+        self,
+        channel_id: Snowflake,
+        message_id: Snowflake,
+        answer_id: int,
+        *,
+        auth: Optional[str] = MISSING,
+        retry_request: bool = True,
+        **payload: Any,
+    ) -> Response[Dict[Literal["users"], List[user.User]]]:
+        valid_keys = ("after", "limit")
+        params = {k: v for k, v in payload.items() if k in valid_keys}
+        r = Route(
+            "GET",
+            "/channels/{channel_id}/polls/{message_id}/answers/{answer_id}",
+            channel_id=channel_id,
+            message_id=message_id,
+            answer_id=answer_id,
+        )
+        return self.request(
+            r,
+            params=params,
+            auth=auth,
+            retry_request=retry_request,
+        )
+
+    def end_poll(
+        self,
+        channel_id: Snowflake,
+        message_id: Snowflake,
+        *,
+        auth: Optional[str] = MISSING,
+        retry_request: bool = True,
+    ) -> Response[message.Message]:
+        r = Route(
+            "POST",
+            "/channels/{channel_id}/polls/{message_id}/expire",
+            channel_id=channel_id,
+            message_id=message_id,
+        )
+        return self.request(
+            r,
             auth=auth,
             retry_request=retry_request,
         )
