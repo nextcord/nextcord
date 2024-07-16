@@ -68,6 +68,22 @@ AutoShardedClient
 Application Info
 ----------------
 
+InstallParams
+~~~~~~~~~~~~~
+
+.. attributetable:: InstallParams
+
+.. autoclass:: InstallParams()
+    :members:
+
+ApplicationIntegrationTypeConfig
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. attributetable:: ApplicationIntegrationTypeConfig
+
+.. autoclass:: ApplicationIntegrationTypeConfig()
+    :members:
+
 AppInfo
 ~~~~~~~
 
@@ -2419,6 +2435,14 @@ MessageInteraction
 .. attributetable:: MessageInteraction
 
 .. autoclass:: MessageInteraction()
+    :members:
+
+MessageInteractionMetadata
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. attributetable:: MessageInteractionMetadata
+
+.. autoclass:: MessageInteractionMetadata()
     :members:
 
 Member
