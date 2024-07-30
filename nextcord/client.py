@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import logging
+import signal
 import sys
 import traceback
 from typing import (
@@ -121,6 +122,18 @@ def _cancel_tasks(loop: asyncio.AbstractEventLoop) -> None:
 
 
 def _cleanup_loop(loop: asyncio.AbstractEventLoop) -> None:
+    """
+    This will cancel all tasks in the given loop, including any async tasks awaiting execution or potentially
+    mid-execution.
+
+    This does not restrict itself to nextcord-module tasks. If the loop provided is being used for non-Nextcord tasks,
+    this WILL cancel them as well.
+
+    Parameters
+    ----------
+    loop: :class:`asyncio.AbstractEventLoop`
+        Asyncio event loop to cancel all tasks and shutdown async generators of.
+    """
     try:
         _cancel_tasks(loop)
         loop.run_until_complete(loop.shutdown_asyncgens())
@@ -852,6 +865,10 @@ class Client:
             called after this function call will not execute until it returns.
         """
         loop = self.loop  # TODO: Make this asyncio.new_event_loop() if self.loop is removed.
+
+        with contextlib.suppress(NotImplementedError):
+            loop.add_signal_handler(signal.SIGTERM, lambda: loop.stop())
+
         try:
             loop.run_until_complete(self.start(token, reconnect=reconnect))
         except KeyboardInterrupt:
@@ -860,10 +877,8 @@ class Client:
             if not self.is_closed():
                 loop.run_until_complete(self.close())
 
-            # This will cancel all tasks in the loop, including any background loops or currently-awaiting listeners. If
-            #  the loop provided is being used by other tasks, this WILL cancel them. However, this IS the blocking
-            #  .run() function that starts the event loop and runs the bot for you. If people don't want other tasks to
-            #  be cancelled, then they can manually run start() and close().
+            # This will cancel all tasks in the loop, including non-Nextcord ones. If you don't want that to occur, run
+            #  .start() and .close() manually.
             _cleanup_loop(loop)
 
     # properties
