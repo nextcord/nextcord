@@ -12,8 +12,6 @@ from .colour import Colour
 if TYPE_CHECKING:
     from typing_extensions import Self
 
-    from .abc import SupportsStr
-
 __all__ = ("Embed",)
 
 
@@ -145,29 +143,26 @@ class Embed:
         *,
         colour: Optional[Union[int, Colour]] = None,
         color: Optional[Union[int, Colour]] = None,
-        title: Optional[Union[SupportsStr, str]] = None,
+        title: Optional[str] = None,
         type: EmbedType = "rich",
-        url: Optional[Union[SupportsStr, str]] = None,
-        description: Optional[Union[SupportsStr, str]] = None,
+        url: Optional[str] = None,
+        description: Optional[str] = None,
         timestamp: Optional[datetime.datetime] = None,
     ) -> None:
         self.colour = colour if colour is not None else color
+        self.title = title
         self.type = type
+        self.url = url
+        self.description = description
 
-        if title is not None:
-            self.title = str(title)
-        else:
-            self.title = None
+        if self.title is not None:
+            self.title = self.title
 
-        if description is not None:
-            self.description = str(description)
-        else:
-            self.description = None
+        if self.description is not None:
+            self.description = self.description
 
-        if url is not None:
-            self.url = str(url)
-        else:
-            self.url = None
+        if self.url is not None:
+            self.url = self.url
 
         if timestamp:
             self.timestamp = timestamp
@@ -315,8 +310,8 @@ class Embed:
     def set_footer(
         self,
         *,
-        text: Optional[Union[SupportsStr, str]] = None,
-        icon_url: Optional[Union[SupportsStr, str]] = None,
+        text: Optional[str] = None,
+        icon_url: Optional[str] = None,
     ) -> Self:
         """Sets the footer for the embed content.
 
@@ -325,18 +320,18 @@ class Embed:
 
         Parameters
         ----------
-        text: Optional[Union[:class:`abc.SupportsStr`, :class:`str`]]
+        text: Optional[:class:`str`]
             The footer text.
-        icon_url: Optional[Union[:class:`abc.SupportsStr`, :class:`str`]]
+        icon_url: Optional[:class:`str`]
             The URL of the footer icon. Only HTTP(S) is supported.
         """
 
         self._footer = {}
         if text is not None:
-            self._footer["text"] = str(text)
+            self._footer["text"] = text
 
         if icon_url is not None:
-            self._footer["icon_url"] = str(icon_url)
+            self._footer["icon_url"] = icon_url
 
         return self
 
@@ -368,7 +363,7 @@ class Embed:
         """
         return EmbedProxy(getattr(self, "_image", {}))  # type: ignore
 
-    def set_image(self, url: Optional[Union[SupportsStr, str]]) -> Self:
+    def set_image(self, url: Optional[str]) -> Self:
         """Sets the image for the embed content.
 
         This function returns the class instance to allow for fluent-style
@@ -379,7 +374,7 @@ class Embed:
 
         Parameters
         ----------
-        url: Optional[Union[:class:`abc.SupportsStr`, :class:`str`]]
+        url: Optional[:class:`str`]
             The source URL for the image. Only HTTP(S) is supported.
         """
 
@@ -389,7 +384,7 @@ class Embed:
 
         else:
             self._image = {
-                "url": str(url),
+                "url": url,
             }
 
         return self
@@ -409,7 +404,7 @@ class Embed:
         """
         return EmbedProxy(getattr(self, "_thumbnail", {}))  # type: ignore
 
-    def set_thumbnail(self, url: Optional[Union[SupportsStr, str]]) -> Self:
+    def set_thumbnail(self, url: Optional[str]) -> Self:
         """Sets the thumbnail for the embed content.
 
         This function returns the class instance to allow for fluent-style
@@ -420,7 +415,7 @@ class Embed:
 
         Parameters
         ----------
-        url: Optional[Union[:class:`abc.SupportsStr`, :class:`str`]]
+        url: Optional[:class:`str`]
             The source URL for the thumbnail. Only HTTP(S) is supported.
         """
 
@@ -430,7 +425,7 @@ class Embed:
 
         else:
             self._thumbnail = {
-                "url": str(url),
+                "url": url,
             }
 
         return self
@@ -472,9 +467,9 @@ class Embed:
     def set_author(
         self,
         *,
-        name: Union[SupportsStr, str],
-        url: Optional[Union[SupportsStr, str]] = None,
-        icon_url: Optional[Union[SupportsStr, str]] = None,
+        name: str,
+        url: Optional[str] = None,
+        icon_url: Optional[str] = None,
     ) -> Self:
         """Sets the author for the embed content.
 
@@ -483,23 +478,23 @@ class Embed:
 
         Parameters
         ----------
-        name: Optional[Union[:class:`abc.SupportsStr`, :class:`str`]]
+        name: Optional[:class:`str`]
             The name of the author.
-        url: Optional[Union[:class:`abc.SupportsStr`, :class:`str`]]
+        url: Optional[:class:`str`]
             The URL for the author.
-        icon_url: Optional[Union[:class:`abc.SupportsStr`, :class:`str`]]
+        icon_url: Optional[:class:`str`]
             The URL of the author icon. Only HTTP(S) is supported.
         """
 
         self._author = {
-            "name": str(name),
+            "name": name,
         }
 
         if url is not None:
-            self._author["url"] = str(url)
+            self._author["url"] = url
 
         if icon_url is not None:
-            self._author["icon_url"] = str(icon_url)
+            self._author["icon_url"] = icon_url
 
         return self
 
@@ -526,9 +521,7 @@ class Embed:
         """
         return [EmbedProxy(d) for d in getattr(self, "_fields", [])]  # type: ignore
 
-    def add_field(
-        self, *, name: Union[SupportsStr, str], value: Union[SupportsStr, str], inline: bool = True
-    ) -> Self:
+    def add_field(self, *, name: str, value: str, inline: bool = True) -> Self:
         """Adds a field to the embed object.
 
         This function returns the class instance to allow for fluent-style
@@ -536,9 +529,9 @@ class Embed:
 
         Parameters
         ----------
-        name: Union[:class:`abc.SupportsStr`, :class:`str`]
+        name: :class:`str`
             The name of the field.
-        value: Union[:class:`abc.SupportsStr`, :class:`str`]
+        value: :class:`str`
             The value of the field.
         inline: :class:`bool`
             Whether the field should be displayed inline. Defaults to ``True``.
@@ -546,8 +539,8 @@ class Embed:
 
         field = {
             "inline": inline,
-            "name": str(name),
-            "value": str(value),
+            "name": name,
+            "value": value,
         }
 
         try:
@@ -561,8 +554,8 @@ class Embed:
         self,
         index: int,
         *,
-        name: Union[SupportsStr, str],
-        value: Union[SupportsStr, str],
+        name: str,
+        value: str,
         inline: bool = True,
     ) -> Self:
         """Inserts a field before a specified index to the embed.
@@ -576,9 +569,9 @@ class Embed:
         ----------
         index: :class:`int`
             The index of where to insert the field.
-        name: Union[:class:`abc.SupportsStr`, :class:`str`]
+        name: :class:`str`
             The name of the field.
-        value: Union[:class:`abc.SupportsStr`, :class:`str`]
+        value: :class:`str`
             The value of the field.
         inline: :class:`bool`
             Whether the field should be displayed inline. Defaults to ``True``.
@@ -586,8 +579,8 @@ class Embed:
 
         field = {
             "inline": inline,
-            "name": str(name),
-            "value": str(value),
+            "name": name,
+            "value": value,
         }
 
         try:
@@ -638,8 +631,8 @@ class Embed:
         self,
         index: int,
         *,
-        name: Union[SupportsStr, str],
-        value: Union[SupportsStr, str],
+        name: str,
+        value: str,
         inline: bool = True,
     ) -> Self:
         """Modifies a field to the embed object.
@@ -653,9 +646,9 @@ class Embed:
         ----------
         index: :class:`int`
             The index of the field to modify.
-        name: Union[:class:`abc.SupportsStr`, :class:`str`]
+        name: :class:`str`
             The name of the field.
-        value: Union[:class:`abc.SupportsStr`, :class:`str`]
+        value: :class:`str`
             The value of the field.
         inline: :class:`bool`
             Whether the field should be displayed inline.
@@ -671,8 +664,8 @@ class Embed:
         except (TypeError, IndexError, AttributeError) as e:
             raise IndexError("field index out of range") from e
 
-        field["name"] = str(name)
-        field["value"] = str(value)
+        field["name"] = name
+        field["value"] = value
         field["inline"] = inline
         return self
 
