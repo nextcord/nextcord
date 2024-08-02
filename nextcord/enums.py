@@ -32,6 +32,7 @@ __all__ = (
     "VideoQualityMode",
     "ComponentType",
     "ButtonStyle",
+    "SelectDefaultType",
     "TextInputStyle",
     "StagePrivacyLevel",
     "InteractionType",
@@ -1828,6 +1829,12 @@ class ButtonStyle(IntEnum):
     """An alias for :attr:`ButtonStyle.danger`."""
     url = 5
     """An alias for :attr:`ButtonStyle.link`."""
+
+
+class SelectDefaultType(StrEnum):
+    channel = "channel"
+    role = "role"
+    user = "user"
 
 
 class TextInputStyle(IntEnum):
