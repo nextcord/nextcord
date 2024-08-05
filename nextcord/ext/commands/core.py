@@ -261,6 +261,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
 
         .. versionadded:: 2.0.0
     """
+
     __original_kwargs__: Dict[str, Any]
 
     def __new__(cls, *_args: Any, **kwargs: Any) -> Self:
@@ -1409,8 +1410,7 @@ class GroupMixin(Generic[CogT]):
             ]
         ],
         Command[CogT, P, T],
-    ]:
-        ...
+    ]: ...
 
     @overload
     def command(
@@ -1419,8 +1419,7 @@ class GroupMixin(Generic[CogT]):
         cls: Type[CommandT] = Command,
         *args: Any,
         **kwargs: Any,
-    ) -> Callable[[Callable[Concatenate[Context, P], Coro[Any]]], CommandT]:
-        ...
+    ) -> Callable[[Callable[Concatenate[Context, P], Coro[Any]]], CommandT]: ...
 
     def command(
         self,
@@ -1462,8 +1461,7 @@ class GroupMixin(Generic[CogT]):
             ]
         ],
         Group[CogT, P, T],
-    ]:
-        ...
+    ]: ...
 
     @overload
     def group(
@@ -1472,8 +1470,7 @@ class GroupMixin(Generic[CogT]):
         cls: Type[GroupT] = MISSING,
         *args: Any,
         **kwargs: Any,
-    ) -> Callable[[Callable[Concatenate[Context, P], Coro[Any]]], GroupT]:
-        ...
+    ) -> Callable[[Callable[Concatenate[Context, P], Coro[Any]]], GroupT]: ...
 
     def group(
         self,
@@ -1629,8 +1626,7 @@ def command(
         ]
     ],
     Command[CogT, P, T],
-]:
-    ...
+]: ...
 
 
 @overload
@@ -1646,8 +1642,7 @@ def command(
         ]
     ],
     CommandT,
-]:
-    ...
+]: ...
 
 
 def command(
@@ -1717,8 +1712,7 @@ def group(
         ]
     ],
     Group[CogT, P, T],
-]:
-    ...
+]: ...
 
 
 @overload
@@ -1734,8 +1728,7 @@ def group(
         ]
     ],
     Group[CogT, P, T],
-]:
-    ...
+]: ...
 
 
 @overload
@@ -1751,8 +1744,7 @@ def group(
         ]
     ],
     GroupT,
-]:
-    ...
+]: ...
 
 
 def group(

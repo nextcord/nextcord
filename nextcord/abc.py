@@ -266,8 +266,7 @@ class GuildChannel:
 
         def __init__(
             self, *, state: ConnectionState, guild: Guild, data: GuildChannelPayload
-        ) -> None:
-            ...
+        ) -> None: ...
 
     def __str__(self) -> str:
         return self.name
@@ -385,7 +384,7 @@ class GuildChannel:
                 position, parent_id=parent_id, lock_permissions=lock_permissions, reason=reason
             )
 
-        overwrites = options.get("overwrites", None)
+        overwrites = options.get("overwrites")
         if overwrites is not None:
             perms = []
             for target, perm in overwrites.items():
@@ -777,8 +776,7 @@ class GuildChannel:
         *,
         overwrite: Optional[PermissionOverwrite] = ...,
         reason: Optional[str] = ...,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     async def set_permissions(
@@ -787,8 +785,7 @@ class GuildChannel:
         *,
         reason: Optional[str] = ...,
         **permissions: bool,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     async def set_permissions(
         self,
@@ -961,8 +958,7 @@ class GuildChannel:
         category: Optional[Snowflake] = ...,
         sync_permissions: bool = ...,
         reason: Optional[str] = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     async def move(
@@ -973,8 +969,7 @@ class GuildChannel:
         category: Optional[Snowflake] = ...,
         sync_permissions: bool = ...,
         reason: Optional[str] = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     async def move(
@@ -985,8 +980,7 @@ class GuildChannel:
         category: Optional[Snowflake] = ...,
         sync_permissions: bool = ...,
         reason: Optional[str] = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     async def move(
@@ -997,8 +991,7 @@ class GuildChannel:
         category: Optional[Snowflake] = ...,
         sync_permissions: bool = ...,
         reason: Optional[str] = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     async def move(
         self,
@@ -1270,8 +1263,7 @@ class Messageable:
         view: Optional[View] = ...,
         flags: Optional[MessageFlags] = ...,
         suppress_embeds: Optional[bool] = ...,
-    ) -> Message:
-        ...
+    ) -> Message: ...
 
     @overload
     async def send(
@@ -1290,8 +1282,7 @@ class Messageable:
         view: Optional[View] = ...,
         flags: Optional[MessageFlags] = ...,
         suppress_embeds: Optional[bool] = ...,
-    ) -> Message:
-        ...
+    ) -> Message: ...
 
     @overload
     async def send(
@@ -1310,8 +1301,7 @@ class Messageable:
         view: Optional[View] = ...,
         flags: Optional[MessageFlags] = ...,
         suppress_embeds: Optional[bool] = ...,
-    ) -> Message:
-        ...
+    ) -> Message: ...
 
     @overload
     async def send(
@@ -1330,8 +1320,7 @@ class Messageable:
         view: Optional[View] = ...,
         flags: Optional[MessageFlags] = ...,
         suppress_embeds: Optional[bool] = ...,
-    ) -> Message:
-        ...
+    ) -> Message: ...
 
     async def send(
         self,
