@@ -460,12 +460,10 @@ class Decoder(_OpusStruct):
         return ret.value
 
     @overload
-    def decode(self, data: bytes, *, fec: bool) -> bytes:
-        ...
+    def decode(self, data: bytes, *, fec: bool) -> bytes: ...
 
     @overload
-    def decode(self, data: Literal[None], *, fec: Literal[False]) -> bytes:
-        ...
+    def decode(self, data: Literal[None], *, fec: Literal[False]) -> bytes: ...
 
     def decode(self, data: Optional[bytes], *, fec: bool = False) -> bytes:
         if data is None and fec:

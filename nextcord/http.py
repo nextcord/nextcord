@@ -78,8 +78,7 @@ if TYPE_CHECKING:
     T = TypeVar("T")
 
     class DispatchProtocol(Protocol):
-        def __call__(self, event: str, *args: Any) -> None:
-            ...
+        def __call__(self, event: str, *args: Any) -> None: ...
 
     Response = Coroutine[Any, Any, T]
 
@@ -141,12 +140,10 @@ class Route:
         return f"{self.channel_id}:{self.guild_id}:{self.path}"
 
 
-class RateLimitMigrating(DiscordException):
-    ...
+class RateLimitMigrating(DiscordException): ...
 
 
-class IncorrectBucket(DiscordException):
-    ...
+class IncorrectBucket(DiscordException): ...
 
 
 class RateLimit:
