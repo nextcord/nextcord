@@ -866,8 +866,14 @@ class Client:
         """
         loop = self.loop  # TODO: Make this asyncio.new_event_loop() if self.loop is removed.
 
+        # This allows Nextcord to gracefully close when Terminate/Signal 7 is received.
         with contextlib.suppress(NotImplementedError):
-            loop.add_signal_handler(signal.SIGTERM, lambda: loop.stop())
+
+            def graceful_close() -> None:
+                loop.create_task(self.close())
+
+            loop.add_signal_handler(signal.SIGTERM, graceful_close)
+            _log.debug("Registered SIGTERM signal handler.")
 
         try:
             loop.run_until_complete(self.start(token, reconnect=reconnect))
@@ -877,8 +883,11 @@ class Client:
             if not self.is_closed():
                 loop.run_until_complete(self.close())
 
-            # This will cancel all tasks in the loop, including non-Nextcord ones. If you don't want that to occur, run
-            #  .start() and .close() manually.
+            # This allows tasks that are pending cancellation to be cancelled and cleaned up. If a better
+            #  method of "wait until all marked-as-cancelled tasks are cancelled" is found, replace this.
+            loop.run_until_complete(asyncio.sleep(0.1))
+            # This will cancel all tasks, including non-Nextcord ones, in the loop and close it. If you don't want
+            # that to occur, run .start() and .close() manually.
             _cleanup_loop(loop)
 
     # properties
