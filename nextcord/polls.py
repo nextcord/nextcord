@@ -273,7 +273,7 @@ class PollCreateRequest:
     question: :class:`PollMedia`
         The question of the poll. Currently only `text` is supported.
     duration: Optional[:class:`int`]
-        The number of hours this poll should be open for. Defaults to ``24``
+        The number of hours this poll should be open for. Defaults to ``24``. Max ``768`` (32 days).
     allow_multiselect: Optional[:class:`bool`]
         Whether voters can select more than one choice. Defaults to False.
     answers: Optional[List[:class:`PollAnswer`]]
