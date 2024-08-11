@@ -1284,6 +1284,7 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     :type answer_id: :class:`int`
     :param user: The user who removed their vote on the poll.
     :type user: :class:`User`
+
 .. _discord-api-utils:
 
 Utility Functions
