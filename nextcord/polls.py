@@ -28,8 +28,6 @@ if TYPE_CHECKING:
         PollResults as PollResultsPayload,
     )
 
-    # for reviewers: this typehint type is precedent in the nextcord codebase i.e.
-    # https://github.com/nextcord/nextcord/blob/master/nextcord/message.py#L68
     EmojiInputType = Union[Emoji, PartialEmoji, str]
 
 __all__ = (
