@@ -581,7 +581,7 @@ class AutoModerationActionExecution:
 
         .. note::
 
-            This requires :attr:`Intents.message_conrent` to not be empty.
+            This requires :attr:`Intents.message_content` to not be empty.
     """
 
     def __init__(self, *, data: ActionExecutionPayload, state: ConnectionState) -> None:
