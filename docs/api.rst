@@ -1444,7 +1444,7 @@ of :class:`enum.Enum`.
 
 .. autoclass:: AuditLogAction
     :members:
-    
+
 .. autoclass:: InviteType
     :members:
 
