@@ -273,7 +273,7 @@ class PollCreateRequest:
     Attributes
     ----------
     question: :class:`PollMedia`
-        The question of the poll. Current only `text` is supported.
+        The question of the poll. Currently only `text` is supported.
     duration: Optional[:class:`int`]
         The number of hours this poll should be open for. Defaults to ``24``
     allow_multiselect: Optional[:class:`bool`]
