@@ -1447,6 +1447,7 @@ of :class:`enum.Enum`.
 
 .. autoclass:: PollLayoutType
     :members:
+
 Async Iterator
 --------------
 
