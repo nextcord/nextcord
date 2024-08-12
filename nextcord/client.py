@@ -122,6 +122,18 @@ def _cancel_tasks(loop: asyncio.AbstractEventLoop) -> None:
 
 
 def _cleanup_loop(loop: asyncio.AbstractEventLoop) -> None:
+    """
+    This will cancel all tasks in the given loop, including any async tasks awaiting execution or potentially
+    mid-execution.
+
+    This does not restrict itself to nextcord-module tasks. If the loop provided is being used for non-Nextcord tasks,
+    this WILL cancel them as well.
+
+    Parameters
+    ----------
+    loop: :class:`asyncio.AbstractEventLoop`
+        Asyncio event loop to cancel all tasks and shutdown async generators of.
+    """
     try:
         _cancel_tasks(loop)
         loop.run_until_complete(loop.shutdown_asyncgens())
@@ -828,7 +840,7 @@ class Client:
         await self.login(token)
         await self.connect(reconnect=reconnect)
 
-    def run(self, *args: Any, **kwargs: Any) -> None:
+    def run(self, token: str, *, reconnect: bool = True) -> None:
         """A blocking call that abstracts away the event loop
         initialisation from you.
 
@@ -852,43 +864,31 @@ class Client:
             is blocking. That means that registration of events or anything being
             called after this function call will not execute until it returns.
         """
-        loop = self.loop
+        loop = self.loop  # TODO: Make this asyncio.new_event_loop() if self.loop is removed.
+
+        # This allows Nextcord to gracefully close when Terminate/Signal 7 is received.
+        with contextlib.suppress(NotImplementedError):
+
+            def graceful_close() -> None:
+                loop.create_task(self.close())
+
+            loop.add_signal_handler(signal.SIGTERM, graceful_close)
+            _log.debug("Registered SIGTERM signal handler.")
 
         try:
-            loop.add_signal_handler(signal.SIGINT, lambda: loop.stop())
-            loop.add_signal_handler(signal.SIGTERM, lambda: loop.stop())
-        except NotImplementedError:
-            pass
-
-        async def runner() -> None:
-            try:
-                await self.start(*args, **kwargs)
-            finally:
-                if not self.is_closed():
-                    await self.close()
-
-        def stop_loop_on_completion(_future) -> None:
-            loop.stop()
-
-        future = asyncio.ensure_future(runner(), loop=loop)
-        future.add_done_callback(stop_loop_on_completion)
-        try:
-            loop.run_forever()
+            loop.run_until_complete(self.start(token, reconnect=reconnect))
         except KeyboardInterrupt:
-            _log.info("Received signal to terminate bot and event loop.")
+            _log.info("Received keyboard interrupt, closing.")
         finally:
-            future.remove_done_callback(stop_loop_on_completion)
-            _log.info("Cleaning up tasks.")
+            if not self.is_closed():
+                loop.run_until_complete(self.close())
+
+            # This allows tasks that are pending cancellation to be cancelled and cleaned up. If a better
+            #  method of "wait until all marked-as-cancelled tasks are cancelled" is found, replace this.
+            loop.run_until_complete(asyncio.sleep(0.1))
+            # This will cancel all tasks, including non-Nextcord ones, in the loop and close it. If you don't want
+            # that to occur, run .start() and .close() manually.
             _cleanup_loop(loop)
-
-        if not future.cancelled():
-            try:
-                return future.result()
-            except KeyboardInterrupt:
-                # I am unsure why this gets raised here but suppress it anyway
-                return None
-
-        return None
 
     # properties
 
