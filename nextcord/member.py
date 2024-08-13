@@ -404,7 +404,7 @@ class Member(abc.Messageable, _UserTag):
             u.name, u._avatar, u.discriminator, u.global_name, u._public_flags = modified
             # Signal to dispatch on_user_update
             return to_return, u
-        return None`
+        return None
 
     @property
     def status(self) -> Union[Status, str]:
