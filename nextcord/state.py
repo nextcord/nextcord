@@ -64,7 +64,10 @@ if TYPE_CHECKING:
     from .gateway import DiscordWebSocket
     from .guild import GuildChannel, VocalGuildChannel
     from .http import HTTPClient
-    from .types.activity import Activity as ActivityPayload
+    from .types.activity import (
+        Activity as ActivityPayload,
+        PartialPresenceUpdate as PartialPresencePayload,
+    )
     from .types.channel import DMChannel as DMChannelPayload
     from .types.emoji import Emoji as EmojiPayload
     from .types.guild import Guild as GuildPayload
@@ -155,6 +158,7 @@ class ConnectionState:
         hooks: Dict[str, Callable],
         http: HTTPClient,
         loop: asyncio.AbstractEventLoop,
+        bot: Client,
         max_messages: Optional[int] = 1000,
         application_id: Optional[int] = None,
         heartbeat_timeout: float = 60.0,
@@ -166,6 +170,8 @@ class ConnectionState:
         chunk_guilds_at_startup: bool = MISSING,
         member_cache_flags: MemberCacheFlags = MISSING,
     ) -> None:
+        self._bot = bot
+        # self._cache = cache
         self.loop: asyncio.AbstractEventLoop = loop
         self.http: HTTPClient = http
         self.max_messages: Optional[int] = max_messages
@@ -266,7 +272,7 @@ class ConnectionState:
         # references now using a regular dictionary with eviction being done
         # using __del__. Testing this for memory leaks led to no discernible leaks,
         # though more testing will have to be done.
-        self._users: Dict[int, User] = {}
+        # self._users: Dict[int, User] = {}
         self._emojis: Dict[int, Emoji] = {}
         self._stickers: Dict[int, GuildSticker] = {}
         self._guilds: Dict[int, Guild] = {}
@@ -292,7 +298,7 @@ class ConnectionState:
         else:
             self._messages: Optional[Deque[Message]] = None
 
-    def process_chunk_requests(
+    async def process_chunk_requests(
         self, guild_id: int, nonce: Optional[str], members: List[Member], complete: bool
     ) -> None:
         removed = []
@@ -363,6 +369,7 @@ class ConnectionState:
             return user
 
     def deref_user(self, user_id: int) -> None:
+        # TODO: Never called in lib? Remove.
         self._users.pop(user_id, None)
 
     def create_user(self, data: Union[PartialUserPayload, UserPayload]) -> User:
@@ -1258,14 +1265,16 @@ class ConnectionState:
         finally:
             self._ready_task = None
 
-    def parse_ready(self, data) -> None:
+    async def parse_ready(self, data) -> None:
         if self._ready_task is not None:
             self._ready_task.cancel()
 
         self._ready_state = asyncio.Queue()
         self.clear(views=False)
-        self.user = ClientUser(state=self, data=data["user"])
-        self.store_user(data["user"])
+        # self.user = ClientUser(state=self, data=data["user"])
+        self.user = await ClientUser.from_user_payload(data["user"], bot=self._bot)
+        # self.store_user(data["user"])
+        await self._bot.cache.add_user(data["user"])
 
         if self.application_id is None:
             try:
@@ -1286,10 +1295,12 @@ class ConnectionState:
     def parse_resumed(self, data) -> None:
         self.dispatch("resumed")
 
-    def parse_message_create(self, data) -> None:
+    async def parse_message_create(self, data) -> None:
         channel, _ = self._get_guild_channel(data)
+        await self._bot.cache.add_message(data)
         # channel would be the correct type here
-        message = Message(channel=channel, data=data, state=self)  # type: ignore
+        # message = Message(channel=channel, data=data, state=self)  # type: ignore
+        message = await Message.from_message_payload(data, bot=self._bot)
         self.dispatch("message", message)
         if self._messages is not None:
             self._messages.append(message)
@@ -1297,8 +1308,9 @@ class ConnectionState:
         if channel and channel.__class__ in (TextChannel, ForumChannel, Thread, VoiceChannel):
             channel.last_message_id = message.id  # type: ignore
 
-    def parse_message_delete(self, data) -> None:
+    async def parse_message_delete(self, data) -> None:
         raw = RawMessageDeleteEvent(data)
+        await self._bot.cache.remove_message(raw.message_id)
         found = self._get_message(raw.message_id)
         raw.cached_message = found
         self.dispatch("raw_message_delete", raw)
@@ -1306,7 +1318,7 @@ class ConnectionState:
             self.dispatch("message_delete", found)
             self._messages.remove(found)
 
-    def parse_message_delete_bulk(self, data) -> None:
+    async def parse_message_delete_bulk(self, data) -> None:
         raw = RawBulkMessageDeleteEvent(data)
         if self._messages:
             found_messages = [
@@ -1320,6 +1332,7 @@ class ConnectionState:
             self.dispatch("bulk_message_delete", found_messages)
             for msg in found_messages:
                 # self._messages won't be None here
+                await self._bot.cache.remove_message(msg.id)
                 self._messages.remove(msg)  # type: ignore
 
     def parse_message_update(self, data) -> None:
@@ -1415,8 +1428,9 @@ class ConnectionState:
                 if reaction:
                     self.dispatch("reaction_clear_emoji", reaction)
 
-    def parse_interaction_create(self, data) -> None:
-        interaction = self._get_client().get_interaction(data=data)
+    async def parse_interaction_create(self, data) -> None:
+        # interaction = self._get_client().get_interaction(data=data)
+        interaction = await self._get_client().typesheet.create_interaction(data)
         if data["type"] == 3:  # interaction component
             custom_id = interaction.data["custom_id"]  # type: ignore
             component_type = interaction.data["component_type"]  # type: ignore
@@ -1425,10 +1439,9 @@ class ConnectionState:
             custom_id = interaction.data["custom_id"]  # type: ignore
             # key exists if type is 5 etc
             self._modal_store.dispatch(custom_id, interaction)
-
         self.dispatch("interaction", interaction)
 
-    def parse_presence_update(self, data) -> None:
+    async def parse_presence_update(self, data: PartialPresencePayload) -> None:
         guild_id = utils.get_as_snowflake(data, "guild_id")
         # guild_id won't be None here
         guild = self._get_guild(guild_id)
@@ -1438,27 +1451,60 @@ class ConnectionState:
 
         user = data["user"]
         member_id = int(user["id"])
-        member = guild.get_member(member_id)
-        if member is None:
+        # member = guild.get_member(member_id)
+        old_member_data = await self._bot.cache.get_member(member_id, guild_id)
+        if old_member_data is None:
             _log.debug(
                 "PRESENCE_UPDATE referencing an unknown member ID: %s. Discarding", member_id
             )
             return
 
-        old_member = Member._copy(member)
-        user_update = member._presence_update(data=data, user=user)
+        # old_member = Member._copy(member)
+        # user_update = member._presence_update(data=data, user=user)
+        # TODO: This seems slightly hacky.
+
+        new_member_data = copy.deepcopy(old_member_data)
+        # for key in data["user"]:
+        #     if data["user"][key] != old_member_data["user"][key]:
+        #         user_update = True
+        # Is this inefficient?
+        if data["user"].items() <= old_member_data["user"].items():
+            user_update = False
+        else:
+            new_member_data["user"].update(data["user"])
+            await self._bot.cache.add_member(new_member_data, guild_id)
+            user_update = True
+
+        # TODO: Look at this and figure out if this is actually good?
+        old_presence_data = await self._bot.cache.get_presence(member_id, guild_id)
+        old_member = await self._bot.typesheet.create_member(
+            old_member_data, old_presence_data, guild_id
+        )
+        new_member = await self._bot.typesheet.create_member(new_member_data, data, guild_id)
+
+        # user_update[0] is the old unmodified user object.
+        # user_update[1] is the modified one.
+        # if user_update:
+        #     self.dispatch("user_update", user_update[0], user_update[1])
+        #
+        # self.dispatch("presence_update", old_member, member)
+
+        await self._bot.cache.add_presence(data)
+
         if user_update:
-            self.dispatch("user_update", user_update[0], user_update[1])
+            self.dispatch("user_update", old_member, new_member)
 
-        self.dispatch("presence_update", old_member, member)
+        self.dispatch("presence_update", old_member, new_member)
 
-    def parse_user_update(self, data) -> None:
+    async def parse_user_update(self, data) -> None:
         # self.user is *always* cached when this is called
-        user: ClientUser = self.user  # type: ignore
-        user._update(data)
-        ref = self._users.get(user.id)
-        if ref:
-            ref._update(data)
+        await self._bot.cache.add_user(data)
+        # TODO: Re-add the update to self.user?
+        # user: ClientUser = self.user  # type: ignore
+        # user._update(data)
+        # ref = self._users.get(user.id)
+        # if ref:
+        #     ref._update(data)
 
     def parse_invite_create(self, data) -> None:
         invite = Invite.from_gateway(state=self, data=data)
@@ -1693,7 +1739,7 @@ class ConnectionState:
             else:
                 self.dispatch("thread_remove", thread)
 
-    def parse_guild_member_add(self, data) -> None:
+    async def parse_guild_member_add(self, data) -> None:
         guild = self._get_guild(int(data["guild_id"]))
         if guild is None:
             _log.debug(
@@ -1701,7 +1747,7 @@ class ConnectionState:
                 data["guild_id"],
             )
             return
-
+        await self._bot.cache.add_member(data, int(data["guild_id"]))
         member = Member(guild=guild, data=data, state=self)
         if self.member_cache_flags.joined:
             guild._add_member(member)
@@ -1734,7 +1780,7 @@ class ConnectionState:
         raw = RawMemberRemoveEvent(data=data, state=self)
         self.dispatch("raw_member_remove", raw)
 
-    def parse_guild_member_update(self, data) -> None:
+    async def parse_guild_member_update(self, data) -> None:
         guild = self._get_guild(int(data["guild_id"]))
         user = data["user"]
         user_id = int(user["id"])
@@ -1744,6 +1790,8 @@ class ConnectionState:
                 data["guild_id"],
             )
             return
+
+        await self._bot.cache.add_member(data, int(data["guild_id"]))
 
         member = guild.get_member(user_id)
         if member is not None:
@@ -1839,13 +1887,16 @@ class ConnectionState:
         else:
             self.dispatch("guild_join", guild)
 
-    def parse_guild_create(self, data) -> None:
+    async def parse_guild_create(self, data) -> None:
         unavailable = data.get("unavailable")
         if unavailable is True:
             # joined a guild with unavailable == True so..
             return
 
         guild = self._get_create_guild(data)
+        await self._bot.cache.add_guild(data)
+        for mdata in data.get("members", []):
+            await self._bot.cache.add_member(mdata, int(data["id"]))
 
         try:
             # Notify the on_ready state, if any, that this guild is complete.
@@ -1968,15 +2019,26 @@ class ConnectionState:
                 data["guild_id"],
             )
 
-    def parse_guild_members_chunk(self, data) -> None:
+    async def parse_guild_members_chunk(self, data) -> None:
         guild_id = int(data["guild_id"])
         guild = self._get_guild(guild_id)
         presences = data.get("presences", [])
 
+        # TODO: I think most of this is useless, work on this later.
+
         # the guild won't be None here
-        members = [Member(guild=guild, data=member, state=self) for member in data.get("members", [])]  # type: ignore
+        # members = [Member(guild=guild, data=member, state=self) for member in data.get("members", [])]  # type: ignore
+        members = [
+            # await Member.from_member_payload(member, guild_id, bot=self._bot) for member in data.get("members", [])
+            await self._bot.typesheet.create_member(member, None, guild_id)
+            for member in data.get("members", [])
+        ]
         _log.debug("Processed a chunk for %s members in guild ID %s.", len(members), guild_id)
 
+        for member in data.get("members", []):
+            await self._bot.cache.add_member(member, guild_id)
+
+        # TODO: Oh crap.
         if presences:
             member_dict = {str(member.id): member for member in members}
             for presence in presences:
@@ -1986,8 +2048,10 @@ class ConnectionState:
                 if member is not None:
                     member._presence_update(presence, user)
 
+                await self._bot.cache.add_presence(presence)
+
         complete = data.get("chunk_index", 0) + 1 == data.get("chunk_count")
-        self.process_chunk_requests(guild_id, data.get("nonce"), members, complete)
+        await self.process_chunk_requests(guild_id, data.get("nonce"), members, complete)
 
     def parse_guild_integrations_update(self, data) -> None:
         guild = self._get_guild(int(data["guild_id"]))
@@ -2097,7 +2161,7 @@ class ConnectionState:
                 data["guild_id"],
             )
 
-    def parse_voice_state_update(self, data) -> None:
+    async def parse_voice_state_update(self, data) -> None:
         guild = self._get_guild(utils.get_as_snowflake(data, "guild_id"))
         channel_id = utils.get_as_snowflake(data, "channel_id")
         flags = self.member_cache_flags
@@ -2125,6 +2189,10 @@ class ConnectionState:
                     elif channel_id is not None:
                         guild._add_member(member)
 
+                    if "user" in data:
+                        # TODO: Address this?
+                        await self._bot.cache.add_member(data, int(data["guild_id"]))
+
                 self.dispatch("voice_state_update", member, before, after)
             else:
                 _log.debug(
@@ -2147,14 +2215,15 @@ class ConnectionState:
             self._background_tasks.add(task)
             task.add_done_callback(self._background_tasks.discard)
 
-    def parse_typing_start(self, data) -> None:
+    async def parse_typing_start(self, data) -> None:
         raw = RawTypingEvent(data)
 
         member_data = data.get("member")
         if member_data:
             guild = self._get_guild(raw.guild_id)
             if guild is not None:
-                raw.member = Member(data=member_data, guild=guild, state=self)
+                # raw.member = Member(data=member_data, guild=guild, state=self)
+                raw.member = await self._bot.typesheet.create_member(member_data, None, guild.id)
             else:
                 raw.member = None
         else:
@@ -2163,17 +2232,23 @@ class ConnectionState:
 
         channel, guild = self._get_guild_channel(data)
         if channel is not None:  # pyright: ignore[reportUnnecessaryComparison]
-            user = raw.member or self._get_typing_user(channel, raw.user_id)  # type: ignore
+            user = raw.member or await self._get_typing_user(channel, raw.user_id)  # type: ignore
             # will be messageable channel if we get here
 
             if user is not None:
                 self.dispatch("typing", channel, user, raw.when)
 
-    def _get_typing_user(
+    async def _get_typing_user(
         self, channel: Optional[MessageableChannel], user_id: int
     ) -> Optional[Union[User, Member]]:
         if isinstance(channel, DMChannel):
-            return channel.recipient or self.get_user(user_id)
+            # return channel.recipient or self.get_user(user_id)
+            if channel.recipient:
+                return channel.recipient
+            elif user_data := await self._bot.cache.get_user(user_id):
+                return await self._bot.typesheet.create_user(user_data)
+            else:
+                return None
 
         if isinstance(channel, (Thread, TextChannel)):
             return channel.guild.get_member(user_id)
@@ -2484,13 +2559,14 @@ class AutoShardedConnectionState(ConnectionState):
         self.call_handlers("ready")
         self.dispatch("ready")
 
-    def parse_ready(self, data) -> None:
+    async def parse_ready(self, data) -> None:
         if not hasattr(self, "_ready_state"):
             self._ready_state = asyncio.Queue()
 
         self.user = user = ClientUser(state=self, data=data["user"])
         # self._users is a list of Users, we're setting a ClientUser
-        self._users[user.id] = user  # type: ignore
+        # self._users[user.id] = user  # type: ignore
+        await self._bot.cache.add_user(data["user"])
 
         if self.application_id is None:
             try:
