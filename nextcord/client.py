@@ -2115,6 +2115,7 @@ class Client:
                     **response_signature
                 )
                 if app_cmd:
+                    from .application_command import BaseApplicationCommand
                     if not isinstance(app_cmd, BaseApplicationCommand):
                         raise ValueError(
                             (
