@@ -411,6 +411,8 @@ class AuditLogEntry(Hashable):
 
     Attributes
     ----------
+    guild: :class:`Guild`
+        The guild to which the audit log belongs.
     action: :class:`AuditLogAction`
         The action that was done.
     user: :class:`abc.User`
@@ -418,14 +420,11 @@ class AuditLogEntry(Hashable):
         then it's a :class:`User`.
     id: :class:`int`
         The entry ID.
-    target: Any
-        The target that got changed. The exact type of this depends on
-        the action being done.
     reason: Optional[:class:`str`]
         The reason this action was done.
     extra: Any
         Extra information that this entry has that might be useful.
-        For most actions, this is ``None``. However in some cases it
+        For most actions, this is ``None``. However, in some cases it
         contains extra information. See :class:`AuditLogAction` for
         which actions have this field filled out.
     """
@@ -549,6 +548,9 @@ class AuditLogEntry(Hashable):
 
     @utils.cached_property
     def target(self) -> AuditTarget:
+        """Any: The target that got changed.
+        The exact type of this depends on the action being done.
+        """
         try:
             converter = getattr(self, "_convert_target_" + str(self.action.target_type))
         except AttributeError:

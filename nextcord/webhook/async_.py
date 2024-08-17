@@ -1152,12 +1152,12 @@ class Webhook(BaseWebhook):
 
         state = channel._state
         session = channel._state.http._HTTPClient__session
-        return cls(feed, session=session, state=state, token=state.http.token)
+        return cls(feed, session=session, state=state, token=state._get_client()._token)
 
     @classmethod
     def from_state(cls, data, state) -> Webhook:
         session = state.http._HTTPClient__session
-        return cls(data, session=session, state=state, token=state.http.token)
+        return cls(data, session=session, state=state, token=state._get_client()._token)
 
     async def fetch(self, *, prefer_auth: bool = True) -> Webhook:
         """|coro|
@@ -1527,7 +1527,7 @@ class Webhook(BaseWebhook):
         if view is not MISSING:
             if isinstance(self._state, _WebhookState):
                 raise InvalidArgument("Webhook views require an associated state with the webhook")
-            if ephemeral is True and view.timeout is None:
+            if ephemeral is True and view.timeout is None and view.prevent_update:
                 view.timeout = 15 * 60.0
 
         params = handle_message_parameters(
@@ -1566,7 +1566,7 @@ class Webhook(BaseWebhook):
         if wait:
             msg = self._create_message(data)
 
-        if view is not MISSING and not view.is_finished():
+        if view is not MISSING and not view.is_finished() and view.prevent_update:
             message_id = None if msg is None else msg.id
             self._state.store_view(view, message_id)
 
@@ -1730,7 +1730,7 @@ class Webhook(BaseWebhook):
         )
 
         message = self._create_message(data)
-        if view and not view.is_finished():
+        if view and not view.is_finished() and view.prevent_update:
             self._state.store_view(view, message_id)
         return message
 
