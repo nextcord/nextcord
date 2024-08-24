@@ -45,10 +45,12 @@ class flag_value:
         self.__doc__ = func.__doc__
 
     @overload
-    def __get__(self, instance: None, owner: Type[BF]) -> Self: ...
+    def __get__(self, instance: None, owner: Type[BF]) -> Self:
+        ...
 
     @overload
-    def __get__(self, instance: BF, owner: Type[BF]) -> bool: ...
+    def __get__(self, instance: BF, owner: Type[BF]) -> bool:
+        ...
 
     def __get__(self, instance: Optional[BF], owner: Type[BF]) -> Any:
         if instance is None:

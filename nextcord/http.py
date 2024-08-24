@@ -4756,14 +4756,12 @@ class HTTPClient:
         after: Snowflake = MISSING,
         limit: int = MISSING,
     ) -> Response[Dict[Literal["users"], List[user.User]]]:
-        params: Dict[str, Union[Snowflake, int]]= {}
+        params: Dict[str, Union[Snowflake, int]] = {}
         if after is not MISSING:
-            params['after'] = after
+            params["after"] = after
 
         if limit is not MISSING:
-            params['limit'] = limit
-
-
+            params["limit"] = limit
 
         r = Route(
             "GET",

@@ -1009,7 +1009,7 @@ class AnswerVotersIterator(_AsyncIterator[Union["User", "Member"]]):
             raise NoMoreItems from None
 
     async def fill_answer_voters(self) -> None:
-        # this is a hack cuz >circular import< 
+        # this is a hack cuz >circular import<
         from .user import User
 
         if self.limit > 0:
