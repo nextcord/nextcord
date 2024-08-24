@@ -4753,14 +4753,14 @@ class HTTPClient:
         *,
         auth: Optional[str] = MISSING,
         retry_request: bool = True,
-        after: Snowflake = MISSING,
-        limit: int = MISSING,
+        after: Optional[Snowflake] = None,
+        limit: Optional[int] = None,
     ) -> Response[Dict[Literal["users"], List[user.User]]]:
         params: Dict[str, Union[Snowflake, int]] = {}
-        if after is not MISSING:
+        if after is not None:
             params["after"] = after
 
-        if limit is not MISSING:
+        if limit is not None:
             params["limit"] = limit
 
         r = Route(
