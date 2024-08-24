@@ -36,6 +36,7 @@ __all__ = (
     "MemberIterator",
     "ScheduledEventIterator",
     "ScheduledEventUserIterator",
+    "AnswerVotersIterator",
 )
 
 if TYPE_CHECKING:
@@ -1008,9 +1009,7 @@ class AnswerVotersIterator(_AsyncIterator[Union["User", "Member"]]):
             raise NoMoreItems from None
 
     async def fill_answer_voters(self) -> None:
-        # for reviewers: this hack is precedent in nextcord codebase:
-        # https://github.com/nextcord/nextcord/blob/master/nextcord/iterators.py#L194
-
+        # this is a hack cuz >circular import< 
         from .user import User
 
         if self.limit > 0:

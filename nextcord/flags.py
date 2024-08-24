@@ -45,12 +45,10 @@ class flag_value:
         self.__doc__ = func.__doc__
 
     @overload
-    def __get__(self, instance: None, owner: Type[BF]) -> Self:
-        ...
+    def __get__(self, instance: None, owner: Type[BF]) -> Self: ...
 
     @overload
-    def __get__(self, instance: BF, owner: Type[BF]) -> bool:
-        ...
+    def __get__(self, instance: BF, owner: Type[BF]) -> bool: ...
 
     def __get__(self, instance: Optional[BF], owner: Type[BF]) -> Any:
         if instance is None:
@@ -1129,7 +1127,7 @@ class Intents(BaseFlags):
 
     @flag_value
     def direct_message_polls(self) -> int:
-        """:class:`bool`: Whether poll related events in guilds are enabled.
+        """:class:`bool`: Whether poll related events in DMs are enabled.
 
         This corresponds to the following events:
         - :func:`on_message_poll_vote_add` (DM only)

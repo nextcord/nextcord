@@ -50,6 +50,7 @@ __all__ = (
     "RoleConnectionMetadataType",
     "ForumLayoutType",
     "InviteType",
+    "PollLayoutType",
 )
 
 

@@ -4753,10 +4753,18 @@ class HTTPClient:
         *,
         auth: Optional[str] = MISSING,
         retry_request: bool = True,
-        **payload: Any,
+        after: Snowflake = MISSING,
+        limit: int = MISSING,
     ) -> Response[Dict[Literal["users"], List[user.User]]]:
-        valid_keys = ("after", "limit")
-        params = {k: v for k, v in payload.items() if k in valid_keys}
+        params: Dict[str, Union[Snowflake, int]]= {}
+        if after is not MISSING:
+            params['after'] = after
+
+        if limit is not MISSING:
+            params['limit'] = limit
+
+
+
         r = Route(
             "GET",
             "/channels/{channel_id}/polls/{message_id}/answers/{answer_id}",
