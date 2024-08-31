@@ -2586,7 +2586,6 @@ class Client:
         *,
         name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         guild_ids: Optional[Iterable[int]] = MISSING,
-        dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         nsfw: bool = False,
         integration_types: Optional[Iterable[Union[IntegrationType, int]]] = None,
@@ -2606,9 +2605,6 @@ class Client:
             IDs of :class:`Guild`'s to add this command to. If not passed and :attr:`Client.default_guild_ids` is
             set, then those default guild ids will be used instead. If both of those are unset, then the command will
             be a global command.
-        dm_permission: :class:`bool`
-            If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
-            usable in DMs. Only for global commands, but will not error on guild.
         default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
             Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
@@ -2635,7 +2631,6 @@ class Client:
                 name=name,
                 name_localizations=name_localizations,
                 guild_ids=guild_ids,
-                dm_permission=dm_permission,
                 default_member_permissions=default_member_permissions,
                 nsfw=nsfw,
                 integration_types=integration_types,
@@ -2653,7 +2648,6 @@ class Client:
         *,
         name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         guild_ids: Optional[Iterable[int]] = MISSING,
-        dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         nsfw: bool = False,
         integration_types: Optional[Iterable[Union[IntegrationType, int]]] = None,
@@ -2673,9 +2667,6 @@ class Client:
             IDs of :class:`Guild`'s to add this command to. If not passed and :attr:`Client.default_guild_ids` is
             set, then those default guild ids will be used instead. If both of those are unset, then the command will
             be a global command.
-        dm_permission: :class:`bool`
-            If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
-            usable in DMs. Only for global commands, but will not error on guild.
         default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
             Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
@@ -2702,7 +2693,6 @@ class Client:
                 name=name,
                 name_localizations=name_localizations,
                 guild_ids=guild_ids,
-                dm_permission=dm_permission,
                 default_member_permissions=default_member_permissions,
                 nsfw=nsfw,
                 integration_types=integration_types,
@@ -2722,7 +2712,6 @@ class Client:
         name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         description_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         guild_ids: Optional[Iterable[int]] = MISSING,
-        dm_permission: Optional[bool] = None,
         nsfw: bool = False,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         integration_types: Optional[Iterable[Union[IntegrationType, int]]] = None,
@@ -2748,9 +2737,6 @@ class Client:
             IDs of :class:`Guild`'s to add this command to. If not passed and :attr:`Client.default_guild_ids` is
             set, then those default guild ids will be used instead. If both of those are unset, then the command will
             be a global command.
-        dm_permission: :class:`bool`
-            If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
-            usable in DMs. Only for global commands, but will not error on guild.
         default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
             Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
@@ -2779,7 +2765,6 @@ class Client:
                 description=description,
                 description_localizations=description_localizations,
                 guild_ids=guild_ids,
-                dm_permission=dm_permission,
                 default_member_permissions=default_member_permissions,
                 nsfw=nsfw,
                 integration_types=integration_types,

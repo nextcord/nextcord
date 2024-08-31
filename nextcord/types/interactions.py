@@ -34,7 +34,6 @@ class ApplicationCommand(TypedDict):
     guild_id: NotRequired[Snowflake]
     options: NotRequired[List[ApplicationCommandOption]]
     default_permission: NotRequired[bool]
-    dm_permission: NotRequired[bool]
     nsfw: NotRequired[bool]
     integration_types: NotRequired[List[IntegrationType]]
     contexts: NotRequired[List[InteractionContextType]]

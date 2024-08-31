@@ -1957,7 +1957,6 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         description_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         callback: Optional[Callable] = None,
         guild_ids: Optional[Iterable[int]] = MISSING,
-        dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         nsfw: bool = False,
         integration_types: Optional[Iterable[Union[IntegrationType, int]]] = None,
@@ -1988,13 +1987,6 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             An iterable list/set/whatever of guild ID's that the application command should register to.
             If not passed and :attr:`Client.default_guild_ids` is set, then those default guild ids will
             be used instead. If both of those are unset, then the command will be a global command.
-        dm_permission: :class:`bool`
-            If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
-            usable in DMs. Only for global commands, but will not error on guild.
-
-            .. warning::
-                This field is deprecated, use ``contexts`` instead.
-            .. deprecated:: 3.0
         default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
             Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
@@ -2036,12 +2028,6 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             None if integration_types is None else [IntegrationType(x) for x in integration_types]
         )
 
-        if dm_permission is not None:
-            if contexts is not None:
-                raise ValueError("Cannot pass both contexts and dm_permission")
-            contexts = [InteractionContextType.bot_dm] if dm_permission else []
-            if integration_types is None or IntegrationType.guild_install in integration_types:
-                contexts.append(InteractionContextType.guild)
         self.contexts = None if contexts is None else [InteractionContextType(x) for x in contexts]
 
         self.force_global: bool = force_global
@@ -2859,7 +2845,6 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
         description_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         callback: Optional[Callable] = None,
         guild_ids: Optional[Iterable[int]] = None,
-        dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         nsfw: bool = False,
         integration_types: Optional[Iterable[Union[IntegrationType, int]]] = None,
@@ -2886,13 +2871,6 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
             Callback to make the application command from, and to run when the application command is called.
         guild_ids: Iterable[:class:`int`]
             An iterable list of guild ID's that the application command should register to.
-        dm_permission: :class:`bool`
-            If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
-            usable in DMs. Only for global commands.
-
-            .. warning::
-                This field is deprecated, use ``contexts`` instead.
-            .. deprecated:: 3.0
         default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
             Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
@@ -2928,7 +2906,6 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
             cmd_type=ApplicationCommandType.chat_input,
             guild_ids=guild_ids,
             default_member_permissions=default_member_permissions,
-            dm_permission=dm_permission,
             nsfw=nsfw,
             integration_types=integration_types,
             contexts=contexts,
@@ -3049,7 +3026,6 @@ class UserApplicationCommand(BaseApplicationCommand):
         name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         callback: Optional[Callable] = None,
         guild_ids: Optional[Iterable[int]] = None,
-        dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         nsfw: bool = False,
         integration_types: Optional[Iterable[Union[IntegrationType, int]]] = None,
@@ -3071,13 +3047,6 @@ class UserApplicationCommand(BaseApplicationCommand):
             Callback to run with the application command is called.
         guild_ids: Iterable[:class:`int`]
             An iterable list of guild ID's that the application command should register to.
-        dm_permission: :class:`bool`
-            If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
-            usable in DMs. Only for global commands, but will not error on guild.
-
-            .. warning::
-                This field is deprecated, use ``contexts`` instead.
-            .. deprecated:: 3.0
         default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
             Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
@@ -3106,7 +3075,6 @@ class UserApplicationCommand(BaseApplicationCommand):
             callback=callback,
             cmd_type=ApplicationCommandType.user,
             guild_ids=guild_ids,
-            dm_permission=dm_permission,
             default_member_permissions=default_member_permissions,
             nsfw=nsfw,
             integration_types=integration_types,
@@ -3147,7 +3115,6 @@ class MessageApplicationCommand(BaseApplicationCommand):
         name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         callback: Optional[Callable] = None,
         guild_ids: Optional[Iterable[int]] = None,
-        dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         nsfw: bool = False,
         integration_types: Optional[Iterable[Union[IntegrationType, int]]] = None,
@@ -3169,13 +3136,6 @@ class MessageApplicationCommand(BaseApplicationCommand):
             Callback to run with the application command is called.
         guild_ids: Iterable[:class:`int`]
             An iterable list of guild ID's that the application command should register to.
-        dm_permission: :class:`bool`
-            If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
-            usable in DMs. Only for global commands, but will not error on guild.
-
-            .. warning::
-                This field is deprecated, use ``contexts`` instead.
-            .. deprecated:: 3.0
         default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
             Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
@@ -3204,7 +3164,6 @@ class MessageApplicationCommand(BaseApplicationCommand):
             callback=callback,
             cmd_type=ApplicationCommandType.message,
             guild_ids=guild_ids,
-            dm_permission=dm_permission,
             default_member_permissions=default_member_permissions,
             nsfw=nsfw,
             integration_types=integration_types,
@@ -3242,7 +3201,6 @@ def slash_command(
     name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
     description_localizations: Optional[Dict[Union[Locale, str], str]] = None,
     guild_ids: Optional[Iterable[int]] = MISSING,
-    dm_permission: Optional[bool] = None,
     default_member_permissions: Optional[Union[Permissions, int]] = None,
     nsfw: bool = False,
     integration_types: Optional[Iterable[Union[IntegrationType, int]]] = None,
@@ -3269,13 +3227,6 @@ def slash_command(
         IDs of :class:`Guild`'s to add this command to. If not passed and :attr:`Client.default_guild_ids` is
         set, then those default guild ids will be used instead. If both of those are unset, then the command will
         be a global command.
-    dm_permission: :class:`bool`
-        If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
-        usable in DMs. Only for global commands, but will not error on guild.
-
-        .. warning::
-            This field is deprecated, use ``contexts`` instead.
-        .. deprecated:: 3.0
     default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
         Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
         example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
@@ -3312,7 +3263,6 @@ def slash_command(
             description=description,
             description_localizations=description_localizations,
             guild_ids=guild_ids,
-            dm_permission=dm_permission,
             default_member_permissions=default_member_permissions,
             nsfw=nsfw,
             integration_types=integration_types,
@@ -3328,7 +3278,6 @@ def message_command(
     *,
     name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
     guild_ids: Optional[Iterable[int]] = MISSING,
-    dm_permission: Optional[bool] = None,
     default_member_permissions: Optional[Union[Permissions, int]] = None,
     nsfw: bool = False,
     integration_types: Optional[Iterable[Union[IntegrationType, int]]] = None,
@@ -3349,13 +3298,6 @@ def message_command(
         IDs of :class:`Guild`'s to add this command to. If not passed and :attr:`Client.default_guild_ids` is
         set, then those default guild ids will be used instead. If both of those are unset, then the command will
         be a global command.
-    dm_permission: :class:`bool`
-        If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
-        usable in DMs. Only for global commands, but will not error on guild.
-
-        .. warning::
-            This field is deprecated, use ``contexts`` instead.
-        .. deprecated:: 3.0
     default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
         Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
         example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
@@ -3386,7 +3328,6 @@ def message_command(
             name=name,
             name_localizations=name_localizations,
             guild_ids=guild_ids,
-            dm_permission=dm_permission,
             default_member_permissions=default_member_permissions,
             nsfw=nsfw,
             integration_types=integration_types,
@@ -3402,7 +3343,6 @@ def user_command(
     *,
     name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
     guild_ids: Optional[Iterable[int]] = MISSING,
-    dm_permission: Optional[bool] = None,
     default_member_permissions: Optional[Union[Permissions, int]] = None,
     nsfw: bool = False,
     integration_types: Optional[Iterable[Union[IntegrationType, int]]] = None,
@@ -3423,13 +3363,6 @@ def user_command(
         IDs of :class:`Guild`'s to add this command to. If not passed and :attr:`Client.default_guild_ids` is
         set, then those default guild ids will be used instead. If both of those are unset, then the command will
         be a global command.
-    dm_permission: :class:`bool`
-        If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
-        usable in DMs. Only for global commands, but will not error on guild.
-
-        .. warning::
-            This field is deprecated, use ``contexts`` instead.
-        .. deprecated:: 3.0
     default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
         Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
         example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
@@ -3460,7 +3393,6 @@ def user_command(
             name=name,
             name_localizations=name_localizations,
             guild_ids=guild_ids,
-            dm_permission=dm_permission,
             default_member_permissions=default_member_permissions,
             nsfw=nsfw,
             integration_types=integration_types,
