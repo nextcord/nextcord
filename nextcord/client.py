@@ -33,7 +33,12 @@ import aiohttp
 from . import utils
 from .activity import ActivityTypes, BaseActivity, create_activity
 from .appinfo import AppInfo
-from .application_command import message_command, slash_command, user_command, BaseApplicationCommand
+from .application_command import (
+    BaseApplicationCommand,
+    message_command,
+    slash_command,
+    user_command,
+)
 from .backoff import ExponentialBackoff
 from .channel import PartialMessageable, _threaded_channel_factory
 from .emoji import Emoji
