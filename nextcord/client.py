@@ -33,7 +33,7 @@ import aiohttp
 from . import utils
 from .activity import ActivityTypes, BaseActivity, create_activity
 from .appinfo import AppInfo
-from .application_command import message_command, slash_command, user_command
+from .application_command import message_command, slash_command, user_command, BaseApplicationCommand
 from .backoff import ExponentialBackoff
 from .channel import PartialMessageable, _threaded_channel_factory
 from .emoji import Emoji
@@ -73,7 +73,7 @@ if TYPE_CHECKING:
     from nextcord.types.checks import ApplicationCheck, ApplicationHook
 
     from .abc import GuildChannel, PrivateChannel, Snowflake, SnowflakeTime
-    from .application_command import BaseApplicationCommand, ClientCog, SlashApplicationSubcommand
+    from .application_command import ClientCog, SlashApplicationSubcommand
     from .asset import Asset
     from .channel import DMChannel
     from .enums import Locale
@@ -2115,7 +2115,6 @@ class Client:
                     **response_signature
                 )
                 if app_cmd:
-                    from .application_command import BaseApplicationCommand
                     if not isinstance(app_cmd, BaseApplicationCommand):
                         raise ValueError(
                             (
