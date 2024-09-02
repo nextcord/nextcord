@@ -132,7 +132,7 @@ class IntEnum(int, Enum):
         return self.value
 
 
-class StrEnum(str, Enum):  # noqa: SLOT000
+class StrEnum(str, Enum):
     """An enum that supports comparing and hashing as a string."""
 
     def __str__(self) -> str:
