@@ -2061,6 +2061,7 @@ class IntegrationType(IntEnum):
 
     .. versionadded:: 3.0
     """
+
     guild_install = 0
     """App is installable to servers."""
     user_install = 1
@@ -2085,9 +2086,10 @@ class PollLayoutType(IntEnum):
     """The layout type of the poll.
 
     ..versionadded:: 3.0"""
-    
+
     default = 1
     """The default poll layout type."""
+
 
 T = TypeVar("T")
 
