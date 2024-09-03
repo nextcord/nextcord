@@ -33,7 +33,12 @@ import aiohttp
 from . import utils
 from .activity import ActivityTypes, BaseActivity, create_activity
 from .appinfo import AppInfo
-from .application_command import message_command, slash_command, user_command
+from .application_command import (
+    BaseApplicationCommand,
+    message_command,
+    slash_command,
+    user_command,
+)
 from .backoff import ExponentialBackoff
 from .channel import PartialMessageable, _threaded_channel_factory
 from .emoji import Emoji
@@ -73,10 +78,10 @@ if TYPE_CHECKING:
     from nextcord.types.checks import ApplicationCheck, ApplicationHook
 
     from .abc import GuildChannel, PrivateChannel, Snowflake, SnowflakeTime
-    from .application_command import BaseApplicationCommand, ClientCog, SlashApplicationSubcommand
+    from .application_command import ClientCog, SlashApplicationSubcommand
     from .asset import Asset
     from .channel import DMChannel
-    from .enums import Locale
+    from .enums import IntegrationType, InteractionContextType, Locale
     from .file import File
     from .flags import MemberCacheFlags
     from .member import Member
@@ -122,6 +127,18 @@ def _cancel_tasks(loop: asyncio.AbstractEventLoop) -> None:
 
 
 def _cleanup_loop(loop: asyncio.AbstractEventLoop) -> None:
+    """
+    This will cancel all tasks in the given loop, including any async tasks awaiting execution or potentially
+    mid-execution.
+
+    This does not restrict itself to nextcord-module tasks. If the loop provided is being used for non-Nextcord tasks,
+    this WILL cancel them as well.
+
+    Parameters
+    ----------
+    loop: :class:`asyncio.AbstractEventLoop`
+        Asyncio event loop to cancel all tasks and shutdown async generators of.
+    """
     try:
         _cancel_tasks(loop)
         loop.run_until_complete(loop.shutdown_asyncgens())
@@ -828,7 +845,7 @@ class Client:
         await self.login(token)
         await self.connect(reconnect=reconnect)
 
-    def run(self, *args: Any, **kwargs: Any) -> None:
+    def run(self, token: str, *, reconnect: bool = True) -> None:
         """A blocking call that abstracts away the event loop
         initialisation from you.
 
@@ -852,43 +869,31 @@ class Client:
             is blocking. That means that registration of events or anything being
             called after this function call will not execute until it returns.
         """
-        loop = self.loop
+        loop = self.loop  # TODO: Make this asyncio.new_event_loop() if self.loop is removed.
+
+        # This allows Nextcord to gracefully close when Terminate/Signal 7 is received.
+        with contextlib.suppress(NotImplementedError):
+
+            def graceful_close() -> None:
+                loop.create_task(self.close())
+
+            loop.add_signal_handler(signal.SIGTERM, graceful_close)
+            _log.debug("Registered SIGTERM signal handler.")
 
         try:
-            loop.add_signal_handler(signal.SIGINT, lambda: loop.stop())
-            loop.add_signal_handler(signal.SIGTERM, lambda: loop.stop())
-        except NotImplementedError:
-            pass
-
-        async def runner() -> None:
-            try:
-                await self.start(*args, **kwargs)
-            finally:
-                if not self.is_closed():
-                    await self.close()
-
-        def stop_loop_on_completion(_future) -> None:
-            loop.stop()
-
-        future = asyncio.ensure_future(runner(), loop=loop)
-        future.add_done_callback(stop_loop_on_completion)
-        try:
-            loop.run_forever()
+            loop.run_until_complete(self.start(token, reconnect=reconnect))
         except KeyboardInterrupt:
-            _log.info("Received signal to terminate bot and event loop.")
+            _log.info("Received keyboard interrupt, closing.")
         finally:
-            future.remove_done_callback(stop_loop_on_completion)
-            _log.info("Cleaning up tasks.")
+            if not self.is_closed():
+                loop.run_until_complete(self.close())
+
+            # This allows tasks that are pending cancellation to be cancelled and cleaned up. If a better
+            #  method of "wait until all marked-as-cancelled tasks are cancelled" is found, replace this.
+            loop.run_until_complete(asyncio.sleep(0.1))
+            # This will cancel all tasks, including non-Nextcord ones, in the loop and close it. If you don't want
+            # that to occur, run .start() and .close() manually.
             _cleanup_loop(loop)
-
-        if not future.cancelled():
-            try:
-                return future.result()
-            except KeyboardInterrupt:
-                # I am unsure why this gets raised here but suppress it anyway
-                return None
-
-        return None
 
     # properties
 
@@ -2586,9 +2591,10 @@ class Client:
         *,
         name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         guild_ids: Optional[Iterable[int]] = MISSING,
-        dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         nsfw: bool = False,
+        integration_types: Optional[Iterable[Union[IntegrationType, int]]] = None,
+        contexts: Optional[Iterable[Union[InteractionContextType, int]]] = None,
         force_global: bool = False,
     ):
         """Creates a User context command from the decorated function.
@@ -2604,9 +2610,6 @@ class Client:
             IDs of :class:`Guild`'s to add this command to. If not passed and :attr:`Client.default_guild_ids` is
             set, then those default guild ids will be used instead. If both of those are unset, then the command will
             be a global command.
-        dm_permission: :class:`bool`
-            If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
-            usable in DMs. Only for global commands, but will not error on guild.
         default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
             Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
@@ -2615,6 +2618,14 @@ class Client:
             Whether the command can only be used in age-restricted channels. Defaults to ``False``.
 
             .. versionadded:: 2.4
+        integration_types: Optional[Iterable[Union[:class:`IntegrationType`, :class:`int`]]]
+            Where the command is available, only for globally-scoped commands. Defaults to ``guild_install``.
+
+            .. versionadded:: 3.0
+        contexts: Optional[Iterable[Union[:class:`InteractionContextType`, :class:`int`]]]
+            Where the command can be used, only for globally-scoped commands. By default, all interaction context types included for new commands.
+
+            .. versionadded:: 3.0
         force_global: :class:`bool`
             If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still
             register to guilds. Has no effect if ``guild_ids`` are never set or added to.
@@ -2625,9 +2636,10 @@ class Client:
                 name=name,
                 name_localizations=name_localizations,
                 guild_ids=guild_ids,
-                dm_permission=dm_permission,
                 default_member_permissions=default_member_permissions,
                 nsfw=nsfw,
+                integration_types=integration_types,
+                contexts=contexts,
                 force_global=force_global,
             )(func)
             self._application_commands_to_add.add(result)
@@ -2641,9 +2653,10 @@ class Client:
         *,
         name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         guild_ids: Optional[Iterable[int]] = MISSING,
-        dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         nsfw: bool = False,
+        integration_types: Optional[Iterable[Union[IntegrationType, int]]] = None,
+        contexts: Optional[Iterable[Union[InteractionContextType, int]]] = None,
         force_global: bool = False,
     ):
         """Creates a Message context command from the decorated function.
@@ -2659,9 +2672,6 @@ class Client:
             IDs of :class:`Guild`'s to add this command to. If not passed and :attr:`Client.default_guild_ids` is
             set, then those default guild ids will be used instead. If both of those are unset, then the command will
             be a global command.
-        dm_permission: :class:`bool`
-            If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
-            usable in DMs. Only for global commands, but will not error on guild.
         default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
             Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
@@ -2670,6 +2680,14 @@ class Client:
             Whether the command can only be used in age-restricted channels. Defaults to ``False``.
 
             .. versionadded:: 2.4
+        integration_types: Optional[Iterable[Union[:class:`IntegrationType`, :class:`int`]]]
+            Where the command is available, only for globally-scoped commands. Defaults to ``guild_install``.
+
+            .. versionadded:: 3.0
+        contexts: Optional[Iterable[Union[:class:`InteractionContextType`, :class:`int`]]]
+            Where the command can be used, only for globally-scoped commands. By default, all interaction context types included for new commands.
+
+            .. versionadded:: 3.0
         force_global: :class:`bool`
             If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still
             register to guilds. Has no effect if ``guild_ids`` are never set or added to.
@@ -2680,8 +2698,10 @@ class Client:
                 name=name,
                 name_localizations=name_localizations,
                 guild_ids=guild_ids,
-                dm_permission=dm_permission,
                 default_member_permissions=default_member_permissions,
+                nsfw=nsfw,
+                integration_types=integration_types,
+                contexts=contexts,
                 force_global=force_global,
             )(func)
             self._application_commands_to_add.add(result)
@@ -2697,9 +2717,10 @@ class Client:
         name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         description_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         guild_ids: Optional[Iterable[int]] = MISSING,
-        dm_permission: Optional[bool] = None,
         nsfw: bool = False,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
+        integration_types: Optional[Iterable[Union[IntegrationType, int]]] = None,
+        contexts: Optional[Iterable[Union[InteractionContextType, int]]] = None,
         force_global: bool = False,
     ):
         """Creates a Slash application command from the decorated function.
@@ -2721,9 +2742,6 @@ class Client:
             IDs of :class:`Guild`'s to add this command to. If not passed and :attr:`Client.default_guild_ids` is
             set, then those default guild ids will be used instead. If both of those are unset, then the command will
             be a global command.
-        dm_permission: :class:`bool`
-            If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
-            usable in DMs. Only for global commands, but will not error on guild.
         default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
             Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
@@ -2732,6 +2750,14 @@ class Client:
             Whether the command can only be used in age-restricted channels. Defaults to ``False``.
 
             .. versionadded:: 2.4
+        integration_types: Optional[Iterable[Union[:class:`IntegrationType`, :class:`int`]]]
+            Where the command is available, only for globally-scoped commands. Defaults to ``guild_install``.
+
+            .. versionadded:: 3.0
+        contexts: Optional[Iterable[Union[:class:`InteractionContextType`, :class:`int`]]]
+            Where the command can be used, only for globally-scoped commands. By default, all interaction context types included for new commands.
+
+            .. versionadded:: 3.0
         force_global: :class:`bool`
             If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still
             register to guilds. Has no effect if ``guild_ids`` are never set or added to.
@@ -2744,9 +2770,10 @@ class Client:
                 description=description,
                 description_localizations=description_localizations,
                 guild_ids=guild_ids,
-                dm_permission=dm_permission,
                 default_member_permissions=default_member_permissions,
                 nsfw=nsfw,
+                integration_types=integration_types,
+                contexts=contexts,
                 force_global=force_global,
             )(func)
             self._application_commands_to_add.add(result)

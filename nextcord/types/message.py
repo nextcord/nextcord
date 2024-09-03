@@ -10,7 +10,7 @@ from .channel import ChannelType
 from .components import Component
 from .embed import Embed
 from .emoji import PartialEmoji
-from .interactions import MessageInteraction
+from .interactions import MessageInteraction, MessageInteractionMetadata
 from .member import Member, UserWithMember
 from .polls import Poll
 from .snowflake import Snowflake, SnowflakeList
@@ -99,6 +99,7 @@ class Message(TypedDict):
     flags: NotRequired[int]
     sticker_items: NotRequired[List[StickerItem]]
     referenced_message: NotRequired[Optional[Message]]
+    interaction_metadata: NotRequired[MessageInteractionMetadata]
     interaction: NotRequired[MessageInteraction]
     components: NotRequired[List[Component]]
     poll: NotRequired[Poll]
