@@ -879,7 +879,7 @@ class Message(Hashable):
     poll: Optional[:class:`Poll`]
         The poll included in a message, if applicable.
 
-        ..versionadded:: 3.0
+        .. versionadded:: 3.0
     """
 
     __slots__ = (
