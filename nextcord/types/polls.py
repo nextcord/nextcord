@@ -15,7 +15,11 @@ class PollMedia(TypedDict):
 
 
 class PollAnswer(TypedDict):
-    answer_id: NotRequired[int]
+    poll_media: PollMedia
+
+
+class DAPIPollAnswer(TypedDict):
+    answer_id: int
     poll_media: PollMedia
 
 
@@ -40,7 +44,7 @@ class PollResults(TypedDict):
 
 class Poll(TypedDict):
     question: PollMedia
-    answers: List[PollAnswer]
+    answers: List[DAPIPollAnswer]
     expiry: str
     allow_multiselect: bool
     layout_type: LayoutType

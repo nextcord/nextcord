@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     from .state import ConnectionState
     from .types.emoji import PartialEmoji as PartialEmojiPayload
     from .types.polls import (
+        DAPIPollAnswer as DAPIPollAnswerPayload,
         Poll as PollData,
         PollAnswer as PollAnswerPayload,
         PollAnswerCount as PollAnswerCountPayload,
@@ -121,15 +122,11 @@ class PollAnswer:
 
     def to_dict(self) -> PollAnswerPayload:
         payload: PollAnswerPayload = {"poll_media": self.media.to_dict()}
-        if self.answer_id:
-            payload["answer_id"] = self.answer_id
-
         return payload
 
     @classmethod
-    def from_dict(cls, data: PollAnswerPayload) -> Self:
-        # data['answer_id'] is always sent as part of Discord's HTTP/Gateway
-        return cls(answer_id=data["answer_id"], poll_media=PollMedia.from_dict(data["poll_media"]))  # type: ignore[reportTypedDictNotRequiredAccess]
+    def from_dict(cls, data: DAPIPollAnswerPayload) -> Self:
+        return cls(answer_id=data["answer_id"], poll_media=PollMedia.from_dict(data["poll_media"]))
 
 
 class PollAnswerCount:
@@ -426,15 +423,3 @@ class Poll:
     def expired(self) -> bool:
         """:class:`bool`: Returns True if this poll has been closed."""
         return self.expiry < utcnow()
-
-    def to_dict(self) -> PollData:
-        payload: PollData = {
-            "question": self.question.to_dict(),
-            "answers": [answer.to_dict() for answer in self.answers],
-            "expiry": self.expiry.isoformat(),
-            "allow_multiselect": self.allow_multiselect,
-            "layout_type": self.layout_type.value,
-        }
-        if self.results:
-            payload["results"] = self.results.to_dict()
-        return payload
