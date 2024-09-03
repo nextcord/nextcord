@@ -1018,14 +1018,14 @@ class Message(Hashable):
         )
         self.poll: Optional[Poll] = (
             Poll(data=data["poll"], message=self, state=self._state) if "poll" in data else None
-
+        )
         self.interaction_metadata: Optional[MessageInteractionMetadata] = (
             MessageInteractionMetadata(
                 data=data["interaction_metadata"], guild=self.guild, state=self._state
             )
             if "interaction_metadata" in data
             else None
-
+        )
 
     def __repr__(self) -> str:
         name = self.__class__.__name__
