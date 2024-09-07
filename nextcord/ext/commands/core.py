@@ -1387,9 +1387,9 @@ class GroupMixin(Generic[CogT]):
         if not isinstance(obj, GroupMixin):
             return obj
 
-        for name in names[1:]:
+        for cmd_name in names[1:]:
             try:
-                obj = obj.all_commands[name]  # type: ignore
+                obj = obj.all_commands[cmd_name]  # type: ignore
             except (AttributeError, KeyError):
                 return None
 

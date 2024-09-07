@@ -959,8 +959,8 @@ class InteractionResponse:
             )
         finally:
             if files:
-                for file in files:
-                    file.close()
+                for f in files:
+                    f.close()
 
         if view is not MISSING and view.prevent_update:
             if ephemeral and view.timeout is None:
@@ -1126,8 +1126,8 @@ class InteractionResponse:
             )
         finally:
             if files:
-                for file in files:
-                    file.close()
+                for f in files:
+                    f.close()
 
         if view and not view.is_finished() and message_id is not None and view.prevent_update:
             state.store_view(view, message_id)

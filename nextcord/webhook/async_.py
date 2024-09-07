@@ -566,7 +566,7 @@ def handle_message_parameters(
 
     if files:
         multipart.append({"name": "payload_json"})
-        for index, file in enumerate(files):
+        for index, file in enumerate(files): # noqa
             payload["attachments"].append(
                 {
                     "id": index,
