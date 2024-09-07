@@ -52,6 +52,7 @@ __all__ = (
     "InviteType",
     "IntegrationType",
     "InteractionContextType",
+    "ReactionType",
 )
 
 
@@ -2078,6 +2079,18 @@ class InteractionContextType(IntEnum):
     """The :class:`BaseApplicationCommand` can be used within DMs with the app's bot user, or the :class:`Interaction` originates from such DMs."""
     private_channel = 2
     """The :class:`BaseApplicationCommand` can be used within Group DMs and DMs other than the app's bot user, or the :class:`Interaction` originates from such channels."""
+
+
+class ReactionType(IntEnum):
+    """Represents the type of a message reaction.
+
+    .. versionadded:: 3.0
+    """
+
+    normal = 0
+    """The message reaction is normal reaction."""
+    burst = 1
+    """The message reaction is a burst/super reaction."""
 
 
 T = TypeVar("T")

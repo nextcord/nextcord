@@ -9,6 +9,7 @@ from .user import User
 
 if TYPE_CHECKING:
     from .colour import Colour
+    from .enums import ReactionType
     from .guild import Guild
     from .member import Member
     from .message import Message
@@ -179,6 +180,7 @@ class RawReactionActionEvent(_RawReprMixin):
         "member",
         "burst",
         "burst_colors",
+        "type",
     )
 
     def __init__(self, data: ReactionActionEvent, emoji: PartialEmoji, event_type: str) -> None:
@@ -189,6 +191,7 @@ class RawReactionActionEvent(_RawReprMixin):
         self.event_type: str = event_type
         self.member: Optional[Member] = None
         self.burst: bool = data["burst"]
+        self.type: ReactionType = data["type"]
 
         if _burst_colors := data.get("burst_colors"):
             self.burst_colors: Optional[List[Colour]] = [

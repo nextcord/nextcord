@@ -4,6 +4,7 @@ from typing import List, TypedDict
 
 from typing_extensions import NotRequired
 
+from ..enums import ReactionType
 from .emoji import PartialEmoji
 from .member import Member
 from .snowflake import Snowflake
@@ -37,6 +38,7 @@ class ReactionActionEvent(TypedDict):
     member: NotRequired[Member]
     burst: bool
     burst_colors: NotRequired[List[str]]
+    type: ReactionType
 
 
 class ReactionClearEvent(TypedDict):
