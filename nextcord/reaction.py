@@ -92,9 +92,10 @@ class Reaction:
         "count",
         "emoji",
         "me",
-        "_burst_colours",
         "me_burst",
         "count_details",
+        "_burst_colours",
+        "burst_colours",
     )
 
     def __init__(
@@ -139,7 +140,7 @@ class Reaction:
     def __repr__(self) -> str:
         return f"<Reaction emoji={self.emoji!r} me={self.me} count={self.count}>"
 
-    @cached_slot_property("_cs_bust_colours")
+    @cached_slot_property("_cs_burst_colours")
     def burst_colours(self) -> List[Colour]:
         """List[:class:`Colour`]: The HEX colours used for a burst reaction.
 
