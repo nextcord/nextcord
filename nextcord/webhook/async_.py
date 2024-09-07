@@ -320,7 +320,11 @@ class AsyncWebhookAdapter:
         payload: Optional[Dict[str, Any]] = None,
         multipart: Optional[List[Dict[str, Any]]] = None,
         files: Optional[List[File]] = None,
+        thread_id: Optional[int] = None,
     ) -> Response[Message]:
+        params = {}
+        if thread_id:
+            params["thread_id"] = thread_id
         route = Route(
             "PATCH",
             "/webhooks/{webhook_id}/{webhook_token}/messages/{message_id}",
@@ -328,7 +332,9 @@ class AsyncWebhookAdapter:
             webhook_token=token,
             message_id=message_id,
         )
-        return self.request(route, session, payload=payload, multipart=multipart, files=files)
+        return self.request(
+            route, session, payload=payload, multipart=multipart, files=files, params=params
+        )
 
     def delete_webhook_message(
         self,
@@ -566,7 +572,7 @@ def handle_message_parameters(
 
     if files:
         multipart.append({"name": "payload_json"})
-        for index, file in enumerate(files):
+        for index, file in enumerate(files):  # noqa: PLR1704
             payload["attachments"].append(
                 {
                     "id": index,
@@ -1358,8 +1364,7 @@ class Webhook(BaseWebhook):
         ephemeral: Optional[bool] = None,
         flags: Optional[MessageFlags] = None,
         suppress_embeds: Optional[bool] = None,
-    ) -> WebhookMessage:
-        ...
+    ) -> WebhookMessage: ...
 
     @overload
     async def send(
@@ -1381,8 +1386,7 @@ class Webhook(BaseWebhook):
         ephemeral: Optional[bool] = None,
         flags: Optional[MessageFlags] = None,
         suppress_embeds: Optional[bool] = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     async def send(
         self,
@@ -1527,7 +1531,7 @@ class Webhook(BaseWebhook):
         if view is not MISSING:
             if isinstance(self._state, _WebhookState):
                 raise InvalidArgument("Webhook views require an associated state with the webhook")
-            if ephemeral is True and view.timeout is None:
+            if ephemeral is True and view.timeout is None and view.prevent_update:
                 view.timeout = 15 * 60.0
 
         params = handle_message_parameters(
@@ -1566,7 +1570,7 @@ class Webhook(BaseWebhook):
         if wait:
             msg = self._create_message(data)
 
-        if view is not MISSING and not view.is_finished():
+        if view is not MISSING and not view.is_finished() and view.prevent_update:
             message_id = None if msg is None else msg.id
             self._state.store_view(view, message_id)
 
@@ -1627,6 +1631,7 @@ class Webhook(BaseWebhook):
         files: List[File] = MISSING,
         attachments: List[Attachment] = MISSING,
         view: Optional[View] = MISSING,
+        thread: Snowflake = MISSING,
         allowed_mentions: Optional[AllowedMentions] = None,
     ) -> WebhookMessage:
         """|coro|
@@ -1674,6 +1679,10 @@ class Webhook(BaseWebhook):
             :meth:`send`.
 
             .. versionadded:: 2.0
+        thread: :class:`~nextcord.abc.Snowflake`
+            The thread that the message to be edited is in.
+
+            .. versionadded:: 3.0
 
         Raises
         ------
@@ -1719,6 +1728,10 @@ class Webhook(BaseWebhook):
             previous_allowed_mentions=previous_mentions,
         )
         adapter = async_context.get()
+        thread_id: Optional[int] = None
+        if thread is not MISSING:
+            thread_id = thread.id
+
         data = await adapter.edit_webhook_message(
             self.id,
             self.token,
@@ -1727,10 +1740,11 @@ class Webhook(BaseWebhook):
             payload=params.payload,
             multipart=params.multipart,
             files=params.files,
+            thread_id=thread_id,
         )
 
         message = self._create_message(data)
-        if view and not view.is_finished():
+        if view and not view.is_finished() and view.prevent_update:
             self._state.store_view(view, message_id)
         return message
 
