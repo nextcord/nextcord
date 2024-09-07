@@ -78,8 +78,7 @@ if TYPE_CHECKING:
     T = TypeVar("T")
 
     class DispatchProtocol(Protocol):
-        def __call__(self, event: str, *args: Any) -> None:
-            ...
+        def __call__(self, event: str, *args: Any) -> None: ...
 
     Response = Coroutine[Any, Any, T]
 
@@ -141,12 +140,10 @@ class Route:
         return f"{self.channel_id}:{self.guild_id}:{self.path}"
 
 
-class RateLimitMigrating(DiscordException):
-    ...
+class RateLimitMigrating(DiscordException): ...
 
 
-class IncorrectBucket(DiscordException):
-    ...
+class IncorrectBucket(DiscordException): ...
 
 
 class RateLimit:
@@ -252,10 +249,7 @@ class RateLimit:
 
             if self._use_reset_timestamp and self.reset is not None:
                 new_reset_diff = (x_reset - self.reset).total_seconds()
-                if self._tracked_reset_time < new_reset_diff:
-                    # Any time the tracked reset time is increased, the reset timestamp should also be increased
-                    #  thus we shouldn't have to (re)start the reset task here.
-                    self._tracked_reset_time = new_reset_diff
+                self._tracked_reset_time = max(self._tracked_reset_time, new_reset_diff)
 
             if self.reset is None or self.reset < x_reset:
                 self.reset = x_reset

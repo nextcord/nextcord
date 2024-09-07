@@ -566,7 +566,7 @@ def handle_message_parameters(
 
     if files:
         multipart.append({"name": "payload_json"})
-        for index, file in enumerate(files):
+        for index, file in enumerate(files):  # noqa: PLR1704
             payload["attachments"].append(
                 {
                     "id": index,
@@ -1358,8 +1358,7 @@ class Webhook(BaseWebhook):
         ephemeral: Optional[bool] = None,
         flags: Optional[MessageFlags] = None,
         suppress_embeds: Optional[bool] = None,
-    ) -> WebhookMessage:
-        ...
+    ) -> WebhookMessage: ...
 
     @overload
     async def send(
@@ -1381,8 +1380,7 @@ class Webhook(BaseWebhook):
         ephemeral: Optional[bool] = None,
         flags: Optional[MessageFlags] = None,
         suppress_embeds: Optional[bool] = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     async def send(
         self,

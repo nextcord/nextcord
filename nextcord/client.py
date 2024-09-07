@@ -2813,16 +2813,13 @@ class Client:
         return utils.unique(it)
 
     @overload
-    def get_interaction(self, data) -> Interaction:
-        ...
+    def get_interaction(self, data) -> Interaction: ...
 
     @overload
-    def get_interaction(self, data, *, cls: Type[Interaction]) -> Interaction:
-        ...
+    def get_interaction(self, data, *, cls: Type[Interaction]) -> Interaction: ...
 
     @overload
-    def get_interaction(self, data, *, cls: Type[InterT]) -> InterT:
-        ...
+    def get_interaction(self, data, *, cls: Type[InterT]) -> InterT: ...
 
     def get_interaction(
         self, data, *, cls: Type[InterT] = Interaction
