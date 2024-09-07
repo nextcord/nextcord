@@ -236,7 +236,7 @@ class Attachment(Hashable):
                 fp.seek(0)
             return written
 
-        with open(fp, "wb") as f: # noqa
+        with open(fp, "wb") as f:  # noqa
             return f.write(data)
 
     async def read(self, *, use_cached: bool = False) -> bytes:

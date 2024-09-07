@@ -93,7 +93,7 @@ class AssetMixin:
                 fp.seek(0)
             return written
 
-        with open(fp, "wb") as f: # noqa
+        with open(fp, "wb") as f:  # noqa
             return f.write(data)
 
     async def to_file(
