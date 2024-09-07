@@ -562,7 +562,7 @@ class Permissions(BaseFlags):
 
         This includes creating emojis, stickers, and soundboard sounds.
 
-        .. versionadded:: 3.0
+        .. versionadded:: 2.6
         """
         return 1 << 43
 
