@@ -149,7 +149,7 @@ class Reaction:
 
     @property
     def burst_colors(self) -> List[Colour]:
-        """List[:class:`Colour`]`: An alias of :attr:`.burst_colours`.
+        """List[:class:`Colour`]: An alias of :attr:`.burst_colours`.
 
         .. versionadded:: 3.0
         """
