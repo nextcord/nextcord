@@ -291,12 +291,10 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
         overwrites: Mapping[Union[Role, Member, Snowflake], PermissionOverwrite] = ...,
         flags: ChannelFlags = ...,
         default_thread_slowmode_delay: int = ...,
-    ) -> Optional[TextChannel]:
-        ...
+    ) -> Optional[TextChannel]: ...
 
     @overload
-    async def edit(self) -> Optional[TextChannel]:
-        ...
+    async def edit(self) -> Optional[TextChannel]: ...
 
     async def edit(self, *, reason: Optional[str] = None, **options):
         """|coro|
@@ -1081,12 +1079,10 @@ class ForumChannel(abc.GuildChannel, Hashable):
         default_thread_slowmode_delay: int = ...,
         available_tags: List[ForumTag] = ...,
         default_reaction: Optional[Union[Emoji, PartialEmoji, str]] = ...,
-    ) -> ForumChannel:
-        ...
+    ) -> ForumChannel: ...
 
     @overload
-    async def edit(self) -> ForumChannel:
-        ...
+    async def edit(self) -> ForumChannel: ...
 
     async def edit(self, *, reason: Optional[str] = None, **options) -> ForumChannel:
         """|coro|
@@ -1748,12 +1744,10 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
         video_quality_mode: VideoQualityMode = ...,
         flags: ChannelFlags = ...,
         reason: Optional[str] = ...,
-    ) -> Optional[VoiceChannel]:
-        ...
+    ) -> Optional[VoiceChannel]: ...
 
     @overload
-    async def edit(self) -> Optional[VoiceChannel]:
-        ...
+    async def edit(self) -> Optional[VoiceChannel]: ...
 
     async def edit(self, *, reason: Optional[str] = None, **options):
         """|coro|
@@ -2305,12 +2299,10 @@ class StageChannel(VocalGuildChannel, abc.Messageable):
         flags: ChannelFlags = ...,
         user_limit: int = ...,
         reason: Optional[str] = ...,
-    ) -> Optional[StageChannel]:
-        ...
+    ) -> Optional[StageChannel]: ...
 
     @overload
-    async def edit(self) -> Optional[StageChannel]:
-        ...
+    async def edit(self) -> Optional[StageChannel]: ...
 
     async def edit(self, *, reason: Optional[str] = None, **options):
         """|coro|
@@ -2512,12 +2504,10 @@ class CategoryChannel(abc.GuildChannel, Hashable):
         overwrites: Mapping[Union[Role, Member], PermissionOverwrite] = ...,
         flags: ChannelFlags = ...,
         reason: Optional[str] = ...,
-    ) -> Optional[CategoryChannel]:
-        ...
+    ) -> Optional[CategoryChannel]: ...
 
     @overload
-    async def edit(self) -> Optional[CategoryChannel]:
-        ...
+    async def edit(self) -> Optional[CategoryChannel]: ...
 
     async def edit(self, *, reason: Optional[str] = None, **options):
         """|coro|
