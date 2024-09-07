@@ -1955,11 +1955,6 @@ class AutoModerationTriggerType(IntEnum):
 
     keyword = 1
     """This rule checks if content contains words from a user defined list of keywords."""
-    member_update = 2
-    """A member sends or edits a message in the guild.
-
-    .. versionadded:: 3.0
-    """
     spam = 3
     """This rule checks if content represents generic spam."""
     keyword_preset = 4
