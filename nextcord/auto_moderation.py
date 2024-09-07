@@ -77,7 +77,7 @@ class AutoModerationTriggerMetadata:
         .. note::
 
             This is ``None`` and cannot be provided if the trigger type of the rule is not
-            :attr:`AutoModerationTriggerType.keyword_preset`
+            :attr:`AutoModerationTriggerType.keyword_preset`.
     allow_list: List[:class:`str`]
         A list of exempt strings that will not trigger the preset type.
 
