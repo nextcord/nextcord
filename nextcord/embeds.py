@@ -336,7 +336,7 @@ class Embed:
         This function returns the class instance to allow for fluent-style
         chaining.
 
-        .. versionchanged:: 2.5
+        .. versionchanged:: 3.0
             The ``icon_url`` parameter can now accept a :class:`File` object.
 
         Parameters
@@ -453,7 +453,7 @@ class Embed:
         .. versionchanged:: 1.4
             Passing ``None`` removes the thumbnail.
 
-        .. versionchanged:: 2.5
+        .. versionchanged:: 3.0
             The ``url`` parameter can now accept a :class:`File` object.
 
         Parameters
@@ -525,7 +525,7 @@ class Embed:
         This function returns the class instance to allow for fluent-style
         chaining.
 
-        .. versionchanged:: 2.5
+        .. versionchanged:: 3.0
             The ``icon_url`` parameter can now accept a :class:`File` object.
 
         Parameters
