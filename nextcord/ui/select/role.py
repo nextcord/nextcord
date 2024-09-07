@@ -37,7 +37,6 @@ class RoleSelectValues(SelectValuesBase):
 
 
 class RoleSelect(SelectBase, Generic[V_co]):
-
     """Represents a UI role select menu.
 
     This is usually represented as a drop down menu.

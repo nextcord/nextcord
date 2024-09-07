@@ -194,7 +194,7 @@ class ReactionIterator(_AsyncIterator[Union["User", "Member"]]):
         from .user import User
 
         if self.limit > 0:
-            retrieve = self.limit if self.limit <= 100 else 100
+            retrieve = min(self.limit, 100)
 
             after = self.after.id if self.after else None
             data: List[PartialUserPayload] = cast(

@@ -30,8 +30,7 @@ if TYPE_CHECKING:
     from .voice_client import VoiceClient
 
     class VariadicArgNone(Protocol):
-        def __call__(self, *args: Any) -> None:
-            ...
+        def __call__(self, *args: Any) -> None: ...
 
 
 _log = logging.getLogger(__name__)
@@ -342,7 +341,7 @@ class DiscordWebSocket:
         ws = cls(socket, loop=client.loop)
 
         # dynamically add attributes needed
-        ws.token = client.http.token  # type: ignore
+        ws.token = client._token  # type: ignore
         ws._connection = client._connection
         ws._discord_parsers = client._connection.parsers
         ws._dispatch = client.dispatch
@@ -597,8 +596,8 @@ class DiscordWebSocket:
             if msg.type is aiohttp.WSMsgType.TEXT or msg.type is aiohttp.WSMsgType.BINARY:
                 await self.received_message(msg.data)
             elif msg.type is aiohttp.WSMsgType.ERROR:
-                _log.debug("Received %s", msg)
-                raise msg.data
+                _log.debug("Received error %s", msg)
+                raise WebSocketClosure
             elif msg.type in (
                 aiohttp.WSMsgType.CLOSED,
                 aiohttp.WSMsgType.CLOSING,
@@ -795,8 +794,7 @@ class DiscordVoiceWebSocket:
             hook or getattr(self, "_hook", None) or self._default_hook
         )
 
-    async def _default_hook(self, *args: Any) -> None:
-        ...
+    async def _default_hook(self, *args: Any) -> None: ...
 
     async def send_as_json(self, data: Any) -> None:
         _log.debug("Sending voice websocket frame: %s.", data)

@@ -164,12 +164,16 @@ class Modal:
         return self.__timeout_expiry
 
     def add_item(self, item: Item) -> Modal:
-        """Adds an item to the modal.
+        r"""Adds an item to the modal.
 
         Parameters
         ----------
         item: :class:`Item`
             The item to add to the modal.
+
+            .. note::
+
+                The only items that are currently supported are :class:`TextInput`\s.
 
         Raises
         ------
@@ -376,7 +380,7 @@ class Modal:
 
 class ModalStore:
     def __init__(self, state: ConnectionState) -> None:
-        # (user_id, custom_id): Modal  # noqa: ERA001
+        # (user_id, custom_id): Modal
         self._modals: Dict[Tuple[int | None, str], Modal] = {}
         self._state: ConnectionState = state
 
