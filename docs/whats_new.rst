@@ -12,6 +12,113 @@ Changelog
 This page keeps a detailed human-friendly rendering of what's new and changed
 in specific versions.
 
+.. _vp2p6p0:
+
+v2.6.0
+------
+
+This release adds even more features and bug fixes, including the new username system, and will likely be the last release of the 2.x series.
+
+v3.0 will have breaking changes and more support for new API features.
+
+Removals
+~~~~~~~~
+
+- ``ApplicationFlags.active`` has been removed as that is not used for active applications anymore (:issue:`1081`).
+
+Deprecations
+~~~~~~~~~~~~
+
+- :attr:`Client.persistent_views` is deprecated in favour of :func:`Client.views` (:issue:`843`).
+
+New Features
+~~~~~~~~~~~~
+
+- Add recent :class:`MessageFlags` values (:issue:`990`):
+    - :attr:`MessageFlags.loading`
+    - :attr:`MessageFlags.failed_to_mention_roles`
+    - :attr:`MessageFlags.suppress_notifications`
+- Add :attr:`ApplicationFlags.application_auto_moderation_rule_create` (:issue:`1026`).
+- Add a ``prevent_update`` parameter to :class:`ui.View` to only store one instance of persistent views (:issue:`886`).
+- Add :attr:`Guild.premium_progress_bar_enabled` (:issue:`1067`).
+- Add application command checks to :class:`Client` (:issue:`1048`). Previously this was only in :class:`commands.Bot <nextcord.ext.commands.Bot>` and :class:`commands.AutoShardedBot <nextcord.ext.commands.AutoShardedBot>`. This means :class:`Client` now has:
+    - :func:`Client.add_application_command_check`
+    - :func:`Client.remove_application_command_check`
+    - :func:`Client.application_command_check`
+    - :func:`Client.application_command_before_invoke`
+    - :func:`Client.application_command_after_invoke`
+- Add support for guild previews (:issue:`1033`). This adds:
+    - :func:`Client.fetch_guild_preview`
+    - :class:`GuildPreview`
+- Track non-persistent :class:`ui.View`\s, and expose them via :attr:`Client.all_views` and :func:`Client.views` (:issue:`843`).
+- Add support for the new "pomelo" username system (:issue:`1060`, :issue:`1061`). :attr:`abc.User.global_name` is used to access the "Display Name", and :attr:`abc.User.discriminator` returns ``0000`` for unmigrated users. This also adds the new default avatar :attr:`DefaultAvatar.fuchsia`.
+- Add the ``default_forum_layout`` parameter to :func:`Guild.create_forum_channel` (:issue:`1013`).
+- Add support to inspect application command permissions (:issue:`1065`). This adds:
+    - :attr:`BaseApplicationCommand.required_permissions`
+    - :attr:`BaseApplicationCommand.required_bot_permissions`
+    - :attr:`BaseApplicationCommand.required_guild_permissions`
+    - :attr:`BaseApplicationCommand.required_bot_guild_permissions`
+- |commands| Add support to inspect prefix command permissions (:issue:`1065`). This adds:
+    - :attr:`Command.required_permissions <nextcord.ext.commands.Command.required_permissions>`
+    - :attr:`Command.required_bot_permissions <nextcord.ext.commands.Command.required_bot_permissions>`
+    - :attr:`Command.required_guild_permissions <nextcord.ext.commands.Command.required_guild_permissions>`
+    - :attr:`Command.required_bot_guild_permissions <nextcord.ext.commands.Command.required_bot_guild_permissions>`
+- Add :class:`AttachmentFlags`, accessible via :attr:`Attachment.flags` and :func:`Attachment.is_remix` (:issue:`1088`).
+- Add :class:`RoleFlags`, accessible via :attr:`Role.flags` and :func:`Role.is_in_prompt` (:issue:`1084`).
+- Add the ``with_counts`` parameter to :func:`Client.fetch_guilds` (:issue:`1093`).
+- Add support for auto moderation mention raids (:issue:`1080`). This adds:
+    - :attr:`AutoModerationTriggerMetadata.mention_raid_protection_enabled`
+    - :attr:`Guild.safety_alerts_channel`
+- Add support for "Text in Stage" and "Video in Stage" (:issue:`1017`). This means that :class:`StageChannel` now inherits :class:`abc.Messageable`. The ``bitrate``, ``user_limit``, ``nsfw``, ``rtc_region`` and ``video_quality_mode`` parameters have been added to :func:`Guild.create_stage_channel`, along with:
+    - :attr:`MessageType.stage_start`
+    - :attr:`MessageType.stage_end`
+    - :attr:`MessageType.stage_speaker`
+    - :attr:`MessageType.stage_topic`
+    - :attr:`Guild.max_stage_video_channel_users`
+- Add :func:`nextcord.utils.format_ts <utils.format_ts>` for formatting integer timestamps without a :class:`datetime.datetime` wrapping it (:issue:`1085`, :issue:`1099`).
+- Add support for custom statuses by making :attr:`CustomActivity.state` fall back to ``name`` so Discord recognises the activity (:issue:`1109`).
+- Add :class:`MemberFlags`, accessible via :attr:`Member.flags`, and modifiable via the ``flags`` and ``bypass_verification`` parameters in :func:`Member.edit` (:issue:`1042`).
+
+Bug Fixes
+~~~~~~~~~
+
+- Fix autocomplete tracebacks due to incomplete :class:`User`/:class:`Member` payloads from Discord (:issue:`1008`).
+- Fix unfocused autocomplete options not being passed into the callback (:issue:`1045`, :issue:`1046`).
+- Fix :attr:`ScheduledEvent.metadata` being missing (:issue:`1105`).
+- Fix :attr:`Thread.applied_tag_ids` not being updated on edit (:issue:`1097`, :issue:`1098`).
+
+Miscellaneous
+~~~~~~~~~~~~~
+
+- Change guild file size limits to the ``25MiB`` limit (:issue:`1063`).
+
+.. _vp2p5p0:
+
+v2.5.0
+------
+
+This version is a smaller release, mostly bundling bug fixes with small changes.
+
+New Features
+~~~~~~~~~~~~
+
+- Add ``invitable`` to :meth:`TextChannel.create_thread` (:issue:`1007`).
+- Add a context manager to :class:`File` (:issue:`998`).
+
+Bug Fixes
+~~~~~~~~~
+
+- Support :class:`Interaction` annotations for application commands using the generic :class:`Client` parameter (:issue:`992`).
+- Fix :attr:`ForumChannel.available_tags` not returning the correct data (:issue:`1021`).
+- Fix a crash if an audit log entry did not have a ``user_id`` (:issue:`1014`).
+- Fix a crash if an auto moderation execution event did not have a ``channel_id`` (:issue:`1038`, :issue:`1051`).
+
+Miscellaneous
+~~~~~~~~~~~~~
+
+- Webhooks now use :class:`weakref.WeakValueDictionary` for storing internal locks (:issue:`971`).
+- Change :meth:`Colour.dark_theme` to use the new dark theme colour (:issue:`1006`).
+
 .. _vp2p4p1:
 
 v2.4.1

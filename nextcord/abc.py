@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import copy
 from typing import (
     TYPE_CHECKING,
@@ -54,7 +55,15 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from .asset import Asset
-    from .channel import CategoryChannel, DMChannel, GroupChannel, PartialMessageable, TextChannel
+    from .channel import (
+        CategoryChannel,
+        DMChannel,
+        GroupChannel,
+        PartialMessageable,
+        StageChannel,
+        TextChannel,
+        VoiceChannel,
+    )
     from .client import Client
     from .embeds import Embed, EmbedData
     from .enums import InviteTarget
@@ -76,7 +85,9 @@ if TYPE_CHECKING:
     from .ui.view import View
     from .user import ClientUser
 
-    PartialMessageableChannel = Union[TextChannel, Thread, DMChannel, PartialMessageable]
+    PartialMessageableChannel = Union[
+        TextChannel, Thread, DMChannel, PartialMessageable, VoiceChannel, StageChannel
+    ]
     MessageableChannel = Union[PartialMessageableChannel, GroupChannel]
     SnowflakeTime = Union["Snowflake", datetime]
 
@@ -117,8 +128,17 @@ class User(Snowflake, Protocol):
     ----------
     name: :class:`str`
         The user's username.
+    global_name: :class:`str`
+        The user's global name. This is represented in the UI as "Display Name"
+
+        .. versionadded:: 2.6
     discriminator: :class:`str`
         The user's discriminator.
+
+        .. warning::
+            This field is deprecated, and will only return if the user has not yet migrated to the
+            new `username <https://dis.gd/usernames>`_ update.
+        .. deprecated:: 2.6
     avatar: :class:`~nextcord.Asset`
         The avatar asset the user has.
     bot: :class:`bool`
@@ -128,6 +148,7 @@ class User(Snowflake, Protocol):
     __slots__ = ()
 
     name: str
+    global_name: str
     discriminator: str
     avatar: Asset
     bot: bool
@@ -223,8 +244,10 @@ class GuildChannel:
     guild: :class:`~nextcord.Guild`
         The guild the channel belongs to.
     position: :class:`int`
-        The position in the channel list. This is a number that starts at 0.
-        e.g. the top channel is position 0.
+        The position in the channel list.
+
+        .. note::
+            Due to API inconsistencies, the position may not mirror the correct UI ordering
     """
 
     __slots__ = ()
@@ -243,8 +266,7 @@ class GuildChannel:
 
         def __init__(
             self, *, state: ConnectionState, guild: Guild, data: GuildChannelPayload
-        ) -> None:
-            ...
+        ) -> None: ...
 
     def __str__(self) -> str:
         return self.name
@@ -307,10 +329,8 @@ class GuildChannel:
         else:
             parent_id = parent and parent.id
 
-        try:
+        with contextlib.suppress(KeyError):
             options["rate_limit_per_user"] = options.pop("slowmode_delay")
-        except KeyError:
-            pass
 
         try:
             rtc_region = options.pop("rtc_region")
@@ -364,7 +384,7 @@ class GuildChannel:
                 position, parent_id=parent_id, lock_permissions=lock_permissions, reason=reason
             )
 
-        overwrites = options.get("overwrites", None)
+        overwrites = options.get("overwrites")
         if overwrites is not None:
             perms = []
             for target, perm in overwrites.items():
@@ -397,12 +417,10 @@ class GuildChannel:
                 raise InvalidArgument("type field must be of type ChannelType")
             options["type"] = ch_type.value
 
-        try:
+        with contextlib.suppress(KeyError):
             options["default_thread_rate_limit_per_user"] = options.pop(
                 "default_thread_slowmode_delay"
             )
-        except KeyError:
-            pass
 
         try:
             default_reaction = options.pop("default_reaction")
@@ -433,6 +451,7 @@ class GuildChannel:
 
         if options:
             return await self._state.http.edit_channel(self.id, reason=reason, **options)
+        return None
 
     def _fill_overwrites(self, data: GuildChannelPayload) -> None:
         self._overwrites = []
@@ -506,7 +525,7 @@ class GuildChannel:
         elif isinstance(obj, Role):
             predicate = lambda p: p.is_role()
         else:
-            predicate = lambda p: True
+            predicate = lambda _: True
 
         for overwrite in filter(predicate, self._overwrites):
             if overwrite.id == obj.id:
@@ -757,8 +776,7 @@ class GuildChannel:
         *,
         overwrite: Optional[PermissionOverwrite] = ...,
         reason: Optional[str] = ...,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     async def set_permissions(
@@ -767,8 +785,7 @@ class GuildChannel:
         *,
         reason: Optional[str] = ...,
         **permissions: bool,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     async def set_permissions(
         self,
@@ -861,11 +878,10 @@ class GuildChannel:
                 raise InvalidArgument("No overwrite provided.")
             try:
                 overwrite = PermissionOverwrite(**permissions)
-            except (ValueError, TypeError):
-                raise InvalidArgument("Invalid permissions given to keyword arguments.")
-        else:
-            if len(permissions) > 0:
-                raise InvalidArgument("Cannot mix overwrite and keyword arguments.")
+            except (ValueError, TypeError) as e:
+                raise InvalidArgument("Invalid permissions given to keyword arguments.") from e
+        elif len(permissions) > 0:
+            raise InvalidArgument("Cannot mix overwrite and keyword arguments.")
 
         # TODO: wait for event
 
@@ -942,8 +958,7 @@ class GuildChannel:
         category: Optional[Snowflake] = ...,
         sync_permissions: bool = ...,
         reason: Optional[str] = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     async def move(
@@ -954,8 +969,7 @@ class GuildChannel:
         category: Optional[Snowflake] = ...,
         sync_permissions: bool = ...,
         reason: Optional[str] = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     async def move(
@@ -966,8 +980,7 @@ class GuildChannel:
         category: Optional[Snowflake] = ...,
         sync_permissions: bool = ...,
         reason: Optional[str] = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     async def move(
@@ -978,8 +991,7 @@ class GuildChannel:
         category: Optional[Snowflake] = ...,
         sync_permissions: bool = ...,
         reason: Optional[str] = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     async def move(
         self,
@@ -1059,34 +1071,28 @@ class GuildChannel:
             raise InvalidArgument("Only one of [before, after, end, beginning] can be used.")
 
         bucket = self._sorting_bucket
-        # fmt: off
         channels: List[GuildChannel]
         if category:
             parent_id = category.id
             channels = [
                 ch
                 for ch in self.guild.channels
-                if ch._sorting_bucket == bucket
-                and ch.category_id == parent_id
+                if ch._sorting_bucket == bucket and ch.category_id == parent_id
             ]
         else:
             parent_id = None
             channels = [
                 ch
                 for ch in self.guild.channels
-                if ch._sorting_bucket == bucket
-                and ch.category_id == self.category_id
+                if ch._sorting_bucket == bucket and ch.category_id == self.category_id
             ]
-        # fmt: on
 
         channels.sort(key=lambda c: (c.position, c.id))
 
-        try:
+        with contextlib.suppress(ValueError):
             # Try to remove ourselves from the channel list
-            channels.remove(self)
-        except ValueError:
             # If we're not there then it's probably due to not being in the category
-            pass
+            channels.remove(self)
 
         index = None
         if beginning:
@@ -1227,6 +1233,7 @@ class Messageable:
     - :class:`~nextcord.DMChannel`
     - :class:`~nextcord.GroupChannel`
     - :class:`~nextcord.VoiceChannel`
+    - :class:`~nextcord.StageChannel`
     - :class:`~nextcord.User`
     - :class:`~nextcord.Member`
     - :class:`~nextcord.ext.commands.Context`
@@ -1256,8 +1263,7 @@ class Messageable:
         view: Optional[View] = ...,
         flags: Optional[MessageFlags] = ...,
         suppress_embeds: Optional[bool] = ...,
-    ) -> Message:
-        ...
+    ) -> Message: ...
 
     @overload
     async def send(
@@ -1276,8 +1282,7 @@ class Messageable:
         view: Optional[View] = ...,
         flags: Optional[MessageFlags] = ...,
         suppress_embeds: Optional[bool] = ...,
-    ) -> Message:
-        ...
+    ) -> Message: ...
 
     @overload
     async def send(
@@ -1296,8 +1301,7 @@ class Messageable:
         view: Optional[View] = ...,
         flags: Optional[MessageFlags] = ...,
         suppress_embeds: Optional[bool] = ...,
-    ) -> Message:
-        ...
+    ) -> Message: ...
 
     @overload
     async def send(
@@ -1316,8 +1320,7 @@ class Messageable:
         view: Optional[View] = ...,
         flags: Optional[MessageFlags] = ...,
         suppress_embeds: Optional[bool] = ...,
-    ) -> Message:
-        ...
+    ) -> Message: ...
 
     async def send(
         self,
@@ -1554,7 +1557,7 @@ class Messageable:
             )
 
         ret = state.create_message(channel=channel, data=data)
-        if view:
+        if view and view.prevent_update:
             state.store_view(view, ret.id)
 
         if delete_after is not None:
@@ -1775,11 +1778,9 @@ class Connectable(Protocol):
         try:
             await voice.connect(timeout=timeout, reconnect=reconnect)
         except asyncio.TimeoutError:
-            try:
+            # we don't care if disconnect failed because connection failed
+            with contextlib.suppress(Exception):
                 await voice.disconnect(force=True)
-            except Exception:
-                # we don't care if disconnect failed because connection failed
-                pass
             raise  # re-raise
 
         return voice

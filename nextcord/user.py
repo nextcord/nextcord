@@ -48,6 +48,7 @@ class BaseUser(_UserTag):
         "system",
         "_public_flags",
         "_state",
+        "global_name",
     )
 
     if TYPE_CHECKING:
@@ -56,6 +57,7 @@ class BaseUser(_UserTag):
         discriminator: str
         bot: bool
         system: bool
+        global_name: Optional[str]
         _state: ConnectionState
         _avatar: Optional[str]
         _banner: Optional[str]
@@ -70,12 +72,13 @@ class BaseUser(_UserTag):
 
     def __repr__(self) -> str:
         return (
-            f"<BaseUser id={self.id} name={self.name!r} discriminator={self.discriminator!r}"
-            f" bot={self.bot} system={self.system}>"
+            f"<BaseUser id={self.id} name={self.name!r} global_name={self.global_name!r}"
+            + (f" discriminator={self.discriminator!r}" if self.discriminator != "0" else "")
+            + f" bot={self.bot} system={self.system}>"
         )
 
     def __str__(self) -> str:
-        return f"{self.name}#{self.discriminator}"
+        return f"{self.name}#{self.discriminator}" if self.discriminator != "0" else self.name
 
     def __eq__(self, other: Any) -> bool:
         return isinstance(other, _UserTag) and other.id == self.id
@@ -96,6 +99,7 @@ class BaseUser(_UserTag):
         self._public_flags = data.get("public_flags", 0)
         self.bot = data.get("bot", False)
         self.system = data.get("system", False)
+        self.global_name = data.get("global_name", None)
 
     @classmethod
     def _copy(cls, user: Self) -> Self:
@@ -118,7 +122,8 @@ class BaseUser(_UserTag):
             "username": self.name,
             "id": self.id,
             "avatar": self._avatar,
-            "discriminator": self.discriminator,
+            "global_name": self.global_name,
+            "discriminator": self.discriminator,  # TODO: possibly remove this?
             "bot": self.bot,
         }
 
@@ -143,8 +148,15 @@ class BaseUser(_UserTag):
         """:class:`Asset`: Returns the default avatar for a given user.
 
         This is calculated by the user's discriminator.
+
+        ..versionchanged:: 2.6
+            Added handling for the new username system for users without a discriminator.
         """
-        return Asset._from_default_avatar(self._state, int(self.discriminator) % len(DefaultAvatar))
+        if self.discriminator != "0":
+            avatar_index = (self.id >> 22) % len(DefaultAvatar)
+        else:
+            avatar_index = int(self.discriminator) % 5
+        return Asset._from_default_avatar(self._state, avatar_index)
 
     @property
     def display_avatar(self) -> Asset:
@@ -235,11 +247,12 @@ class BaseUser(_UserTag):
     def display_name(self) -> str:
         """:class:`str`: Returns the user's display name.
 
-        For regular users this is just their username, but
-        if they have a guild specific nickname then that
-        is returned instead.
+        This will return the name using the following hierachy:
+
+        1. Global Name (also known as 'Display Name' in the Discord UI)
+        2. Unique username
         """
-        return self.name
+        return self.global_name or self.name
 
     def mentioned_in(self, message: Message) -> bool:
         """Checks if the user is mentioned in the specified message.
@@ -288,8 +301,17 @@ class ClientUser(BaseUser):
         The user's username.
     id: :class:`int`
         The user's unique ID.
+    global_name: Optional[:class:`str`]
+        The user's display name, if any.
+
+        .. versionadded: 2.6
     discriminator: :class:`str`
-        The user's discriminator. This is given when the username has conflicts.
+        The user's discriminator.
+
+        .. warning::
+            This field is deprecated, and will only return if the user has not yet migrated to the
+            new `username <https://dis.gd/usernames>`_ update.
+        .. deprecated:: 2.6
     bot: :class:`bool`
         Specifies if the user is a bot account.
     system: :class:`bool`
@@ -318,8 +340,9 @@ class ClientUser(BaseUser):
 
     def __repr__(self) -> str:
         return (
-            f"<ClientUser id={self.id} name={self.name!r} discriminator={self.discriminator!r}"
-            f" bot={self.bot} verified={self.verified} mfa_enabled={self.mfa_enabled}>"
+            f"<ClientUser id={self.id} name={self.name!r} global_name={self.global_name!r}"
+            + (f" discriminator={self.discriminator!r}" if self.discriminator != "0" else "")
+            + f" bot={self.bot} verified={self.verified} mfa_enabled={self.mfa_enabled}>"
         )
 
     def _update(self, data: UserPayload) -> None:
@@ -335,6 +358,7 @@ class ClientUser(BaseUser):
         *,
         username: str = MISSING,
         avatar: Optional[Union[bytes, Asset, Attachment, File]] = MISSING,
+        banner: Optional[Union[bytes, Asset, Attachment, File]] = MISSING,
     ) -> ClientUser:
         """|coro|
 
@@ -355,6 +379,9 @@ class ClientUser(BaseUser):
         .. versionchanged:: 2.1
             The ``avatar`` parameter now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
 
+        .. versionadded:: 3.0
+            The ``banner`` field has been added.
+
         Parameters
         ----------
         username: :class:`str`
@@ -362,13 +389,16 @@ class ClientUser(BaseUser):
         avatar: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
             A :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`, or :class:`Asset`
             representing the image to upload. Could be ``None`` to denote no avatar.
+        banner: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
+            A :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`, or :class:`Asset`
+            representing the image to upload. Could be ``None`` to denote no banner.
 
         Raises
         ------
         HTTPException
             Editing your profile failed.
         InvalidArgument
-            Wrong image format passed for ``avatar``.
+            Wrong image format passed for ``avatar`` and/or ``banner``.
 
         Returns
         -------
@@ -380,6 +410,8 @@ class ClientUser(BaseUser):
             payload["username"] = username
         if avatar is not MISSING:
             payload["avatar"] = await obj_to_base64_data(avatar)
+        if banner is not MISSING:
+            payload["banner"] = await obj_to_base64_data(banner)
 
         data: UserPayload = await self._state.http.edit_profile(payload)
         return ClientUser(state=self._state, data=data)
@@ -412,8 +444,17 @@ class User(BaseUser, abc.Messageable):
         The user's username.
     id: :class:`int`
         The user's unique ID.
+    global_name: Optional[:class:`str`]
+        The user's default name, if any.
+
+        ..versionadded: 2.6
     discriminator: :class:`str`
-        The user's discriminator. This is given when the username has conflicts.
+        The user's discriminator.
+
+        .. warning::
+          This field is deprecated, and will only return if the user has not yet migrated to the
+          new `username <https://dis.gd/usernames>`_ update.
+        .. deprecated:: 2.6
     bot: :class:`bool`
         Specifies if the user is a bot account.
     system: :class:`bool`
@@ -429,7 +470,11 @@ class User(BaseUser, abc.Messageable):
         self._stored: bool = False
 
     def __repr__(self) -> str:
-        return f"<User id={self.id} name={self.name!r} discriminator={self.discriminator!r} bot={self.bot}>"
+        return (
+            f"<User id={self.id} name={self.name!r} global_name={self.global_name!r}"
+            + (f" discriminator={self.discriminator!r}" if self.discriminator != "0" else "")
+            + f" bot={self.bot}>"
+        )
 
     def __del__(self) -> None:
         try:
@@ -445,8 +490,7 @@ class User(BaseUser, abc.Messageable):
         return self
 
     async def _get_channel(self) -> DMChannel:
-        ch = await self.create_dm()
-        return ch
+        return await self.create_dm()
 
     @property
     def dm_channel(self) -> Optional[DMChannel]:

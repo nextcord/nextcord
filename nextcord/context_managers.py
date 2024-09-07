@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 from typing import TYPE_CHECKING, Optional, Type, TypeVar
 
 if TYPE_CHECKING:
@@ -19,10 +20,8 @@ __all__ = ("Typing",)
 
 def _typing_done_callback(fut: asyncio.Future) -> None:
     # just retrieve any exception and call it a day
-    try:
+    with contextlib.suppress(asyncio.CancelledError, Exception):
         fut.exception()
-    except (asyncio.CancelledError, Exception):
-        pass
 
 
 class Typing:

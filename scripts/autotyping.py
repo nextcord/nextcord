@@ -24,6 +24,7 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -38,7 +39,7 @@ def main(argv: Sequence[str] | None = None) -> None:
     args = parser.parse_args(argv)
     if not args.paths:
         sys.exit(0)
-    output = subprocess.run(
+    subprocess.run(
         [
             "python",
             "-m",
@@ -48,8 +49,8 @@ def main(argv: Sequence[str] | None = None) -> None:
             *args.paths,
             "--aggressive",
         ],
+        check=True,
     )
-    sys.exit(output.returncode)
 
 
 if __name__ == "__main__":

@@ -52,6 +52,7 @@ GuildFeature = Literal[
     "NEWS",
     "PARTNERED",
     "PREVIEW_ENABLED",
+    "RAID_ALERTS_DISABLED",
     "ROLE_ICONS",
     "TICKETED_EVENTS_ENABLED",
     "VANITY_URL",
@@ -69,6 +70,7 @@ class _BaseGuildPreview(UnavailableGuild):
     emojis: List[Emoji]
     features: List[GuildFeature]
     description: Optional[str]
+    stickers: List[GuildSticker]
 
 
 class _GuildPreviewUnique(TypedDict):
@@ -76,8 +78,7 @@ class _GuildPreviewUnique(TypedDict):
     approximate_presence_count: int
 
 
-class GuildPreview(_BaseGuildPreview, _GuildPreviewUnique):
-    ...
+class GuildPreview(_BaseGuildPreview, _GuildPreviewUnique): ...
 
 
 class Guild(_BaseGuildPreview):
@@ -118,15 +119,17 @@ class Guild(_BaseGuildPreview):
     max_members: NotRequired[int]
     premium_subscription_count: NotRequired[int]
     max_video_channel_users: NotRequired[int]
+    max_stage_video_channel_users: NotRequired[int]
     stickers: NotRequired[List[GuildSticker]]
+    premium_progress_bar_enabled: Optional[bool]
+    safety_alerts_channel_id: Optional[Snowflake]
 
 
 class InviteGuild(Guild, total=False):
     welcome_screen: WelcomeScreen
 
 
-class GuildWithCounts(Guild, _GuildPreviewUnique):
-    ...
+class GuildWithCounts(Guild, _GuildPreviewUnique): ...
 
 
 class GuildPrune(TypedDict):
