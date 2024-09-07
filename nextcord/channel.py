@@ -2194,11 +2194,11 @@ class StageChannel(VocalGuildChannel, abc.Messageable):
         send_start_notification: :class:`bool`
             Whether to notify ``@everyone`` that the stage instance has started. Defaults to ``False``.
 
-            .. versionadded:: 2.7
+            .. versionadded:: 3.0
         scheduled_event: :class:`abc.Snowflake`
             The scheduled event associated with this stage instance.
 
-            .. versionadded:: 2.7
+            .. versionadded:: 3.0
         reason: :class:`str`
             The reason the stage instance was created. Shows up on the audit log.
 

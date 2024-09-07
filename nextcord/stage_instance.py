@@ -53,7 +53,7 @@ class StageInstance(Hashable):
     scheduled_event_id: Optional[:class:`int`]
         The ID of the scheduled event for this stage instance.
 
-        .. versionadded:: 2.7
+        .. versionadded:: 3.0
     discoverable_disabled: :class:`bool`
         Whether discoverability for the stage instance is disabled.
     """
@@ -99,7 +99,7 @@ class StageInstance(Hashable):
     def scheduled_event(self) -> Optional[ScheduledEvent]:
         """Optional[:class:`ScheduledEvent`]: The scheduled event for this stage instance.
 
-        .. versionadded:: 2.7
+        .. versionadded:: 3.0
         """
         if self.scheduled_event_id is None:
             return None
