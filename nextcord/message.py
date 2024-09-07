@@ -756,16 +756,6 @@ class MessageCall:
 
     .. versionadded:: 3.0
 
-    .. container:: operations
-
-        .. describe:: x == y
-
-            Checks if two message calls are equal.
-
-        .. describe:: x != y
-
-            Checks if two message calls are not equal.
-
     Attributes
     ----------
     data: Dict[:class:`str`, Any]
