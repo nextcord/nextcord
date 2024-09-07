@@ -94,7 +94,7 @@ class Reaction:
         "me",
         "me_burst",
         "count_details",
-        "_burst_colours",
+        "_cs_burst_colours",
     )
 
     def __init__(
