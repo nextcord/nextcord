@@ -25,10 +25,10 @@ __all__ = (
     "string_select",
 )
 
-V = TypeVar("V", bound="View", covariant=True)
+V_co = TypeVar("V_co", bound="View", covariant=True)
 
 
-class StringSelect(SelectBase, Generic[V]):
+class StringSelect(SelectBase, Generic[V_co]):
     """Represents a UI string select menu.
 
     This is usually represented as a drop down menu.
@@ -206,7 +206,7 @@ def string_select(
     disabled: bool = False,
     row: Optional[int] = None,
 ) -> Callable[
-    [ItemCallbackType[StringSelect[V], ClientT]], ItemCallbackType[StringSelect[V], ClientT]
+    [ItemCallbackType[StringSelect[V_co], ClientT]], ItemCallbackType[StringSelect[V_co], ClientT]
 ]:
     """A decorator that attaches a string select menu to a component.
 
@@ -244,7 +244,9 @@ def string_select(
         Whether the select is disabled or not. Defaults to ``False``.
     """
 
-    def decorator(func: ItemCallbackType[Select[V]]) -> ItemCallbackType[Select[V]]:
+    def decorator(
+        func: ItemCallbackType[Select[V_co], ClientT]
+    ) -> ItemCallbackType[Select[V_co], ClientT]:
         if not asyncio.iscoroutinefunction(func):
             raise TypeError("Select function must be a coroutine function")
 

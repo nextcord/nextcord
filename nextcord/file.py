@@ -13,6 +13,12 @@ class File:
     r"""A parameter object used for :meth:`abc.Messageable.send`
     for sending file objects.
 
+    .. versionchanged:: 2.5
+
+        You can now use nextcord.File as a context manager. This will
+        automatically call :meth:`close` when the context manager exits scope.
+        When using the context manager, force_close will default to True.
+
     .. note::
 
         File objects are single use and are not meant to be reused in
@@ -47,6 +53,7 @@ class File:
         This will also make the file bytes unusable by flushing it from
         memory after it is sent once.
         Enable this if you don't wish to reuse the same bytes.
+        Defaults to ``True`` when using context manager.
 
         .. versionadded:: 2.2
 
@@ -90,7 +97,7 @@ class File:
         filename: Optional[str]
         description: Optional[str]
         spoiler: bool
-        force_close: bool
+        force_close: Optional[bool]
 
     def __init__(
         self,
@@ -99,7 +106,7 @@ class File:
         *,
         description: Optional[str] = None,
         spoiler: bool = False,
-        force_close: bool = False,
+        force_close: Optional[bool] = None,
     ) -> None:
         if isinstance(fp, io.IOBase):
             if not (fp.seekable() and fp.readable()):
@@ -108,7 +115,7 @@ class File:
             self._original_pos = fp.tell()
             self._owner = False
         else:
-            self.fp = open(fp, "rb")
+            self.fp = open(fp, "rb")  # noqa: SIM115
             self._original_pos = 0
             self._owner = True
 
@@ -137,6 +144,16 @@ class File:
         self.spoiler = spoiler or (
             self.filename is not None and self.filename.startswith("SPOILER_")
         )
+
+    def __enter__(self) -> File:
+        # Set force_close to true when using context manager
+        # and force_close was not provided to __init__
+        if self.force_close is None:
+            self.force_close = True
+        return self
+
+    def __exit__(self, *_) -> None:
+        self.close()
 
     def reset(self, *, seek: Union[int, bool] = True) -> None:
         # The `seek` parameter is needed because

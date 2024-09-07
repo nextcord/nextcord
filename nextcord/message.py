@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import datetime
 import io
 import re
@@ -15,6 +16,7 @@ from typing import (
     Dict,
     List,
     Optional,
+    Set,
     Tuple,
     Union,
     overload,
@@ -24,10 +26,10 @@ from . import utils
 from .components import _component_factory
 from .embeds import Embed
 from .emoji import Emoji
-from .enums import ChannelType, MessageType, try_enum
+from .enums import ChannelType, IntegrationType, MessageType, try_enum
 from .errors import HTTPException, InvalidArgument
 from .file import File
-from .flags import MessageFlags
+from .flags import AttachmentFlags, MessageFlags
 from .guild import Guild
 from .member import Member
 from .mixins import Hashable
@@ -48,7 +50,10 @@ if TYPE_CHECKING:
     from .state import ConnectionState
     from .types.components import Component as ComponentPayload
     from .types.embed import Embed as EmbedPayload
-    from .types.interactions import MessageInteraction as MessageInteractionPayload
+    from .types.interactions import (
+        MessageInteraction as MessageInteractionPayload,
+        MessageInteractionMetadata as MessageInteractionMetadataPayload,
+    )
     from .types.member import Member as MemberPayload, UserWithMember as UserWithMemberPayload
     from .types.message import (
         Attachment as AttachmentPayload,
@@ -72,6 +77,7 @@ __all__ = (
     "MessageReference",
     "DeletedReferencedMessage",
     "MessageInteraction",
+    "MessageInteractionMetadata",
 )
 
 
@@ -157,6 +163,7 @@ class Attachment(Hashable):
         "_http",
         "content_type",
         "description",
+        "_flags",
     )
 
     def __init__(self, *, data: AttachmentPayload, state: ConnectionState) -> None:
@@ -170,6 +177,7 @@ class Attachment(Hashable):
         self._http = state.http
         self.content_type: Optional[str] = data.get("content_type")
         self.description: Optional[str] = data.get("description")
+        self._flags: int = data.get("flags", 0)
 
     def is_spoiler(self) -> bool:
         """:class:`bool`: Whether this attachment contains a spoiler."""
@@ -227,9 +235,9 @@ class Attachment(Hashable):
             if seek_begin:
                 fp.seek(0)
             return written
-        else:
-            with open(fp, "wb") as f:
-                return f.write(data)
+
+        with open(fp, "wb") as f:  # noqa: ASYNC230
+            return f.write(data)
 
     async def read(self, *, use_cached: bool = False) -> bytes:
         """|coro|
@@ -263,8 +271,7 @@ class Attachment(Hashable):
             The contents of the attachment.
         """
         url = self.proxy_url if use_cached else self.url
-        data = await self._http.get_from_cdn(url)
-        return data
+        return await self._http.get_from_cdn(url)
 
     async def to_file(
         self,
@@ -360,6 +367,18 @@ class Attachment(Hashable):
         if self.description:
             result["description"] = self.description
         return result
+
+    @property
+    def flags(self) -> AttachmentFlags:
+        """Optional[:class:`AttachmentFlags`]: The avaliable flags that the attachment has.
+
+        .. versionadded:: 2.6
+        """
+        return AttachmentFlags._from_value(self._flags)
+
+    def is_remix(self) -> bool:
+        """:class:`bool`: Whether the attachment is remixed."""
+        return self.flags.is_remix
 
 
 class DeletedReferencedMessage:
@@ -511,10 +530,9 @@ class MessageReference:
             {"message_id": self.message_id} if self.message_id is not None else {}
         )
         result["channel_id"] = self.channel_id
+        result["fail_if_not_exists"] = self.fail_if_not_exists
         if self.guild_id is not None:
             result["guild_id"] = self.guild_id
-        if self.fail_if_not_exists is not None:
-            result["fail_if_not_exists"] = self.fail_if_not_exists
         return result
 
     to_message_reference_dict = to_dict
@@ -570,6 +588,10 @@ class MessageInteraction(Hashable):
     user: Union[:class:`User`, :class:`Member`]
         The :class:`User` who invoked the interaction or :class:`Member` if the interaction
         occurred in a guild.
+
+    .. warning::
+        This class is deprecated, use :attr:`Message.interaction_metadata` instead.
+    .. deprecated:: 3.0
     """
 
     __slots__ = (
@@ -604,6 +626,128 @@ class MessageInteraction(Hashable):
     def created_at(self) -> datetime.datetime:
         """:class:`datetime.datetime`: The interaction's creation time in UTC."""
         return utils.snowflake_time(self.id)
+
+
+class MessageInteractionMetadata(Hashable):
+    """Represents a message's interaction metadata.
+
+    A message's interaction metadata is a property of a message when the message
+    is a response to an interaction from any bot.
+
+    .. versionadded:: 3.0
+
+    .. container:: operations
+
+        .. describe:: x == y
+
+            Checks if two message interactions are equal.
+
+        .. describe:: x != y
+
+            Checks if two interaction messages are not equal.
+
+        .. describe:: hash(x)
+
+            Returns the message interaction's hash.
+
+    Attributes
+    ----------
+    data: Dict[:class:`str`, Any]
+        The raw data from the interaction metadata.
+    id: :class:`int`
+        The interaction's ID.
+    type: :class:`InteractionType`
+        The interaction type.
+    user: Union[:class:`User`, :class:`Member`]
+        The :class:`User` who invoked the interaction or :class:`Member` if the interaction
+        occurred in a guild and that member is cached.
+    authorizing_integration_owners: Dict[:class:`IntegrationType`, :class:`str`]
+        Mapping of installation contexts that the interaction was authorized for to related user or guild IDs.
+        You can find out about this field in the `official Discord documentation`__.
+
+        .. _DiscordDocs: https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-authorizing-integration-owners-object
+
+        .. versionadded:: 3.0
+    name: Optional[:class:`str`]
+        The name of the application command.
+    original_response_message_id: Optional[:class:`int`]
+        The ID of the original response message, present only on follow-up messages.
+    interacted_message_id: Optional[:class:`int`]
+        The ID of the message that contained the interactive component, present only on messages created from component interactions.
+    triggering_interaction_metadata: Optional[:class:`MessageInteractionMetadata`]
+        Metadata for the interaction that was used to open the modal, present only on modal submit interactions.
+    """
+
+    __slots__ = (
+        "_state",
+        "data",
+        "id",
+        "type",
+        "user",
+        "authorizing_integration_owners",
+        "name",
+        "original_response_message_id",
+        "interacted_message_id",
+        "triggering_interaction_metadata",
+    )
+
+    def __init__(
+        self,
+        *,
+        data: MessageInteractionMetadataPayload,
+        guild: Optional[Guild],
+        state: ConnectionState,
+    ) -> None:
+        self._state: ConnectionState = state
+
+        self.data: MessageInteractionMetadataPayload = data
+        self.id: int = int(data["id"])
+        self.type: int = data["type"]
+
+        # No member data is provided, retrieve from cache if possible
+        self.user = None if guild is None else guild.get_member(int(data["user"]["id"]))
+        if self.user is None:
+            self.user = self._state.create_user(data=data["user"])
+
+        self.authorizing_integration_owners: Dict[IntegrationType, int] = {
+            IntegrationType(int(integration_type)): int(details)
+            for integration_type, details in data["authorizing_integration_owners"].items()
+        }
+
+        self.name: Optional[str] = data.get("name")
+        self.original_response_message_id: Optional[int] = (
+            int(data["original_response_message_id"])
+            if "original_response_message_id" in data
+            else None
+        )
+        self.interacted_message_id: Optional[int] = (
+            int(data["interacted_message_id"]) if "interacted_message_id" in data else None
+        )
+        self.triggering_interaction_metadata: Optional[MessageInteractionMetadata] = (
+            MessageInteractionMetadata(
+                data=data["triggering_interaction_metadata"], guild=guild, state=state
+            )
+            if "triggering_interaction_metadata" in data
+            else None
+        )
+
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__} id={self.id} type={self.type} user={self.user!r} name={self.name!r}>"
+
+    @property
+    def created_at(self) -> datetime.datetime:
+        """:class:`datetime.datetime`: The interaction's creation time in UTC."""
+        return utils.snowflake_time(self.id)
+
+    @property
+    def cached_original_response_message(self) -> Optional[Message]:
+        """Optional[:class:`~nextcord.Message`]: The original response message, if found in the internal message cache."""
+        return self._state._get_message(self.original_response_message_id)
+
+    @property
+    def cached_interacted_message(self) -> Optional[Message]:
+        """Optional[:class:`~nextcord.Message`]: The interacted message, if found in the internal message cache."""
+        return self._state._get_message(self.interacted_message_id)
 
 
 @flatten_handlers
@@ -723,6 +867,14 @@ class Message(Hashable):
         The guild that the message belongs to, if applicable.
     interaction: Optional[:class:`MessageInteraction`]
         The interaction data of a message, if applicable.
+
+        .. warning::
+            This field is deprecated, use ``interaction_metadata`` instead.
+        .. deprecated:: 3.0
+    interaction_metadata: Optional[:class:`MessageInteractionMetadata`]
+        The interaction metadata of a message. Present if the message is sent as a result of an interaction.
+
+        .. versionadded:: 3.0
     """
 
     __slots__ = (
@@ -742,6 +894,7 @@ class Message(Hashable):
         "embeds",
         "id",
         "interaction",
+        "interaction_metadata",
         "mentions",
         "author",
         "attachments",
@@ -756,6 +909,7 @@ class Message(Hashable):
         "activity",
         "stickers",
         "components",
+        "_background_tasks",
         "guild",
     )
 
@@ -804,6 +958,7 @@ class Message(Hashable):
         self.components: List[Component] = [
             _component_factory(d) for d in data.get("components", [])
         ]
+        self._background_tasks: Set[asyncio.Task[None]] = set()
 
         try:
             # if the channel doesn't have a guild attribute, we handle that
@@ -814,9 +969,12 @@ class Message(Hashable):
             else:
                 self.guild = None
 
-        if thread_data := data.get("thread"):
-            if not self.thread and isinstance(self.guild, Guild):
-                self.guild._store_thread(thread_data)
+        if (
+            (thread_data := data.get("thread"))
+            and not self.thread
+            and isinstance(self.guild, Guild)
+        ):
+            self.guild._store_thread(thread_data)
 
         try:
             ref = data["message_reference"]
@@ -850,6 +1008,13 @@ class Message(Hashable):
         self.interaction: Optional[MessageInteraction] = (
             MessageInteraction(data=data["interaction"], guild=self.guild, state=self._state)
             if "interaction" in data
+            else None
+        )
+        self.interaction_metadata: Optional[MessageInteractionMetadata] = (
+            MessageInteractionMetadata(
+                data=data["interaction_metadata"], guild=self.guild, state=self._state
+            )
+            if "interaction_metadata" in data
             else None
         )
 
@@ -906,12 +1071,12 @@ class Message(Hashable):
 
     def _clear_emoji(self, emoji) -> Optional[Reaction]:
         to_check = str(emoji)
-        for index, reaction in enumerate(self.reactions):
+        for index, reaction in enumerate(self.reactions):  # noqa: B007
             if str(reaction.emoji) == to_check:
                 break
         else:
             # didn't find anything so just return
-            return
+            return None
 
         del self.reactions[index]
         return reaction
@@ -931,10 +1096,8 @@ class Message(Hashable):
 
         # clear the cached properties
         for attr in self._CACHED_SLOTS:
-            try:
+            with contextlib.suppress(AttributeError):
                 delattr(self, attr)
-            except AttributeError:
-                pass
 
     def _handle_edited_timestamp(self, value: str) -> None:
         self._edited_timestamp = utils.parse_time(value)
@@ -1080,21 +1243,17 @@ class Message(Hashable):
             respectively, along with this function.
         """
 
-        # fmt: off
         transformations = {
-            re.escape(f'<#{channel.id}>'): '#' + channel.name
-            for channel in self.channel_mentions
+            re.escape(f"<#{channel.id}>"): "#" + channel.name for channel in self.channel_mentions
         }
 
         mention_transforms = {
-            re.escape(f'<@{member.id}>'): '@' + member.display_name
-            for member in self.mentions
+            re.escape(f"<@{member.id}>"): "@" + member.display_name for member in self.mentions
         }
 
         # add the <@!user_id> cases as well..
         second_mention_transforms = {
-            re.escape(f'<@!{member.id}>'): '@' + member.display_name
-            for member in self.mentions
+            re.escape(f"<@!{member.id}>"): "@" + member.display_name for member in self.mentions
         }
 
         transformations.update(mention_transforms)
@@ -1102,12 +1261,9 @@ class Message(Hashable):
 
         if self.guild is not None:
             role_transforms = {
-                re.escape(f'<@&{role.id}>'): '@' + role.name
-                for role in self.role_mentions
+                re.escape(f"<@&{role.id}>"): "@" + role.name for role in self.role_mentions
             }
             transformations.update(role_transforms)
-
-        # fmt: on
 
         def repl(obj):
             return transformations.get(re.escape(obj.group(0)), "")
@@ -1172,14 +1328,12 @@ class Message(Hashable):
         if self.type is MessageType.recipient_add:
             if self.channel.type is ChannelType.group:
                 return f"{self.author.name} added {self.mentions[0].name} to the group."
-            else:
-                return f"{self.author.name} added {self.mentions[0].name} to the thread."
+            return f"{self.author.name} added {self.mentions[0].name} to the thread."
 
         if self.type is MessageType.recipient_remove:
             if self.channel.type is ChannelType.group:
                 return f"{self.author.name} removed {self.mentions[0].name} from the group."
-            else:
-                return f"{self.author.name} removed {self.mentions[0].name} from the thread."
+            return f"{self.author.name} removed {self.mentions[0].name} from the thread."
 
         if self.type is MessageType.channel_name_change:
             return f"{self.author.name} changed the channel name: **{self.content}**"
@@ -1213,26 +1367,22 @@ class Message(Hashable):
         if self.type is MessageType.premium_guild_subscription:
             if not self.content:
                 return f"{self.author.name} just boosted the server!"
-            else:
-                return f"{self.author.name} just boosted the server **{self.content}** times!"
+            return f"{self.author.name} just boosted the server **{self.content}** times!"
 
         if self.type is MessageType.premium_guild_tier_1:
             if not self.content:
                 return f"{self.author.name} just boosted the server! {self.guild} has achieved **Level 1!**"
-            else:
-                return f"{self.author.name} just boosted the server **{self.content}** times! {self.guild} has achieved **Level 1!**"
+            return f"{self.author.name} just boosted the server **{self.content}** times! {self.guild} has achieved **Level 1!**"
 
         if self.type is MessageType.premium_guild_tier_2:
             if not self.content:
                 return f"{self.author.name} just boosted the server! {self.guild} has achieved **Level 2!**"
-            else:
-                return f"{self.author.name} just boosted the server **{self.content}** times! {self.guild} has achieved **Level 2!**"
+            return f"{self.author.name} just boosted the server **{self.content}** times! {self.guild} has achieved **Level 2!**"
 
         if self.type is MessageType.premium_guild_tier_3:
             if not self.content:
                 return f"{self.author.name} just boosted the server! {self.guild} has achieved **Level 3!**"
-            else:
-                return f"{self.author.name} just boosted the server **{self.content}** times! {self.guild} has achieved **Level 3!**"
+            return f"{self.author.name} just boosted the server **{self.content}** times! {self.guild} has achieved **Level 3!**"
 
         if self.type is MessageType.channel_follow_add:
             return f"{self.author.name} has added {self.content} to this channel"
@@ -1269,6 +1419,20 @@ class Message(Hashable):
         if self.type is MessageType.guild_invite_reminder:
             return "Wondering who to invite?\nStart by inviting anyone who can help you build the server!"
 
+        if self.type is MessageType.stage_start:
+            return f"{self.author.display_name} started {self.content}"
+
+        if self.type is MessageType.stage_end:
+            return f"{self.author.display_name} ended {self.content}"
+
+        if self.type is MessageType.stage_speaker:
+            return f"{self.author.display_name} is now a speaker."
+
+        if self.type is MessageType.stage_topic:
+            return f"{self.author.display_name} changed the Stage topic: {self.content}"
+
+        return None
+
     async def delete(self, *, delay: Optional[float] = None) -> None:
         """|coro|
 
@@ -1300,12 +1464,12 @@ class Message(Hashable):
 
             async def delete(delay: float) -> None:
                 await asyncio.sleep(delay)
-                try:
+                with contextlib.suppress(HTTPException):
                     await self._state.http.delete_message(self.channel.id, self.id)
-                except HTTPException:
-                    pass
 
-            asyncio.create_task(delete(delay))
+            task = asyncio.create_task(delete(delay))
+            self._background_tasks.add(task)
+            task.add_done_callback(self._background_tasks.discard)
         else:
             await self._state.http.delete_message(self.channel.id, self.id)
 
@@ -1321,8 +1485,7 @@ class Message(Hashable):
         allowed_mentions: Optional[AllowedMentions] = ...,
         view: Optional[View] = ...,
         file: Optional[File] = ...,
-    ) -> Message:
-        ...
+    ) -> Message: ...
 
     @overload
     async def edit(
@@ -1336,8 +1499,7 @@ class Message(Hashable):
         allowed_mentions: Optional[AllowedMentions] = ...,
         view: Optional[View] = ...,
         file: Optional[File] = ...,
-    ) -> Message:
-        ...
+    ) -> Message: ...
 
     @overload
     async def edit(
@@ -1351,8 +1513,7 @@ class Message(Hashable):
         allowed_mentions: Optional[AllowedMentions] = ...,
         view: Optional[View] = ...,
         files: Optional[List[File]] = ...,
-    ) -> Message:
-        ...
+    ) -> Message: ...
 
     @overload
     async def edit(
@@ -1366,8 +1527,7 @@ class Message(Hashable):
         allowed_mentions: Optional[AllowedMentions] = ...,
         view: Optional[View] = ...,
         files: Optional[List[File]] = ...,
-    ) -> Message:
-        ...
+    ) -> Message: ...
 
     async def edit(
         self,
@@ -1494,14 +1654,13 @@ class Message(Hashable):
         if allowed_mentions is MISSING:
             if self._state.allowed_mentions is not None and self.author.id == self._state.self_id:
                 payload["allowed_mentions"] = self._state.allowed_mentions.to_dict()
-        else:
-            if allowed_mentions is not None:
-                if self._state.allowed_mentions is not None:
-                    payload["allowed_mentions"] = self._state.allowed_mentions.merge(
-                        allowed_mentions
-                    ).to_dict()
-                else:
-                    payload["allowed_mentions"] = allowed_mentions.to_dict()
+        elif allowed_mentions is not None:
+            if self._state.allowed_mentions is not None:
+                payload["allowed_mentions"] = self._state.allowed_mentions.merge(
+                    allowed_mentions
+                ).to_dict()
+            else:
+                payload["allowed_mentions"] = allowed_mentions.to_dict()
 
         if attachments is not MISSING:
             payload["attachments"] = [a.to_dict() for a in attachments]
@@ -1516,7 +1675,7 @@ class Message(Hashable):
         data = await self._state.http.edit_message(self.channel.id, self.id, **payload)
         message = Message(state=self._state, channel=self.channel, data=data)
 
-        if view and not view.is_finished():
+        if view and not view.is_finished() and view.prevent_update:
             self._state.store_view(view, self.id)
 
         if delete_after is not None:
@@ -1903,7 +2062,7 @@ class PartialMessage(Hashable):
 
     # Also needed for duck typing purposes
     # n.b. not exposed
-    pinned = property(None, lambda x, y: None)
+    pinned = property(None, lambda _, __: None)
 
     def __repr__(self) -> str:
         return f"<PartialMessage id={self.id} channel={self.channel!r}>"
@@ -2068,6 +2227,7 @@ class PartialMessage(Hashable):
         if fields:
             # data isn't unbound
             msg = self._state.create_message(channel=self.channel, data=data)  # type: ignore
-            if view and not view.is_finished():
+            if view and not view.is_finished() and view.prevent_update:
                 self._state.store_view(view, self.id)
             return msg
+        return None

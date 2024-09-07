@@ -113,6 +113,7 @@ class BaseActivity:
             return datetime.datetime.fromtimestamp(
                 self._created_at / 1000, tz=datetime.timezone.utc
             )
+        return None
 
     def to_dict(self) -> ActivityPayload:
         raise NotImplementedError
@@ -394,13 +395,11 @@ class Game(BaseActivity):
         if self._end:
             timestamps["end"] = self._end
 
-        # fmt: off
         return {
-            'type': ActivityType.playing.value,
-            'name': str(self.name),
-            'timestamps': timestamps
+            "type": ActivityType.playing.value,
+            "name": str(self.name),
+            "timestamps": timestamps,
         }
-        # fmt: on
 
     def __eq__(self, other: Any) -> bool:
         return isinstance(other, Game) and other.name == self.name
@@ -498,14 +497,12 @@ class Streaming(BaseActivity):
             return name[7:] if name[:7] == "twitch:" else None
 
     def to_dict(self) -> Dict[str, Any]:
-        # fmt: off
         ret: Dict[str, Any] = {
-            'type': ActivityType.streaming.value,
-            'name': str(self.name),
-            'url': str(self.url),
-            'assets': self.assets
+            "type": ActivityType.streaming.value,
+            "name": str(self.name),
+            "url": str(self.url),
+            "assets": self.assets,
         }
-        # fmt: on
         if self.details:
             ret["details"] = self.details
         return ret
@@ -582,6 +579,7 @@ class Spotify:
             return datetime.datetime.fromtimestamp(
                 self._created_at / 1000, tz=datetime.timezone.utc
             )
+        return None
 
     @property
     def colour(self) -> Colour:
@@ -735,6 +733,11 @@ class CustomActivity(BaseActivity):
         The custom activity's name.
     emoji: Optional[:class:`PartialEmoji`]
         The emoji to pass to the activity, if any.
+    state: Optional[:class:`str`]
+        The custom status text. :attr:`~.CustomActivity.name` must equal "Custom Status" for this to work.
+
+        .. versionchanged:: 2.6
+            This falls back to :attr:`~.CustomActivity.name` if not provided.
     """
 
     __slots__ = ("name", "emoji", "state", "_state")
@@ -750,7 +753,7 @@ class CustomActivity(BaseActivity):
         super().__init__(**extra)
         self._state = _connection_state
         self.name: Optional[str] = name
-        self.state: Optional[str] = extra.pop("state", None)
+        self.state: Optional[str] = extra.pop("state", name)
         if self.name == "Custom Status":
             self.name = self.state
 
@@ -814,8 +817,7 @@ class CustomActivity(BaseActivity):
             if self.name:
                 return f"{self.emoji} {self.name}"
             return str(self.emoji)
-        else:
-            return str(self.name)
+        return str(self.name)
 
     def __repr__(self) -> str:
         return f"<CustomActivity name={self.name!r} emoji={self.emoji!r}>"
@@ -825,13 +827,11 @@ ActivityTypes = Union[Activity, Game, CustomActivity, Streaming, Spotify]
 
 
 @overload
-def create_activity(state: ConnectionState, data: ActivityPayload) -> ActivityTypes:
-    ...
+def create_activity(state: ConnectionState, data: ActivityPayload) -> ActivityTypes: ...
 
 
 @overload
-def create_activity(state: ConnectionState, data: None) -> None:
-    ...
+def create_activity(state: ConnectionState, data: None) -> None: ...
 
 
 def create_activity(
@@ -845,19 +845,19 @@ def create_activity(
         if "application_id" in data or "session_id" in data:
             return Activity(**data)
         return Game(**data)
-    elif game_type is ActivityType.custom:
-        try:
-            name = data.pop("name")  # pyright: ignore[reportGeneralTypeIssues]
-        except KeyError:
-            return Activity(**data)
-        else:
-            # we removed the name key from data already
-            return CustomActivity(name=name, _connection_state=state, **data)  # type: ignore
-    elif game_type is ActivityType.streaming:
+
+    if game_type is ActivityType.custom:
+        if "name" in data:
+            return CustomActivity(_connection_state=state, **data)  # type: ignore
+        return Activity(**data)
+
+    if game_type is ActivityType.streaming:
         if "url" in data:
             # the URL won't be None here
             return Streaming(**data)  # type: ignore
         return Activity(**data)
-    elif game_type is ActivityType.listening and "sync_id" in data and "session_id" in data:
+
+    if game_type is ActivityType.listening and "sync_id" in data and "session_id" in data:
         return Spotify(**data)
+
     return Activity(**data)

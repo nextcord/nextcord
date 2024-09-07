@@ -21,12 +21,14 @@ if TYPE_CHECKING:
 
     from ...guild import Guild
     from ...state import ConnectionState
-    from ...types.components import MentionableSelectMenu as MentionableSelectMenuPayload
+    from ...types.components import (
+        MentionableSelectMenu as MentionableSelectMenuPayload,
+    )
     from ...types.interactions import ComponentInteractionData
 
 __all__ = ("MentionableSelect", "mentionable_select", "MentionableSelectValues")
 
-V = TypeVar("V", bound="View", covariant=True)
+V_co = TypeVar("V_co", bound="View", covariant=True)
 
 
 class MentionableSelectValues(SelectValuesBase):
@@ -39,7 +41,7 @@ class MentionableSelectValues(SelectValuesBase):
 
     @property
     def users(self) -> List[User]:
-        """List[:class:`.User`]: A list of users that were selected."""
+        """List[:class:`nextcord.User`]: A list of users that were selected."""
         return [v for v in self.data if isinstance(v, User)]
 
     @property
@@ -48,8 +50,7 @@ class MentionableSelectValues(SelectValuesBase):
         return [v for v in self.data if isinstance(v, Role)]
 
 
-class MentionableSelect(SelectBase, Generic[V]):
-
+class MentionableSelect(SelectBase, Generic[V_co]):
     """Represents a UI mentionable select menu.
 
     This is usually represented as a drop down menu.
@@ -119,7 +120,7 @@ class MentionableSelect(SelectBase, Generic[V]):
 
     @property
     def values(self) -> MentionableSelectValues:
-        """:class:`.ui.MentionableSelectValues`: A list of Union[:class:`.Member`, :class:`.User`, :class:`.Role`] that have been selected by the user."""
+        """:class:`.ui.MentionableSelectValues`: A list of Union[:class:`.Member`, :class:`nextcord.User`, :class:`.Role`] that have been selected by the user."""
         return self._selected_values
 
     def to_component_dict(self) -> MentionableSelectMenuPayload:
@@ -156,8 +157,8 @@ def mentionable_select(
     disabled: bool = False,
     row: Optional[int] = None,
 ) -> Callable[
-    [ItemCallbackType[MentionableSelect[V], ClientT]],
-    ItemCallbackType[MentionableSelect[V], ClientT],
+    [ItemCallbackType[MentionableSelect[V_co], ClientT]],
+    ItemCallbackType[MentionableSelect[V_co], ClientT],
 ]:
     """A decorator that attaches a mentionable select menu to a component.
 

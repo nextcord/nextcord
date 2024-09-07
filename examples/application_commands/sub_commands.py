@@ -12,7 +12,6 @@ async def main(interaction: Interaction):
     This is the main slash command that will be the prefix of all commands below.
     This will never get called since it has subcommands.
     """
-    pass
 
 
 @main.subcommand(description="Subcommand 1")
@@ -40,7 +39,6 @@ async def main_group(interaction: Interaction):
     All subcommands of this group will be prefixed with '/main main_group'.
     This will never get called since it has subcommands.
     """
-    pass
 
 
 @main_group.subcommand(description="Subcommand group subcommand 1")
