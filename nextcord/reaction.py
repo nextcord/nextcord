@@ -141,7 +141,7 @@ class Reaction:
 
     @cached_slot_property("_cs_bust_colours")
     def burst_colours(self) -> List[Colour]:
-        """List[:class:`Colour`]: The HEX colors used for a burst reaction.
+        """List[:class:`Colour`]: The HEX colours used for a burst reaction.
 
         .. versionadded:: 3.0
         """
