@@ -50,16 +50,13 @@ class ExponentialBackoff(Generic[T]):
         )
 
     @overload
-    def delay(self: ExponentialBackoff[Literal[False]]) -> float:
-        ...
+    def delay(self: ExponentialBackoff[Literal[False]]) -> float: ...
 
     @overload
-    def delay(self: ExponentialBackoff[Literal[True]]) -> int:
-        ...
+    def delay(self: ExponentialBackoff[Literal[True]]) -> int: ...
 
     @overload
-    def delay(self: ExponentialBackoff[bool]) -> Union[int, float]:
-        ...
+    def delay(self: ExponentialBackoff[bool]) -> Union[int, float]: ...
 
     def delay(self) -> Union[int, float]:
         """Compute the next delay

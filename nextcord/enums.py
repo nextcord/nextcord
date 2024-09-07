@@ -49,6 +49,9 @@ __all__ = (
     "SortOrderType",
     "RoleConnectionMetadataType",
     "ForumLayoutType",
+    "InviteType",
+    "IntegrationType",
+    "InteractionContextType",
 )
 
 
@@ -129,7 +132,7 @@ class IntEnum(int, Enum):
         return self.value
 
 
-class StrEnum(str, Enum):  # noqa: SLOT000
+class StrEnum(str, Enum):
     """An enum that supports comparing and hashing as a string."""
 
     def __str__(self) -> str:
@@ -2035,6 +2038,46 @@ class ForumLayoutType(IntEnum):
     """Display posts as a list, more text focused."""
     gallery = 2
     """Display posts as a collection of posts with images, this is more image focused."""
+
+
+class InviteType(IntEnum):
+    """Represents the type of an invite.
+
+    .. versionadded:: 3.0
+    """
+
+    guild = 0
+    """The invite is for a guild."""
+    group_dm = 1
+    """The invite is for a group DM."""
+    friend = 2
+    """The invite is for a Discord user."""
+
+
+class IntegrationType(IntEnum):
+    """Where a :class:`BaseApplicationCommand` is available, only for globally-scoped commands.
+
+    .. versionadded:: 3.0
+    """
+
+    guild_install = 0
+    """App is installable to servers."""
+    user_install = 1
+    """App is installable to users."""
+
+
+class InteractionContextType(IntEnum):
+    """Where a :class:`BaseApplicationCommand` can be used, only for globally-scoped commands, or where a :class:`Interaction` originates from.
+
+    .. versionadded:: 3.0
+    """
+
+    guild = 0
+    """The :class:`BaseApplicationCommand` can be used within servers, or the :class:`Interaction` originates from a server."""
+    bot_dm = 1
+    """The :class:`BaseApplicationCommand` can be used within DMs with the app's bot user, or the :class:`Interaction` originates from such DMs."""
+    private_channel = 2
+    """The :class:`BaseApplicationCommand` can be used within Group DMs and DMs other than the app's bot user, or the :class:`Interaction` originates from such channels."""
 
 
 T = TypeVar("T")
