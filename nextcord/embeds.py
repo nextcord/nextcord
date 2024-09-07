@@ -337,15 +337,15 @@ class Embed:
         chaining.
 
         .. versionchanged:: 2.5
-            The ``icon_url`` parameter can be a File object.
+            The ``icon_url`` parameter can now accept a :class:`File` object.
 
         Parameters
         ----------
         text: Optional[:class:`str`]
             The footer text.
         icon_url: Optional[:class:`str`]
-            The URL or the File object of the footer icon.
-            Only HTTP(S) and File(s) are supported.
+            The URL or the :class:`File` object of the footer icon.
+            Only HTTP(S) and files are supported.
         """
         self._footer = {}
         if text is not None:
@@ -404,13 +404,13 @@ class Embed:
             Passing ``None`` removes the image.
 
         .. versionchanged:: 2.5
-            The ``url`` parameter can be a File object.
+            The ``url`` parameter can now accept a :class:`File` object.
 
         Parameters
         ----------
         url: Optional[:class:`str`]
             The source URL or the File object for the image.
-            Only HTTP(S) and File(s) are supported.
+            Only HTTP(S) and files are supported.
         """
         if url is None:
             try:
@@ -454,13 +454,13 @@ class Embed:
             Passing ``None`` removes the thumbnail.
 
         .. versionchanged:: 2.5
-            The ``url`` parameter can be a File object.
+            The ``url`` parameter can now accept a :class:`File` object.
 
         Parameters
         ----------
         url: Optional[:class:`str`]
             The source URL or the File object for the image.
-            Only HTTP(S) and File(s) are supported.
+            Only HTTP(S) and files are supported.
         """
         if url is None:
             try:
@@ -526,7 +526,7 @@ class Embed:
         chaining.
 
         .. versionchanged:: 2.5
-            The ``icon_url`` parameter can be a File object.
+            The ``icon_url`` parameter can now accept a :class:`File` object.
 
         Parameters
         ----------
@@ -536,7 +536,7 @@ class Embed:
             The URL for the author.
         icon_url: Optional[:class:`str`]
             The URL or the File object of the author icon.
-            Only HTTP(S) and File(s) are supported.
+            Only HTTP(S) and files are supported.
         """
 
         self._author = {
