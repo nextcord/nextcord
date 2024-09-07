@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, List, Optional, Union
 
 from .iterators import ReactionIterator
-from .utils import cached_property
+from .utils import cached_slot_property
 
 __all__ = ("Reaction",)
 
@@ -139,7 +139,7 @@ class Reaction:
     def __repr__(self) -> str:
         return f"<Reaction emoji={self.emoji!r} me={self.me} count={self.count}>"
 
-    @cached_property
+    @cached_slot_property("_cs_bust_colours")
     def burst_colours(self) -> List[Colour]:
         """List[:class:`Colour`]: The HEX colors used for a burst reaction.
 
