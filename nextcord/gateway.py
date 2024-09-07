@@ -30,8 +30,7 @@ if TYPE_CHECKING:
     from .voice_client import VoiceClient
 
     class VariadicArgNone(Protocol):
-        def __call__(self, *args: Any) -> None:
-            ...
+        def __call__(self, *args: Any) -> None: ...
 
 
 _log = logging.getLogger(__name__)
@@ -795,8 +794,7 @@ class DiscordVoiceWebSocket:
             hook or getattr(self, "_hook", None) or self._default_hook
         )
 
-    async def _default_hook(self, *args: Any) -> None:
-        ...
+    async def _default_hook(self, *args: Any) -> None: ...
 
     async def send_as_json(self, data: Any) -> None:
         _log.debug("Sending voice websocket frame: %s.", data)
