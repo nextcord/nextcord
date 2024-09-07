@@ -37,8 +37,8 @@ class ReactionCountDetails:
     __slots__ = ("burst", "normal")
 
     def __init__(self, data: ReactionCountDetailsPayload) -> None:
-        self.burst = data.get("burst")
-        self.normal = data.get("normal")
+        self.burst: int = data.get("burst")
+        self.normal: int = data.get("normal")
 
 
 class Reaction:
