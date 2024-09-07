@@ -1858,8 +1858,8 @@ class HTTPClient:
 
     def bulk_ban(
         self,
-        guild_id: Snowflake,
         user_ids: List[Snowflake],
+        guild_id: Snowflake,
         delete_message_seconds: int = 0,
         reason: Optional[str] = None,
         *,
