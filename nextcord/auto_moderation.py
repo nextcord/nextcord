@@ -205,23 +205,44 @@ class AutoModerationActionMetadata:
         .. note::
 
             The maximum value that can be used is ``2419200`` seconds (4 weeks)
+    custom_message: Optional[:class:`str`]
+        The message explaining why the message has been blocked.
+
+        .. versionadded:: 3.0
+
+        .. note::
+
+            This is ``None`` and cannot be provided if the action type of the rule is not
+            :attr:`AutoModerationActionType.block_message`.
+
+        .. note::
+
+            This message cannot exceed 150 characters.
     """
 
-    __slots__ = ("channel_id", "duration_seconds")
+    __slots__ = ("channel_id", "duration_seconds", "custom_message")
 
     def __init__(
-        self, *, channel: Optional[Snowflake] = None, duration_seconds: Optional[int] = None
+        self,
+        *,
+        channel: Optional[Snowflake] = None,
+        duration_seconds: Optional[int] = None,
+        custom_message: Optional[str] = None,
     ) -> None:
         self.channel_id: Optional[int] = channel.id if channel is not None else None
         self.duration_seconds: Optional[int] = duration_seconds
+        self.custom_message: Optional[str] = custom_message
 
     @classmethod
     def from_data(cls, data: ActionMetadataPayload):
         channel_id = get_as_snowflake(data, "channel_id")
         channel = Object(id=channel_id) if channel_id is not None else None
         duration_seconds = data.get("duration_seconds")
+        custom_message = data.get("custom_message")
 
-        return cls(channel=channel, duration_seconds=duration_seconds)
+        return cls(
+            channel=channel, duration_seconds=duration_seconds, custom_message=custom_message
+        )
 
     @property
     def payload(self) -> ActionMetadataPayload:
@@ -232,6 +253,9 @@ class AutoModerationActionMetadata:
 
         if self.duration_seconds is not None:
             payload["duration_seconds"] = self.duration_seconds
+
+        if self.custom_message is not None:
+            payload["custom_message"] = self.custom_message
 
         return payload
 
@@ -557,7 +581,7 @@ class AutoModerationActionExecution:
 
         .. note::
 
-            This requires :attr:`Intents.message_conrent` to not be empty.
+            This requires :attr:`Intents.message_content` to not be empty.
     """
 
     def __init__(self, *, data: ActionExecutionPayload, state: ConnectionState) -> None:
