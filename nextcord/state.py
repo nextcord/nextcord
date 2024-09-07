@@ -891,7 +891,7 @@ class ConnectionState:
                 data = await self.http.get_global_commands(self.application_id)
 
         for raw_response in data:
-            payload_type = raw_response["type"] if "type" in raw_response else 1
+            payload_type = raw_response.get("type", 1)
             fixed_guild_id = raw_response.get("guild_id", None)
 
             response_signature = {
@@ -1045,7 +1045,7 @@ class ConnectionState:
         data_signatures = [
             (
                 raw_response["name"],
-                int(raw_response["type"] if "type" in raw_response else 1),
+                int(raw_response.get("type", 1)),
                 int(temp) if (temp := raw_response.get("guild_id", None)) else temp,
             )
             for raw_response in data

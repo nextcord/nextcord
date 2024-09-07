@@ -237,7 +237,7 @@ class Attachment(Hashable):
                 fp.seek(0)
             return written
 
-        with open(fp, "wb") as f:  # noqa: ASYNC101
+        with open(fp, "wb") as f:  # noqa: ASYNC230
             return f.write(data)
 
     async def read(self, *, use_cached: bool = False) -> bytes:
@@ -1494,8 +1494,7 @@ class Message(Hashable):
         allowed_mentions: Optional[AllowedMentions] = ...,
         view: Optional[View] = ...,
         file: Optional[File] = ...,
-    ) -> Message:
-        ...
+    ) -> Message: ...
 
     @overload
     async def edit(
@@ -1509,8 +1508,7 @@ class Message(Hashable):
         allowed_mentions: Optional[AllowedMentions] = ...,
         view: Optional[View] = ...,
         file: Optional[File] = ...,
-    ) -> Message:
-        ...
+    ) -> Message: ...
 
     @overload
     async def edit(
@@ -1524,8 +1522,7 @@ class Message(Hashable):
         allowed_mentions: Optional[AllowedMentions] = ...,
         view: Optional[View] = ...,
         files: Optional[List[File]] = ...,
-    ) -> Message:
-        ...
+    ) -> Message: ...
 
     @overload
     async def edit(
@@ -1539,8 +1536,7 @@ class Message(Hashable):
         allowed_mentions: Optional[AllowedMentions] = ...,
         view: Optional[View] = ...,
         files: Optional[List[File]] = ...,
-    ) -> Message:
-        ...
+    ) -> Message: ...
 
     async def edit(
         self,

@@ -38,7 +38,6 @@ class ChannelSelectValues(SelectValuesBase):
 
 
 class ChannelSelect(SelectBase, Generic[V_co]):
-
     """Represents a UI channel select menu.
 
     This is usually represented as a drop down menu.

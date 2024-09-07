@@ -290,16 +290,16 @@ class ApplicationCommandOption:
         self.name: Optional[str] = name
         self.name_localizations: Optional[Dict[Union[str, Locale], str]] = name_localizations
         self.description: Optional[str] = description
-        self.description_localizations: Optional[
-            Dict[Union[str, Locale], str]
-        ] = description_localizations
+        self.description_localizations: Optional[Dict[Union[str, Locale], str]] = (
+            description_localizations
+        )
         self.required: Optional[bool] = required
         self.choices: Optional[
             Union[Dict[str, Union[str, int, float]], Iterable[Union[str, int, float]]]
         ] = choices
-        self.choice_localizations: Optional[
-            Dict[str, Dict[Union[Locale, str], str]]
-        ] = choice_localizations
+        self.choice_localizations: Optional[Dict[str, Dict[Union[Locale, str], str]]] = (
+            choice_localizations
+        )
         self.channel_types: Optional[List[ChannelType]] = channel_types
         self.min_value: Optional[Union[int, float]] = min_value
         self.max_value: Optional[Union[int, float]] = max_value
@@ -1802,10 +1802,11 @@ class SlashCommandMixin(CallbackMixin):
         command_ids: Dict[Optional[int], int]
         qualified_name: str
         _children: Dict[str, SlashApplicationSubcommand]
+        _options: Dict[str, SlashCommandOption]
 
     def __init__(self, callback: Optional[Callable], parent_cog: Optional[ClientCog]) -> None:
         CallbackMixin.__init__(self, callback=callback, parent_cog=parent_cog)
-        self.options: Dict[str, SlashCommandOption] = {}
+        self._options = {}
         self._parsed_docstring: Optional[Dict[str, Any]] = None
         self._children: Dict[str, SlashApplicationSubcommand] = {}
 
@@ -1817,6 +1818,19 @@ class SlashCommandMixin(CallbackMixin):
             ``.children`` is now a read-only property.
         """
         return self._children
+
+    @property
+    def options(self) -> Dict[str, SlashCommandOption]:
+        """Dict[:class:`str`, :class:`SlashCommandOption`]: Returns the options of the command.
+
+        .. versionchanged:: 2.5
+            This is now a property.
+        """
+        return self._options
+
+    @options.setter
+    def options(self, value: Dict[str, SlashCommandOption]) -> None:
+        self._options = value
 
     @property
     def description(self) -> str:
@@ -1854,11 +1868,11 @@ class SlashCommandMixin(CallbackMixin):
                 raise ValueError("Discord did not provide us any options data")
 
         kwargs = {}
-        uncalled_args = self.options.copy()
+        uncalled_args = self._options.copy()
         for arg_data in option_data:
             if arg_data["name"] in uncalled_args:
                 uncalled_args.pop(arg_data["name"])
-                kwargs[self.options[arg_data["name"]].functional_name] = await self.options[
+                kwargs[self.options[arg_data["name"]].functional_name] = await self._options[
                     arg_data["name"]
                 ].handle_value(state, arg_data.get("value"), interaction)
             else:
@@ -2015,14 +2029,14 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         self.name: Optional[str] = name
         self.name_localizations: Optional[Dict[Union[str, Locale], str]] = name_localizations
         self._description: Optional[str] = description
-        self.description_localizations: Optional[
-            Dict[Union[str, Locale], str]
-        ] = description_localizations
+        self.description_localizations: Optional[Dict[Union[str, Locale], str]] = (
+            description_localizations
+        )
         self.guild_ids_to_rollout: Set[int] = set(guild_ids) if guild_ids else set()
         self.use_default_guild_ids: bool = guild_ids is MISSING and not force_global
-        self.default_member_permissions: Optional[
-            Union[Permissions, int]
-        ] = default_member_permissions
+        self.default_member_permissions: Optional[Union[Permissions, int]] = (
+            default_member_permissions
+        )
         self.nsfw: bool = nsfw
         self.integration_types = (
             None if integration_types is None else [IntegrationType(x) for x in integration_types]
@@ -2037,7 +2051,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         Dict[Optional[:class:`int`], :class:`int`]:
             Command IDs that this application command currently has. Schema: {Guild ID (None for global): command ID}
         """
-        self.options: Dict[str, ApplicationCommandOption] = {}
+        self._options: Dict[str, ApplicationCommandOption] = {}
 
     # Simple-ish getter + setter methods.
 
@@ -2648,9 +2662,9 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
         self.name: Optional[str] = name
         self.name_localizations: Optional[Dict[Union[str, Locale], str]] = name_localizations
         self._description: Optional[str] = description
-        self.description_localizations: Optional[
-            Dict[Union[str, Locale], str]
-        ] = description_localizations
+        self.description_localizations: Optional[Dict[Union[str, Locale], str]] = (
+            description_localizations
+        )
         self.type = cmd_type
         self.parent_cmd = parent_cmd
         self._inherit_hooks: bool = inherit_hooks
@@ -3425,12 +3439,12 @@ def check_dictionary_values(dict1: dict, dict2: dict, *keywords) -> bool:
         True if keyword values in both dictionaries match, False otherwise.
     """
     for keyword in keywords:
-        if dict1.get(keyword, None) != dict2.get(keyword, None):
+        if dict1.get(keyword) != dict2.get(keyword):
             _log.debug(
                 "Failed basic dictionary value check for key %s:\n %s vs %s",
                 keyword,
-                dict1.get(keyword, None),
-                dict2.get(keyword, None),
+                dict1.get(keyword),
+                dict2.get(keyword),
             )
             return False
 
@@ -3700,8 +3714,7 @@ class RangeMeta(type):
             Tuple[int, EllipsisType],
             Tuple[EllipsisType, int],
         ],
-    ) -> Type[int]:
-        ...
+    ) -> Type[int]: ...
 
     @overload
     def __getitem__(
@@ -3712,8 +3725,7 @@ class RangeMeta(type):
             Tuple[float, EllipsisType],
             Tuple[EllipsisType, float],
         ],
-    ) -> Type[float]:
-        ...
+    ) -> Type[float]: ...
 
     def __getitem__(
         cls,
