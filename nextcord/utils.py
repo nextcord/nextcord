@@ -42,6 +42,7 @@ from typing import (
     overload,
 )
 
+from .enums import IntegrationType
 from .errors import InvalidArgument
 from .file import File
 
@@ -290,6 +291,7 @@ def oauth_url(
     redirect_uri: str = MISSING,
     scopes: Iterable[str] = MISSING,
     disable_guild_select: bool = False,
+    integration_type: IntegrationType = IntegrationType.guild_install,
 ) -> str:
     """A helper function that returns the OAuth2 URL for inviting the bot
     into guilds.
@@ -313,13 +315,18 @@ def oauth_url(
         Whether to disallow the user from changing the guild dropdown.
 
         .. versionadded:: 2.0
+    integration_type: :class:`~nextcord.IntegrationType`
+        The integration type (otherwise known as installation context) that the invite is for.
+        Defaults to `~nextcord.IntegrationType.guild_install` if not provided
+
+        .. versionadded:: 3.0
 
     Returns
     -------
     :class:`str`
         The OAuth2 URL for inviting the bot into guilds.
     """
-    url = f"https://discord.com/oauth2/authorize?client_id={client_id}"
+    url = f"https://discord.com/oauth2/authorize?client_id={client_id}&integration_type={integration_type.value}"
     url += "&scope=" + "+".join(scopes or ("bot",))
     if permissions is not MISSING:
         url += f"&permissions={permissions.value}"
@@ -494,7 +501,7 @@ def get_as_snowflake(data: Any, key: str) -> Optional[int]:
 
 
 def _get_mime_type_for_image(data: bytes) -> str:
-    if data.startswith(b"\x89\x50\x4E\x47\x0D\x0A\x1A\x0A"):
+    if data.startswith(b"\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"):
         return "image/png"
     if data[0:3] == b"\xff\xd8\xff" or data[6:10] in (b"JFIF", b"Exif"):
         return "image/jpeg"
