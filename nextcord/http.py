@@ -3507,6 +3507,20 @@ class HTTPClient:
             retry_request=retry_request,
         )
 
+    def get_role(
+        self,
+        guild_id: Snowflake,
+        role_id: Snowflake,
+        *,
+        auth: Optional[str] = MISSING,
+        retry_request: bool = True,
+    ) -> Response[role.Role]:
+        return self.request(
+            Route("GET", "/guilds/{guild_id}/roles/{role_id}", guild_id=guild_id, role_id=role_id),
+            auth=auth,
+            retry_request=retry_request,
+        )
+
     def edit_role(
         self,
         guild_id: Snowflake,
