@@ -45,8 +45,7 @@ class Invite(IncompleteInvite, total=False):
     flags: int
 
 
-class InviteWithCounts(Invite, _GuildPreviewUnique):
-    ...
+class InviteWithCounts(Invite, _GuildPreviewUnique): ...
 
 
 class GatewayInviteCreate(TypedDict):

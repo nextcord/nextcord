@@ -143,10 +143,10 @@ class Embed:
         *,
         colour: Optional[Union[int, Colour]] = None,
         color: Optional[Union[int, Colour]] = None,
-        title: Optional[Any] = None,
+        title: Optional[str] = None,
         type: EmbedType = "rich",
-        url: Optional[Any] = None,
-        description: Optional[Any] = None,
+        url: Optional[str] = None,
+        description: Optional[str] = None,
         timestamp: Optional[datetime.datetime] = None,
     ) -> None:
         self.colour = colour if colour is not None else color
@@ -156,13 +156,13 @@ class Embed:
         self.description = description
 
         if self.title is not None:
-            self.title = str(self.title)
+            self.title = self.title
 
         if self.description is not None:
-            self.description = str(self.description)
+            self.description = self.description
 
         if self.url is not None:
-            self.url = str(self.url)
+            self.url = self.url
 
         if timestamp:
             self.timestamp = timestamp
@@ -307,7 +307,12 @@ class Embed:
         """
         return EmbedProxy(getattr(self, "_footer", {}))  # type: ignore
 
-    def set_footer(self, *, text: Optional[Any] = None, icon_url: Optional[Any] = None) -> Self:
+    def set_footer(
+        self,
+        *,
+        text: Optional[str] = None,
+        icon_url: Optional[str] = None,
+    ) -> Self:
         """Sets the footer for the embed content.
 
         This function returns the class instance to allow for fluent-style
@@ -323,10 +328,10 @@ class Embed:
 
         self._footer = {}
         if text is not None:
-            self._footer["text"] = str(text)
+            self._footer["text"] = text
 
         if icon_url is not None:
-            self._footer["icon_url"] = str(icon_url)
+            self._footer["icon_url"] = icon_url
 
         return self
 
@@ -358,7 +363,7 @@ class Embed:
         """
         return EmbedProxy(getattr(self, "_image", {}))  # type: ignore
 
-    def set_image(self, url: Optional[Any]) -> Self:
+    def set_image(self, url: Optional[str]) -> Self:
         """Sets the image for the embed content.
 
         This function returns the class instance to allow for fluent-style
@@ -379,7 +384,7 @@ class Embed:
 
         else:
             self._image = {
-                "url": str(url),
+                "url": url,
             }
 
         return self
@@ -399,7 +404,7 @@ class Embed:
         """
         return EmbedProxy(getattr(self, "_thumbnail", {}))  # type: ignore
 
-    def set_thumbnail(self, url: Optional[Any]) -> Self:
+    def set_thumbnail(self, url: Optional[str]) -> Self:
         """Sets the thumbnail for the embed content.
 
         This function returns the class instance to allow for fluent-style
@@ -410,7 +415,7 @@ class Embed:
 
         Parameters
         ----------
-        url: :class:`str`
+        url: Optional[:class:`str`]
             The source URL for the thumbnail. Only HTTP(S) is supported.
         """
 
@@ -420,7 +425,7 @@ class Embed:
 
         else:
             self._thumbnail = {
-                "url": str(url),
+                "url": url,
             }
 
         return self
@@ -462,9 +467,9 @@ class Embed:
     def set_author(
         self,
         *,
-        name: Any,
-        url: Optional[Any] = None,
-        icon_url: Optional[Any] = None,
+        name: str,
+        url: Optional[str] = None,
+        icon_url: Optional[str] = None,
     ) -> Self:
         """Sets the author for the embed content.
 
@@ -482,14 +487,14 @@ class Embed:
         """
 
         self._author = {
-            "name": str(name),
+            "name": name,
         }
 
         if url is not None:
-            self._author["url"] = str(url)
+            self._author["url"] = url
 
         if icon_url is not None:
-            self._author["icon_url"] = str(icon_url)
+            self._author["icon_url"] = icon_url
 
         return self
 
@@ -516,7 +521,7 @@ class Embed:
         """
         return [EmbedProxy(d) for d in getattr(self, "_fields", [])]  # type: ignore
 
-    def add_field(self, *, name: Any, value: Any, inline: bool = True) -> Self:
+    def add_field(self, *, name: str, value: str, inline: bool = True) -> Self:
         """Adds a field to the embed object.
 
         This function returns the class instance to allow for fluent-style
@@ -534,8 +539,8 @@ class Embed:
 
         field = {
             "inline": inline,
-            "name": str(name),
-            "value": str(value),
+            "name": name,
+            "value": value,
         }
 
         try:
@@ -545,7 +550,14 @@ class Embed:
 
         return self
 
-    def insert_field_at(self, index: int, *, name: Any, value: Any, inline: bool = True) -> Self:
+    def insert_field_at(
+        self,
+        index: int,
+        *,
+        name: str,
+        value: str,
+        inline: bool = True,
+    ) -> Self:
         """Inserts a field before a specified index to the embed.
 
         This function returns the class instance to allow for fluent-style
@@ -567,8 +579,8 @@ class Embed:
 
         field = {
             "inline": inline,
-            "name": str(name),
-            "value": str(value),
+            "name": name,
+            "value": value,
         }
 
         try:
@@ -615,7 +627,14 @@ class Embed:
 
         return self
 
-    def set_field_at(self, index: int, *, name: Any, value: Any, inline: bool = True) -> Self:
+    def set_field_at(
+        self,
+        index: int,
+        *,
+        name: str,
+        value: str,
+        inline: bool = True,
+    ) -> Self:
         """Modifies a field to the embed object.
 
         The index must point to a valid pre-existing field.
@@ -645,8 +664,8 @@ class Embed:
         except (TypeError, IndexError, AttributeError) as e:
             raise IndexError("field index out of range") from e
 
-        field["name"] = str(name)
-        field["value"] = str(value)
+        field["name"] = name
+        field["value"] = value
         field["inline"] = inline
         return self
 

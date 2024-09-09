@@ -291,12 +291,10 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
         overwrites: Mapping[Union[Role, Member, Snowflake], PermissionOverwrite] = ...,
         flags: ChannelFlags = ...,
         default_thread_slowmode_delay: int = ...,
-    ) -> Optional[TextChannel]:
-        ...
+    ) -> Optional[TextChannel]: ...
 
     @overload
-    async def edit(self) -> Optional[TextChannel]:
-        ...
+    async def edit(self) -> Optional[TextChannel]: ...
 
     async def edit(self, *, reason: Optional[str] = None, **options):
         """|coro|
@@ -1081,12 +1079,10 @@ class ForumChannel(abc.GuildChannel, Hashable):
         default_thread_slowmode_delay: int = ...,
         available_tags: List[ForumTag] = ...,
         default_reaction: Optional[Union[Emoji, PartialEmoji, str]] = ...,
-    ) -> ForumChannel:
-        ...
+    ) -> ForumChannel: ...
 
     @overload
-    async def edit(self) -> ForumChannel:
-        ...
+    async def edit(self) -> ForumChannel: ...
 
     async def edit(self, *, reason: Optional[str] = None, **options) -> ForumChannel:
         """|coro|
@@ -1748,12 +1744,10 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
         video_quality_mode: VideoQualityMode = ...,
         flags: ChannelFlags = ...,
         reason: Optional[str] = ...,
-    ) -> Optional[VoiceChannel]:
-        ...
+    ) -> Optional[VoiceChannel]: ...
 
     @overload
-    async def edit(self) -> Optional[VoiceChannel]:
-        ...
+    async def edit(self) -> Optional[VoiceChannel]: ...
 
     async def edit(self, *, reason: Optional[str] = None, **options):
         """|coro|
@@ -2222,6 +2216,8 @@ class StageChannel(VocalGuildChannel, abc.Messageable):
         *,
         topic: str,
         privacy_level: StagePrivacyLevel = MISSING,
+        send_start_notification: bool = False,
+        scheduled_event: Snowflake = MISSING,
         reason: Optional[str] = None,
     ) -> StageInstance:
         """|coro|
@@ -2239,6 +2235,14 @@ class StageChannel(VocalGuildChannel, abc.Messageable):
             The stage instance's topic.
         privacy_level: :class:`StagePrivacyLevel`
             The stage instance's privacy level. Defaults to :attr:`StagePrivacyLevel.guild_only`.
+        send_start_notification: :class:`bool`
+            Whether to notify ``@everyone`` that the stage instance has started. Defaults to ``False``.
+
+            .. versionadded:: 3.0
+        scheduled_event: :class:`abc.Snowflake`
+            The scheduled event associated with this stage instance.
+
+            .. versionadded:: 3.0
         reason: :class:`str`
             The reason the stage instance was created. Shows up on the audit log.
 
@@ -2264,6 +2268,11 @@ class StageChannel(VocalGuildChannel, abc.Messageable):
                 raise InvalidArgument("privacy_level field must be of type PrivacyLevel")
 
             payload["privacy_level"] = privacy_level.value
+
+        if scheduled_event is not MISSING:
+            payload["guild_scheduled_event_id"] = scheduled_event.id
+
+        payload["send_start_notification"] = send_start_notification
 
         data = await self._state.http.create_stage_instance(**payload, reason=reason)
         return StageInstance(guild=self.guild, state=self._state, data=data)
@@ -2305,12 +2314,10 @@ class StageChannel(VocalGuildChannel, abc.Messageable):
         flags: ChannelFlags = ...,
         user_limit: int = ...,
         reason: Optional[str] = ...,
-    ) -> Optional[StageChannel]:
-        ...
+    ) -> Optional[StageChannel]: ...
 
     @overload
-    async def edit(self) -> Optional[StageChannel]:
-        ...
+    async def edit(self) -> Optional[StageChannel]: ...
 
     async def edit(self, *, reason: Optional[str] = None, **options):
         """|coro|
@@ -2512,12 +2519,10 @@ class CategoryChannel(abc.GuildChannel, Hashable):
         overwrites: Mapping[Union[Role, Member], PermissionOverwrite] = ...,
         flags: ChannelFlags = ...,
         reason: Optional[str] = ...,
-    ) -> Optional[CategoryChannel]:
-        ...
+    ) -> Optional[CategoryChannel]: ...
 
     @overload
-    async def edit(self) -> Optional[CategoryChannel]:
-        ...
+    async def edit(self) -> Optional[CategoryChannel]: ...
 
     async def edit(self, *, reason: Optional[str] = None, **options):
         """|coro|
