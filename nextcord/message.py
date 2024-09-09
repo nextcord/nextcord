@@ -33,10 +33,12 @@ from .flags import AttachmentFlags, MessageFlags
 from .guild import Guild
 from .member import Member
 from .mixins import Hashable
+from .object import Object
 from .partial_emoji import PartialEmoji
 from .reaction import Reaction
 from .sticker import StickerItem
 from .threads import Thread
+from .user import User
 from .utils import MISSING, escape_mentions
 
 if TYPE_CHECKING:
@@ -61,6 +63,7 @@ if TYPE_CHECKING:
         MessageActivity as MessageActivityPayload,
         MessageApplication as MessageApplicationPayload,
         MessageReference as MessageReferencePayload,
+        MessageSnapshot as MessageSnapshotPayload,
         Reaction as ReactionPayload,
     )
     from .types.threads import Thread as ThreadPayload, ThreadArchiveDuration
@@ -553,6 +556,67 @@ def flatten_handlers(cls):
     return cls
 
 
+class MessageSnapshot:
+    """Represents a message reference snapshot.
+
+    .. versionadded:: 3.0
+
+    Attributes
+    ----------
+    type: :class:`MessageType`
+        The type of message.
+    content: :class:`str`
+        The message's content.
+    embeds: List[:class:`Embed`]
+        The embeds the message contains.
+    attachments: List[:class:`Attachment`]
+        The attachments the message contains.
+    timestamp: :class:`datetime.datetime`
+        The timestamp when the message was sent.
+    edited_timestamp: Optional[:class:`datetime.datetime`]
+        The timestamp when the message was last edited.
+        Returns ``None`` if it has not been edited.
+    flags: :class:`MessageFlags`
+        The message's flags.
+    mentions: List[:class:`User`]
+        A list of users that the message has mentioned.
+    mention_roles: List[:class:`Object`]
+        A list of role IDs that the message has mentioned.
+    sticker_items: List[:class:`StickerItem`]
+        A list of stickers packs that the message contains.
+    components: List[:class:`Component`]
+        A list of components that the message contains.
+    """
+
+    def __init__(self, *, data: MessageSnapshotPayload, state: ConnectionState) -> None:
+        self._message = data["message"]
+        self._state = state
+
+        self.type: MessageType = MessageType(self._message["type"])
+        self.content: str = self._message["content"]
+        self.embeds: List[Embed] = [Embed.from_dict(d) for d in self._message.get("embeds", [])]
+        self.attachments: List[Attachment] = [
+            Attachment(data=a, state=self._state) for a in self._message.get("attachments", [])
+        ]
+        self.timestamp: datetime.datetime = utils.parse_time(self._message["timestamp"])
+        self.edited_timestamp: datetime.datetime | None = utils.parse_time(
+            self._message.get("edited_timestamp")
+        )
+        self.flags: MessageFlags = MessageFlags._from_value(self._message.get("flags", 0))
+        self.mentions: List[User] = [
+            User(state=self._state, data=u) for u in self._message.get("mentions", [])
+        ]
+        self.mention_roles: List[Object] = [
+            Object(r) for r in self._message.get("mention_roles", [])
+        ]
+        self.sticker_items: List[StickerItem] = [
+            StickerItem(state=self._state, data=s) for s in self._message.get("sticker_items", [])
+        ]
+        self.components: List[Component] = [
+            _component_factory(c) for c in self._message.get("components", [])
+        ]
+
+
 class MessageInteraction(Hashable):
     """Represents a message's interaction data.
 
@@ -911,6 +975,7 @@ class Message(Hashable):
         "components",
         "_background_tasks",
         "guild",
+        "snapshots",
     )
 
     if TYPE_CHECKING:
@@ -975,6 +1040,10 @@ class Message(Hashable):
             and isinstance(self.guild, Guild)
         ):
             self.guild._store_thread(thread_data)
+
+        self.snapshots: List[MessageSnapshot] = [
+            MessageSnapshot(state=self._state, data=s) for s in data.get("message_snapshots", [])
+        ]
 
         try:
             ref = data["message_reference"]
