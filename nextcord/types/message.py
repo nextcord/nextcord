@@ -81,7 +81,7 @@ class MessageSnapshotMessage(TypedDict):
     edited_timestamp: Optional[str]
     flags: NotRequired[int]
     mentions: List[User]
-    mentions_roles: SnowflakeList
+    mention_roles: SnowflakeList
     sticker_items: NotRequired[List[StickerItem]]
     components: NotRequired[List[Component]]
 
