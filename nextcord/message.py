@@ -26,7 +26,7 @@ from . import utils
 from .components import _component_factory
 from .embeds import Embed
 from .emoji import Emoji
-from .enums import ChannelType, IntegrationType, MessageType, try_enum
+from .enums import ChannelType, IntegrationType, MessageReferenceType, MessageType, try_enum
 from .errors import HTTPException, InvalidArgument
 from .file import File
 from .flags import AttachmentFlags, MessageFlags
@@ -454,17 +454,27 @@ class MessageReference:
         .. versionadded:: 1.6
     """
 
-    __slots__ = ("message_id", "channel_id", "guild_id", "fail_if_not_exists", "resolved", "_state")
+    __slots__ = (
+        "message_id",
+        "channel_id",
+        "guild_id",
+        "fail_if_not_exists",
+        "resolved",
+        "_state",
+        "type",
+    )
 
     def __init__(
         self,
         *,
         message_id: int,
         channel_id: int,
+        type: MessageReferenceType = MessageReferenceType.default,
         guild_id: Optional[int] = None,
         fail_if_not_exists: bool = True,
     ) -> None:
         self._state: Optional[ConnectionState] = None
+        self.type: MessageReferenceType = type
         self.resolved: Optional[Union[Message, DeletedReferencedMessage]] = None
         self.message_id: Optional[int] = message_id
         self.channel_id: int = channel_id
@@ -474,6 +484,7 @@ class MessageReference:
     @classmethod
     def with_state(cls, state: ConnectionState, data: MessageReferencePayload) -> Self:
         self = cls.__new__(cls)
+        self.type = MessageReferenceType(data.get("type", 0))
         self.message_id = utils.get_as_snowflake(data, "message_id")
         self.channel_id = int(data.pop("channel_id"))
         self.guild_id = utils.get_as_snowflake(data, "guild_id")
@@ -483,7 +494,13 @@ class MessageReference:
         return self
 
     @classmethod
-    def from_message(cls, message: Message, *, fail_if_not_exists: bool = True) -> Self:
+    def from_message(
+        cls,
+        message: Message,
+        *,
+        type: MessageReferenceType = MessageReferenceType.default,
+        fail_if_not_exists: bool = True,
+    ) -> Self:
         """Creates a :class:`MessageReference` from an existing :class:`~nextcord.Message`.
 
         .. versionadded:: 1.6
@@ -492,6 +509,10 @@ class MessageReference:
         ----------
         message: :class:`~nextcord.Message`
             The message to be converted into a reference.
+        type: :class:`~nextcord.MessageReferenceType`
+            The type of reference that the message is. Defaults to the ``reply`` type  if not provided.
+
+            .. versionadded:: 3.0
         fail_if_not_exists: :class:`bool`
             Whether replying to the referenced message should raise :class:`HTTPException`
             if the message no longer exists or Discord could not fetch the message.
@@ -504,6 +525,7 @@ class MessageReference:
             A reference to the message.
         """
         self = cls(
+            type=type,
             message_id=message.id,
             channel_id=message.channel.id,
             guild_id=getattr(message.guild, "id", None),
@@ -533,6 +555,7 @@ class MessageReference:
         result: MessageReferencePayload = (
             {"message_id": self.message_id} if self.message_id is not None else {}
         )
+        result["type"] = self.type.value
         result["channel_id"] = self.channel_id
         result["fail_if_not_exists"] = self.fail_if_not_exists
         if self.guild_id is not None:
