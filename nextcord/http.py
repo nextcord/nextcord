@@ -1629,7 +1629,7 @@ class HTTPClient:
         if after:
             params["after"] = after
         if type:
-            params["type"] = type
+            params["type"] = type.value
 
         return self.request(
             r,
