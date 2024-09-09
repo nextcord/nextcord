@@ -769,9 +769,7 @@ class MessageCall:
         self.data: MessageCallPayload = data
 
         self._participants: SnowflakeList = SnowflakeList(map(int, data["participants"]))
-        self._ended_timestamp: Optional[datetime.datetime] = utils.parse_time(
-            data.get("ended_timestamp")
-        )
+        self._ended_timestamp: Optional[str] = data.get("ended_timestamp")
 
     @property
     def participants(self) -> List[Optional[User]]:
@@ -781,7 +779,7 @@ class MessageCall:
     @property
     def ended_timestamp(self) -> Optional[datetime.datetime]:
         """Optional[:class:`datetime.datetime`]: An aware UTC datetime object containing the time the call ended."""
-        return self._ended_timestamp
+        return utils.parse_time(self._ended_timestamp)
 
 
 @flatten_handlers
