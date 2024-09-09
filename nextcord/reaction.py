@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, List, Optional, Union
 
 from .colour import Colour
+from .enums import ReactionType
 from .iterators import ReactionIterator
 from .utils import cached_slot_property
 
@@ -207,7 +208,11 @@ class Reaction:
         await self.message.clear_reaction(self.emoji)
 
     def users(
-        self, *, limit: Optional[int] = None, after: Optional[Snowflake] = None
+        self,
+        *,
+        limit: Optional[int] = None,
+        after: Optional[Snowflake] = None,
+        type: ReactionType = ReactionType.normal,
     ) -> ReactionIterator:
         """Returns an :class:`AsyncIterator` representing the users that have reacted to the message.
 
@@ -238,6 +243,11 @@ class Reaction:
             reacted to the message.
         after: Optional[:class:`abc.Snowflake`]
             For pagination, reactions are sorted by member.
+        type: :class:`ReactionType`
+            The type of reactions to return.
+            Defaults to `~ReactionType.normal` if not provided.
+
+            .. versionadded:: 3.0
 
         Raises
         ------
@@ -261,4 +271,4 @@ class Reaction:
         if limit is None:
             limit = self.count
 
-        return ReactionIterator(self.message, emoji, limit, after)
+        return ReactionIterator(self.message, emoji, limit, after, type)
