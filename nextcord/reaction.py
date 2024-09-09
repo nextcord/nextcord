@@ -116,7 +116,7 @@ class Reaction:
             data=data.get("count_details")
         )
 
-        self._burst_colours: List[int] = data.get("burst_colors")
+        self._burst_colours: List[str] = data.get("burst_colors")
 
     # TODO: typeguard
     def is_custom_emoji(self) -> bool:
@@ -146,7 +146,7 @@ class Reaction:
 
         .. versionadded:: 3.0
         """
-        return [Colour(value=c) for c in self._burst_colours]
+        return [Colour(value=int(c.strip("#"), base=16)) for c in self._burst_colours]
 
     @property
     def burst_colors(self) -> List[Colour]:

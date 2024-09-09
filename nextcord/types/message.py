@@ -35,7 +35,7 @@ class Reaction(TypedDict):
     me: bool
     me_burst: bool
     emoji: PartialEmoji
-    burst_colors: List[int]
+    burst_colors: List[str]
 
 
 class Attachment(TypedDict):
