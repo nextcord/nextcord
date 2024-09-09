@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, List, Optional, Union
 
+from .colour import Colour
 from .iterators import ReactionIterator
 from .utils import cached_slot_property
 
@@ -11,7 +12,6 @@ __all__ = ("Reaction",)
 
 if TYPE_CHECKING:
     from .abc import Snowflake
-    from .colour import Colour
     from .emoji import Emoji
     from .message import Message
     from .partial_emoji import PartialEmoji
