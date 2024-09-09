@@ -81,6 +81,7 @@ __all__ = (
     "DeletedReferencedMessage",
     "MessageInteraction",
     "MessageInteractionMetadata",
+    "MessageSnapshot",
 )
 
 
