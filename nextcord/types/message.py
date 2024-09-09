@@ -106,7 +106,7 @@ class Message(TypedDict):
     interaction_metadata: NotRequired[MessageInteractionMetadata]
     interaction: NotRequired[MessageInteraction]
     components: NotRequired[List[Component]]
-    call: NotRequired[Optional[MessageCall]]
+    call: NotRequired[MessageCall]
 
 
 AllowedMentionType = Literal["roles", "users", "everyone"]
