@@ -37,7 +37,7 @@ from .partial_emoji import PartialEmoji
 from .reaction import Reaction
 from .sticker import StickerItem
 from .threads import Thread
-from .utils import MISSING, SnowflakeList, escape_mentions
+from .utils import MISSING, SnowflakeList, cached_slot_property, escape_mentions
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -762,7 +762,7 @@ class MessageCall:
         The raw data from the call.
     """
 
-    __slots__ = ("_state", "data", "_participants", "_ended_timestamp")
+    __slots__ = ("_state", "data", "_participants", "_ended_timestamp", "_cs_participants")
 
     def __init__(self, *, data: MessageCallPayload, state: ConnectionState) -> None:
         self._state: ConnectionState = state
@@ -771,7 +771,7 @@ class MessageCall:
         self._participants: SnowflakeList = SnowflakeList(map(int, data["participants"]))
         self._ended_timestamp: Optional[str] = data.get("ended_timestamp")
 
-    @property
+    @cached_slot_property("_cs_participants")
     def participants(self) -> List[Optional[User]]:
         """List[Optional[:class:`~User`]]: The list of users that participated in the call."""
         return [self._state.get_user(p) for p in self._participants]
