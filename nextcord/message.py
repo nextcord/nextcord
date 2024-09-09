@@ -171,6 +171,7 @@ class Attachment(Hashable):
         "description",
         "duration_secs",
         "_waveform",
+        "_cs_waveform",
         "_flags",
     )
 
@@ -382,7 +383,7 @@ class Attachment(Hashable):
             result["waveform"] = self._waveform
         return result
 
-    @utils.cached_property
+    @utils.cached_slot_property("_cs_waveform")
     def waveform(self) -> Optional[array[int]]:
         """Optional[array[:class:`int`]]: The base64 decoded data representing a sampled waveform
         (currently for voice messages).
