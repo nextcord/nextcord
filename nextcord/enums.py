@@ -2058,7 +2058,6 @@ class InviteType(IntEnum):
 class IntegrationType(IntEnum):
     """Where a :class:`BaseApplicationCommand` is available, only for globally-scoped commands.
 
-
     .. versionadded:: 3.0
     """
 
