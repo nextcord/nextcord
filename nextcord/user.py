@@ -358,6 +358,7 @@ class ClientUser(BaseUser):
         *,
         username: str = MISSING,
         avatar: Optional[Union[bytes, Asset, Attachment, File]] = MISSING,
+        banner: Optional[Union[bytes, Asset, Attachment, File]] = MISSING,
     ) -> ClientUser:
         """|coro|
 
@@ -378,6 +379,9 @@ class ClientUser(BaseUser):
         .. versionchanged:: 2.1
             The ``avatar`` parameter now accepts :class:`File`, :class:`Attachment`, and :class:`Asset`.
 
+        .. versionadded:: 3.0
+            The ``banner`` field has been added.
+
         Parameters
         ----------
         username: :class:`str`
@@ -385,13 +389,16 @@ class ClientUser(BaseUser):
         avatar: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
             A :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`, or :class:`Asset`
             representing the image to upload. Could be ``None`` to denote no avatar.
+        banner: Optional[Union[:class:`bytes`, :class:`Asset`, :class:`Attachment`, :class:`File`]]
+            A :term:`py:bytes-like object`, :class:`File`, :class:`Attachment`, or :class:`Asset`
+            representing the image to upload. Could be ``None`` to denote no banner.
 
         Raises
         ------
         HTTPException
             Editing your profile failed.
         InvalidArgument
-            Wrong image format passed for ``avatar``.
+            Wrong image format passed for ``avatar`` and/or ``banner``.
 
         Returns
         -------
@@ -403,6 +410,8 @@ class ClientUser(BaseUser):
             payload["username"] = username
         if avatar is not MISSING:
             payload["avatar"] = await obj_to_base64_data(avatar)
+        if banner is not MISSING:
+            payload["banner"] = await obj_to_base64_data(banner)
 
         data: UserPayload = await self._state.http.edit_profile(payload)
         return ClientUser(state=self._state, data=data)
