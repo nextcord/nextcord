@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Protocol, 
 
 from . import utils
 from .colour import Colour
+from .file import File
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -136,6 +137,7 @@ class Embed:
         "_author",
         "_fields",
         "description",
+        "_local_files",
     )
 
     def __init__(
@@ -166,6 +168,16 @@ class Embed:
 
         if timestamp:
             self.timestamp = timestamp
+
+    @property
+    def Empty(self) -> None:
+        warnings.warn(
+            "Empty is deprecated and will be removed in a future version. Use None instead.",
+            FutureWarning,
+            stacklevel=2,
+        )
+        return None
+
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> Self:
@@ -310,28 +322,39 @@ class Embed:
     def set_footer(
         self,
         *,
-        text: Optional[str] = None,
-        icon_url: Optional[str] = None,
+        text: Optional[Any] = None,
+        icon_url: Optional[Any] = None,
     ) -> Self:
         """Sets the footer for the embed content.
 
         This function returns the class instance to allow for fluent-style
         chaining.
 
+        .. versionchanged:: 3.0
+            The ``icon_url`` parameter can now accept a :class:`File` object.
+
         Parameters
         ----------
         text: Optional[:class:`str`]
             The footer text.
         icon_url: Optional[:class:`str`]
-            The URL of the footer icon. Only HTTP(S) is supported.
+            The URL or the :class:`File` object of the footer icon.
+            Only HTTP(S) and files are supported.
         """
-
         self._footer = {}
         if text is not None:
             self._footer["text"] = text
 
         if icon_url is not None:
             self._footer["icon_url"] = icon_url
+
+        elif isinstance(icon_url, File):
+            self._local_files["footer"] = icon_url
+            self._footer["icon_url"] = f"attachment://{icon_url.filename}"
+
+        else:
+            self._footer.pop("icon_url", None)
+            self._local_files.pop("footer", None)
 
         return self
 
@@ -363,7 +386,7 @@ class Embed:
         """
         return EmbedProxy(getattr(self, "_image", {}))  # type: ignore
 
-    def set_image(self, url: Optional[str]) -> Self:
+    def set_image(self, url: Optional[Any] = None) -> Self:
         """Sets the image for the embed content.
 
         This function returns the class instance to allow for fluent-style
@@ -372,20 +395,29 @@ class Embed:
         .. versionchanged:: 1.4
             Passing ``None`` removes the image.
 
+        .. versionchanged:: 2.5
+            The ``url`` parameter can now accept a :class:`File` object.
+
         Parameters
         ----------
         url: Optional[:class:`str`]
-            The source URL for the image. Only HTTP(S) is supported.
+            The source URL or the File object for the image.
+            Only HTTP(S) and files are supported.
         """
-
         if url is None:
             with contextlib.suppress(AttributeError):
                 del self._image
+            except AttributeError:
+                pass
+
+            self._local_files.pop("image", None)
+
+        elif isinstance(url, File):
+            self._local_files["image"] = url
+            self._image = {"url": f"attachment://{url.filename}"}
 
         else:
-            self._image = {
-                "url": url,
-            }
+            self._image = {"url": str(url)}
 
         return self
 
@@ -413,20 +445,29 @@ class Embed:
         .. versionchanged:: 1.4
             Passing ``None`` removes the thumbnail.
 
+        .. versionchanged:: 3.0
+            The ``url`` parameter can now accept a :class:`File` object.
+
         Parameters
         ----------
         url: Optional[:class:`str`]
-            The source URL for the thumbnail. Only HTTP(S) is supported.
+            The source URL or the File object for the image.
+            Only HTTP(S) and files are supported.
         """
-
         if url is None:
             with contextlib.suppress(AttributeError):
                 del self._thumbnail
+            except AttributeError:
+                pass
+
+            self._local_files.pop("thumbnail", None)
+
+        elif isinstance(url, File):
+            self._local_files["thumbnail"] = url
+            self._thumbnail = {"url": f"attachment://{url.filename}"}
 
         else:
-            self._thumbnail = {
-                "url": url,
-            }
+            self._thumbnail = {"url": str(url)}
 
         return self
 
@@ -476,6 +517,9 @@ class Embed:
         This function returns the class instance to allow for fluent-style
         chaining.
 
+        .. versionchanged:: 3.0
+            The ``icon_url`` parameter can now accept a :class:`File` object.
+
         Parameters
         ----------
         name: Optional[:class:`str`]
@@ -483,7 +527,8 @@ class Embed:
         url: Optional[:class:`str`]
             The URL for the author.
         icon_url: Optional[:class:`str`]
-            The URL of the author icon. Only HTTP(S) is supported.
+            The URL or the File object of the author icon.
+            Only HTTP(S) and files are supported.
         """
 
         self._author = {
@@ -495,6 +540,10 @@ class Embed:
 
         if icon_url is not None:
             self._author["icon_url"] = icon_url
+
+        if isinstance(icon_url, File):
+            self._local_files["author"] = icon_url
+            self._author["icon_url"] = f"attachment://{icon_url.filename}"
 
         return self
 
@@ -673,13 +722,11 @@ class Embed:
         """Converts this embed object into a dict."""
 
         # add in the raw data into the dict
-        # fmt: off
         result = {
             key[1:]: getattr(self, key)
             for key in self.__slots__
-            if key[0] == "_" and hasattr(self, key)
+            if key[0] == "_" and hasattr(self, key) and key != "_local_files"
         }
-        # fmt: on
 
         # deal with basic convenience wrappers
 
