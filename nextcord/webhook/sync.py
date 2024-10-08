@@ -310,7 +310,11 @@ class WebhookAdapter:
         payload: Optional[Dict[str, Any]] = None,
         multipart: Optional[List[Dict[str, Any]]] = None,
         files: Optional[List[File]] = None,
+        thread_id: Optional[int] = None,
     ):
+        params = {}
+        if thread_id:
+            params["thread_id"] = thread_id
         route = Route(
             "PATCH",
             "/webhooks/{webhook_id}/{webhook_token}/messages/{message_id}",
@@ -318,7 +322,9 @@ class WebhookAdapter:
             webhook_token=token,
             message_id=message_id,
         )
-        return self.request(route, session, payload=payload, multipart=multipart, files=files)
+        return self.request(
+            route, session, payload=payload, multipart=multipart, files=files, params=params
+        )
 
     def delete_webhook_message(
         self,
@@ -828,8 +834,7 @@ class SyncWebhook(BaseWebhook):
         allowed_mentions: AllowedMentions = MISSING,
         wait: Literal[True],
         thread_name: Optional[str] = None,
-    ) -> SyncWebhookMessage:
-        ...
+    ) -> SyncWebhookMessage: ...
 
     @overload
     def send(
@@ -846,8 +851,7 @@ class SyncWebhook(BaseWebhook):
         allowed_mentions: AllowedMentions = MISSING,
         wait: Literal[False] = ...,
         thread_name: Optional[str] = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     def send(
         self,
@@ -1025,6 +1029,7 @@ class SyncWebhook(BaseWebhook):
         files: List[File] = MISSING,
         attachments: List[Attachment] = MISSING,
         allowed_mentions: Optional[AllowedMentions] = None,
+        thread: Snowflake = MISSING,
     ) -> SyncWebhookMessage:
         """Edits a message owned by this webhook.
 
@@ -1054,6 +1059,10 @@ class SyncWebhook(BaseWebhook):
         allowed_mentions: :class:`AllowedMentions`
             Controls the mentions being processed in this message.
             See :meth:`.abc.Messageable.send` for more information.
+        thread: :class:`~nextcord.abc.Snowflake`
+            The thread that the message to be edited is in.
+
+            .. versionadded:: 3.0
 
         Raises
         ------
@@ -1086,6 +1095,9 @@ class SyncWebhook(BaseWebhook):
             previous_allowed_mentions=previous_mentions,
         )
         adapter: WebhookAdapter = _get_webhook_adapter()
+        thread_id: Optional[int] = None
+        if thread is not MISSING:
+            thread_id = thread.id
         data = adapter.edit_webhook_message(
             self.id,
             self.token,
@@ -1094,6 +1106,7 @@ class SyncWebhook(BaseWebhook):
             payload=params.payload,
             multipart=params.multipart,
             files=params.files,
+            thread_id=thread_id,
         )
         return self._create_message(data)
 

@@ -8,7 +8,7 @@ class MyInteraction(nextcord.Interaction):
             title=title,
             description=description,
         )
-        embed.set_author(name=self.user.display_name, icon_url=self.user.display_avatar)
+        embed.set_author(name=self.user.display_name, icon_url=self.user.display_avatar.url)
         await self.send(embed=embed)
 
 
