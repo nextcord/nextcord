@@ -10,7 +10,7 @@ from .channel import ChannelType
 from .components import Component
 from .embed import Embed
 from .emoji import PartialEmoji
-from .interactions import MessageInteraction
+from .interactions import MessageInteraction, MessageInteractionMetadata
 from .member import Member, UserWithMember
 from .snowflake import Snowflake, SnowflakeList
 from .sticker import StickerItem
@@ -41,6 +41,7 @@ class Attachment(TypedDict):
     description: NotRequired[str]
     content_type: NotRequired[str]
     spoiler: NotRequired[bool]
+    flags: NotRequired[int]
 
 
 MessageActivityType = Literal[1, 2, 3, 5]
@@ -97,6 +98,7 @@ class Message(TypedDict):
     flags: NotRequired[int]
     sticker_items: NotRequired[List[StickerItem]]
     referenced_message: NotRequired[Optional[Message]]
+    interaction_metadata: NotRequired[MessageInteractionMetadata]
     interaction: NotRequired[MessageInteraction]
     components: NotRequired[List[Component]]
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import logging
 import re
@@ -32,7 +33,7 @@ from ..channel import PartialMessageable
 from ..enums import WebhookType, try_enum
 from ..errors import DiscordServerError, Forbidden, HTTPException, InvalidArgument, NotFound
 from ..flags import MessageFlags
-from ..http import Route
+from ..http import _USER_AGENT, Route
 from ..message import Attachment, Message
 from ..mixins import Hashable
 from ..user import BaseUser, User
@@ -107,7 +108,8 @@ class AsyncWebhookAdapter:
         auth_token: Optional[str] = None,
         params: Optional[Dict[str, Any]] = None,
     ) -> Any:
-        headers: Dict[str, str] = {}
+        # always ensure our user agent is being used
+        headers: Dict[str, str] = {"User-Agent": _USER_AGENT}
         files = files or []
         to_send: Optional[Union[str, aiohttp.FormData]] = None
         bucket = (route.webhook_id, route.webhook_token)
@@ -191,10 +193,11 @@ class AsyncWebhookAdapter:
 
                         if response.status == 403:
                             raise Forbidden(response, data)
-                        elif response.status == 404:
+
+                        if response.status == 404:
                             raise NotFound(response, data)
-                        else:
-                            raise HTTPException(response, data)
+
+                        raise HTTPException(response, data)
 
                 except OSError as e:
                     if attempt < 4 and e.errno in (54, 10054):
@@ -317,7 +320,11 @@ class AsyncWebhookAdapter:
         payload: Optional[Dict[str, Any]] = None,
         multipart: Optional[List[Dict[str, Any]]] = None,
         files: Optional[List[File]] = None,
+        thread_id: Optional[int] = None,
     ) -> Response[Message]:
+        params = {}
+        if thread_id:
+            params["thread_id"] = thread_id
         route = Route(
             "PATCH",
             "/webhooks/{webhook_id}/{webhook_token}/messages/{message_id}",
@@ -325,7 +332,9 @@ class AsyncWebhookAdapter:
             webhook_token=token,
             message_id=message_id,
         )
-        return self.request(route, session, payload=payload, multipart=multipart, files=files)
+        return self.request(
+            route, session, payload=payload, multipart=multipart, files=files, params=params
+        )
 
     def delete_webhook_message(
         self,
@@ -563,7 +572,7 @@ def handle_message_parameters(
 
     if files:
         multipart.append({"name": "payload_json"})
-        for index, file in enumerate(files):
+        for index, file in enumerate(files):  # noqa: PLR1704
             payload["attachments"].append(
                 {
                     "id": index,
@@ -835,12 +844,12 @@ class WebhookMessage(Message):
 
             async def inner_call(delay: float = delay) -> None:
                 await asyncio.sleep(delay)
-                try:
+                with contextlib.suppress(HTTPException):
                     await self._state._webhook.delete_message(self.id)
-                except HTTPException:
-                    pass
 
-            asyncio.create_task(inner_call())
+            task = asyncio.create_task(inner_call())
+            self._background_tasks.add(task)
+            task.add_done_callback(self._background_tasks.discard)
         else:
             await self._state._webhook.delete_message(self.id)
 
@@ -1140,6 +1149,7 @@ class Webhook(BaseWebhook):
             "guild_id": channel.guild.id,
             "user": {
                 "username": user.name,
+                "global_name": user.global_name,
                 "discriminator": user.discriminator,
                 "id": user.id,
                 "avatar": user._avatar,
@@ -1148,12 +1158,12 @@ class Webhook(BaseWebhook):
 
         state = channel._state
         session = channel._state.http._HTTPClient__session
-        return cls(feed, session=session, state=state, token=state.http.token)
+        return cls(feed, session=session, state=state, token=state._get_client()._token)
 
     @classmethod
     def from_state(cls, data, state) -> Webhook:
         session = state.http._HTTPClient__session
-        return cls(data, session=session, state=state, token=state.http.token)
+        return cls(data, session=session, state=state, token=state._get_client()._token)
 
     async def fetch(self, *, prefer_auth: bool = True) -> Webhook:
         """|coro|
@@ -1354,8 +1364,7 @@ class Webhook(BaseWebhook):
         ephemeral: Optional[bool] = None,
         flags: Optional[MessageFlags] = None,
         suppress_embeds: Optional[bool] = None,
-    ) -> WebhookMessage:
-        ...
+    ) -> WebhookMessage: ...
 
     @overload
     async def send(
@@ -1377,8 +1386,7 @@ class Webhook(BaseWebhook):
         ephemeral: Optional[bool] = None,
         flags: Optional[MessageFlags] = None,
         suppress_embeds: Optional[bool] = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     async def send(
         self,
@@ -1512,8 +1520,6 @@ class Webhook(BaseWebhook):
         previous_mentions: Optional[AllowedMentions] = getattr(
             self._state, "allowed_mentions", None
         )
-        if content is None:
-            content = MISSING
 
         application_webhook = self.type is WebhookType.application
         if ephemeral and not application_webhook:
@@ -1525,7 +1531,7 @@ class Webhook(BaseWebhook):
         if view is not MISSING:
             if isinstance(self._state, _WebhookState):
                 raise InvalidArgument("Webhook views require an associated state with the webhook")
-            if ephemeral is True and view.timeout is None:
+            if ephemeral is True and view.timeout is None and view.prevent_update:
                 view.timeout = 15 * 60.0
 
         params = handle_message_parameters(
@@ -1564,7 +1570,7 @@ class Webhook(BaseWebhook):
         if wait:
             msg = self._create_message(data)
 
-        if view is not MISSING and not view.is_finished():
+        if view is not MISSING and not view.is_finished() and view.prevent_update:
             message_id = None if msg is None else msg.id
             self._state.store_view(view, message_id)
 
@@ -1625,6 +1631,7 @@ class Webhook(BaseWebhook):
         files: List[File] = MISSING,
         attachments: List[Attachment] = MISSING,
         view: Optional[View] = MISSING,
+        thread: Snowflake = MISSING,
         allowed_mentions: Optional[AllowedMentions] = None,
     ) -> WebhookMessage:
         """|coro|
@@ -1672,6 +1679,10 @@ class Webhook(BaseWebhook):
             :meth:`send`.
 
             .. versionadded:: 2.0
+        thread: :class:`~nextcord.abc.Snowflake`
+            The thread that the message to be edited is in.
+
+            .. versionadded:: 3.0
 
         Raises
         ------
@@ -1717,6 +1728,10 @@ class Webhook(BaseWebhook):
             previous_allowed_mentions=previous_mentions,
         )
         adapter = async_context.get()
+        thread_id: Optional[int] = None
+        if thread is not MISSING:
+            thread_id = thread.id
+
         data = await adapter.edit_webhook_message(
             self.id,
             self.token,
@@ -1725,10 +1740,11 @@ class Webhook(BaseWebhook):
             payload=params.payload,
             multipart=params.multipart,
             files=params.files,
+            thread_id=thread_id,
         )
 
         message = self._create_message(data)
-        if view and not view.is_finished():
+        if view and not view.is_finished() and view.prevent_update:
             self._state.store_view(view, message_id)
         return message
 

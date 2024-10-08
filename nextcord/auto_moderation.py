@@ -97,9 +97,24 @@ class AutoModerationTriggerMetadata:
         .. note::
 
             This is ``None`` and cannot be provided if the trigger type of this rule is not :attr:`AutoModerationTriggerType.mention_spam`.
+    mention_raid_protection_enabled: Optional[:class:`bool`]
+        Whether to automatically detect mention raids.
+
+        .. versionadded:: 2.6
+
+        .. note::
+
+            This is ``None`` and cannot be provided if the trigger type of this rule is not :attr:`AutoModerationTriggerType.mention_spam`.
     """
 
-    __slots__ = ("keyword_filter", "regex_patterns", "presets", "allow_list", "mention_total_limit")
+    __slots__ = (
+        "keyword_filter",
+        "regex_patterns",
+        "presets",
+        "allow_list",
+        "mention_total_limit",
+        "mention_raid_protection_enabled",
+    )
 
     def __init__(
         self,
@@ -109,12 +124,14 @@ class AutoModerationTriggerMetadata:
         presets: Optional[List[KeywordPresetType]] = None,
         allow_list: Optional[List[str]] = None,
         mention_total_limit: Optional[int] = None,
+        mention_raid_protection_enabled: Optional[bool] = None,
     ) -> None:
         self.keyword_filter: Optional[List[str]] = keyword_filter
         self.regex_patterns: Optional[List[str]] = regex_patterns
         self.presets: Optional[List[KeywordPresetType]] = presets
         self.allow_list: Optional[List[str]] = allow_list
         self.mention_total_limit: Optional[int] = mention_total_limit
+        self.mention_raid_protection_enabled: Optional[bool] = mention_raid_protection_enabled
 
     @classmethod
     def from_data(cls, data: TriggerMetadataPayload):
@@ -127,6 +144,7 @@ class AutoModerationTriggerMetadata:
         )
         allow_list = data.get("allow_list")
         mention_total_limit = data.get("mention_total_limit")
+        mention_raid_protection_enabled = data.get("mention_raid_protection_enabled")
 
         return cls(
             keyword_filter=keyword_filter,
@@ -134,6 +152,7 @@ class AutoModerationTriggerMetadata:
             presets=presets,
             allow_list=allow_list,
             mention_total_limit=mention_total_limit,
+            mention_raid_protection_enabled=mention_raid_protection_enabled,
         )
 
     @property
@@ -154,6 +173,9 @@ class AutoModerationTriggerMetadata:
 
         if self.mention_total_limit is not None:
             payload["mention_total_limit"] = self.mention_total_limit
+
+        if self.mention_raid_protection_enabled is not None:
+            payload["mention_raid_protection_enabled"] = self.mention_raid_protection_enabled
 
         return payload
 
@@ -183,23 +205,44 @@ class AutoModerationActionMetadata:
         .. note::
 
             The maximum value that can be used is ``2419200`` seconds (4 weeks)
+    custom_message: Optional[:class:`str`]
+        The message explaining why the message has been blocked.
+
+        .. versionadded:: 3.0
+
+        .. note::
+
+            This is ``None`` and cannot be provided if the action type of the rule is not
+            :attr:`AutoModerationActionType.block_message`.
+
+        .. note::
+
+            This message cannot exceed 150 characters.
     """
 
-    __slots__ = ("channel_id", "duration_seconds")
+    __slots__ = ("channel_id", "duration_seconds", "custom_message")
 
     def __init__(
-        self, *, channel: Optional[Snowflake] = None, duration_seconds: Optional[int] = None
+        self,
+        *,
+        channel: Optional[Snowflake] = None,
+        duration_seconds: Optional[int] = None,
+        custom_message: Optional[str] = None,
     ) -> None:
         self.channel_id: Optional[int] = channel.id if channel is not None else None
         self.duration_seconds: Optional[int] = duration_seconds
+        self.custom_message: Optional[str] = custom_message
 
     @classmethod
     def from_data(cls, data: ActionMetadataPayload):
         channel_id = get_as_snowflake(data, "channel_id")
         channel = Object(id=channel_id) if channel_id is not None else None
         duration_seconds = data.get("duration_seconds")
+        custom_message = data.get("custom_message")
 
-        return cls(channel=channel, duration_seconds=duration_seconds)
+        return cls(
+            channel=channel, duration_seconds=duration_seconds, custom_message=custom_message
+        )
 
     @property
     def payload(self) -> ActionMetadataPayload:
@@ -210,6 +253,9 @@ class AutoModerationActionMetadata:
 
         if self.duration_seconds is not None:
             payload["duration_seconds"] = self.duration_seconds
+
+        if self.custom_message is not None:
+            payload["custom_message"] = self.custom_message
 
         return payload
 
@@ -535,7 +581,7 @@ class AutoModerationActionExecution:
 
         .. note::
 
-            This requires :attr:`Intents.message_conrent` to not be empty.
+            This requires :attr:`Intents.message_content` to not be empty.
     """
 
     def __init__(self, *, data: ActionExecutionPayload, state: ConnectionState) -> None:
