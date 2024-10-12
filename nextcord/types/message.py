@@ -70,6 +70,11 @@ class MessageReference(TypedDict, total=False):
 MessageType = Literal[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 18, 19, 20, 21]
 
 
+class MessageCall(TypedDict):
+    participants: SnowflakeList
+    ended_timestamp: NotRequired[Optional[str]]
+
+
 class Message(TypedDict):
     id: Snowflake
     channel_id: Snowflake
@@ -101,6 +106,7 @@ class Message(TypedDict):
     interaction_metadata: NotRequired[MessageInteractionMetadata]
     interaction: NotRequired[MessageInteraction]
     components: NotRequired[List[Component]]
+    call: NotRequired[MessageCall]
 
 
 AllowedMentionType = Literal["roles", "users", "everyone"]
