@@ -52,6 +52,7 @@ __all__ = (
     "InviteType",
     "IntegrationType",
     "InteractionContextType",
+    "PollLayoutType",
 )
 
 
@@ -2078,6 +2079,15 @@ class InteractionContextType(IntEnum):
     """The :class:`BaseApplicationCommand` can be used within DMs with the app's bot user, or the :class:`Interaction` originates from such DMs."""
     private_channel = 2
     """The :class:`BaseApplicationCommand` can be used within Group DMs and DMs other than the app's bot user, or the :class:`Interaction` originates from such channels."""
+
+
+class PollLayoutType(IntEnum):
+    """The layout type of the poll.
+
+    ..versionadded:: 3.0"""
+
+    default = 1
+    """The default poll layout type."""
 
 
 T = TypeVar("T")
