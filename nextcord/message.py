@@ -44,7 +44,13 @@ from .utils import MISSING, escape_mentions
 if TYPE_CHECKING:
     from typing_extensions import Self
 
-    from .abc import GuildChannel, MessageableChannel, PartialMessageableChannel, Snowflake
+    from .abc import (
+        GuildChannel,
+        Messageable,
+        MessageableChannel,
+        PartialMessageableChannel,
+        Snowflake,
+    )
     from .channel import TextChannel
     from .components import Component
     from .mentions import AllowedMentions
@@ -2041,6 +2047,31 @@ class Message(Hashable):
         """
 
         return await self.channel.send(content, reference=self, **kwargs)
+
+    async def forward(self, channel: Messageable) -> Message:
+        """Forward this message to a channel.
+
+        .. note::
+            It is not possible to forward messages through interactions.
+            It is only possible to forward a message to a channel as a message.
+
+        Parameters
+        ----------
+        channel: :class:`~nextcord.Messageable`
+            The channel to forward this message.
+
+        Raises
+        ------
+        ~nextcord.HTTPException
+            Forwarding/sending the message failed.
+        ~nextcord.Forbidden
+            You do not have the proper permissions to send the message.
+
+        .. versionadded:: 3.0
+        """
+        return await channel.send(
+            reference=MessageReference.from_message(self, type=MessageReferenceType.forward),
+        )
 
     def to_reference(self, *, fail_if_not_exists: bool = True) -> MessageReference:
         """Creates a :class:`~nextcord.MessageReference` from the current message.
