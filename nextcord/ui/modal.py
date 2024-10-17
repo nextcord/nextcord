@@ -38,7 +38,7 @@ def _walk_component_interaction_data(
 ) -> Iterator[ComponentInteractionData]:
     for item in components:
         if "components" in item:
-            yield from item["components"]  # type: ignore
+            yield from item["components"]
         else:
             yield item
 
