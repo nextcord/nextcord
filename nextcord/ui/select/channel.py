@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, TypeVar
+from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, TypeVar, Union
 
 from ...abc import GuildChannel
-from ...components import ChannelSelectMenu
+from ...channel import PartialMessageable
+from ...components import ChannelSelectMenu, SelectDefault
 from ...enums import ComponentType
 from ...interactions import ClientT
 from ...utils import MISSING
@@ -62,14 +63,18 @@ class ChannelSelect(SelectBase, Generic[V_co]):
         Defaults to 1 and must be between 1 and 25.
     disabled: :class:`bool`
         Whether the select is disabled or not. Defaults to ``False``.
+    defaults: Optional[List[Union[:class:`.SelectDefault`, :class:`.abc.GuildChannel`, :class:`.abc.PartialMessageable`]]]
+        The default channels that are automatically selected.
+
+        .. versionadded:: 3.0
+    channel_types: List[:class:`.ChannelType`]
+        The types of channels that can be selected. If not given, all channel types are allowed.
     row: Optional[:class:`int`]
         The relative row this select menu belongs to. A Discord component can only have 5
         rows. By default, items are arranged automatically into those 5 rows. If you'd
         like to control the relative positioning of the row then passing an index is advised.
         For example, row=1 will show up before row=2. Defaults to ``None``, which is automatic
         ordering. The row number must be between 0 and 4 (i.e. zero indexed).
-    channel_types: List[:class:`.ChannelType`]
-        The types of channels that can be selected. If not given, all channel types are allowed.
     """
 
     __item_repr_attributes__: Tuple[str, ...] = (
@@ -78,6 +83,7 @@ class ChannelSelect(SelectBase, Generic[V_co]):
         "max_values",
         "disabled",
         "channel_types",
+        "defaults",
     )
 
     def __init__(
@@ -88,8 +94,9 @@ class ChannelSelect(SelectBase, Generic[V_co]):
         min_values: int = 1,
         max_values: int = 1,
         disabled: bool = False,
-        row: Optional[int] = None,
+        defaults: Optional[List[Union[SelectDefault, GuildChannel, PartialMessageable]]] = None,
         channel_types: List[ChannelType] = MISSING,
+        row: Optional[int] = None,
     ) -> None:
         super().__init__(
             custom_id=custom_id,
@@ -108,6 +115,14 @@ class ChannelSelect(SelectBase, Generic[V_co]):
             min_values=self.min_values,
             max_values=self.max_values,
             disabled=self.disabled,
+            defaults=[
+                SelectDefault.from_value(d).to_dict()
+                if not isinstance(d, SelectDefault)
+                else d.to_dict()
+                for d in defaults
+            ]
+            if defaults
+            else None,
             channel_types=channel_types,
         )
 
@@ -115,6 +130,24 @@ class ChannelSelect(SelectBase, Generic[V_co]):
     def values(self) -> ChannelSelectValues:
         """:class:`.ui.ChannelSelectValues`: A list of resolved :class:`.abc.GuildChannel` that have been selected by the user."""
         return self._selected_values
+
+    @property
+    def defaults(self) -> Optional[List[SelectDefault]]:
+        """List[:class:`.SelectDefault`]: The default channels that are automatically selected.
+
+        .. versionadded:: 3.0"""
+        return (
+            [SelectDefault.from_dict(d) for d in self._underlying.defaults]
+            if self._underlying.defaults
+            else None
+        )
+
+    @defaults.setter
+    def defaults(self, value: Optional[List[SelectDefault]]) -> None:
+        if value is None:
+            self._underlying.defaults = None
+        else:
+            self._underlying.defaults = [d.to_dict() for d in value]
 
     def to_component_dict(self) -> ChannelSelectMenuPayload:
         return self._underlying.to_dict()
@@ -127,6 +160,9 @@ class ChannelSelect(SelectBase, Generic[V_co]):
             min_values=component.min_values,
             max_values=component.max_values,
             disabled=component.disabled,
+            defaults=[SelectDefault.from_dict(d) for d in component.defaults]
+            if component.defaults
+            else None,
             row=None,
         )
 
@@ -149,6 +185,7 @@ def channel_select(
     max_values: int = 1,
     disabled: bool = False,
     row: Optional[int] = None,
+    defaults: Optional[List[Union[SelectDefault, GuildChannel, PartialMessageable]]] = None,
     channel_types: List[ChannelType] = MISSING,
 ) -> Callable[
     [ItemCallbackType[ChannelSelect[V_co], ClientT]], ItemCallbackType[ChannelSelect[V_co], ClientT]
@@ -160,11 +197,7 @@ def channel_select(
     the :class:`.Interaction` you receive.
 
     In order to get the selected items that the user has chosen within the callback
-    use :attr:`ChannelSelect.values`.
-
-    .. versionadded:: 2.3
-
-    Parameters
+    use :attr:`ChannelSelect.values`.roles
     ----------
     placeholder: Optional[:class:`str`]
         The placeholder text that is shown if nothing is selected, if any.
@@ -187,6 +220,10 @@ def channel_select(
         Whether the select is disabled or not. Defaults to ``False``.
     channel_types: List[:class:`.ChannelType`]
         A list of channel types that can be selected in this menu.
+    defaults: Optional[List[Union[:class:`.SelectDefault`, :class:`.abc.GuildChannel`, :class:`.abc.PartialMessageable`]]]
+        The default channels that are automatically selected.
+
+        .. versionadded:: 3.0
     """
 
     def decorator(func: ItemCallbackType) -> ItemCallbackType:
@@ -202,6 +239,7 @@ def channel_select(
             "max_values": max_values,
             "disabled": disabled,
             "channel_types": channel_types,
+            "defaults": defaults,
         }
         return func
 
