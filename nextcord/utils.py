@@ -291,7 +291,7 @@ def oauth_url(
     redirect_uri: str = MISSING,
     scopes: Iterable[str] = MISSING,
     disable_guild_select: bool = False,
-    integration_type: IntegrationType = IntegrationType.guild_install,
+    integration_type: IntegrationType = MISSING,
 ) -> str:
     """A helper function that returns the OAuth2 URL for inviting the bot
     into guilds.
@@ -317,7 +317,6 @@ def oauth_url(
         .. versionadded:: 2.0
     integration_type: :class:`~nextcord.IntegrationType`
         The integration type (otherwise known as installation context) that the invite is for.
-        Defaults to `~nextcord.IntegrationType.guild_install` if not provided
 
         .. versionadded:: 3.0
 
@@ -326,7 +325,7 @@ def oauth_url(
     :class:`str`
         The OAuth2 URL for inviting the bot into guilds.
     """
-    url = f"https://discord.com/oauth2/authorize?client_id={client_id}&integration_type={integration_type.value}"
+    url = f"https://discord.com/oauth2/authorize?client_id={client_id}"
     url += "&scope=" + "+".join(scopes or ("bot",))
     if permissions is not MISSING:
         url += f"&permissions={permissions.value}"
@@ -338,6 +337,8 @@ def oauth_url(
         url += "&response_type=code&" + urlencode({"redirect_uri": redirect_uri})
     if disable_guild_select:
         url += "&disable_guild_select=true"
+    if integration_type is not MISSING:
+        url += f"&integration_type={integration_type.value}"
     return url
 
 
