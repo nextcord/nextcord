@@ -2807,7 +2807,7 @@ class Guild(Hashable):
     async def fetch_role(self, role_id: int, /) -> Role:
         """|coro|
 
-        Retrieves a :class:`Role` that a guild has.
+        Retrieve a :class:`Role` that a guild has.
 
         .. versionadded:: 3.0
 
