@@ -1867,9 +1867,9 @@ class HTTPClient:
         retry_request: bool = True,
     ) -> Response[guild.BulkBan]:
         r = Route("POST", "/guilds/{guild_id}/bulk-ban", guild_id=guild_id)
-        params = {"users_ids": user_ids, "delete_message_seconds": delete_message_seconds}
+        data = {"users_ids": user_ids, "delete_message_seconds": delete_message_seconds}
 
-        return self.request(r, params=params, reason=reason, auth=auth, retry_request=retry_request)
+        return self.request(r, json=data, reason=reason, auth=auth, retry_request=retry_request)
 
     def unban(
         self,
