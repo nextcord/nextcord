@@ -2101,7 +2101,7 @@ class ReactionType(IntEnum):
     """
 
     normal = 0
-    """The message reaction is normal reaction."""
+    """The message reaction is a normal reaction."""
     burst = 1
     """The message reaction is a burst/super reaction."""
 
