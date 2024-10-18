@@ -52,7 +52,6 @@ class ReactionClearEmojiEvent(TypedDict):
     message_id: int
     emoji: PartialEmoji
     guild_id: NotRequired[Snowflake]
-    burst: bool
 
 
 class IntegrationDeleteEvent(TypedDict):
