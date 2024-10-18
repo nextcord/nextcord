@@ -25,14 +25,14 @@ if TYPE_CHECKING:
 class ReactionCountDetails:
     """Represents a reaction's count details.
 
+    .. versionadded:: 3.0
+
     Attributes
     ----------
     burst: :class:`int`
         The amount of burst reactions.
     normal: :class:`int`
         The amount of normal reactions.
-
-    .. versionadded:: 3.0
     """
 
     __slots__ = ("burst", "normal")
