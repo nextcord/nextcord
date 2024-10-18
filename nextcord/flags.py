@@ -377,6 +377,14 @@ class MessageFlags(BaseFlags):
         """
         return 1 << 12
 
+    @flag_value
+    def is_voice_message(self) -> int:
+        """:class:`bool`: Returns ``True`` if the message is a voice message.
+
+        .. versionadded:: 3.0
+        """
+        return 1 << 13
+
 
 @fill_with_flags()
 class PublicUserFlags(BaseFlags):
