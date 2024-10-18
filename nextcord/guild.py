@@ -2819,7 +2819,9 @@ class Guild(Hashable):
         Raises
         ------
         HTTPException
-            Retrieving the roles failed.
+            Retrieving the role failed.
+        NotFound
+            The role was not found.
 
         Returns
         -------
@@ -2827,7 +2829,6 @@ class Guild(Hashable):
             The role in the guild.
         """
         data = await self._state.http.get_role(self.id, role_id)
-
         return Role(guild=self, state=self._state, data=data)
 
     @overload
