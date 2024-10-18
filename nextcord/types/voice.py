@@ -4,10 +4,12 @@ from typing import List, Literal, Optional, TypedDict
 
 from typing_extensions import NotRequired
 
+from .emoji import PartialEmoji
 from .member import MemberWithUser
 from .snowflake import Snowflake
 
 SupportedModes = Literal["xsalsa20_poly1305_lite", "xsalsa20_poly1305_suffix", "xsalsa20_poly1305"]
+AnimationTypes = Literal[0, 1]
 
 
 class _VoiceState(TypedDict):
@@ -60,3 +62,17 @@ class VoiceReady(TypedDict):
     port: int
     modes: List[SupportedModes]
     heartbeat_interval: int
+
+
+class VoiceChannelEffectSend(TypedDict):
+    channel_id: Snowflake
+    guild_id: Snowflake
+    user_id: Snowflake
+    emoji: NotRequired[Optional[PartialEmoji]]
+    animation_type: NotRequired[AnimationTypes]  # enums.AnimationType
+    animation_id: NotRequired[int]
+
+    # These only exist with soundboard sounds
+    sound_id: NotRequired[Snowflake]
+    sound_override_path: NotRequired[str]
+    sound_volume: NotRequired[float]
