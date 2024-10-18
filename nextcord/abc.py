@@ -1564,6 +1564,29 @@ class Messageable:
             await ret.delete(delay=delete_after)
         return ret
 
+    async def forward(self, message: Message) -> Message:
+        """Forward a message to this channel.
+
+        Parameters
+        ----------
+        message: :class:`~nextcord.Message`
+            The message to forward.
+
+        .. note::
+            It is not possible to forward messages through interactions.
+            It is only possible to forward a message to a channel as a message.
+
+        Raises
+        ------
+        ~nextcord.HTTPException
+            Forwarding/sending the message failed.
+        ~nextcord.Forbidden
+            You do not have the proper permissions to send the message.
+
+        .. versionadded:: 3.0
+        """
+        return await message.forward(self)
+
     async def trigger_typing(self) -> None:
         """|coro|
 
