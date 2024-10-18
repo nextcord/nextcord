@@ -2913,6 +2913,14 @@ MessageReference
 .. autoclass:: MessageReference
     :members:
 
+MessageSnapshot
+~~~~~~~~~~~~~~~
+
+.. attributetable:: MessageSnapshot
+
+.. autoclass:: MessageSnapshot
+    :members:
+
 PartialMessage
 ~~~~~~~~~~~~~~
 

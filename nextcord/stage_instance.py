@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Optional
 from .enums import StagePrivacyLevel, try_enum
 from .errors import InvalidArgument
 from .mixins import Hashable
+from .scheduled_events import ScheduledEvent
 from .utils import MISSING, cached_slot_property
 
 __all__ = ("StageInstance",)
@@ -49,6 +50,10 @@ class StageInstance(Hashable):
         The topic of the stage instance.
     privacy_level: :class:`StagePrivacyLevel`
         The privacy level of the stage instance.
+    scheduled_event_id: Optional[:class:`int`]
+        The ID of the scheduled event for this stage instance.
+
+        .. versionadded:: 3.0
     discoverable_disabled: :class:`bool`
         Whether discoverability for the stage instance is disabled.
     """
@@ -61,7 +66,9 @@ class StageInstance(Hashable):
         "topic",
         "privacy_level",
         "discoverable_disabled",
+        "scheduled_event_id",
         "_cs_channel",
+        "_cs_scheduled_event",
     )
 
     def __init__(self, *, state: ConnectionState, guild: Guild, data: StageInstancePayload) -> None:
@@ -75,6 +82,9 @@ class StageInstance(Hashable):
         self.topic: str = data["topic"]
         self.privacy_level: StagePrivacyLevel = try_enum(StagePrivacyLevel, data["privacy_level"])
         self.discoverable_disabled: bool = data.get("discoverable_disabled", False)
+        self.scheduled_event_id: Optional[int] = (
+            int(event_id) if (event_id := data.get("guild_scheduled_event_id")) else None
+        )
 
     def __repr__(self) -> str:
         return f"<StageInstance id={self.id} guild={self.guild!r} channel_id={self.channel_id} topic={self.topic!r}>"
@@ -84,6 +94,17 @@ class StageInstance(Hashable):
         """Optional[:class:`StageChannel`]: The channel that stage instance is running in."""
         # the returned channel will always be a StageChannel or None
         return self._state.get_channel(self.channel_id)  # type: ignore
+
+    @cached_slot_property("_cs_scheduled_event")
+    def scheduled_event(self) -> Optional[ScheduledEvent]:
+        """Optional[:class:`ScheduledEvent`]: The scheduled event for this stage instance.
+
+        .. versionadded:: 3.0
+        """
+        if self.scheduled_event_id is None:
+            return None
+
+        return self._state.get_scheduled_event(self.scheduled_event_id)
 
     def is_public(self) -> bool:
         return self.privacy_level is StagePrivacyLevel.public
