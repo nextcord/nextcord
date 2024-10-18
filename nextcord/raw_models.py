@@ -161,6 +161,10 @@ class RawReactionActionEvent(_RawReprMixin):
         The member who added the reaction. Only available if ``event_type`` is ``REACTION_ADD`` and the reaction is inside a guild.
 
         .. versionadded:: 1.3
+    burst: :class:`bool`
+        If the reaction is a super/burst reaction.
+
+        .. versionadded:: 3.0
 
     event_type: :class:`str`
         The event type that triggered this action. Can be
