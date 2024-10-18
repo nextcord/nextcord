@@ -950,13 +950,13 @@ class CallbackMixin:
 
         if can_run:
             if self._callback_before_invoke is not None:
-                await self._callback_before_invoke(interaction)  # type: ignore
+                await self._invoke_hook_param_check(self._callback_before_invoke, interaction)
 
             if (before_invoke := self.cog_before_invoke) is not None:
-                await before_invoke(interaction)  # type: ignore
+                await self._invoke_hook_param_check(before_invoke, interaction)
 
             if (before_invoke := interaction.client._application_command_before_invoke) is not None:
-                await before_invoke(interaction)
+                await self._invoke_hook_param_check(before_invoke, interaction)
 
             try:
                 await self(interaction, *args, **kwargs)
@@ -971,15 +971,24 @@ class CallbackMixin:
                 state.dispatch("application_command_completion", interaction)
             finally:
                 if self._callback_after_invoke is not None:
-                    await self._callback_after_invoke(interaction)  # type: ignore
+                    await self._invoke_hook_param_check(self._callback_after_invoke, interaction)
 
                 if (after_invoke := self.cog_after_invoke) is not None:
-                    await after_invoke(interaction)  # type: ignore
+                    await self._invoke_hook_param_check(after_invoke, interaction)
 
                 if (
                     after_invoke := interaction.client._application_command_after_invoke
                 ) is not None:
-                    await after_invoke(interaction)
+                    await self._invoke_hook_param_check(after_invoke, interaction)
+
+    async def _invoke_hook_param_check(
+        self, hook: ApplicationHook, interaction: Interaction
+    ) -> None:
+        # invoke with self parameter if it exists
+        if len(signature(hook).parameters) == 2:
+            await hook(self.parent_cog, interaction)  # type: ignore
+        else:
+            await hook(interaction)  # type: ignore
 
     async def invoke_callback(self, interaction: Interaction, *args, **kwargs) -> None:
         """|coro|

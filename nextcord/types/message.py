@@ -68,14 +68,34 @@ class MessageApplication(TypedDict):
     cover_image: NotRequired[str]
 
 
+MessageType = Literal[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 18, 19, 20, 21]
+MessageReferenceType = Literal[0, 1]
+
+
 class MessageReference(TypedDict, total=False):
+    type: MessageReferenceType
     message_id: Snowflake
     channel_id: Snowflake
     guild_id: Snowflake
     fail_if_not_exists: bool
 
 
-MessageType = Literal[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 18, 19, 20, 21]
+class MessageSnapshotMessage(TypedDict):
+    type: MessageType
+    content: str
+    embeds: List[Embed]
+    attachments: List[Attachment]
+    timestamp: str
+    edited_timestamp: Optional[str]
+    flags: NotRequired[int]
+    mentions: List[User]
+    mention_roles: SnowflakeList
+    sticker_items: NotRequired[List[StickerItem]]
+    components: NotRequired[List[Component]]
+
+
+class MessageSnapshot(TypedDict):
+    message: MessageSnapshotMessage
 
 
 class Message(TypedDict):
@@ -103,9 +123,10 @@ class Message(TypedDict):
     application: NotRequired[MessageApplication]
     application_id: NotRequired[Snowflake]
     message_reference: NotRequired[MessageReference]
+    message_snapshots: NotRequired[List[MessageSnapshot]]
+    referenced_message: NotRequired[Optional[Message]]
     flags: NotRequired[int]
     sticker_items: NotRequired[List[StickerItem]]
-    referenced_message: NotRequired[Optional[Message]]
     interaction_metadata: NotRequired[MessageInteractionMetadata]
     interaction: NotRequired[MessageInteraction]
     components: NotRequired[List[Component]]
