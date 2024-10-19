@@ -37,6 +37,7 @@ __all__ = (
     "InteractionType",
     "InteractionResponseType",
     "ApplicationCommandType",
+    "ApplicationCommandPermissionType",
     "ApplicationCommandOptionType",
     "NSFWLevel",
     "ScheduledEventEntityType",
@@ -1658,6 +1659,12 @@ class ApplicationCommandType(IntEnum):
     """The command is a user context menu command."""
     message = 3
     """The command is a message context menu command."""
+
+
+class ApplicationCommandPermissionType(IntEnum):
+    role = 1
+    user = 2
+    channel = 3
 
 
 class ApplicationCommandOptionType(IntEnum):

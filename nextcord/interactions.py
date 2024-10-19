@@ -24,6 +24,7 @@ from . import utils
 from .channel import ChannelType, PartialMessageable
 from .embeds import Embed
 from .enums import (
+    ApplicationCommandPermissionType,
     IntegrationType,
     InteractionContextType,
     InteractionResponseType,
@@ -47,6 +48,8 @@ __all__ = (
     "InteractionMessage",
     "InteractionResponse",
     "PartialInteractionMessage",
+    "GuildApplicationCommandPermissions",
+    "ApplicationCommandPermissions",
 )
 
 if TYPE_CHECKING:
@@ -60,7 +63,12 @@ if TYPE_CHECKING:
     from .message import AllowedMentions
     from .state import ConnectionState
     from .threads import Thread
-    from .types.interactions import Interaction as InteractionPayload, InteractionData
+    from .types.interactions import (
+        ApplicationCommandPermissions as ApplicationCommandPermissionsPayload,
+        GuildApplicationCommandPermissions as GuildApplicationCommandPermissionsPayload,
+        Interaction as InteractionPayload,
+        InteractionData,
+    )
     from .types.message import Message as MessagePayload
     from .ui.modal import Modal
     from .ui.view import View
@@ -235,7 +243,9 @@ class Interaction(Hashable, Generic[ClientT]):
         try:
             message = data["message"]
             self.message = self._state._get_message(int(message["id"])) or Message(
-                state=self._state, channel=self.channel, data=message  # type: ignore
+                state=self._state,
+                channel=self.channel,
+                data=message,  # type: ignore
             )
         except KeyError:
             self.message = None
@@ -1367,3 +1377,61 @@ class InteractionMessage(_InteractionMessageMixin, Message):
     ) -> None:
         super().__init__(state=state, channel=channel, data=data)
         self._interaction: Interaction = interaction
+
+
+class ApplicationCommandPermissions:
+    """Represents an application command's permissions.
+
+    Parameters
+    ----------
+    id: :class:`int`
+        The ID of the role, user, or channel that this permission overwrite is for.
+    type: :class:`ApplicationCommandPermissionType`
+        The type of object that the permission overwrite is for.
+
+        Can be for a role, user, or channel.
+    permission: :class:`bool`
+        Whether the permission overwrite is disallowing or allowing usage of the command.
+
+    .. versionadded:: 3.0
+    """
+
+    def __init__(self, *, data: ApplicationCommandPermissionsPayload) -> None:
+        self.id: int = int(data["id"])
+        self.type: ApplicationCommandPermissionType = try_enum(
+            ApplicationCommandPermissionType, data["type"]
+        )
+        self.permission: bool = data["permission"]
+
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__} id={self.id!r} type={self.type!r} permission={self.permission!r}>"
+
+
+class GuildApplicationCommandPermissions:
+    """Represents the permissions for an application command when fetched from a guild.
+
+
+    Parameters
+    ----------
+    id: :class:`int`
+        The ID of the command or application ID.
+    application_id: :class:`int`
+        The ID of the application ID that this command belongs to.
+    guild_id: :class:`int`
+        The ID of the guild the application command is in.
+    permissions: :class:`ApplicationCommandPermissions`
+        The permissions for the command in this guild.
+
+    .. versionadded:: 3.0
+    """
+
+    def __init__(self, *, data: GuildApplicationCommandPermissionsPayload) -> None:
+        self.id: int = int(data["id"])
+        self.application_id: int = int(data["application_id"])
+        self.guild_id: int = int(data["guild_id"])
+        self.permissions: List[ApplicationCommandPermissions] = [
+            ApplicationCommandPermissions(data=p) for p in data["permissions"]
+        ]
+
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__} id={self.id!r} application_id={self.application_id!r} guild_id={self.guild_id!r}>"
