@@ -26,23 +26,31 @@ from . import utils
 from .components import _component_factory
 from .embeds import Embed
 from .emoji import Emoji
-from .enums import ChannelType, MessageType, try_enum
+from .enums import ChannelType, IntegrationType, MessageReferenceType, MessageType, try_enum
 from .errors import HTTPException, InvalidArgument
 from .file import File
 from .flags import AttachmentFlags, MessageFlags
 from .guild import Guild
 from .member import Member
 from .mixins import Hashable
+from .object import Object
 from .partial_emoji import PartialEmoji
 from .reaction import Reaction
 from .sticker import StickerItem
 from .threads import Thread
+from .user import User
 from .utils import MISSING, escape_mentions
 
 if TYPE_CHECKING:
     from typing_extensions import Self
 
-    from .abc import GuildChannel, MessageableChannel, PartialMessageableChannel, Snowflake
+    from .abc import (
+        GuildChannel,
+        Messageable,
+        MessageableChannel,
+        PartialMessageableChannel,
+        Snowflake,
+    )
     from .channel import TextChannel
     from .components import Component
     from .mentions import AllowedMentions
@@ -50,7 +58,10 @@ if TYPE_CHECKING:
     from .state import ConnectionState
     from .types.components import Component as ComponentPayload
     from .types.embed import Embed as EmbedPayload
-    from .types.interactions import MessageInteraction as MessageInteractionPayload
+    from .types.interactions import (
+        MessageInteraction as MessageInteractionPayload,
+        MessageInteractionMetadata as MessageInteractionMetadataPayload,
+    )
     from .types.member import Member as MemberPayload, UserWithMember as UserWithMemberPayload
     from .types.message import (
         Attachment as AttachmentPayload,
@@ -58,6 +69,7 @@ if TYPE_CHECKING:
         MessageActivity as MessageActivityPayload,
         MessageApplication as MessageApplicationPayload,
         MessageReference as MessageReferencePayload,
+        MessageSnapshot as MessageSnapshotPayload,
         Reaction as ReactionPayload,
     )
     from .types.threads import Thread as ThreadPayload, ThreadArchiveDuration
@@ -74,6 +86,8 @@ __all__ = (
     "MessageReference",
     "DeletedReferencedMessage",
     "MessageInteraction",
+    "MessageInteractionMetadata",
+    "MessageSnapshot",
 )
 
 
@@ -232,7 +246,7 @@ class Attachment(Hashable):
                 fp.seek(0)
             return written
 
-        with open(fp, "wb") as f:  # noqa: ASYNC101
+        with open(fp, "wb") as f:  # noqa: ASYNC230
             return f.write(data)
 
     async def read(self, *, use_cached: bool = False) -> bytes:
@@ -446,17 +460,27 @@ class MessageReference:
         .. versionadded:: 1.6
     """
 
-    __slots__ = ("message_id", "channel_id", "guild_id", "fail_if_not_exists", "resolved", "_state")
+    __slots__ = (
+        "message_id",
+        "channel_id",
+        "guild_id",
+        "fail_if_not_exists",
+        "resolved",
+        "_state",
+        "type",
+    )
 
     def __init__(
         self,
         *,
         message_id: int,
         channel_id: int,
+        type: MessageReferenceType = MessageReferenceType.default,
         guild_id: Optional[int] = None,
         fail_if_not_exists: bool = True,
     ) -> None:
         self._state: Optional[ConnectionState] = None
+        self.type: MessageReferenceType = type
         self.resolved: Optional[Union[Message, DeletedReferencedMessage]] = None
         self.message_id: Optional[int] = message_id
         self.channel_id: int = channel_id
@@ -466,6 +490,7 @@ class MessageReference:
     @classmethod
     def with_state(cls, state: ConnectionState, data: MessageReferencePayload) -> Self:
         self = cls.__new__(cls)
+        self.type = MessageReferenceType(data.get("type", 0))
         self.message_id = utils.get_as_snowflake(data, "message_id")
         self.channel_id = int(data.pop("channel_id"))
         self.guild_id = utils.get_as_snowflake(data, "guild_id")
@@ -475,7 +500,13 @@ class MessageReference:
         return self
 
     @classmethod
-    def from_message(cls, message: Message, *, fail_if_not_exists: bool = True) -> Self:
+    def from_message(
+        cls,
+        message: Message,
+        *,
+        type: MessageReferenceType = MessageReferenceType.default,
+        fail_if_not_exists: bool = True,
+    ) -> Self:
         """Creates a :class:`MessageReference` from an existing :class:`~nextcord.Message`.
 
         .. versionadded:: 1.6
@@ -484,6 +515,10 @@ class MessageReference:
         ----------
         message: :class:`~nextcord.Message`
             The message to be converted into a reference.
+        type: :class:`~nextcord.MessageReferenceType`
+            The type of reference that the message is. Defaults to the ``reply`` type  if not provided.
+
+            .. versionadded:: 3.0
         fail_if_not_exists: :class:`bool`
             Whether replying to the referenced message should raise :class:`HTTPException`
             if the message no longer exists or Discord could not fetch the message.
@@ -496,6 +531,7 @@ class MessageReference:
             A reference to the message.
         """
         self = cls(
+            type=type,
             message_id=message.id,
             channel_id=message.channel.id,
             guild_id=getattr(message.guild, "id", None),
@@ -525,6 +561,7 @@ class MessageReference:
         result: MessageReferencePayload = (
             {"message_id": self.message_id} if self.message_id is not None else {}
         )
+        result["type"] = self.type.value
         result["channel_id"] = self.channel_id
         result["fail_if_not_exists"] = self.fail_if_not_exists
         if self.guild_id is not None:
@@ -547,6 +584,67 @@ def flatten_handlers(cls):
     cls._HANDLERS = handlers
     cls._CACHED_SLOTS = [attr for attr in cls.__slots__ if attr.startswith("_cs_")]
     return cls
+
+
+class MessageSnapshot:
+    """Represents a message reference snapshot.
+
+    .. versionadded:: 3.0
+
+    Attributes
+    ----------
+    type: :class:`MessageType`
+        The type of message.
+    content: :class:`str`
+        The message's content.
+    embeds: List[:class:`Embed`]
+        The embeds the message contains.
+    attachments: List[:class:`Attachment`]
+        The attachments the message contains.
+    timestamp: :class:`datetime.datetime`
+        The timestamp when the message was sent.
+    edited_timestamp: Optional[:class:`datetime.datetime`]
+        The timestamp when the message was last edited.
+        Returns ``None`` if it has not been edited.
+    flags: :class:`MessageFlags`
+        The message's flags.
+    mentions: List[:class:`User`]
+        A list of users that the message has mentioned.
+    mention_roles: List[:class:`Object`]
+        A list of role IDs that the message has mentioned.
+    sticker_items: List[:class:`StickerItem`]
+        A list of stickers packs that the message contains.
+    components: List[:class:`Component`]
+        A list of components that the message contains.
+    """
+
+    def __init__(self, *, data: MessageSnapshotPayload, state: ConnectionState) -> None:
+        self._message = data["message"]
+        self._state = state
+
+        self.type: MessageType = MessageType(self._message["type"])
+        self.content: str = self._message["content"]
+        self.embeds: List[Embed] = [Embed.from_dict(d) for d in self._message.get("embeds", [])]
+        self.attachments: List[Attachment] = [
+            Attachment(data=a, state=self._state) for a in self._message.get("attachments", [])
+        ]
+        self.timestamp: datetime.datetime = utils.parse_time(self._message["timestamp"])
+        self.edited_timestamp: datetime.datetime | None = utils.parse_time(
+            self._message.get("edited_timestamp")
+        )
+        self.flags: MessageFlags = MessageFlags._from_value(self._message.get("flags", 0))
+        self.mentions: List[User] = [
+            User(state=self._state, data=u) for u in self._message.get("mentions", [])
+        ]
+        self.mention_roles: List[Object] = [
+            Object(r) for r in self._message.get("mention_roles", [])
+        ]
+        self.sticker_items: List[StickerItem] = [
+            StickerItem(state=self._state, data=s) for s in self._message.get("sticker_items", [])
+        ]
+        self.components: List[Component] = [
+            _component_factory(c) for c in self._message.get("components", [])
+        ]
 
 
 class MessageInteraction(Hashable):
@@ -584,6 +682,10 @@ class MessageInteraction(Hashable):
     user: Union[:class:`User`, :class:`Member`]
         The :class:`User` who invoked the interaction or :class:`Member` if the interaction
         occurred in a guild.
+
+    .. warning::
+        This class is deprecated, use :attr:`Message.interaction_metadata` instead.
+    .. deprecated:: 3.0
     """
 
     __slots__ = (
@@ -618,6 +720,128 @@ class MessageInteraction(Hashable):
     def created_at(self) -> datetime.datetime:
         """:class:`datetime.datetime`: The interaction's creation time in UTC."""
         return utils.snowflake_time(self.id)
+
+
+class MessageInteractionMetadata(Hashable):
+    """Represents a message's interaction metadata.
+
+    A message's interaction metadata is a property of a message when the message
+    is a response to an interaction from any bot.
+
+    .. versionadded:: 3.0
+
+    .. container:: operations
+
+        .. describe:: x == y
+
+            Checks if two message interactions are equal.
+
+        .. describe:: x != y
+
+            Checks if two interaction messages are not equal.
+
+        .. describe:: hash(x)
+
+            Returns the message interaction's hash.
+
+    Attributes
+    ----------
+    data: Dict[:class:`str`, Any]
+        The raw data from the interaction metadata.
+    id: :class:`int`
+        The interaction's ID.
+    type: :class:`InteractionType`
+        The interaction type.
+    user: Union[:class:`User`, :class:`Member`]
+        The :class:`User` who invoked the interaction or :class:`Member` if the interaction
+        occurred in a guild and that member is cached.
+    authorizing_integration_owners: Dict[:class:`IntegrationType`, :class:`str`]
+        Mapping of installation contexts that the interaction was authorized for to related user or guild IDs.
+        You can find out about this field in the `official Discord documentation`__.
+
+        .. _DiscordDocs: https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-authorizing-integration-owners-object
+
+        .. versionadded:: 3.0
+    name: Optional[:class:`str`]
+        The name of the application command.
+    original_response_message_id: Optional[:class:`int`]
+        The ID of the original response message, present only on follow-up messages.
+    interacted_message_id: Optional[:class:`int`]
+        The ID of the message that contained the interactive component, present only on messages created from component interactions.
+    triggering_interaction_metadata: Optional[:class:`MessageInteractionMetadata`]
+        Metadata for the interaction that was used to open the modal, present only on modal submit interactions.
+    """
+
+    __slots__ = (
+        "_state",
+        "data",
+        "id",
+        "type",
+        "user",
+        "authorizing_integration_owners",
+        "name",
+        "original_response_message_id",
+        "interacted_message_id",
+        "triggering_interaction_metadata",
+    )
+
+    def __init__(
+        self,
+        *,
+        data: MessageInteractionMetadataPayload,
+        guild: Optional[Guild],
+        state: ConnectionState,
+    ) -> None:
+        self._state: ConnectionState = state
+
+        self.data: MessageInteractionMetadataPayload = data
+        self.id: int = int(data["id"])
+        self.type: int = data["type"]
+
+        # No member data is provided, retrieve from cache if possible
+        self.user = None if guild is None else guild.get_member(int(data["user"]["id"]))
+        if self.user is None:
+            self.user = self._state.create_user(data=data["user"])
+
+        self.authorizing_integration_owners: Dict[IntegrationType, int] = {
+            IntegrationType(int(integration_type)): int(details)
+            for integration_type, details in data["authorizing_integration_owners"].items()
+        }
+
+        self.name: Optional[str] = data.get("name")
+        self.original_response_message_id: Optional[int] = (
+            int(data["original_response_message_id"])
+            if "original_response_message_id" in data
+            else None
+        )
+        self.interacted_message_id: Optional[int] = (
+            int(data["interacted_message_id"]) if "interacted_message_id" in data else None
+        )
+        self.triggering_interaction_metadata: Optional[MessageInteractionMetadata] = (
+            MessageInteractionMetadata(
+                data=data["triggering_interaction_metadata"], guild=guild, state=state
+            )
+            if "triggering_interaction_metadata" in data
+            else None
+        )
+
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__} id={self.id} type={self.type} user={self.user!r} name={self.name!r}>"
+
+    @property
+    def created_at(self) -> datetime.datetime:
+        """:class:`datetime.datetime`: The interaction's creation time in UTC."""
+        return utils.snowflake_time(self.id)
+
+    @property
+    def cached_original_response_message(self) -> Optional[Message]:
+        """Optional[:class:`~nextcord.Message`]: The original response message, if found in the internal message cache."""
+        return self._state._get_message(self.original_response_message_id)
+
+    @property
+    def cached_interacted_message(self) -> Optional[Message]:
+        """Optional[:class:`~nextcord.Message`]: The interacted message, if found in the internal message cache."""
+        return self._state._get_message(self.interacted_message_id)
 
 
 @flatten_handlers
@@ -737,6 +961,14 @@ class Message(Hashable):
         The guild that the message belongs to, if applicable.
     interaction: Optional[:class:`MessageInteraction`]
         The interaction data of a message, if applicable.
+
+        .. warning::
+            This field is deprecated, use ``interaction_metadata`` instead.
+        .. deprecated:: 3.0
+    interaction_metadata: Optional[:class:`MessageInteractionMetadata`]
+        The interaction metadata of a message. Present if the message is sent as a result of an interaction.
+
+        .. versionadded:: 3.0
     """
 
     __slots__ = (
@@ -756,6 +988,7 @@ class Message(Hashable):
         "embeds",
         "id",
         "interaction",
+        "interaction_metadata",
         "mentions",
         "author",
         "attachments",
@@ -772,6 +1005,7 @@ class Message(Hashable):
         "components",
         "_background_tasks",
         "guild",
+        "snapshots",
     )
 
     if TYPE_CHECKING:
@@ -837,6 +1071,10 @@ class Message(Hashable):
         ):
             self.guild._store_thread(thread_data)
 
+        self.snapshots: List[MessageSnapshot] = [
+            MessageSnapshot(state=self._state, data=s) for s in data.get("message_snapshots", [])
+        ]
+
         try:
             ref = data["message_reference"]
         except KeyError:
@@ -869,6 +1107,13 @@ class Message(Hashable):
         self.interaction: Optional[MessageInteraction] = (
             MessageInteraction(data=data["interaction"], guild=self.guild, state=self._state)
             if "interaction" in data
+            else None
+        )
+        self.interaction_metadata: Optional[MessageInteractionMetadata] = (
+            MessageInteractionMetadata(
+                data=data["interaction_metadata"], guild=self.guild, state=self._state
+            )
+            if "interaction_metadata" in data
             else None
         )
 
@@ -1339,8 +1584,7 @@ class Message(Hashable):
         allowed_mentions: Optional[AllowedMentions] = ...,
         view: Optional[View] = ...,
         file: Optional[File] = ...,
-    ) -> Message:
-        ...
+    ) -> Message: ...
 
     @overload
     async def edit(
@@ -1354,8 +1598,7 @@ class Message(Hashable):
         allowed_mentions: Optional[AllowedMentions] = ...,
         view: Optional[View] = ...,
         file: Optional[File] = ...,
-    ) -> Message:
-        ...
+    ) -> Message: ...
 
     @overload
     async def edit(
@@ -1369,8 +1612,7 @@ class Message(Hashable):
         allowed_mentions: Optional[AllowedMentions] = ...,
         view: Optional[View] = ...,
         files: Optional[List[File]] = ...,
-    ) -> Message:
-        ...
+    ) -> Message: ...
 
     @overload
     async def edit(
@@ -1384,8 +1626,7 @@ class Message(Hashable):
         allowed_mentions: Optional[AllowedMentions] = ...,
         view: Optional[View] = ...,
         files: Optional[List[File]] = ...,
-    ) -> Message:
-        ...
+    ) -> Message: ...
 
     async def edit(
         self,
@@ -1457,6 +1698,8 @@ class Message(Hashable):
 
         Raises
         ------
+        NotFound
+            The message was not found.
         HTTPException
             Editing the message failed.
         Forbidden
@@ -1804,6 +2047,31 @@ class Message(Hashable):
         """
 
         return await self.channel.send(content, reference=self, **kwargs)
+
+    async def forward(self, channel: Messageable) -> Message:
+        """Forward this message to a channel.
+
+        .. note::
+            It is not possible to forward messages through interactions.
+            It is only possible to forward a message to a channel as a message.
+
+        Parameters
+        ----------
+        channel: :class:`~nextcord.Messageable`
+            The channel to forward this message.
+
+        Raises
+        ------
+        ~nextcord.HTTPException
+            Forwarding/sending the message failed.
+        ~nextcord.Forbidden
+            You do not have the proper permissions to send the message.
+
+        .. versionadded:: 3.0
+        """
+        return await channel.send(
+            reference=MessageReference.from_message(self, type=MessageReferenceType.forward),
+        )
 
     def to_reference(self, *, fail_if_not_exists: bool = True) -> MessageReference:
         """Creates a :class:`~nextcord.MessageReference` from the current message.
