@@ -1856,6 +1856,21 @@ class HTTPClient:
             retry_request=retry_request,
         )
 
+    def bulk_ban(
+        self,
+        user_ids: List[Snowflake],
+        guild_id: Snowflake,
+        delete_message_seconds: int = 0,
+        reason: Optional[str] = None,
+        *,
+        auth: Optional[str] = MISSING,
+        retry_request: bool = True,
+    ) -> Response[guild.BulkBan]:
+        r = Route("POST", "/guilds/{guild_id}/bulk-ban", guild_id=guild_id)
+        data = {"user_ids": user_ids, "delete_message_seconds": delete_message_seconds}
+
+        return self.request(r, json=data, reason=reason, auth=auth, retry_request=retry_request)
+
     def unban(
         self,
         user_id: Snowflake,
