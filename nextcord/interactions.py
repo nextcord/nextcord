@@ -243,9 +243,7 @@ class Interaction(Hashable, Generic[ClientT]):
         try:
             message = data["message"]
             self.message = self._state._get_message(int(message["id"])) or Message(
-                state=self._state,
-                channel=self.channel,
-                data=message,  # type: ignore
+                state=self._state, channel=self.channel, data=message  # type: ignore
             )
         except KeyError:
             self.message = None
