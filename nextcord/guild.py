@@ -3072,7 +3072,7 @@ class Guild(Hashable):
         You must have the :attr:`~Permissions.ban_members` and :attr:`~Permissions.manage_guild` permissions to
         do this.
 
-        .. versionadded: 3.0
+        .. versionadded:: 3.0
 
         Parameters
         ----------
