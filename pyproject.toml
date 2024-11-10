@@ -61,7 +61,7 @@ pyright = "1.1.317"
 sphinx_autobuild = "2021.3.14"
 
 [tool.poetry.group.docs.dependencies]
-sphinx = "6.20"
+sphinx = "6.2.0"
 sphinxcontrib-trio = "1.1.2"
 sphinxcontrib-websupport = "^1.2.4"
 
