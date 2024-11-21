@@ -55,7 +55,7 @@ async def reaction_iterator(
     state = message._state
 
     while limit > 0:
-        retrieve = limit if limit <= 100 else 100
+        retrieve = min(limit, 100)
 
         data = cast(
             List[PartialUserPayload],
