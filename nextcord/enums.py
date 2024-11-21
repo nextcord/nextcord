@@ -49,6 +49,10 @@ __all__ = (
     "SortOrderType",
     "RoleConnectionMetadataType",
     "ForumLayoutType",
+    "InviteType",
+    "IntegrationType",
+    "InteractionContextType",
+    "MessageReferenceType",
     "OnboardingPromptType",
     "OnboardingMode",
 )
@@ -131,7 +135,7 @@ class IntEnum(int, Enum):
         return self.value
 
 
-class StrEnum(str, Enum):  # noqa: SLOT000
+class StrEnum(str, Enum):
     """An enum that supports comparing and hashing as a string."""
 
     def __str__(self) -> str:
@@ -2053,12 +2057,48 @@ class InviteType(IntEnum):
     """The invite is for a Discord user."""
 
 
-class OnboardingPromptType(IntEnum):
-    """Represents the type of :class:`OnboardingPrompt`.
+class IntegrationType(IntEnum):
+    """Where a :class:`BaseApplicationCommand` is available, only for globally-scoped commands.
+
+    .. versionadded:: 3.0
+    """
+    guild_install = 0
+    """App is installable to servers."""
+    user_install = 1
+    """App is installable to users."""
+
+
+class InteractionContextType(IntEnum):
+    """Where a :class:`BaseApplicationCommand` can be used, only for globally-scoped commands, or where a :class:`Interaction` originates from.
 
     .. versionadded:: 3.0
     """
 
+    guild = 0
+    """The :class:`BaseApplicationCommand` can be used within servers, or the :class:`Interaction` originates from a server."""
+    bot_dm = 1
+    """The :class:`BaseApplicationCommand` can be used within DMs with the app's bot user, or the :class:`Interaction` originates from such DMs."""
+    private_channel = 2
+    """The :class:`BaseApplicationCommand` can be used within Group DMs and DMs other than the app's bot user, or the :class:`Interaction` originates from such channels."""
+
+
+class MessageReferenceType(IntEnum):
+    """Represents the type of reference that a message is.
+
+    .. versionadded:: 3.0
+    """
+
+    default = 0
+    """The reference is used as a reply."""
+    forward = 1
+    """The reference is used to point to a message."""
+
+
+class OnboardingPromptType(IntEnum):
+    """Represents the type of :class:`OnboardingPrompt`.
+    
+    .. versionadded:: 3.0
+    """
     multiple_choice = 0
     """Displays the options as multiple choice."""
     dropdown = 1
@@ -2067,10 +2107,9 @@ class OnboardingPromptType(IntEnum):
 
 class OnboardingMode(IntEnum):
     """The criteria needed in order for onboarding to be enabled.
-
+    
     .. versionadded:: 3.0
     """
-
     default = 0
     """Only "Default Channels" are needed."""
     advanced = 1

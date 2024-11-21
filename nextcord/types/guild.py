@@ -80,8 +80,7 @@ class _GuildPreviewUnique(TypedDict):
     approximate_presence_count: int
 
 
-class GuildPreview(_BaseGuildPreview, _GuildPreviewUnique):
-    ...
+class GuildPreview(_BaseGuildPreview, _GuildPreviewUnique): ...
 
 
 class Guild(_BaseGuildPreview):
@@ -132,8 +131,7 @@ class InviteGuild(Guild, total=False):
     welcome_screen: WelcomeScreen
 
 
-class GuildWithCounts(Guild, _GuildPreviewUnique):
-    ...
+class GuildWithCounts(Guild, _GuildPreviewUnique): ...
 
 
 class GuildPrune(TypedDict):

@@ -68,6 +68,22 @@ AutoShardedClient
 Application Info
 ----------------
 
+InstallParams
+~~~~~~~~~~~~~
+
+.. attributetable:: InstallParams
+
+.. autoclass:: InstallParams()
+    :members:
+
+ApplicationIntegrationTypeConfig
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. attributetable:: ApplicationIntegrationTypeConfig
+
+.. autoclass:: ApplicationIntegrationTypeConfig()
+    :members:
+
 AppInfo
 ~~~~~~~
 
@@ -1424,6 +1440,15 @@ of :class:`enum.Enum`.
 .. autoclass:: AuditLogAction
     :members:
 
+.. autoclass:: InviteType
+    :members:
+
+.. autoclass:: IntegrationType
+    :members:
+
+.. autoclass:: InteractionContextType
+    :members:
+
 Async Iterator
 --------------
 
@@ -2433,6 +2458,14 @@ MessageInteraction
 .. autoclass:: MessageInteraction()
     :members:
 
+MessageInteractionMetadata
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. attributetable:: MessageInteractionMetadata
+
+.. autoclass:: MessageInteractionMetadata()
+    :members:
+
 Member
 ~~~~~~
 
@@ -2880,6 +2913,14 @@ MessageReference
 .. attributetable:: MessageReference
 
 .. autoclass:: MessageReference
+    :members:
+
+MessageSnapshot
+~~~~~~~~~~~~~~~
+
+.. attributetable:: MessageSnapshot
+
+.. autoclass:: MessageSnapshot
     :members:
 
 PartialMessage
