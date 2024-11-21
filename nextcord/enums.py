@@ -2062,6 +2062,7 @@ class IntegrationType(IntEnum):
 
     .. versionadded:: 3.0
     """
+
     guild_install = 0
     """App is installable to servers."""
     user_install = 1
@@ -2096,9 +2097,10 @@ class MessageReferenceType(IntEnum):
 
 class OnboardingPromptType(IntEnum):
     """Represents the type of :class:`OnboardingPrompt`.
-    
+
     .. versionadded:: 3.0
     """
+
     multiple_choice = 0
     """Displays the options as multiple choice."""
     dropdown = 1
@@ -2107,9 +2109,10 @@ class OnboardingPromptType(IntEnum):
 
 class OnboardingMode(IntEnum):
     """The criteria needed in order for onboarding to be enabled.
-    
+
     .. versionadded:: 3.0
     """
+
     default = 0
     """Only "Default Channels" are needed."""
     advanced = 1
