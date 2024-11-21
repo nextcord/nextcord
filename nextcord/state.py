@@ -34,7 +34,7 @@ from .auto_moderation import AutoModerationActionExecution, AutoModerationRule
 from .channel import *
 from .channel import _channel_factory
 from .emoji import Emoji
-from .enums import ChannelType, Status, try_enum
+from .enums import ApplicationCommandType, ChannelType, Status, try_enum
 from .errors import Forbidden
 from .flags import ApplicationFlags, Intents, MemberCacheFlags
 from .guild import Guild
@@ -580,7 +580,7 @@ class ConnectionState:
         if not qualified_name:
             return None
 
-        if " " not in qualified_name:
+        if type != ApplicationCommandType.chat_input or " " not in qualified_name:
             return get_parent_command(qualified_name)
 
         for command_name in qualified_name.split(" "):
@@ -891,7 +891,7 @@ class ConnectionState:
                 data = await self.http.get_global_commands(self.application_id)
 
         for raw_response in data:
-            payload_type = raw_response["type"] if "type" in raw_response else 1
+            payload_type = raw_response.get("type", 1)
             fixed_guild_id = raw_response.get("guild_id", None)
 
             response_signature = {
@@ -1045,7 +1045,7 @@ class ConnectionState:
         data_signatures = [
             (
                 raw_response["name"],
-                int(raw_response["type"] if "type" in raw_response else 1),
+                int(raw_response.get("type", 1)),
                 int(temp) if (temp := raw_response.get("guild_id", None)) else temp,
             )
             for raw_response in data

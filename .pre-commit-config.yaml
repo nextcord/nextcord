@@ -7,20 +7,34 @@ ci:
     ci(pre-commit): autoupdate hook versions
 
 repos:
+  # Taken from numpy, for license info see scripts/autotyping.py
+  - repo: local
+    hooks:
+      - id: autotyping
+        name: Add repetitive type hints to the codebase.
+        entry: python -m scripts.autotyping
+        types_or: [python, pyi]
+        language: python
+        files: nextcord/
+        additional_dependencies:
+          - autotyping==24.3.0
+          - black==23.12.1
+          - libcst==1.2.0
+
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.11
+    rev: v0.6.3
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
 
   - repo: https://github.com/psf/black
-    rev: 23.12.1
+    rev: 24.8.0
     hooks:
       - id: black
         name: Running black in all files.
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v4.6.0
     hooks:
       - id: check-ast
         name: Check if python files are valid syntax for the ast parser
@@ -39,17 +53,3 @@ repos:
       - id: trailing-whitespace
         name: Check for trailing whitespace.
         args: [--markdown-linebreak-ext=md]
-
-  # Taken from numpy, for license info see scripts/autotyping.py
-  - repo: local
-    hooks:
-      - id: autotyping
-        name: Add repetitive type hints to the codebase.
-        entry: python -m scripts.autotyping
-        types_or: [python, pyi]
-        language: python
-        files: nextcord/
-        additional_dependencies:
-          - autotyping==22.9.0
-          - black==22.12.0
-          - libcst==0.4.9

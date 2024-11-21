@@ -174,8 +174,15 @@ class WidgetMember(BaseUser):
 
     @property
     def display_name(self) -> str:
-        """:class:`str`: Returns the member's display name."""
-        return self.nick or self.name
+        """:class:`str`: Returns the user's display name.
+
+        This will return the name using the following hierarchy:
+
+        1. Guild specific nickname
+        2. Global Name (also known as 'Display Name' in the Discord UI)
+        3. Unique username
+        """
+        return self.nick or self.global_name or self.name
 
 
 class Widget:

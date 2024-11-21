@@ -15,7 +15,6 @@ from typing import (
     ClassVar,
     Dict,
     List,
-    Literal,
     NamedTuple,
     Optional,
     Sequence,
@@ -2812,8 +2811,7 @@ class Guild(Hashable):
         hoist: bool = ...,
         mentionable: bool = ...,
         icon: Optional[Union[str, bytes, Asset, Attachment, File]] = ...,
-    ) -> Role:
-        ...
+    ) -> Role: ...
 
     @overload
     async def create_role(
@@ -2826,8 +2824,7 @@ class Guild(Hashable):
         hoist: bool = ...,
         mentionable: bool = ...,
         icon: Optional[Union[str, bytes, Asset, Attachment, File]] = ...,
-    ) -> Role:
-        ...
+    ) -> Role: ...
 
     async def create_role(
         self,
@@ -3016,7 +3013,6 @@ class Guild(Hashable):
         *,
         reason: Optional[str] = None,
         delete_message_seconds: Optional[int] = None,
-        delete_message_days: Optional[Literal[0, 1, 2, 3, 4, 5, 6, 7]] = None,
     ) -> None:
         """|coro|
 
@@ -3029,9 +3025,8 @@ class Guild(Hashable):
 
         For backwards compatibility reasons, by default one day worth of messages will be deleted.
 
-        .. warning::
-            delete_message_days is deprecated and will be removed in a future version.
-            Use delete_message_seconds instead.
+        .. versionchanged:: 3.0
+            ``delete_message_days`` has been removed in favor of ``delete_message_seconds``.
 
         Parameters
         ----------
@@ -3042,11 +3037,6 @@ class Guild(Hashable):
             in the guild. The minimum is 0 and the maximum is 604800 (7 days).
 
             .. versionadded:: 2.3
-        delete_message_days: Optional[:class:`int`]
-            The number of days worth of messages to delete from the user
-            in the guild. The minimum is 0 and the maximum is 7.
-
-            .. deprecated:: 2.3
         reason: Optional[:class:`str`]
             The reason the user got banned.
 
@@ -3057,19 +3047,7 @@ class Guild(Hashable):
         HTTPException
             Banning failed.
         """
-        if delete_message_days is not None and delete_message_seconds is not None:
-            raise InvalidArgument(
-                "Cannot pass both delete_message_days and delete_message_seconds."
-            )
-        if delete_message_days is not None:
-            warnings.warn(
-                DeprecationWarning(
-                    "delete_message_days is deprecated, use delete_message_seconds instead.",
-                ),
-                stacklevel=2,
-            )
-            delete_message_seconds = delete_message_days * 24 * 60 * 60
-        elif delete_message_seconds is None:
+        if delete_message_seconds is None:
             # Default to one day
             delete_message_seconds = 24 * 60 * 60
 
@@ -3897,9 +3875,9 @@ class Guild(Hashable):
         List[Union[:class:`Member`, :class:`User`]]
             List of :class:`Member` or :class:`User` objects that were mentioned in the string.
         """
-        get_member_or_user: Callable[
-            [int], Optional[Union[Member, User]]
-        ] = lambda id: self.get_member(id) or self._state.get_user(id)
+        get_member_or_user: Callable[[int], Optional[Union[Member, User]]] = (
+            lambda id: self.get_member(id) or self._state.get_user(id)
+        )
         it = filter(None, map(get_member_or_user, utils.parse_raw_mentions(text)))
         return utils.unique(it)
 

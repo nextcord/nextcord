@@ -8,7 +8,7 @@ import datetime
 import itertools
 import sys
 from operator import attrgetter
-from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 from . import abc, utils
 from .activity import ActivityTypes, create_activity
@@ -390,17 +390,18 @@ class Member(abc.Messageable, _UserTag):
 
     def _update_inner_user(self, user: UserPayload) -> Optional[Tuple[User, User]]:
         u = self._user
-        original = (u.name, u._avatar, u.discriminator, u._public_flags)
+        original = (u.name, u._avatar, u.discriminator, u.global_name, u._public_flags)
         # These keys seem to always be available
         modified = (
             user["username"],
             user["avatar"],
             user["discriminator"],
+            user.get("global_name"),
             user.get("public_flags", 0),
         )
         if original != modified:
             to_return = User._copy(self._user)
-            u.name, u._avatar, u.discriminator, u._public_flags = modified
+            u.name, u._avatar, u.discriminator, u.global_name, u._public_flags = modified
             # Signal to dispatch on_user_update
             return to_return, u
         return None
@@ -502,11 +503,13 @@ class Member(abc.Messageable, _UserTag):
     def display_name(self) -> str:
         """:class:`str`: Returns the user's display name.
 
-        For regular users this is just their username, but
-        if they have a guild specific nickname then that
-        is returned instead.
+        This will return the name using the following hierachy:
+
+        1. Guild specific nickname
+        2. Global Name (also known as 'Display Name' in the Discord UI)
+        3. Unique username
         """
-        return self.nick or self.name
+        return self.nick or self.global_name or self.name
 
     @property
     def display_avatar(self) -> Asset:
@@ -641,7 +644,6 @@ class Member(abc.Messageable, _UserTag):
         self,
         *,
         delete_message_seconds: Optional[int] = None,
-        delete_message_days: Optional[Literal[0, 1, 2, 3, 4, 5, 6, 7]] = None,
         reason: Optional[str] = None,
     ) -> None:
         """|coro|
@@ -652,7 +654,6 @@ class Member(abc.Messageable, _UserTag):
             self,
             reason=reason,
             delete_message_seconds=delete_message_seconds,
-            delete_message_days=delete_message_days,
         )
 
     async def unban(self, *, reason: Optional[str] = None) -> None:
