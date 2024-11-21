@@ -1380,7 +1380,9 @@ class InteractionMessage(_InteractionMessageMixin, Message):
 class ApplicationCommandPermissions:
     """Represents an application command's permissions.
 
-    Parameters
+    .. versionadded:: 3.0
+
+    Attributes
     ----------
     id: :class:`int`
         The ID of the role, user, or channel that this permission overwrite is for.
@@ -1390,8 +1392,6 @@ class ApplicationCommandPermissions:
         Can be for a role, user, or channel.
     permission: :class:`bool`
         Whether the permission overwrite is disallowing or allowing usage of the command.
-
-    .. versionadded:: 3.0
     """
 
     def __init__(self, *, data: ApplicationCommandPermissionsPayload) -> None:
@@ -1408,8 +1408,9 @@ class ApplicationCommandPermissions:
 class GuildApplicationCommandPermissions:
     """Represents the permissions for an application command when fetched from a guild.
 
+    .. versionadded:: 3.0
 
-    Parameters
+    Attributes
     ----------
     id: :class:`int`
         The ID of the command or application ID.
@@ -1419,8 +1420,6 @@ class GuildApplicationCommandPermissions:
         The ID of the guild the application command is in.
     permissions: :class:`ApplicationCommandPermissions`
         The permissions for the command in this guild.
-
-    .. versionadded:: 3.0
     """
 
     def __init__(self, *, data: GuildApplicationCommandPermissionsPayload) -> None:
