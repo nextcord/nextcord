@@ -1284,8 +1284,8 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     :type message: :class:`Message`
     :param answer_id: The ID of the answer which had a vote cast.
     :type answer_id: :class:`int`
-    :param user: The user who cast a vote on the poll.
-    :type user: :class:`User`
+    :param user: The user who cast a vote on the poll. Can be ``None`` if :attr:`Intents.members` is not enabled.
+    :type user: Optional[:class:`User`]
 
 
 .. function:: on_message_poll_vote_remove(message, answer_id, user)
@@ -1298,7 +1298,7 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     :type message: :class:`Message`
     :param answer_id: The ID of the answer which had a vote removed.
     :type answer_id: :class:`int`
-    :param user: The user who removed their vote on the poll.
+    :param user: The user who removed their vote on the poll. Can be ``None`` if :attr:`Intents.members` is not enabled.
     :type user: :class:`User`
 
 .. _discord-api-utils:

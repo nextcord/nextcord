@@ -2373,22 +2373,15 @@ class ConnectionState:
         answer_id = data["answer_id"]
         if message:
             user = self.get_user(int(data["user_id"]))
-            if user:
-                self.dispatch(
-                    "message_poll_vote_add",
-                    message,
-                    answer_id,
-                    user,
-                )
-            else:
-                _log.debug(
-                    "message_poll_vote_add was not dispatched because the message (%r) and/or user (%r) are None",
-                    message,
-                    user,
-                )
+            self.dispatch(
+                "message_poll_vote_add",
+                message,
+                answer_id,
+                user,
+            )
         else:
             _log.debug(
-                "message_poll_vote_add was not dispatched because the message (%r) are None",
+                "message_poll_vote_add was not dispatched because the message (%r) is None",
                 message,
             )
 
@@ -2397,22 +2390,15 @@ class ConnectionState:
         answer_id = data["answer_id"]
         if message:
             user = self.get_user(int(data["user_id"]))
-            if user:
-                self.dispatch(
-                    "message_poll_vote_remove",
-                    message,
-                    answer_id,
-                    user,
-                )
-            else:
-                _log.debug(
-                    "message_poll_vote_remove was not dispatched because the message (%r) and/or user (%r) are None ",
-                    message,
-                    user,
-                )
+            self.dispatch(
+                "message_poll_vote_remove",
+                message,
+                answer_id,
+                user,
+            )
         else:
             _log.debug(
-                "message_poll_vote_remove was not dispatched because the message (%r) are None ",
+                "message_poll_vote_remove was not dispatched because the message (%r) if None ",
                 message,
             )
 
