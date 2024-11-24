@@ -57,11 +57,11 @@ if TYPE_CHECKING:
     from ..guild import Guild
     from ..http import Response
     from ..mentions import AllowedMentions
+    from ..polls import PollCreateRequest
     from ..state import ConnectionState
     from ..types.message import Message as MessagePayload
     from ..types.snowflake import Snowflake as SnowflakeAlias
     from ..types.webhook import Webhook as WebhookPayload
-    from ..polls import PollCreateRequest
     from ..ui.view import View
 
 MISSING = utils.MISSING
