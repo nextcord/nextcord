@@ -507,7 +507,6 @@ def handle_message_parameters(
     suppress_embeds: Optional[bool] = None,
     thread_name: Optional[str] = None,
     poll: Optional[PollCreateRequest] = None,
-
 ) -> ExecuteWebhookParameters:
     if files is not MISSING and file is not MISSING:
         raise InvalidArgument("Cannot mix file and files keyword arguments.")
@@ -1511,7 +1510,7 @@ class Webhook(BaseWebhook):
             .. versionadded:: 3.0
         poll: Optional[:class:`PollCreateRequest`]
             The poll to send with this message.
-            
+
             .. versionadded:: 3.0
 
         Raises

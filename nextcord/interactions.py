@@ -58,13 +58,13 @@ if TYPE_CHECKING:
     from .client import Client
     from .guild import Guild
     from .message import AllowedMentions
+    from .polls import PollCreateRequest
     from .state import ConnectionState
     from .threads import Thread
     from .types.interactions import Interaction as InteractionPayload, InteractionData
     from .types.message import Message as MessagePayload
     from .ui.modal import Modal
     from .ui.view import View
-    from .polls import PollCreateRequest
 
     InteractionChannel = Union[
         VoiceChannel,
@@ -561,7 +561,7 @@ class Interaction(Hashable, Generic[ClientT]):
         flags: Optional[MessageFlags] = None,
         ephemeral: Optional[bool] = None,
         suppress_embeds: Optional[bool] = None,
-        poll: Optional[PollCreateRequest] = None
+        poll: Optional[PollCreateRequest] = None,
     ) -> Union[PartialInteractionMessage, WebhookMessage]:
         """|coro|
 
@@ -955,7 +955,6 @@ class InteractionResponse:
             ).to_dict()
         else:
             payload["allowed_mentions"] = allowed_mentions.to_dict()
-
 
         parent = self._parent
         adapter = async_context.get()

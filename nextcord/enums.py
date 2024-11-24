@@ -54,7 +54,6 @@ __all__ = (
     "InteractionContextType",
     "MessageReferenceType",
     "PollLayoutType",
-
 )
 
 
@@ -2090,6 +2089,7 @@ class PollLayoutType(IntEnum):
 
     default = 1
     """The default poll layout type."""
+
 
 class MessageReferenceType(IntEnum):
     """Represents the type of reference that a message is.

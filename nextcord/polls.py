@@ -298,10 +298,8 @@ class PollCreateRequest:
         answers: Optional[List[PollAnswer]] = None,
     ) -> None:
         self.question: PollMedia = (
-                question
-                if isinstance(question, PollMedia)
-                else PollMedia(text=question)
-                )
+            question if isinstance(question, PollMedia) else PollMedia(text=question)
+        )
         self.answers: List[PollAnswer] = answers or []
         self.duration: int = duration
         self.allow_multiselect: bool = allow_multiselect

@@ -559,7 +559,6 @@ class Permissions(BaseFlags):
         """
         return 1 << 40
 
-
     @flag_value
     def create_expressions(self) -> int:
         """:class:`bool`: Returns ``True`` if a user can create expressions.
