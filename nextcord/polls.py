@@ -10,10 +10,9 @@ from .enums import PollLayoutType, try_enum
 from .errors import InvalidArgument
 from .iterators import AnswerVotersIterator
 from .partial_emoji import PartialEmoji
+from .types.emoji import PartialEmoji as PartialEmojiPayload
 from .utils import MISSING, utcnow
 
-
-from .types.emoji import PartialEmoji as PartialEmojiPayload
 if TYPE_CHECKING:
     from typing_extensions import Self
 
