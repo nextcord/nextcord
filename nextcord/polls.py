@@ -267,8 +267,9 @@ class PollCreateRequest:
 
     Attributes
     ----------
-    question: :class:`PollMedia`
+    question: Union[:class:`str`, :class:`PollMedia`]
         The question of the poll. Currently only `text` is supported.
+        If a :class:`str` was passed, it automatically converts to a :class:`PollMedia`.
     duration: Optional[:class:`int`]
         The number of hours this poll should be open for. Defaults to ``24``. Max ``768`` (32 days).
     allow_multiselect: Optional[:class:`bool`]
@@ -290,13 +291,17 @@ class PollCreateRequest:
 
     def __init__(
         self,
-        question: PollMedia,
+        question: Union[str, PollMedia],
         duration: int = 24,
         allow_multiselect: bool = False,
         layout_type: Optional[PollLayoutType] = MISSING,
         answers: Optional[List[PollAnswer]] = None,
     ) -> None:
-        self.question: PollMedia = question
+        self.question: PollMedia = (
+                question
+                if isinstance(question, PollMedia)
+                else PollMedia(text=question)
+                )
         self.answers: List[PollAnswer] = answers or []
         self.duration: int = duration
         self.allow_multiselect: bool = allow_multiselect

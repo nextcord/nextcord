@@ -505,6 +505,7 @@ def handle_message_parameters(
     ephemeral: Optional[bool] = None,
     flags: Optional[MessageFlags] = None,
     suppress_embeds: Optional[bool] = None,
+    poll: Optional[PollCreateRequest] = None,
 ) -> ExecuteWebhookParameters:
     if files is not MISSING and file is not MISSING:
         raise InvalidArgument("Cannot mix file and files keyword arguments.")
@@ -545,6 +546,8 @@ def handle_message_parameters(
         payload["avatar_url"] = str(avatar_url)
     if username:
         payload["username"] = username
+    if poll:
+        payload["poll"] = poll.to_dict()
 
     if flags is None:
         flags = MessageFlags()
@@ -1364,6 +1367,7 @@ class Webhook(BaseWebhook):
         ephemeral: Optional[bool] = None,
         flags: Optional[MessageFlags] = None,
         suppress_embeds: Optional[bool] = None,
+        poll: Optional[PollCreateRequest] = None,
     ) -> WebhookMessage: ...
 
     @overload
@@ -1386,6 +1390,7 @@ class Webhook(BaseWebhook):
         ephemeral: Optional[bool] = None,
         flags: Optional[MessageFlags] = None,
         suppress_embeds: Optional[bool] = None,
+        poll: Optional[PollCreateRequest] = None,
     ) -> None: ...
 
     async def send(
@@ -1407,6 +1412,7 @@ class Webhook(BaseWebhook):
         ephemeral: Optional[bool] = None,
         flags: Optional[MessageFlags] = None,
         suppress_embeds: Optional[bool] = None,
+        poll: Optional[PollCreateRequest] = None,
     ) -> Optional[WebhookMessage]:
         """|coro|
 
@@ -1490,6 +1496,10 @@ class Webhook(BaseWebhook):
             Whether to suppress embeds on this message.
 
             .. versionadded:: 2.4
+        poll: Optional[:class:`PollCreateRequest`]
+            The poll to send with this message.
+
+            .. versionadded:: 3.0
 
         Raises
         ------
@@ -1549,6 +1559,7 @@ class Webhook(BaseWebhook):
             previous_allowed_mentions=previous_mentions,
             flags=flags,
             suppress_embeds=suppress_embeds,
+            poll=poll,
         )
         adapter = async_context.get()
         thread_id: Optional[int] = None
