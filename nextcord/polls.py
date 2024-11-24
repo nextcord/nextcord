@@ -12,13 +12,14 @@ from .iterators import AnswerVotersIterator
 from .partial_emoji import PartialEmoji
 from .utils import MISSING, utcnow
 
+
+from .types.emoji import PartialEmoji as PartialEmojiPayload
 if TYPE_CHECKING:
     from typing_extensions import Self
 
     from .abc import Snowflake
     from .message import Message
     from .state import ConnectionState
-    from .types.emoji import PartialEmoji as PartialEmojiPayload
     from .types.polls import (
         DAPIPollAnswer as DAPIPollAnswerPayload,
         Poll as PollData,
