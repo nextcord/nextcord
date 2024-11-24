@@ -61,6 +61,7 @@ if TYPE_CHECKING:
     from ..types.message import Message as MessagePayload
     from ..types.snowflake import Snowflake as SnowflakeAlias
     from ..types.webhook import Webhook as WebhookPayload
+    from ..polls import PollCreateRequest
     from ..ui.view import View
 
 MISSING = utils.MISSING
