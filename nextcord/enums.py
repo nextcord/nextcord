@@ -52,7 +52,9 @@ __all__ = (
     "InviteType",
     "IntegrationType",
     "InteractionContextType",
+    "MessageReferenceType",
     "PollLayoutType",
+
 )
 
 
@@ -2088,6 +2090,17 @@ class PollLayoutType(IntEnum):
 
     default = 1
     """The default poll layout type."""
+
+class MessageReferenceType(IntEnum):
+    """Represents the type of reference that a message is.
+
+    .. versionadded:: 3.0
+    """
+
+    default = 0
+    """The reference is used as a reply."""
+    forward = 1
+    """The reference is used to point to a message."""
 
 
 T = TypeVar("T")

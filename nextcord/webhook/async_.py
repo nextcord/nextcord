@@ -505,7 +505,9 @@ def handle_message_parameters(
     ephemeral: Optional[bool] = None,
     flags: Optional[MessageFlags] = None,
     suppress_embeds: Optional[bool] = None,
+    thread_name: Optional[str] = None,
     poll: Optional[PollCreateRequest] = None,
+
 ) -> ExecuteWebhookParameters:
     if files is not MISSING and file is not MISSING:
         raise InvalidArgument("Cannot mix file and files keyword arguments.")
@@ -513,6 +515,9 @@ def handle_message_parameters(
         raise InvalidArgument("Cannot mix embed and embeds keyword arguments.")
 
     payload: Dict[str, Any] | None = {}
+
+    if thread_name:
+        payload["thread_name"] = thread_name
 
     if file is not MISSING or files is not MISSING:
         payload["attachments"] = []
@@ -1367,6 +1372,7 @@ class Webhook(BaseWebhook):
         ephemeral: Optional[bool] = None,
         flags: Optional[MessageFlags] = None,
         suppress_embeds: Optional[bool] = None,
+        thread_name: Optional[str] = None,
         poll: Optional[PollCreateRequest] = None,
     ) -> WebhookMessage: ...
 
@@ -1390,6 +1396,7 @@ class Webhook(BaseWebhook):
         ephemeral: Optional[bool] = None,
         flags: Optional[MessageFlags] = None,
         suppress_embeds: Optional[bool] = None,
+        thread_name: Optional[str] = None,
         poll: Optional[PollCreateRequest] = None,
     ) -> None: ...
 
@@ -1412,6 +1419,7 @@ class Webhook(BaseWebhook):
         ephemeral: Optional[bool] = None,
         flags: Optional[MessageFlags] = None,
         suppress_embeds: Optional[bool] = None,
+        thread_name: Optional[str] = None,
         poll: Optional[PollCreateRequest] = None,
     ) -> Optional[WebhookMessage]:
         """|coro|
@@ -1484,7 +1492,8 @@ class Webhook(BaseWebhook):
 
             .. versionadded:: 2.0
         thread: :class:`~nextcord.abc.Snowflake`
-            The thread to send this webhook to.
+            Send a message to the specified thread.
+            The thread will automatically be unarchived.
 
             .. versionadded:: 2.0
         flags: Optional[:class:`~nextcord.MessageFlags`]
@@ -1496,9 +1505,13 @@ class Webhook(BaseWebhook):
             Whether to suppress embeds on this message.
 
             .. versionadded:: 2.4
+        thread_name:
+            Name of thread to create (requires the webhook channel to be a forum or media channel).
+
+            .. versionadded:: 3.0
         poll: Optional[:class:`PollCreateRequest`]
             The poll to send with this message.
-
+            
             .. versionadded:: 3.0
 
         Raises
@@ -1559,12 +1572,10 @@ class Webhook(BaseWebhook):
             previous_allowed_mentions=previous_mentions,
             flags=flags,
             suppress_embeds=suppress_embeds,
+            thread_name=thread_name,
             poll=poll,
         )
         adapter = async_context.get()
-        thread_id: Optional[int] = None
-        if thread is not MISSING:
-            thread_id = thread.id
 
         data = await adapter.execute_webhook(
             self.id,
@@ -1573,7 +1584,7 @@ class Webhook(BaseWebhook):
             payload=params.payload,
             multipart=params.multipart,
             files=params.files,
-            thread_id=thread_id,
+            thread_id=thread.id if thread else None,
             wait=wait,
         )
 

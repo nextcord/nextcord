@@ -34,7 +34,7 @@ from .auto_moderation import AutoModerationActionExecution, AutoModerationRule
 from .channel import *
 from .channel import _channel_factory
 from .emoji import Emoji
-from .enums import ChannelType, Status, try_enum
+from .enums import ApplicationCommandType, ChannelType, Status, try_enum
 from .errors import Forbidden
 from .flags import ApplicationFlags, Intents, MemberCacheFlags
 from .guild import Guild
@@ -580,7 +580,7 @@ class ConnectionState:
         if not qualified_name:
             return None
 
-        if " " not in qualified_name:
+        if type != ApplicationCommandType.chat_input or " " not in qualified_name:
             return get_parent_command(qualified_name)
 
         for command_name in qualified_name.split(" "):

@@ -559,6 +559,25 @@ class Permissions(BaseFlags):
         """
         return 1 << 40
 
+
+    @flag_value
+    def create_expressions(self) -> int:
+        """:class:`bool`: Returns ``True`` if a user can create expressions.
+
+        This includes creating emojis, stickers, and soundboard sounds.
+
+        .. versionadded:: 3.0
+        """
+        return 1 << 43
+
+    @flag_value
+    def create_events(self) -> int:
+        """:class:`bool`: Returns ``True`` if a user can create scheduled events.
+
+        .. versionadded:: 3.0
+        """
+        return 1 << 44
+
     @flag_value
     def send_polls(self) -> int:
         """:class:`bool`: Returns ``True`` if a user can send polls.
@@ -681,6 +700,8 @@ class PermissionOverwrite:
         use_external_stickers: Optional[bool]
         start_embedded_activities: Optional[bool]
         moderate_members: Optional[bool]
+        create_expressions: Optional[bool]
+        create_events: Optional[bool]
 
     def __init__(self, **kwargs: Optional[bool]) -> None:
         self._values: Dict[str, Optional[bool]] = {}
