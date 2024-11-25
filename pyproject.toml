@@ -110,7 +110,7 @@ build-backend = "poetry_dynamic_versioning.backend"
 # credit to https://github.com/disnakeDev/disnake/blob/master/pyproject.toml for config
 [tool.black]
 line-length = 100
-target-version = ["py38", "py39", "py310", "py311", "py312"]
+target-version = ["py38", "py39", "py310", "py311", "py312", "py313"]
 
 
 [tool.taskipy.tasks]
