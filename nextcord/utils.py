@@ -87,7 +87,6 @@ __all__ = (
     "time_snowflake",
     "find",
     "get",
-    "anext",
     "sleep_until",
     "utcnow",
     "remove_markdown",
@@ -479,28 +478,6 @@ def get(iterable: Iterable[T], **attrs: Any) -> Optional[T]:
         if _all(pred(elem) == value for pred, value in converted):
             return elem
     return None
-
-
-async def anext(iter: AsyncIterator[Any], default: Any = MISSING) -> Any:
-    """|coro|
-
-    A backported helper from Python 3.10+ that returns the next item in an async iterator.
-
-    Parameters
-    ----------
-    iter
-        The iterator to get the next item from.
-    default
-        The default to return if the iterator has been exhausted.
-    """
-    try:
-        ret = await iter.__anext__()
-    except StopAsyncIteration:
-        if default is not MISSING:
-            return default
-        raise
-    else:
-        return ret
 
 
 def unique(iterable: Iterable[T]) -> List[T]:
