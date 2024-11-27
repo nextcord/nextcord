@@ -149,6 +149,7 @@ async def history_iterator(
         # their old definitions as a parameter, so we manually cast in the functions
 
         if before is not None:
+
             def _check(msg: MessagePayload):
                 b = cast("Object | Snowflake | None", before)
                 return b is not None and int(msg["id"]) < b.id
@@ -156,6 +157,7 @@ async def history_iterator(
             checks.append(_check)
 
         if after is not None:
+
             def _check(msg: MessagePayload):
                 a = cast("Object | Snowflake | None", after)
                 return a is not None and a.id < int(msg["id"])
@@ -391,6 +393,7 @@ async def guild_iterator(
 
     check: Optional[Callable[[GuildPayload], bool]] = None
     if before is not None and after is not None:
+
         def _check(guild: GuildPayload):
             a = cast("Object | Snowflake | None", after)
             return a is not None and int(guild["id"]) > a.id
@@ -485,7 +488,9 @@ async def archived_thread_iterator(
     else:
         cbefore = str(before.id) if joined else snowflake_time(before.id).isoformat()
 
-    update_before: Callable[[ThreadPayload], str] = lambda d: d["thread_metadata"]["archive_timestamp"]
+    update_before: Callable[[ThreadPayload], str] = lambda d: d["thread_metadata"][
+        "archive_timestamp"
+    ]
     endpoint: Callable[..., Awaitable[ThreadPaginationPayload]]
     if joined:
         endpoint = state.http.get_joined_private_archived_threads
