@@ -10,6 +10,7 @@ from asyncio import Future
 from typing import (
     TYPE_CHECKING,
     Any,
+    AsyncIterator,
     Callable,
     ClassVar,
     Dict,
@@ -57,7 +58,7 @@ from .errors import ClientException, InvalidArgument, InvalidData
 from .flags import SystemChannelFlags
 from .integrations import Integration, _integration_factory
 from .invite import Invite
-from .iterators import AuditLogIterator, BanIterator, MemberIterator, ScheduledEventIterator
+from .iterators import audit_log_iterator, ban_iterator, member_iterator, scheduled_event_iterator
 from .member import Member, VoiceState
 from .mixins import Hashable
 from .object import Object
@@ -81,6 +82,7 @@ if TYPE_CHECKING:
 
     from .abc import Snowflake, SnowflakeTime
     from .application_command import BaseApplicationCommand
+    from .audit_logs import AuditLogEntry
     from .auto_moderation import AutoModerationAction
     from .channel import ForumTag
     from .enums import ForumLayoutType, SortOrderType
@@ -1999,8 +2001,10 @@ class Guild(Hashable):
     # TODO: Remove Optional typing here when async iterators are refactored
     def fetch_members(
         self, *, limit: Optional[int] = 1000, after: Optional[SnowflakeTime] = None
-    ) -> MemberIterator:
-        """Retrieves an :class:`.AsyncIterator` that enables receiving the guild's members. In order to use this,
+    ) -> AsyncIterator[Member]:
+        """|asynciter|
+
+        Returns an async iterator that enables receiving the guild's members. In order to use this,
         :meth:`Intents.members` must be enabled.
 
         .. note::
@@ -2040,17 +2044,12 @@ class Guild(Hashable):
 
             async for member in guild.fetch_members(limit=150):
                 print(member.name)
-
-        Flattening into a list ::
-
-            members = await guild.fetch_members(limit=150).flatten()
-            # members is now a list of Member...
         """
 
         if not self._state._intents.members:
             raise ClientException("Intents.members must be enabled to use this.")
 
-        return MemberIterator(self, limit=limit, after=after)
+        return member_iterator(self, limit=limit, after=after)
 
     async def fetch_member(self, member_id: int, /) -> Member:
         """|coro|
@@ -2165,8 +2164,10 @@ class Guild(Hashable):
         limit: Optional[int] = 1000,
         before: Optional[Snowflake] = None,
         after: Optional[Snowflake] = None,
-    ) -> BanIterator:
-        """Returns an :class:`~nextcord.AsyncIterator` that enables receiving the destination's bans.
+    ) -> AsyncIterator[BanEntry]:
+        """|asynciter|
+
+        Returns an async iterator that enables receiving the destination's bans.
 
         You must have the :attr:`~Permissions.ban_members` permission to get this information.
 
@@ -2182,11 +2183,6 @@ class Guild(Hashable):
             async for ban in guild.bans(limit=200):
                 if not ban.user.bot:
                     counter += 1
-
-        Flattening into a list: ::
-
-            bans = await guild.bans(limit=123).flatten()
-            # bans is now a list of BanEntry...
 
         All parameters are optional.
 
@@ -2215,7 +2211,7 @@ class Guild(Hashable):
             The ban with the ban data parsed.
         """
 
-        return BanIterator(self, limit=limit, before=before, after=after)
+        return ban_iterator(self, limit=limit, before=before, after=after)
 
     async def prune_members(
         self,
@@ -3223,8 +3219,10 @@ class Guild(Hashable):
         oldest_first: Optional[bool] = None,
         user: Optional[Snowflake] = None,
         action: Optional[AuditLogAction] = None,
-    ) -> AuditLogIterator:
-        """Returns an :class:`AsyncIterator` that enables receiving the guild's audit logs.
+    ) -> AsyncIterator[AuditLogEntry]:
+        """|asynciter|
+
+        Returns an async iterator that enables receiving the guild's audit logs.
 
         You must have the :attr:`~Permissions.view_audit_log` permission to use this.
 
@@ -3243,7 +3241,7 @@ class Guild(Hashable):
 
         Getting entries made by a specific user: ::
 
-            entries = await guild.audit_logs(limit=None, user=guild.me).flatten()
+            entries = [entry async for entry in guild.audit_logs(limit=None, user=guild.me)]
             await channel.send(f'I made {len(entries)} moderation actions.')
 
         Parameters
@@ -3280,7 +3278,7 @@ class Guild(Hashable):
         """
         user_id = user.id if user is not None else None
 
-        return AuditLogIterator(
+        return audit_log_iterator(
             self,
             before=before,
             after=after,
@@ -3488,9 +3486,11 @@ class Guild(Hashable):
         channel_id = channel.id if channel else None
         await ws.voice_state(self.id, channel_id, self_mute, self_deaf)
 
-    def fetch_scheduled_events(self, *, with_users: bool = False) -> ScheduledEventIterator:
-        """Retrieves an :class:`.AsyncIterator` that enables receiving scheduled
-        events on this guild
+    def fetch_scheduled_events(self, *, with_users: bool = False) -> AsyncIterator[ScheduledEvent]:
+        """|asynciter|
+
+        Returns an async iterator that enables receiving scheduled
+        events on this guild.
 
         .. note::
 
@@ -3523,13 +3523,8 @@ class Guild(Hashable):
 
             async for event in guild.fetch_scheduled_events():
                 print(event.name)
-
-        Flattening into a list ::
-
-            events = await guild.fetch_scheduled_events().flatten()
-            # events is now a list of ScheduledEvent...
         """
-        return ScheduledEventIterator(self, with_users=with_users)
+        return scheduled_event_iterator(self, with_users=with_users)
 
     def get_scheduled_event(self, event_id: int) -> Optional[ScheduledEvent]:
         """Get a scheduled event from cache by id.
