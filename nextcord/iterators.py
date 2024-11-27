@@ -10,7 +10,6 @@ from .audit_logs import AuditLogEntry
 from .auto_moderation import AutoModerationRule
 from .bans import BanEntry
 from .object import Object
-from .types.user import PartialUser as PartialUserPayload
 from .utils import snowflake_time, time_snowflake
 
 __all__ = (
@@ -57,13 +56,9 @@ async def reaction_iterator(
     while limit > 0:
         retrieve = min(limit, 100)
 
-        data = cast(
-            List[PartialUserPayload],
-            await state.http.get_reaction_users(
-                message.channel.id, message.id, emoji, retrieve, after=after.id if after else None
-            ),
+        data = await state.http.get_reaction_users(
+            message.channel.id, message.id, emoji, retrieve, after=after.id if after else None
         )
-        # cast needed here because of list's invariance
 
         if data:
             limit -= retrieve
@@ -128,19 +123,10 @@ async def history_iterator(
         If set to ``True``, return messages in oldest->newest order. Defaults to
         ``True`` if ``after`` is specified, otherwise ``False``.
     """
-    # pyright ignores that the converted parameters have to be a generic object or None
-    # inside the scope of a nested function
-
     if isinstance(before, datetime.datetime):
-        cbefore = Object(id=time_snowflake(before, high=False))
-    else:
-        cbefore = before
-
+        before = Object(id=time_snowflake(before, high=False))
     if isinstance(after, datetime.datetime):
-        cafter = Object(id=time_snowflake(after, high=True))
-    else:
-        cafter = after
-
+        after = Object(id=time_snowflake(after, high=True))
     if isinstance(around, datetime.datetime):
         around = Object(id=time_snowflake(around))
 
@@ -159,17 +145,20 @@ async def history_iterator(
         elif limit == 101:
             limit = 100  # Thanks discord
 
-        if cbefore is not None:
+        # in nested functions, pyright thinks that the before and after parameters are
+        # their old definitions as a parameter, so we manually cast in the functions
 
+        if before is not None:
             def _check(msg: MessagePayload):
-                return cbefore is not None and int(msg["id"]) < cbefore.id
+                b = cast("Object | Snowflake | None", before)
+                return b is not None and int(msg["id"]) < b.id
 
             checks.append(_check)
 
-        if cafter is not None:
-
+        if after is not None:
             def _check(msg: MessagePayload):
-                return cafter is not None and cafter.id < int(msg["id"])
+                a = cast("Object | Snowflake | None", after)
+                return a is not None and a.id < int(msg["id"])
 
             checks.append(_check)
 
@@ -186,8 +175,8 @@ async def history_iterator(
         data: List[MessagePayload] = await state.http.logs_from(
             channel.id,
             retrieve,
-            cbefore.id if cbefore is not None and around is None else None,
-            cafter.id if cafter is not None and around is None else None,
+            before.id if before is not None and around is None else None,
+            after.id if after is not None and around is None else None,
             around.id if around is not None else None,
         )
 
@@ -196,9 +185,9 @@ async def history_iterator(
                 limit -= retrieve
 
             if before is not None:
-                cbefore = Object(id=int(data[-1]["id"]))
+                before = Object(id=int(data[-1]["id"]))
             if after is not None:
-                cafter = Object(id=int(data[0]["id"]))
+                after = Object(id=int(data[0]["id"]))
             if around is not None:
                 around = None
 
@@ -207,8 +196,8 @@ async def history_iterator(
 
         if checks:
             data = list(filter(check, data))
-
-        data.sort(key=lambda msg: msg["id"], reverse=not reverse)
+        if reverse:
+            data = list(reversed(data))
 
         for item in data:
             yield state.create_message(channel=channel, data=item)
@@ -393,20 +382,20 @@ async def guild_iterator(
 
     if isinstance(before, datetime.datetime):
         before = Object(id=time_snowflake(before, high=False))
-
-    # see the history iterator for why this is necessary
     if isinstance(after, datetime.datetime):
-        cafter = Object(id=time_snowflake(after, high=True))
-    else:
-        cafter = after
+        after = Object(id=time_snowflake(after, high=True))
 
     state = client._connection
     retrieve = 0
     reverse = bool(before)
 
     check: Optional[Callable[[GuildPayload], bool]] = None
-    if before is not None and cafter is not None:
-        check = lambda g: cafter is not None and int(g["id"]) > cafter.id
+    if before is not None and after is not None:
+        def _check(guild: GuildPayload):
+            a = cast("Object | Snowflake | None", after)
+            return a is not None and int(guild["id"]) > a.id
+
+        check = _check
 
     def get_retrieve():
         nonlocal retrieve
@@ -418,7 +407,7 @@ async def guild_iterator(
         data: List[GuildPayload] = await state.http.get_guilds(
             retrieve,
             before=before.id if before is not None else None,
-            after=cafter.id if cafter is not None else None,
+            after=after.id if after is not None else None,
             with_counts=with_counts,
         )
 
@@ -429,15 +418,15 @@ async def guild_iterator(
             if before is not None:
                 before = Object(id=int(data[0]["id"]))
             if after is not None:
-                cafter = Object(id=int(data[-1]["id"]))
+                after = Object(id=int(data[-1]["id"]))
 
         if len(data) < 200:
             limit = 0
 
         if check is not None:
             data = list(filter(check, data))
-
-        data.sort(key=lambda guild: guild["id"], reverse=not reverse)
+        if reverse:
+            data = list(reversed(data))
 
         for item in data:
             yield Guild(state=state, data=item)
@@ -488,26 +477,19 @@ async def archived_thread_iterator(
     state = guild._state
     has_more = True
 
-    converted_before: Optional[str]
+    cbefore: Optional[str]
     if before is None:
-        converted_before = None
+        cbefore = None
     elif isinstance(before, datetime.datetime):
-        converted_before = str(time_snowflake(before, high=False)) if joined else before.isoformat()
+        cbefore = str(time_snowflake(before, high=False)) if joined else before.isoformat()
     else:
-        converted_before = str(before.id) if joined else snowflake_time(before.id).isoformat()
+        cbefore = str(before.id) if joined else snowflake_time(before.id).isoformat()
 
-    def get_archive_timestamp(data: ThreadPayload) -> str:
-        return data["thread_metadata"]["archive_timestamp"]
-
-    def get_thread_id(data: ThreadPayload) -> str:
-        return str(data["id"])
-
-    update_before: Callable[[ThreadPayload], str] = get_archive_timestamp
-
+    update_before: Callable[[ThreadPayload], str] = lambda d: d["thread_metadata"]["archive_timestamp"]
     endpoint: Callable[..., Awaitable[ThreadPaginationPayload]]
     if joined:
         endpoint = state.http.get_joined_private_archived_threads
-        update_before = get_thread_id
+        update_before = lambda d: str(d["id"])
     elif private:
         endpoint = state.http.get_private_archived_threads
     else:
@@ -515,7 +497,7 @@ async def archived_thread_iterator(
 
     while has_more:
         limit = max(limit, 50) if limit is not None else 50
-        data = await endpoint(channel_id, before=converted_before, limit=limit)
+        data = await endpoint(channel_id, before=cbefore, limit=limit)
 
         threads = data["threads"]
         has_more = data["has_more"]
@@ -525,7 +507,7 @@ async def archived_thread_iterator(
             has_more = False
 
         if has_more:
-            converted_before = update_before(threads[-1])
+            cbefore = update_before(threads[-1])
 
         for item in reversed(threads):
             yield Thread(guild=guild, state=state, data=item)
