@@ -39,7 +39,7 @@ from .reaction import Reaction
 from .sticker import StickerItem
 from .threads import Thread
 from .user import User
-from .utils import MISSING, escape_mentions
+from .utils import MISSING, SnowflakeList, cached_slot_property, escape_mentions
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -68,6 +68,7 @@ if TYPE_CHECKING:
         Message as MessagePayload,
         MessageActivity as MessageActivityPayload,
         MessageApplication as MessageApplicationPayload,
+        MessageCall as MessageCallPayload,
         MessageReference as MessageReferencePayload,
         MessageSnapshot as MessageSnapshotPayload,
         Reaction as ReactionPayload,
@@ -844,6 +845,37 @@ class MessageInteractionMetadata(Hashable):
         return self._state._get_message(self.interacted_message_id)
 
 
+class MessageCall:
+    """Represents a message's call data.
+
+    .. versionadded:: 3.0
+
+    Attributes
+    ----------
+    data: Dict[:class:`str`, Any]
+        The raw data from the call.
+    """
+
+    __slots__ = ("_state", "data", "_participants", "_ended_timestamp", "_cs_participants")
+
+    def __init__(self, *, data: MessageCallPayload, state: ConnectionState) -> None:
+        self._state: ConnectionState = state
+        self.data: MessageCallPayload = data
+
+        self._participants: SnowflakeList = SnowflakeList(map(int, data["participants"]))
+        self._ended_timestamp: Optional[str] = data.get("ended_timestamp")
+
+    @cached_slot_property("_cs_participants")
+    def participants(self) -> List[Optional[User]]:
+        """List[Optional[:class:`~User`]]: The list of users that participated in the call."""
+        return [self._state.get_user(p) for p in self._participants]
+
+    @property
+    def ended_timestamp(self) -> Optional[datetime.datetime]:
+        """Optional[:class:`datetime.datetime`]: An aware UTC datetime object containing the time the call ended."""
+        return utils.parse_time(self._ended_timestamp)
+
+
 @flatten_handlers
 class Message(Hashable):
     r"""Represents a message from Discord.
@@ -969,10 +1001,15 @@ class Message(Hashable):
         The interaction metadata of a message. Present if the message is sent as a result of an interaction.
 
         .. versionadded:: 3.0
+    call: Optional[:class:`MessageCall`]
+        The call associated with the message.
+
+        .. versionadded:: 3.0
     """
 
     __slots__ = (
         "_state",
+        "_call",
         "_edited_timestamp",
         "_cs_channel_mentions",
         "_cs_raw_mentions",
@@ -981,6 +1018,7 @@ class Message(Hashable):
         "_cs_raw_role_mentions",
         "_cs_system_content",
         "tts",
+        "call",
         "content",
         "channel",
         "webhook_id",
@@ -1054,6 +1092,10 @@ class Message(Hashable):
             _component_factory(d) for d in data.get("components", [])
         ]
         self._background_tasks: Set[asyncio.Task[None]] = set()
+
+        self.call: Optional[MessageCall] = None
+        if _call := data.get("call"):
+            self.call = MessageCall(state=state, data=_call)
 
         try:
             # if the channel doesn't have a guild attribute, we handle that
