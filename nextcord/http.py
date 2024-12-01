@@ -1856,6 +1856,21 @@ class HTTPClient:
             retry_request=retry_request,
         )
 
+    def bulk_ban(
+        self,
+        user_ids: List[Snowflake],
+        guild_id: Snowflake,
+        delete_message_seconds: int = 0,
+        reason: Optional[str] = None,
+        *,
+        auth: Optional[str] = MISSING,
+        retry_request: bool = True,
+    ) -> Response[guild.BulkBan]:
+        r = Route("POST", "/guilds/{guild_id}/bulk-ban", guild_id=guild_id)
+        data = {"user_ids": user_ids, "delete_message_seconds": delete_message_seconds}
+
+        return self.request(r, json=data, reason=reason, auth=auth, retry_request=retry_request)
+
     def unban(
         self,
         user_id: Snowflake,
@@ -3507,6 +3522,20 @@ class HTTPClient:
             retry_request=retry_request,
         )
 
+    def get_role(
+        self,
+        guild_id: Snowflake,
+        role_id: Snowflake,
+        *,
+        auth: Optional[str] = MISSING,
+        retry_request: bool = True,
+    ) -> Response[role.Role]:
+        return self.request(
+            Route("GET", "/guilds/{guild_id}/roles/{role_id}", guild_id=guild_id, role_id=role_id),
+            auth=auth,
+            retry_request=retry_request,
+        )
+
     def edit_role(
         self,
         guild_id: Snowflake,
@@ -3755,6 +3784,8 @@ class HTTPClient:
             "channel_id",
             "topic",
             "privacy_level",
+            "send_start_notification",
+            "guild_scheduled_event_id",
         )
         payload = {k: v for k, v in payload.items() if k in valid_keys}
 

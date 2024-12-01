@@ -165,7 +165,7 @@ class Client:
     loop: Optional[:class:`asyncio.AbstractEventLoop`]
         The :class:`asyncio.AbstractEventLoop` to use for asynchronous operations.
         Defaults to ``None``, in which case the default event loop is used via
-        :func:`asyncio.get_event_loop()`.
+        :func:`asyncio.get_running_loop()` or :func:`asyncio.new_event_loop()`.
     connector: Optional[:class:`aiohttp.BaseConnector`]
         The connector to use for connection pooling.
     proxy: Optional[:class:`str`]
@@ -307,7 +307,11 @@ class Client:
     ) -> None:
         # self.ws is set in the connect method
         self.ws: DiscordWebSocket = None  # type: ignore
-        self.loop: asyncio.AbstractEventLoop = asyncio.get_event_loop() if loop is None else loop
+        try:
+            self.loop: asyncio.AbstractEventLoop = loop or asyncio.get_running_loop()
+        except RuntimeError:
+            self.loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self.loop)
         self._listeners: Dict[str, List[Tuple[asyncio.Future, Callable[..., bool]]]] = {}
         self.extra_events: Dict[str, List[CoroFunc]] = {}
 
@@ -874,7 +878,7 @@ class Client:
             is blocking. That means that registration of events or anything being
             called after this function call will not execute until it returns.
         """
-        loop = self.loop  # TODO: Make this asyncio.new_event_loop() if self.loop is removed.
+        loop = self.loop or asyncio.new_event_loop()
 
         # This allows Nextcord to gracefully close when Terminate/Signal 7 is received.
         with contextlib.suppress(NotImplementedError):
