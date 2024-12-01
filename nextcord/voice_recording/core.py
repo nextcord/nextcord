@@ -313,9 +313,9 @@ class AudioWriter:
         self.buffer: Union[BufferedWriter, BytesIO]
         self.starting_silence: Optional[Silence] = None
 
-        if tmp_type == TmpType.File:
+        if tmp_type is TmpType.File:
             self.buffer = open_tmp_file(guild_id, user_id, "wb+")
-        elif tmp_type == TmpType.Memory:
+        elif tmp_type is TmpType.Memory:
             self.buffer = BytesIO()
         else:
             raise TypeError(f"Arg `tmp_type` must be of type `TmpType` not `{type(tmp_type)}`")
