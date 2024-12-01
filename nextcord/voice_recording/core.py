@@ -745,7 +745,7 @@ class RecorderClient(nc_vc.VoiceClient):
         await self.channel.guild.change_voice_state(  # type: ignore
             channel=self.channel,
             self_deaf=(deaf if deaf is not None else self.auto_deaf),
-            self_mute=mute or False,
+            self_mute=bool(mute),
         )
 
     # custom output stuff
