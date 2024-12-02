@@ -19,10 +19,10 @@ if TYPE_CHECKING:
     from .context import Context
 
 __all__ = (
-    "Paginator",
-    "HelpCommand",
     "DefaultHelpCommand",
+    "HelpCommand",
     "MinimalHelpCommand",
+    "Paginator",
 )
 
 # help -> shows info of bot on top/bottom and lists subcommands

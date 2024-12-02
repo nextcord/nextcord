@@ -28,12 +28,12 @@ from .types.user import PartialUser as PartialUserPayload
 from .utils import maybe_coroutine, snowflake_time, time_snowflake
 
 __all__ = (
-    "ReactionIterator",
-    "HistoryIterator",
-    "BanIterator",
     "AuditLogIterator",
+    "BanIterator",
     "GuildIterator",
+    "HistoryIterator",
     "MemberIterator",
+    "ReactionIterator",
     "ScheduledEventIterator",
     "ScheduledEventUserIterator",
 )

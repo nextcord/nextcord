@@ -28,8 +28,8 @@ from .object import Object
 from .permissions import PermissionOverwrite, Permissions
 
 __all__ = (
-    "AuditLogDiff",
     "AuditLogChanges",
+    "AuditLogDiff",
     "AuditLogEntry",
 )
 
