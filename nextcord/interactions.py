@@ -180,31 +180,31 @@ class Interaction(Hashable, Generic[ClientT]):
     """
 
     __slots__: Tuple[str, ...] = (
-        "id",
-        "type",
-        "guild_id",
-        "channel_id",
-        "data",
-        "application_id",
-        "message",
-        "user",
-        "locale",
-        "guild_locale",
-        "token",
-        "version",
-        "authorizing_integration_owners",
-        "context",
-        "application_command",
-        "attached",
-        "_background_tasks",
-        "_permissions",
         "_app_permissions",
-        "_state",
-        "_session",
-        "_original_message",
-        "_cs_response",
-        "_cs_followup",
+        "_background_tasks",
         "_cs_channel",
+        "_cs_followup",
+        "_cs_response",
+        "_original_message",
+        "_permissions",
+        "_session",
+        "_state",
+        "application_command",
+        "application_id",
+        "attached",
+        "authorizing_integration_owners",
+        "channel_id",
+        "context",
+        "data",
+        "guild_id",
+        "guild_locale",
+        "id",
+        "locale",
+        "message",
+        "token",
+        "type",
+        "user",
+        "version",
     )
 
     def __init__(self, *, data: InteractionPayload, state: ConnectionState) -> None:
@@ -674,8 +674,8 @@ class InteractionResponse:
     """
 
     __slots__: Tuple[str, ...] = (
-        "_responded",
         "_parent",
+        "_responded",
     )
 
     def __init__(self, parent: Interaction) -> None:
