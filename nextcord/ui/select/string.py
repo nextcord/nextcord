@@ -20,8 +20,8 @@ if TYPE_CHECKING:
 
 __all__ = (
     "Select",
-    "select",
     "StringSelect",
+    "select",
     "string_select",
 )
 

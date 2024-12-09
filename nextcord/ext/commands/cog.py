@@ -20,8 +20,8 @@ if TYPE_CHECKING:
     from .core import Command
 
 __all__ = (
-    "CogMeta",
     "Cog",
+    "CogMeta",
 )
 
 CogT = TypeVar("CogT", bound="Cog")
