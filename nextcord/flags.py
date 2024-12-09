@@ -24,16 +24,16 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
 __all__ = (
-    "SystemChannelFlags",
-    "MessageFlags",
-    "PublicUserFlags",
-    "MemberFlags",
+    "ApplicationFlags",
+    "AttachmentFlags",
+    "ChannelFlags",
     "Intents",
     "MemberCacheFlags",
-    "ApplicationFlags",
-    "ChannelFlags",
-    "AttachmentFlags",
+    "MemberFlags",
+    "MessageFlags",
+    "PublicUserFlags",
     "RoleFlags",
+    "SystemChannelFlags",
 )
 
 BF = TypeVar("BF", bound="BaseFlags")
