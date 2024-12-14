@@ -33,7 +33,7 @@ packages = [
     { include = "nextcord/ext/tasks" },
 ]
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.12"
 aiohttp = "^3.8.0"
 typing_extensions = "^4.2.0"
 audioop-lts = { version = "^0.2.1", python = "^3.13" }
@@ -110,7 +110,7 @@ build-backend = "poetry_dynamic_versioning.backend"
 # credit to https://github.com/disnakeDev/disnake/blob/master/pyproject.toml for config
 [tool.black]
 line-length = 100
-target-version = ["py38", "py39", "py310", "py311", "py312", "py313"]
+target-version = ["py312", "py313"]
 
 
 [tool.taskipy.tasks]
@@ -139,7 +139,7 @@ exclude-modules = '''
 typeCheckingMode = "basic"
 include = ["nextcord", "docs", "*.py"]
 ignore = ["examples"]
-pythonVersion = "3.8"
+pythonVersion = "3.12"
 
 # https://github.com/microsoft/pyright/blob/main/docs/configuration.md
 reportInvalidStringEscapeSequence = false
@@ -205,7 +205,7 @@ ignore = [
     "UP",      # TODO:
 ]
 exclude = [".github/*"]
-target-version = "py38"
+target-version = "py312"
 
 [tool.ruff.per-file-ignores]
 "__init__.py" = [
