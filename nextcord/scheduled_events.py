@@ -13,8 +13,8 @@ from .utils import MISSING, obj_to_base64_data, parse_time
 
 __all__: Tuple[str, ...] = (
     "EntityMetadata",
-    "ScheduledEventUser",
     "ScheduledEvent",
+    "ScheduledEventUser",
 )
 
 if TYPE_CHECKING:
@@ -75,8 +75,8 @@ class ScheduledEventUser(Hashable):
     __slots__: Tuple[str, ...] = (
         "_state",
         "event",
-        "user",
         "member",
+        "user",
         "user_id",
     )
 
@@ -187,6 +187,8 @@ class ScheduledEvent(Hashable):
     """
 
     __slots__: Tuple[str, ...] = (
+        "_state",
+        "_users",
         "channel",
         "channel_id",
         "creator",
@@ -194,14 +196,12 @@ class ScheduledEvent(Hashable):
         "end_time",
         "guild",
         "id",
+        "image",
         "metadata",
         "name",
         "privacy_level",
         "start_time",
         "user_count",
-        "_state",
-        "_users",
-        "image",
     )
 
     def __init__(
