@@ -169,6 +169,7 @@ ignore = [
     "ANN102",  # `cls` does not need a type annotation
     "ARG002",  # TODO:
     "ARG003",  # TODO:
+    "ASYNC109",# TODO:
     "B008",    # SlashOption() as default, it is okay (Annotated is technically better but verbose)
     "BLE",     # TODO:
     "C90",     # TODO:
