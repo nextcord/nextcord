@@ -41,7 +41,7 @@ __all__ = (
 if TYPE_CHECKING:
     from .abc import Messageable, Snowflake, SnowflakeTime
     from .client import Client
-    from .enums import AuditLogAction
+    from .enums import AuditLogAction, ReactionType
     from .guild import Guild
     from .http import HTTPClient
     from .member import Member
@@ -169,11 +169,17 @@ class _FilteredAsyncIterator(_AsyncIterator[T]):
 
 class ReactionIterator(_AsyncIterator[Union["User", "Member"]]):
     def __init__(
-        self, message: Message, emoji: str, limit: int = 100, after: Optional[Snowflake] = None
+        self,
+        message: Message,
+        emoji: str,
+        limit: int = 100,
+        after: Optional[Snowflake] = None,
+        type: Optional[ReactionType] = None,
     ) -> None:
         self.message: Message = message
         self.limit: int = limit
         self.after: Optional[Snowflake] = after
+        self.type: Optional[ReactionType] = type
         self.state: ConnectionState = message._state
         self.emoji: str = emoji
         self.guild: Optional[Guild] = message.guild
@@ -200,7 +206,12 @@ class ReactionIterator(_AsyncIterator[Union["User", "Member"]]):
             data: List[PartialUserPayload] = cast(
                 List[PartialUserPayload],
                 await self.state.http.get_reaction_users(
-                    self.channel_id, self.message.id, self.emoji, retrieve, after=after
+                    self.channel_id,
+                    self.message.id,
+                    self.emoji,
+                    retrieve,
+                    after=after,
+                    type=self.type,
                 ),
             )
             # cast needed here because of list's invariance

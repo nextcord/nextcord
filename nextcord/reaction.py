@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any, List, Optional, Union
 
+from .colour import Colour
+from .enums import ReactionType
 from .iterators import ReactionIterator
+from .utils import cached_slot_property
 
 __all__ = ("Reaction",)
 
@@ -13,7 +16,30 @@ if TYPE_CHECKING:
     from .emoji import Emoji
     from .message import Message
     from .partial_emoji import PartialEmoji
-    from .types.message import Reaction as ReactionPayload
+    from .types.message import (
+        Reaction as ReactionPayload,
+        ReactionCountDetails as ReactionCountDetailsPayload,
+    )
+
+
+class ReactionCountDetails:
+    """Represents a reaction's count details.
+
+    .. versionadded:: 3.0
+
+    Attributes
+    ----------
+    burst: :class:`int`
+        The amount of burst reactions.
+    normal: :class:`int`
+        The amount of normal reactions.
+    """
+
+    __slots__ = ("burst", "normal")
+
+    def __init__(self, data: ReactionCountDetailsPayload) -> None:
+        self.burst: int = data.get("burst")
+        self.normal: int = data.get("normal")
 
 
 class Reaction:
@@ -48,13 +74,30 @@ class Reaction:
         The reaction emoji. May be a custom emoji, or a unicode emoji.
     count: :class:`int`
         Number of times this reaction was made
+    count_details: :class:`ReactionCountDetails`
+        The count details for this reaction.
+
+        .. versionadded:: 3.0
     me: :class:`bool`
         If the user sent this reaction.
+    me_burst: :class:`bool`
+        If the user sent a burst reaction.
+
+        .. versionadded:: 3.0
     message: :class:`Message`
         Message this reaction is for.
     """
 
-    __slots__ = ("message", "count", "emoji", "me")
+    __slots__ = (
+        "message",
+        "count",
+        "emoji",
+        "me",
+        "me_burst",
+        "count_details",
+        "_burst_colours",
+        "_cs_burst_colours",
+    )
 
     def __init__(
         self,
@@ -69,6 +112,12 @@ class Reaction:
         )
         self.count: int = data.get("count", 1)
         self.me: bool = data.get("me")
+        self.me_burst: bool = data.get("me_burst")
+        self.count_details: ReactionCountDetails = ReactionCountDetails(
+            data=data.get("count_details")
+        )
+
+        self._burst_colours: List[str] = data.get("burst_colors")
 
     # TODO: typeguard
     def is_custom_emoji(self) -> bool:
@@ -91,6 +140,22 @@ class Reaction:
 
     def __repr__(self) -> str:
         return f"<Reaction emoji={self.emoji!r} me={self.me} count={self.count}>"
+
+    @cached_slot_property("_cs_burst_colours")
+    def burst_colours(self) -> List[Colour]:
+        """List[:class:`Colour`]: The HEX colours used for a burst reaction.
+
+        .. versionadded:: 3.0
+        """
+        return [Colour(value=int(c.strip("#"), base=16)) for c in self._burst_colours]
+
+    @property
+    def burst_colors(self) -> List[Colour]:
+        """List[:class:`Colour`]: An alias of :attr:`.burst_colours`.
+
+        .. versionadded:: 3.0
+        """
+        return self.burst_colours
 
     async def remove(self, user: Snowflake) -> None:
         """|coro|
@@ -143,7 +208,11 @@ class Reaction:
         await self.message.clear_reaction(self.emoji)
 
     def users(
-        self, *, limit: Optional[int] = None, after: Optional[Snowflake] = None
+        self,
+        *,
+        limit: Optional[int] = None,
+        after: Optional[Snowflake] = None,
+        type: ReactionType = ReactionType.normal,
     ) -> ReactionIterator:
         """Returns an :class:`AsyncIterator` representing the users that have reacted to the message.
 
@@ -174,6 +243,11 @@ class Reaction:
             reacted to the message.
         after: Optional[:class:`abc.Snowflake`]
             For pagination, reactions are sorted by member.
+        type: :class:`ReactionType`
+            The type of reactions to return.
+            Defaults to `~ReactionType.normal` if not provided.
+
+            .. versionadded:: 3.0
 
         Raises
         ------
@@ -197,4 +271,4 @@ class Reaction:
         if limit is None:
             limit = self.count
 
-        return ReactionIterator(self.message, emoji, limit, after)
+        return ReactionIterator(self.message, emoji, limit, after, type)
