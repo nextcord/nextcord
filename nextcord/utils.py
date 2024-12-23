@@ -12,13 +12,13 @@ import functools
 import inspect
 import json
 import re
-import sys
 import unicodedata
 import warnings
 from base64 import b64encode
 from bisect import bisect_left
 from inspect import isawaitable as _isawaitable, signature as _signature
 from operator import attrgetter
+from types import UnionType
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -65,18 +65,6 @@ else:
 
 
 HAS_ORJSON = _orjson_defined
-
-
-PY_310 = sys.version_info >= (3, 10)
-
-
-if PY_310:
-    from types import UnionType  # type: ignore
-
-    # UnionType is the annotation origin when doing Python 3.10 unions. Example: "str | None"
-else:
-    UnionType = None
-
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -1028,7 +1016,7 @@ def evaluate_annotation(
         is_literal = False
         args = tp.__args__
         if not hasattr(tp, "__origin__"):
-            if PY_310 and tp.__class__ is UnionType:
+            if tp.__class__ is UnionType:
                 converted = Union[args]  # type: ignore
                 return evaluate_annotation(converted, globals, locals, cache)
 
@@ -1040,8 +1028,6 @@ def evaluate_annotation(
             except ValueError:
                 pass
         if tp.__origin__ is Literal:
-            if not PY_310:
-                args = flatten_literal_params(tp.__args__)
             implicit_str = False
             is_literal = True
 

@@ -33,7 +33,7 @@ Key Features
 Installing
 ----------
 
-**Python 3.8 or higher is required**
+**Python 3.12 or higher is required**
 
 To install the library without full voice support, you can just run the following command:
 
@@ -85,7 +85,7 @@ Optional Packages
 Please note that on Linux installing voice you must install the following packages via your favourite package manager (e.g. ``apt``, ``dnf``, etc) before running the above commands:
 
 * libffi-dev (or ``libffi-devel`` on some systems)
-* python-dev (e.g. ``python3.8-dev`` for Python 3.8)
+* python-dev (e.g. ``python3.12-dev`` for Python 3.12)
 
 
 Quick Example
