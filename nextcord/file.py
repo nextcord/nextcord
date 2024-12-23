@@ -82,14 +82,14 @@ class File:
     """
 
     __slots__ = (
-        "fp",
-        "filename",
-        "spoiler",
-        "force_close",
+        "_closer",
         "_original_pos",
         "_owner",
-        "_closer",
         "description",
+        "filename",
+        "force_close",
+        "fp",
+        "spoiler",
     )
 
     if TYPE_CHECKING:

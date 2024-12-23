@@ -50,7 +50,7 @@ class EventType:
 
 
 class EventItem:
-    __slots__ = ("type", "shard", "error")
+    __slots__ = ("error", "shard", "type")
 
     def __init__(self, etype: int, shard: Optional["Shard"], error: Optional[Exception]) -> None:
         self.type: int = etype
