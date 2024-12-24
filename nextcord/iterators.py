@@ -140,10 +140,8 @@ async def history_iterator(
     if around:
         if limit is None:
             raise ValueError("history does not support around with limit=None")
-        if limit > 101:
-            raise ValueError("history max limit 101 when specifying around parameter")
-        elif limit == 101:
-            limit = 100  # Thanks discord
+        if limit > 100:
+            raise ValueError("history max limit 100 when specifying around parameter")
 
         # in nested functions, pyright thinks that the before and after parameters are
         # their old definitions as a parameter, so we manually cast in the functions
