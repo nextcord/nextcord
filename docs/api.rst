@@ -2355,6 +2355,12 @@ MessageInteractionMetadata
 .. autoclass:: MessageInteractionMetadata()
     :members:
 
+MessageCall
+~~~~~~~~~~~
+
+.. autoclass:: MessageCall()
+    :members:
+
 Member
 ~~~~~~
 
