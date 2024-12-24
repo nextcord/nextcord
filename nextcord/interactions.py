@@ -170,7 +170,9 @@ class Interaction(Hashable, Generic[ClientT]):
         Mapping of installation contexts that the interaction was authorized for to related user or guild IDs.
         You can find out about this field in the `official Discord documentation`__.
 
-        .. _DiscordDocs: https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-authorizing-integration-owners-object
+        .. _integration_docs: https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-authorizing-integration-owners-object
+
+        __ integration_docs_
 
         .. versionadded:: 3.0
     context: Optional[:class:`InteractionContextType`]

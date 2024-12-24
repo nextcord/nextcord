@@ -483,6 +483,10 @@ class MessageReference:
         Currently, this is mainly the replied to message when a user replies to a message.
 
         .. versionadded:: 1.6
+    type: :class:`~nextcord.MessageReferenceType`
+        The type of reference that the message is. Defaults to a reply.
+
+        .. versionadded:: 3.0
     """
 
     __slots__ = (
@@ -784,7 +788,9 @@ class MessageInteractionMetadata(Hashable):
         Mapping of installation contexts that the interaction was authorized for to related user or guild IDs.
         You can find out about this field in the `official Discord documentation`__.
 
-        .. _DiscordDocs: https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-authorizing-integration-owners-object
+        .. _integration_owners_docs: https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-authorizing-integration-owners-object
+
+        __ integration_owners_docs_
 
         .. versionadded:: 3.0
     name: Optional[:class:`str`]
@@ -992,6 +998,10 @@ class Message(Hashable):
         .. deprecated:: 3.0
     interaction_metadata: Optional[:class:`MessageInteractionMetadata`]
         The interaction metadata of a message. Present if the message is sent as a result of an interaction.
+
+        .. versionadded:: 3.0
+    snapshots: List[:class:`MessageSnapshot`]
+        A list of message snapshots that the message contains.
 
         .. versionadded:: 3.0
     """

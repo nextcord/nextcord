@@ -1443,6 +1443,12 @@ of :class:`enum.Enum`.
 .. autoclass:: InteractionContextType
     :members:
 
+.. autoclass:: ApplicationCommandType
+    :members:
+
+.. autoclass:: MessageReferenceType
+    :members:
+
 Async Iterator
 --------------
 
