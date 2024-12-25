@@ -13,11 +13,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-tags: true
 
       - name: Install poetry
-        run: pipx install poetry
+        run: |
+          pipx install poetry
+          poetry self add "poetry-dynamic-versioning[plugin] @ git+https://github.com/nextcord/poetry-dynamic-versioning@master"
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
@@ -33,4 +33,3 @@ jobs:
         with:
           user: __token__
           password: ${{ secrets.PYPI_TOKEN }}
-          repository-url: https://test.pypi.org/legacy/
