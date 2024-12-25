@@ -970,7 +970,7 @@ class clean_content(Converter[str]):
                     f"@{m.display_name if self.use_nicknames else m.name}" if m else "@deleted-user"
                 )
 
-            def resolve_role(id: int) -> str:  # pyright: ignore[reportGeneralTypeIssues]
+            def resolve_role(id: int) -> str:  # pyright: ignore[reportRedeclaration]
                 r = _utils_get(msg.role_mentions, id=id) or ctx.guild.get_role(id)  # type: ignore
                 return f"@{r.name}" if r else "@deleted-role"
 
