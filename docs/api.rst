@@ -3331,6 +3331,15 @@ Command Helpers
 .. autoclass:: Mentionable
     :members:
 
+Command Permissions
+~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: ApplicationCommandPermissions
+    :members:
+
+.. autoclass:: GuildApplicationCommandPermissions
+    :members:
+
 Decorators
 ~~~~~~~~~~
 
