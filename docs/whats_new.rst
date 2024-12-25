@@ -38,6 +38,14 @@ Breaking Changes
     - The ``name`` parameter has been renamed to ``qualified_name`` and supports subcommands/groups separated by spaces.
     - The ``cmd_type`` parameter has been renamed to ``type``, defaults to :attr:`~nextcord.ApplicationCommandType.chat_input`, and is a keyword-only parameter.
     - The ``guild_id`` parameter has been renamed to ``guild``, defaults to :data:`None`, and is a keyword-only parameter.
+- Rework async iterators to use regular async iterators (:issue:`950`). This removes the following methods with replacements:
+    - ``AsyncIterator.chunk`` can be replaced with :func:`utils.as_chunks`
+    - ``AsyncIterator.flatten`` can be replaced with ``[item async for item in iterator]``
+    - ``AsyncIterator.map`` can be replaced with ``[func(item) async for item in iterator]``
+    - ``AsyncIterator.next`` can be replaced with either a regular ``async for`` loop, or :func:`anext`
+    - ``AsyncIterator.filter`` can be replaced with ``[item async for item in iterator if condition(item)]``
+    - ``AsyncIterator.find`` can be replaced with ``next((item async for item in iterator if condition(item)), None)``
+    - ``AsyncIterator.get`` can be replaced with ``next((item async for item in iterator if condition(item)), None)``
 
 Deprecations
 ~~~~~~~~~~~~
@@ -105,6 +113,7 @@ Miscellaneous
 ~~~~~~~~~~~~~
 
 - The HTTP client has been reworked, allowing multiple requests in the same bucket to execute at once, and opening the support for native Oauth2 support (:issue:`1057`).
+- Async iterators now use regular async iterators as opposed to a custom implementation (:issue:`122`, :issue:`950`).
 
 .. _vp2p6p0:
 
