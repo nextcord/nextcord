@@ -2162,7 +2162,7 @@ class ConnectionState:
         self.dispatch("raw_typing", raw)
 
         channel, guild = self._get_guild_channel(data)
-        if channel is not None:  # pyright: ignore[reportUnnecessaryComparison]
+        if channel is not None:
             user = raw.member or self._get_typing_user(channel, raw.user_id)  # type: ignore
             # will be messageable channel if we get here
 
