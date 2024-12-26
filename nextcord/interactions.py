@@ -233,14 +233,11 @@ class Interaction(Hashable, Generic[ClientT]):
         self.locale: Optional[str] = data.get("locale")
         self.guild_locale: Optional[str] = data.get("guild_locale")
 
-        self.message: Optional[Message]
-        try:
-            message = data["message"]
+        self.message: Optional[Message] = None
+        if message := data.get("message"):
             self.message = self._state._get_message(int(message["id"])) or Message(
                 state=self._state, channel=self.channel, data=message  # type: ignore
             )
-        except KeyError:
-            self.message = None
 
         self.user: Optional[Union[User, Member]] = None
         self._app_permissions: int = int(data.get("app_permissions", 0))

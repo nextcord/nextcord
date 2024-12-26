@@ -512,17 +512,16 @@ class ConnectionState:
         self, data: MessagePayload
     ) -> Tuple[Union[Channel, Thread], Optional[Guild]]:
         channel_id = int(data["channel_id"])
-        try:
-            guild = self._get_guild(int(data["guild_id"]))
-        except KeyError:
+        if guild_id := data.get("guild_id"):
+            guild = self._get_guild(int(guild_id))
+            channel = guild and guild._resolve_channel(channel_id)
+        else:
             channel = self.get_channel(channel_id)
 
             if channel is None:
                 channel = DMChannel._from_message(self, channel_id)
 
             guild = getattr(channel, "guild", None)
-        else:
-            channel = guild and guild._resolve_channel(channel_id)
 
         return channel or PartialMessageable(state=self, id=channel_id), guild
 
