@@ -39,6 +39,7 @@ from typing import (
     Type,
     TypeVar,
     Union,
+    get_args,
     overload,
 )
 
@@ -975,11 +976,11 @@ def as_chunks(iterator: _Iter[T], max_size: int) -> _Iter[List[T]]:
 
 
 def flatten_literal_params(parameters: Iterable[Any]) -> Tuple[Any, ...]:
-    params = []
+    params: list[Any] = []
     literal_cls = type(Literal[0])
     for p in parameters:
         if isinstance(p, literal_cls):
-            params.extend(p.__args__)
+            params.extend(get_args(p))
         else:
             params.append(p)
     return tuple(params)
