@@ -297,7 +297,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
     @overload
     async def edit(self) -> Optional[TextChannel]: ...
 
-    async def edit(self, *, reason: Optional[str] = None, **options):
+    async def edit(self, *, reason: Optional[str] = None, **options) -> Optional[TextChannel]:
         """|coro|
 
         Edits the channel.
@@ -1754,7 +1754,7 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
     @overload
     async def edit(self) -> Optional[VoiceChannel]: ...
 
-    async def edit(self, *, reason: Optional[str] = None, **options):
+    async def edit(self, *, reason: Optional[str] = None, **options) -> Optional[VoiceChannel]:
         """|coro|
 
         Edits the channel.
@@ -2324,7 +2324,7 @@ class StageChannel(VocalGuildChannel, abc.Messageable):
     @overload
     async def edit(self) -> Optional[StageChannel]: ...
 
-    async def edit(self, *, reason: Optional[str] = None, **options):
+    async def edit(self, *, reason: Optional[str] = None, **options) -> Optional[StageChannel]:
         """|coro|
 
         Edits the channel.
@@ -2529,7 +2529,7 @@ class CategoryChannel(abc.GuildChannel, Hashable):
     @overload
     async def edit(self) -> Optional[CategoryChannel]: ...
 
-    async def edit(self, *, reason: Optional[str] = None, **options):
+    async def edit(self, *, reason: Optional[str] = None, **options) -> Optional[CategoryChannel]:
         """|coro|
 
         Edits the channel.
