@@ -1119,7 +1119,7 @@ CONVERTER_MAPPING: Dict[Type[Any], Any] = {
 }
 
 
-async def _actual_conversion(ctx: Context, converter, argument: str, param: inspect.Parameter):
+async def _actual_conversion(ctx: Context, converter: Any, argument: str, param: inspect.Parameter):
     if converter is bool:
         return _convert_to_bool(argument)
 
@@ -1140,14 +1140,16 @@ async def _actual_conversion(ctx: Context, converter, argument: str, param: insp
             return await converter().convert(ctx, argument)
 
         if isinstance(converter, Converter):
-            return await converter.convert(ctx, argument)  # type: ignore
+            return await converter.convert(ctx, argument)
     except CommandError:
         raise
     except Exception as exc:
         raise ConversionError(converter, exc) from exc  # type: ignore
 
     try:
-        return converter(argument)
+        # pyright believes this to be Any | type[object], which is fine anyway
+        # but claims 0 positional arguments
+        return converter(argument)  # pyright: ignore
     except CommandError:
         raise
     except Exception as exc:
