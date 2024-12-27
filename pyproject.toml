@@ -165,8 +165,6 @@ select = ["ALL"]
 ignore = [
     "A",       # TODO:
     "ANN",     # TODO:
-    "ANN101",  # `self` does not need a type annotation
-    "ANN102",  # `cls` does not need a type annotation
     "ARG002",  # TODO:
     "ARG003",  # TODO:
     "ASYNC109",# TODO:
@@ -200,7 +198,7 @@ ignore = [
     "SLF",     # pyright can detect private access, but internals rely on it too much right now
     "TD002",   # authors in TODO comments would be nice, but they don't exactly work retroactively (discord.py comments)
     "TD003",   # same with issue links, nice but not retroactive
-    "TCH",     # TODO:
+    "TC",      # TODO:
     "TID",     # TODO:
     "TRY",     # TODO:
     "UP",      # TODO:
