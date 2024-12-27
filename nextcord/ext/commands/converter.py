@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import inspect
 import re
+from types import GenericAlias
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -1088,11 +1089,8 @@ def get_converter(param: inspect.Parameter) -> Any:
     return converter
 
 
-_GenericAlias = type(List[T])
-
-
-def is_generic_type(tp: Any, *, _GenericAlias: Type = _GenericAlias) -> bool:
-    return isinstance(tp, type) and issubclass(tp, Generic) or isinstance(tp, _GenericAlias)
+def is_generic_type(tp: Any) -> bool:
+    return isinstance(tp, type) and issubclass(tp, Generic) or isinstance(tp, GenericAlias)
 
 
 CONVERTER_MAPPING: Dict[Type[Any], Any] = {
