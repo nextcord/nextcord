@@ -1067,7 +1067,8 @@ class Greedy(List[T]):
         if origin is Union and type(None) in args:
             raise TypeError(f"Greedy[{converter!r}] is invalid.")
 
-        return cls(converter=converter)
+        # The type variable T is completely lost by this point.
+        return cls(converter=converter)  # pyright: ignore
 
 
 def _convert_to_bool(argument: str) -> bool:
