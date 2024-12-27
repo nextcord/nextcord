@@ -1062,7 +1062,7 @@ class Greedy(List[T]):
             raise TypeError("Greedy[...] expects a type or a Converter instance.")
 
         if converter in (str, type(None)) or origin is Greedy:
-            raise TypeError(f"Greedy[{converter.__class__.__name__}] is invalid.")
+            raise TypeError(f"Greedy[{type(converter).__name__}] is invalid.")
 
         if origin is Union and type(None) in args:
             raise TypeError(f"Greedy[{converter!r}] is invalid.")
