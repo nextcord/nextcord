@@ -2373,7 +2373,7 @@ class PartialMessage(Hashable):
 
         if fields:
             # data isn't unbound
-            msg = self._state.create_message(channel=self.channel, data=data)  # type: ignore
+            msg = self._state.create_message(channel=self.channel, data=data)
             if view and not view.is_finished() and view.prevent_update:
                 self._state.store_view(view, self.id)
             return msg

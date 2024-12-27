@@ -2447,9 +2447,7 @@ class AutoShardedConnectionState(ConnectionState):
         for shard_id, info in itertools.groupby(guilds, key=key):
             children: Tuple[Guild]
             futures: Tuple[Future]
-            # zip with `*` should, and will, return 2 tuples since every element is 2 length
-            # but pyright believes otherwise.
-            children, futures = zip(*info, strict=False)  # type: ignore
+            children, futures = zip(*info, strict=False)
             # 110 reqs/minute w/ 1 req/guild plus some buffer
             timeout = 61 * (len(children) / 110)
             try:

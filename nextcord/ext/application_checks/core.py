@@ -165,7 +165,7 @@ def check(predicate: "ApplicationCheck") -> AC:
         return CheckWrapper(func, predicate)
 
     wrapper.predicate = predicate
-    return wrapper  # type: ignore
+    return wrapper
 
 
 def check_any(*checks: "ApplicationCheck") -> AC:
