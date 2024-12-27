@@ -257,12 +257,7 @@ class Role(Hashable):
         if self._icon is None:
             self._icon: Optional[str] = data.get("unicode_emoji", None)
         self.tags: Optional[RoleTags]
-
-        try:
-            self.tags = RoleTags(data["tags"])
-        except KeyError:
-            self.tags = None
-
+        self.tags = RoleTags(data["tags"]) if "tags" in data else None
         self._flags: int = data.get("flags", 0)
 
     def is_default(self) -> bool:
