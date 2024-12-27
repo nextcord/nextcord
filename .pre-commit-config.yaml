@@ -5,6 +5,7 @@ ci:
     style: auto fixes from pre-commit hooks
   autoupdate_commit_msg: |
     ci(pre-commit): autoupdate hook versions
+  autoupdate_schedule: monthly
 
 repos:
   # Taken from numpy, for license info see scripts/autotyping.py
