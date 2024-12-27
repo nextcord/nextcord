@@ -174,10 +174,12 @@ class CallbackWrapper:
     """
 
     @overload
-    def __new__(cls, callback: Union[Callable, CallbackWrapper]) -> Self: ...
+    def __new__(
+        cls, callback: Union[Callable, CallbackWrapper], *args: Any, **kwargs: Any
+    ) -> Self: ...
 
     @overload
-    def __new__(cls, callback: CmdT) -> CmdT: ...
+    def __new__(cls, callback: CmdT, *args: Any, **kwargs: Any) -> CmdT: ...
 
     def __new__(
         cls,
