@@ -160,6 +160,10 @@ reportUnnecessaryTypeIgnoreComment = true
 
 [tool.ruff]
 line-length = 100
+exclude = [".github/*"]
+target-version = "py312"
+
+[tool.ruff.lint]
 select = ["ALL"]
 # TODO comments are for rules that should be enabled in the future (separate PRs)
 ignore = [
@@ -208,10 +212,8 @@ ignore = [
     "TRY",     # TODO:
     "UP",      # TODO:
 ]
-exclude = [".github/*"]
-target-version = "py312"
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "__init__.py" = [
     "F401", # unused imports in __init__.py, "from . import abc, ..."
 ]
@@ -228,11 +230,11 @@ target-version = "py312"
 "__main__.py" = ["T20"]
 "docs/*" = ["ERA001", "INP"]
 
-[tool.ruff.pylint]
+[tool.ruff.lint.pylint]
 max-args = 40        # message args (send, execute_webhook) make this way too long usually
 max-branches = 50    # these are quite big, but better than no linting for now
 max-statements = 110
 max-returns = 40
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 combine-as-imports = true
