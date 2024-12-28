@@ -169,6 +169,7 @@ ignore = [
     "ARG003",  # TODO:
     "ASYNC109",# TODO:
     "B008",    # SlashOption() as default, it is okay (Annotated is technically better but verbose)
+    "B039",    # TODO:
     "BLE",     # TODO:
     "C90",     # TODO:
     "COM",     # black sorts out trailing commas
@@ -185,10 +186,14 @@ ignore = [
     "PD",      # all .values is mistaken for pandas
     "PERF203", # TODO:
     "PGH003",  # pyright: ignore[rule] is too verbose (reportGeneralTypeIssues) unfortunately and makes a mess
+    "PLC0206", # TODO:
     "PLR2004", # TODO:
     "PLW2901", # overriding loop var with a change (like anno = anno.type) is very common in this
     "PTH",     # TODO:
     "PYI",     # TODO:
+    "RUF021",  # TODO:
+    "RUF022",  # TODO:
+    "RUF023",  # TODO:
     "S101",    # asserts are usually used for typing assertions - typing.cast would be better but it's fine
     "S110",    # TODO:
     "S112",    # TODO:
