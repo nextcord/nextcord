@@ -12,13 +12,13 @@ import functools
 import inspect
 import json
 import re
-import sys
 import unicodedata
 import warnings
 from base64 import b64encode
 from bisect import bisect_left
 from inspect import isawaitable as _isawaitable, signature as _signature
 from operator import attrgetter
+from types import UnionType
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -42,6 +42,7 @@ from typing import (
     overload,
 )
 
+from .enums import IntegrationType
 from .errors import InvalidArgument
 from .file import File
 
@@ -64,18 +65,6 @@ else:
 
 
 HAS_ORJSON = _orjson_defined
-
-
-PY_310 = sys.version_info >= (3, 10)
-
-
-if PY_310:
-    from types import UnionType  # type: ignore
-
-    # UnionType is the annotation origin when doing Python 3.10 unions. Example: "str | None"
-else:
-    UnionType = None
-
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -290,6 +279,7 @@ def oauth_url(
     redirect_uri: str = MISSING,
     scopes: Iterable[str] = MISSING,
     disable_guild_select: bool = False,
+    integration_type: IntegrationType = MISSING,
 ) -> str:
     """A helper function that returns the OAuth2 URL for inviting the bot
     into guilds.
@@ -313,6 +303,10 @@ def oauth_url(
         Whether to disallow the user from changing the guild dropdown.
 
         .. versionadded:: 2.0
+    integration_type: :class:`~nextcord.IntegrationType`
+        The integration type (otherwise known as installation context) that the invite is for.
+
+        .. versionadded:: 3.0
 
     Returns
     -------
@@ -331,6 +325,8 @@ def oauth_url(
         url += "&response_type=code&" + urlencode({"redirect_uri": redirect_uri})
     if disable_guild_select:
         url += "&disable_guild_select=true"
+    if integration_type is not MISSING:
+        url += f"&integration_type={integration_type.value}"
     return url
 
 
@@ -1020,7 +1016,7 @@ def evaluate_annotation(
         is_literal = False
         args = tp.__args__
         if not hasattr(tp, "__origin__"):
-            if PY_310 and tp.__class__ is UnionType:
+            if tp.__class__ is UnionType:
                 converted = Union[args]  # type: ignore
                 return evaluate_annotation(converted, globals, locals, cache)
 
@@ -1032,8 +1028,6 @@ def evaluate_annotation(
             except ValueError:
                 pass
         if tp.__origin__ is Literal:
-            if not PY_310:
-                args = flatten_literal_params(tp.__args__)
             implicit_str = False
             is_literal = True
 
