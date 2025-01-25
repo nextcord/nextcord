@@ -3101,7 +3101,9 @@ class Client:
             raise TypeError("Could not get the current application's id")
 
         img_base64 = await utils.obj_to_base64_data(image)
-        data = await self.http.create_application_emoji(self.application_id, name=name, image=img_base64)
+        data = await self.http.create_application_emoji(
+            self.application_id, name=name, image=img_base64
+        )
         return Emoji(state=self._connection, data=data)
 
     async def fetch_application_emojis(self) -> list[Emoji]:
