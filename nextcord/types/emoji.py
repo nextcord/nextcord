@@ -28,3 +28,7 @@ class EditEmoji(TypedDict):
 class DefaultReaction(TypedDict, total=False):
     emoji_id: Optional[Snowflake]
     emoji_name: Optional[str]
+
+
+class ListApplicationEmojis(TypedDict):
+    items: list[Emoji]
