@@ -66,6 +66,9 @@ sphinx = "6.2.0"
 sphinxcontrib-trio = "1.1.2"
 sphinxcontrib-websupport = "^1.2.4"
 
+[tool.poetry.requires-plugins]
+poetry-plugin-export = ">=1.8"
+
 [tool.poetry.urls]
 "Documentation" = "https://docs.nextcord.dev/"
 "Issue tracker" = "https://github.com/nextcord/nextcord/issues"
