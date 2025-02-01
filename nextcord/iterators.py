@@ -565,3 +565,34 @@ async def scheduled_event_user_iterator(
 
         for item in reversed(data):
             yield event._update_user(item)
+
+async def answer_voters_iterator(
+    message: Message, answer_id: int, limit: int = 100, after: Optional[Snowflake] = None
+):
+    from .user import User
+
+    state = message._state
+
+    while limit > 0:
+        retrieve = min(limit, 100)
+
+        data = await state.http.get_answer_voters(
+            message.channel.id, message.id, answer_id, limit=retrieve, after=after.id if after else None
+        )
+
+        if data:
+            limit -= retrieve
+            after = Object(id=int(data['users'][-1]["id"]))
+        users = data['users']
+        for item in reversed(users):
+            user: Union[User, Member]
+            if (
+                message.guild is None
+                or isinstance(message.guild, Object)
+                or not (member := message.guild.get_member(int(item["id"])))
+            ):
+                user = User(state=state, data=item)
+            else:
+                user = member
+
+            yield user

@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TYPE_CHECKING, List, Optional, Union, cast
+from typing import TYPE_CHECKING, AsyncIterator, List, Optional, Union, cast
 
 from .emoji import Emoji
 from .enums import PollLayoutType, try_enum
 from .errors import InvalidArgument
-from .iterators import AnswerVotersIterator
+from .iterators import answer_voters_iterator
 from .partial_emoji import PartialEmoji
 from .types.emoji import PartialEmoji as PartialEmojiPayload
 from .utils import MISSING, utcnow
@@ -28,6 +28,9 @@ if TYPE_CHECKING:
         PollMedia as PollMediaPayload,
         PollResults as PollResultsPayload,
     )
+
+    from .member import Member
+    from .user import User
 
     EmojiInputType = Union[Emoji, PartialEmoji, str]
 
@@ -165,8 +168,10 @@ class PollAnswerCount:
 
     def voters(
         self, *, limit: Optional[int] = None, after: Optional[Snowflake] = None
-    ) -> AnswerVotersIterator:
-        """Returns an :class:`AsyncIterator` representing the users who have voted for this option.
+    ) -> AsyncIterator[Union[User, Member]]:
+        """|asynciter|
+
+        Returns an async iterator representing the users who have voted for this option.
 
         The ``after`` parameter must represent an user
         and meet the :class:`abc.Snowflake` abc.
@@ -180,13 +185,6 @@ class PollAnswerCount:
             async for voter in count.voters():
                 await channel.send(f"{voter} has voted with choice number {count.id}!")
 
-        Flattening into a list ::
-
-            voters = await count.voters().flatten()
-            # voters is now a list of User...
-            await channel.send("Those people have voted with choice number {count.id}: {', '.join(voters)}")
-
-
         Parameters
         ----------
         limit: Optional[:class:`int`]
@@ -199,9 +197,8 @@ class PollAnswerCount:
         if limit is None:
             limit = self.count
 
-        return AnswerVotersIterator(
-            message=self.poll.message, answer_id=self.id, after=after, limit=limit
-        )
+        return answer_voters_iterator(self.poll.message, answer_id=self.id, limit=limit, after=after)
+
 
     def to_dict(self) -> PollAnswerCountPayload:
         payload: PollAnswerCountPayload = {
