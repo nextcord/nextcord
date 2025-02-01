@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from .abc import Snowflake
+    from .member import Member
     from .message import Message
     from .state import ConnectionState
     from .types.polls import (
@@ -28,8 +29,6 @@ if TYPE_CHECKING:
         PollMedia as PollMediaPayload,
         PollResults as PollResultsPayload,
     )
-
-    from .member import Member
     from .user import User
 
     EmojiInputType = Union[Emoji, PartialEmoji, str]
@@ -197,8 +196,9 @@ class PollAnswerCount:
         if limit is None:
             limit = self.count
 
-        return answer_voters_iterator(self.poll.message, answer_id=self.id, limit=limit, after=after)
-
+        return answer_voters_iterator(
+            self.poll.message, answer_id=self.id, limit=limit, after=after
+        )
 
     def to_dict(self) -> PollAnswerCountPayload:
         payload: PollAnswerCountPayload = {
