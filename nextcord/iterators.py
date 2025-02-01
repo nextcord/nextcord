@@ -22,6 +22,7 @@ __all__ = (
     "archived_thread_iterator",
     "scheduled_event_iterator",
     "scheduled_event_user_iterator",
+    "answer_voters_iterator",
 )
 
 if TYPE_CHECKING:
