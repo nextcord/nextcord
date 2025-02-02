@@ -11,6 +11,7 @@ import traceback
 from typing import (
     TYPE_CHECKING,
     Any,
+    AsyncIterator,
     Callable,
     Coroutine,
     Dict,
@@ -57,7 +58,7 @@ from .guild_preview import GuildPreview
 from .http import HTTPClient
 from .interactions import Interaction
 from .invite import Invite
-from .iterators import GuildIterator
+from .iterators import guild_iterator
 from .mentions import AllowedMentions
 from .object import Object
 from .stage_instance import StageInstance
@@ -165,7 +166,7 @@ class Client:
     loop: Optional[:class:`asyncio.AbstractEventLoop`]
         The :class:`asyncio.AbstractEventLoop` to use for asynchronous operations.
         Defaults to ``None``, in which case the default event loop is used via
-        :func:`asyncio.get_event_loop()`.
+        :func:`asyncio.get_running_loop()` or :func:`asyncio.new_event_loop()`.
     connector: Optional[:class:`aiohttp.BaseConnector`]
         The connector to use for connection pooling.
     proxy: Optional[:class:`str`]
@@ -307,7 +308,11 @@ class Client:
     ) -> None:
         # self.ws is set in the connect method
         self.ws: DiscordWebSocket = None  # type: ignore
-        self.loop: asyncio.AbstractEventLoop = asyncio.get_event_loop() if loop is None else loop
+        try:
+            self.loop: asyncio.AbstractEventLoop = loop or asyncio.get_running_loop()
+        except RuntimeError:
+            self.loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self.loop)
         self._listeners: Dict[str, List[Tuple[asyncio.Future, Callable[..., bool]]]] = {}
         self.extra_events: Dict[str, List[CoroFunc]] = {}
 
@@ -874,7 +879,7 @@ class Client:
             is blocking. That means that registration of events or anything being
             called after this function call will not execute until it returns.
         """
-        loop = self.loop  # TODO: Make this asyncio.new_event_loop() if self.loop is removed.
+        loop = self.loop or asyncio.new_event_loop()
 
         # This allows Nextcord to gracefully close when Terminate/Signal 7 is received.
         with contextlib.suppress(NotImplementedError):
@@ -1462,8 +1467,10 @@ class Client:
         with_counts: bool = False,
         before: Optional[SnowflakeTime] = None,
         after: Optional[SnowflakeTime] = None,
-    ) -> GuildIterator:
-        """Retrieves an :class:`.AsyncIterator` that enables receiving your guilds.
+    ) -> AsyncIterator[Guild]:
+        """|asynciter|
+
+        Returns an async iterator that enables receiving your guilds.
 
         .. note::
 
@@ -1481,11 +1488,6 @@ class Client:
 
             async for guild in client.fetch_guilds(limit=150):
                 print(guild.name)
-
-        Flattening into a list ::
-
-            guilds = await client.fetch_guilds(limit=150).flatten()
-            # guilds is now a list of Guild...
 
         All parameters are optional.
 
@@ -1523,7 +1525,9 @@ class Client:
         :class:`.Guild`
             The guild with the guild data parsed.
         """
-        return GuildIterator(self, limit=limit, before=before, after=after, with_counts=with_counts)
+        return guild_iterator(
+            self, limit=limit, before=before, after=after, with_counts=with_counts
+        )
 
     async def fetch_template(self, code: Union[Template, str]) -> Template:
         """|coro|

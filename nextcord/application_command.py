@@ -1968,6 +1968,14 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         :exc:`.ApplicationError` should be used. Note that if the checks fail then
         :exc:`.ApplicationCheckFailure` exception is raised to the :func:`.on_application_command_error`
         event.
+    integration_types: Optional[Iterable[Union[:class:`IntegrationType`, :class:`int`]]]
+        Where the command is available, only for globally-scoped commands.
+
+        .. versionadded:: 3.0
+    contexts: Optional[Iterable[Union[:class:`InteractionContextType`, :class:`int`]]]
+        Where the command can be used, only for globally-scoped commands.
+
+        .. versionadded:: 3.0
     """
 
     def __init__(
