@@ -35,7 +35,7 @@ jobs:
           cache-dependency-path: pyproject.toml
 
       - name: Install dependencies
-        run: poetry install
+        run: poetry install --all-groups
 
       - name: Configure Poetry for docs
         run: echo "$(poetry env info --path)/bin" >> $GITHUB_PATH
