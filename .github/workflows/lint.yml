@@ -36,7 +36,7 @@ jobs:
           cache-dependency-path: pyproject.toml
 
       - name: Install dependencies
-        run: poetry install --all-groups
+        run: poetry install --all-groups -E voice -E speed
 
       - name: Configure Poetry for pyright
         run: echo "$(poetry env info --path)/bin" >> $GITHUB_PATH
@@ -92,7 +92,7 @@ jobs:
           cache-dependency-path: pyproject.toml
 
       - name: Install dependencies
-        run: poetry install --all-groups
+        run: poetry install --all-groups -E voice -E speed
 
       - name: Configure Poetry for slotscheck
         run: echo "$(poetry env info --path)/bin" >> $GITHUB_PATH
