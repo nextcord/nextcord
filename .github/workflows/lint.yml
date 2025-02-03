@@ -35,11 +35,11 @@ jobs:
           cache: poetry
           cache-dependency-path: pyproject.toml
 
-      - name: Export dependencies
-        run: poetry export --no-interaction -f requirements.txt --output requirements.txt --with docs,dev -E voice -E speed
-
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: poetry install --all-groups -E voice -E speed
+
+      - name: Configure Poetry for pyright
+        run: echo "$(poetry env info --path)/bin" >> $GITHUB_PATH
 
       - name: Set up pyright
         run: echo "PYRIGHT_VERSION=$(python -c 'import pyright; print(pyright.__pyright_version__)')" >> $GITHUB_ENV
@@ -91,11 +91,11 @@ jobs:
           cache: poetry
           cache-dependency-path: pyproject.toml
 
-      - name: Export dependencies
-        run: poetry export --no-interaction -f requirements.txt --output requirements.txt --with docs,dev -E voice -E speed
-
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: poetry install --all-groups -E voice -E speed
+
+      - name: Configure Poetry for slotscheck
+        run: echo "$(poetry env info --path)/bin" >> $GITHUB_PATH
 
       - name: Run slotscheck
         run: task slotscheck
