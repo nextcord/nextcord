@@ -4521,7 +4521,7 @@ class HTTPClient:
     ) -> Response[scheduled_events.ScheduledEvent]:
         valid_keys = {
             "channel_id",
-            "event_metadata",
+            "entity_metadata",
             "name",
             "privacy_level",
             "scheduled_start_time",
