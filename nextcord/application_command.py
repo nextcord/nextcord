@@ -2043,6 +2043,8 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         CallbackMixin.__init__(self, callback=callback, parent_cog=parent_cog)
         self._state: Optional[ConnectionState] = None
         self.type = cmd_type or ApplicationCommandType(1)
+        self.id: int
+        self.guild_id: Optional[int] = None
         self.name: Optional[str] = name
         self.name_localizations: Optional[Dict[Union[str, Locale], str]] = name_localizations
         self._description: Optional[str] = description
@@ -2338,9 +2340,11 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         """
         self._state = state
         command_id = int(data["id"])
+        self.id = command_id
         if guild_id := data.get("guild_id", None):
             guild_id = int(guild_id)
             self.command_ids[guild_id] = command_id
+            self.guild_id = guild_id
             self.guild_ids_to_rollout.add(guild_id)
         else:
             self.command_ids[None] = command_id
