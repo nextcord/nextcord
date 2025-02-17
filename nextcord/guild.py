@@ -539,6 +539,8 @@ class Guild(Hashable):
             guild, "safety_alerts_channel_id"
         )
 
+        self._incidents: Optional[IncidentsData] = guild.get("incidents_data")
+
     # TODO: refactor/remove?
     def _sync(self, data: GuildPayload) -> None:
         with contextlib.suppress(KeyError):
@@ -825,6 +827,10 @@ class Guild(Hashable):
         """
         channel_id = self._safety_alerts_channel_id
         return channel_id and self._channels.get(channel_id)  # type: ignore
+
+    @property
+    def incidents(self) -> Optional[IncidentsData]:
+        return self._incidents
 
     @property
     def emoji_limit(self) -> int:
