@@ -530,7 +530,7 @@ class Guild(Hashable):
         for event in guild.get("guild_scheduled_events") or []:
             self._store_scheduled_event(event)
 
-        self._premium_progress_bar_enabled: Optional[bool] = guild.get(
+        self._premium_progress_bar_enabled: bool = guild.get(
             "premium_progress_bar_enabled"
         )
 
@@ -672,7 +672,7 @@ class Guild(Hashable):
         return list(self._scheduled_events.values())
 
     @property
-    def premium_progress_bar_enabled(self) -> Optional[bool]:
+    def premium_progress_bar_enabled(self) -> bool:
         """Optional[:class:`bool`:] Whether the premium boost progress bar is enabled.
 
         .. versionadded:: 2.6
