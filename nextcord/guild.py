@@ -1708,7 +1708,7 @@ class Guild(Hashable):
         vanity_code: str = MISSING,
         system_channel: Optional[TextChannel] = MISSING,
         system_channel_flags: SystemChannelFlags = MISSING,
-        preferred_locale: str = MISSING,
+        preferred_locale: Locale = MISSING,
         rules_channel: Optional[TextChannel] = MISSING,
         public_updates_channel: Optional[TextChannel] = MISSING,
         invites_disabled: bool = MISSING,
@@ -1787,7 +1787,7 @@ class Guild(Hashable):
             The new channel that is used for the system channel. Could be ``None`` for no system channel.
         system_channel_flags: :class:`SystemChannelFlags`
             The new system channel settings to use with the new system channel.
-        preferred_locale: :class:`str`
+        preferred_locale: :class:`Locale`
             The new preferred locale for the guild. Used as the primary language in the guild.
             If set, this must be an ISO 639 code, e.g. ``en-US`` or ``ja`` or ``zh-CN``.
         rules_channel: Optional[:class:`TextChannel`]
