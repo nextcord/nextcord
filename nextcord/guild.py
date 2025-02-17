@@ -70,6 +70,7 @@ from .scheduled_events import EntityMetadata, ScheduledEvent
 from .stage_instance import StageInstance
 from .sticker import GuildSticker
 from .threads import Thread, ThreadMember
+from .types.guild import IncidentsData
 from .user import User
 from .widget import Widget
 
@@ -260,6 +261,11 @@ class Guild(Hashable):
         The maximum amount of users in a stage channel when video is being broadcasted.
 
         .. versionadded:: 2.6
+
+    incidents: Optional[:class:`IncidentsData`]
+        The incidents data for this guild.
+
+        .. versionadded:: 3.0
     """
 
     __slots__ = (
@@ -309,6 +315,7 @@ class Guild(Hashable):
         "_premium_progress_bar_enabled",
         "_safety_alerts_channel_id",
         "max_stage_video_channel_users",
+        "_incidents",
     )
 
     _PREMIUM_GUILD_LIMITS: ClassVar[Dict[Optional[int], _GuildLimit]] = {
