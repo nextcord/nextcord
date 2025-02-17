@@ -3315,7 +3315,11 @@ class Guild(Hashable):
         return Widget(state=self._state, data=data)
 
     async def edit_widget(
-        self, *, enabled: bool = MISSING, channel: Optional[Snowflake] = MISSING
+        self,
+        *,
+        enabled: bool = MISSING,
+        channel: Optional[Snowflake] = MISSING,
+        reason: Optional[str] = None,
     ) -> None:
         """|coro|
 
@@ -3340,13 +3344,13 @@ class Guild(Hashable):
         HTTPException
             Editing the widget failed.
         """
-        payload = {}
+        payload: Dict[str, Any] = {}
         if channel is not MISSING:
             payload["channel_id"] = None if channel is None else channel.id
         if enabled is not MISSING:
             payload["enabled"] = enabled
 
-        await self._state.http.edit_widget(self.id, payload=payload)
+        await self._state.http.edit_widget(self.id, reason=reason, **payload)
 
     async def chunk(self, *, cache: bool = True) -> Optional[List[Member]]:
         """|coro|

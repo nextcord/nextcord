@@ -3392,14 +3392,16 @@ class HTTPClient:
     def edit_widget(
         self,
         guild_id: Snowflake,
-        payload,
         *,
+        reason: Optional[str] = None,
         auth: Optional[str] = MISSING,
         retry_request: bool = True,
+        **fields,
     ) -> Response[widget.WidgetSettings]:
         return self.request(
             Route("PATCH", "/guilds/{guild_id}/widget", guild_id=guild_id),
-            json=payload,
+            json=fields,
+            reason=reason,
             auth=auth,
             retry_request=retry_request,
         )
