@@ -45,6 +45,7 @@ from .enums import (
     AutoModerationTriggerType,
     ChannelType,
     ContentFilter,
+    Locale,
     NotificationLevel,
     NSFWLevel,
     ScheduledEventEntityType,
@@ -233,7 +234,7 @@ class Guild(Hashable):
         The number goes from 0 to 3 inclusive.
     premium_subscription_count: :class:`int`
         The number of "boosts" this guild currently has.
-    preferred_locale: Optional[:class:`str`]
+    preferred_locale: Optional[:class:`Locale`]
         The preferred locale for the guild. Used when filtering Server Discovery
         results to a specific language.
     nsfw_level: :class:`NSFWLevel`
@@ -496,7 +497,7 @@ class Guild(Hashable):
         self.premium_tier: int = guild.get("premium_tier", 0)
         self.premium_subscription_count: int = guild.get("premium_subscription_count") or 0
         self._system_channel_flags: int = guild.get("system_channel_flags", 0)
-        self.preferred_locale: Optional[str] = guild.get("preferred_locale")
+        self.preferred_locale: Locale = try_enum(Locale, guild.get("preferred_locale"))
         self._discovery_splash: Optional[str] = guild.get("discovery_splash")
         self._rules_channel_id: Optional[int] = utils.get_as_snowflake(guild, "rules_channel_id")
         self._public_updates_channel_id: Optional[int] = utils.get_as_snowflake(
