@@ -88,7 +88,7 @@ class GuildPreview(_BaseGuildPreview, _GuildPreviewUnique): ...
 
 class Guild(_BaseGuildPreview):
     owner_id: Snowflake
-    region: str
+    region: NotRequired[Optional[str]]
     afk_channel_id: Optional[Snowflake]
     afk_timeout: int
     verification_level: VerificationLevel
