@@ -14,7 +14,11 @@ if TYPE_CHECKING:
     import datetime
 
     from .state import ConnectionState
-    from .types.widget import Widget as WidgetPayload, WidgetMember as WidgetMemberPayload
+    from .types.widget import (
+        Widget as WidgetPayload,
+        WidgetImageStyle,
+        WidgetMember as WidgetMemberPayload,
+    )
 
 __all__ = (
     "WidgetChannel",
