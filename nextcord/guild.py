@@ -296,6 +296,10 @@ class Guild(Hashable):
         The maximum amount of users in a stage channel when video is being broadcasted.
 
         .. versionadded:: 2.6
+
+    incidents: :class:`Incidents`
+        Currently applied security actions to guild.
+        .. versionadded:: 3.1
     """
 
     __slots__ = (
@@ -1778,6 +1782,10 @@ class Guild(Hashable):
         .. versionchanged:: 2.6
             The ``premium_progress_bar_enabled`` parameter has been added.
 
+        .. versionchanged:: 3.1
+            The ``invites_disabled_until`` parameter has been added.
+            The ``dms_disabled_until`` parameter has been added.
+
         Parameters
         ----------
         name: :class:`str`
@@ -1841,6 +1849,15 @@ class Guild(Hashable):
             This will prevent new users from joining said guild.
         premium_progress_bar_enabled: :class:`bool`
             Whether the premium guild boost progress bar is enabled.
+        invites_disabled_until: Optional[Union[:class:`~datetime.datetime`, :class:`~datetime.timedelta`]
+            The time until guild invites should be disabled.
+            Set this to None to enable invites.
+            Can be enabled for a maximal timespan of 24 hours in the future.
+        dms_disabled_until: Optional[Union[:class:`~datetime.datetime`, :class:`~datetime.timedelta`]
+            The time until guild direct messages between members should be disabled.
+            Friend can still DM each other, moderators can still DM members, and Applications can still DM members.
+            Set this to None to enable direct messages between members.
+            Can be enabled for a maximal timespan of 24 hours in the future.
         reason: Optional[:class:`str`]
             The reason for editing this guild. Shows up on the audit log.
 
