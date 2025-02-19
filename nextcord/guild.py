@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import contextlib
 import copy
+import datetime
 import unicodedata
 import warnings
 from asyncio import Future
@@ -77,7 +78,6 @@ __all__ = ("Guild",)
 MISSING = utils.MISSING
 
 if TYPE_CHECKING:
-    import datetime
     from typing import cast
 
     from .abc import Snowflake, SnowflakeTime
@@ -95,8 +95,10 @@ if TYPE_CHECKING:
     from .types.channel import GuildChannel as GuildChannelPayload
     from .types.guild import (
         Ban as BanPayload,
+        BaseIncidentsData,
         Guild as GuildPayload,
         GuildFeature,
+        IncidentsData,
         MFALevel,
         RolePositionUpdate,
     )
@@ -114,6 +116,41 @@ if TYPE_CHECKING:
     VocalGuildChannel = Union[VoiceChannel, StageChannel]
     GuildChannel = Union[VoiceChannel, StageChannel, TextChannel, CategoryChannel, ForumChannel]
     ByCategoryItem = Tuple[Optional[CategoryChannel], List[GuildChannel]]
+
+
+class Incidents:
+    def __init__(self, data: Optional[IncidentsData]) -> None:
+        self._invites_disabled_until: Optional[datetime.datetime] = None
+        self._dms_disabled_until: Optional[datetime.datetime] = None
+        self._dm_spam_detected_at: Optional[datetime.datetime] = None
+        self._raid_detected_at: Optional[datetime.datetime] = None
+        if data:
+            self._from_data(data)
+
+    def _from_data(self, data: IncidentsData) -> None:
+        self._invites_disabled_until = utils.parse_time(data.get("invites_disabled_until"))
+        self._dms_disabled_until = utils.parse_time(data.get("dms_disabled_until"))
+        self._dm_spam_detected_at = utils.parse_time(data.get("dm_spam_detected_at"))
+        self._raid_detected_at = utils.parse_time(data.get("raid_detected_at"))
+
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__} invites_disabled_until={self.invites_disabled_until!r} dms_disabled_until={self.dms_disabled_until!r} dm_spam_detected_at={self.dm_spam_detected_at!r} raid_detected_at={self.raid_detected_at!r}>"
+
+    @property
+    def invites_disabled_until(self) -> Optional[datetime.datetime]:
+        return self._invites_disabled_until
+
+    @property
+    def dms_disabled_until(self) -> Optional[datetime.datetime]:
+        return self._dms_disabled_until
+
+    @property
+    def dm_spam_detected_at(self) -> Optional[datetime.datetime]:
+        return self._dm_spam_detected_at
+
+    @property
+    def raid_detected_at(self) -> Optional[datetime.datetime]:
+        return self._raid_detected_at
 
 
 class _GuildLimit(NamedTuple):
@@ -308,6 +345,7 @@ class Guild(Hashable):
         "_premium_progress_bar_enabled",
         "_safety_alerts_channel_id",
         "max_stage_video_channel_users",
+        "_incidents",
     )
 
     _PREMIUM_GUILD_LIMITS: ClassVar[Dict[Optional[int], _GuildLimit]] = {
@@ -537,6 +575,7 @@ class Guild(Hashable):
         self._safety_alerts_channel_id: Optional[int] = utils.get_as_snowflake(
             guild, "safety_alerts_channel_id"
         )
+        self._incidents: Incidents = Incidents(guild.get("incidents"))
 
     # TODO: refactor/remove?
     def _sync(self, data: GuildPayload) -> None:
@@ -1056,6 +1095,10 @@ class Guild(Hashable):
     def created_at(self) -> datetime.datetime:
         """:class:`datetime.datetime`: Returns the guild's creation time in UTC."""
         return utils.snowflake_time(self.id)
+
+    @property
+    def incidents(self) -> Incidents:
+        return self._incidents
 
     def get_member_named(self, name: str, /) -> Optional[Member]:
         """Returns the first member found that matches the name provided.
@@ -1706,6 +1749,8 @@ class Guild(Hashable):
         public_updates_channel: Optional[TextChannel] = MISSING,
         invites_disabled: bool = MISSING,
         premium_progress_bar_enabled: bool = MISSING,
+        invites_disabled_until: Optional[Union[datetime.datetime, datetime.timedelta]] = MISSING,
+        dms_disabled_until: Optional[Union[datetime.datetime, datetime.timedelta]] = MISSING,
     ) -> Guild:
         r"""|coro|
 
@@ -1931,6 +1976,45 @@ class Guild(Hashable):
                 features.remove("INVITES_DISABLED")
 
             fields["features"] = features
+        incidents_data_payload: BaseIncidentsData = {}
+
+        if invites_disabled_until is MISSING:
+            pass
+        elif invites_disabled_until is None:
+            incidents_data_payload["invites_disabled_until"] = None
+        elif isinstance(invites_disabled_until, datetime.timedelta):
+            incidents_data_payload["invites_disabled_until"] = (
+                utils.utcnow() + invites_disabled_until
+            ).isoformat()
+        elif isinstance(invites_disabled_until, datetime.datetime):
+            incidents_data_payload["invites_disabled_until"] = invites_disabled_until.isoformat()
+        else:
+            raise TypeError(
+                "invites_disabled_until must be a `datetime.datetime` or `datetime.timedelta`"
+                f"not {invites_disabled_until.__class__.__name__}"
+            )
+
+        if dms_disabled_until is MISSING:
+            pass
+        elif dms_disabled_until is None:
+            incidents_data_payload["dms_disabled_until"] = None
+        elif isinstance(dms_disabled_until, datetime.timedelta):
+            incidents_data_payload["dms_disabled_until"] = (
+                utils.utcnow() + dms_disabled_until
+            ).isoformat()
+        elif isinstance(dms_disabled_until, datetime.datetime):
+            incidents_data_payload["dms_disabled_until"] = dms_disabled_until.isoformat()
+        else:
+            raise TypeError(
+                "dms_disabled_until must be a `datetime.datetime` or `datetime.timedelta`"
+                f"not {dms_disabled_until.__class__.__name__}"
+            )
+
+        if incidents_data_payload:
+            incidents_data: IncidentsData = await http.edit_incidents(
+                guild_id=self.id, data=incidents_data_payload
+            )
+            self._incidents = Incidents(incidents_data)
 
         data = await http.edit_guild(self.id, reason=reason, **fields)
         return Guild(data=data, state=self._state)
