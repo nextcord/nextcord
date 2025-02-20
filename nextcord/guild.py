@@ -1855,7 +1855,7 @@ class Guild(Hashable):
             Can be enabled for a maximal timespan of 24 hours in the future.
         dms_disabled_until: Optional[Union[:class:`~datetime.datetime`, :class:`~datetime.timedelta`]
             The time until guild direct messages between members should be disabled.
-            Friend can still DM each other, moderators can still DM members, and Applications can still DM members.
+            Friends can still DM each other, moderators can still DM members, and Applications can still DM members.
             Set this to None to enable direct messages between members.
             Can be enabled for a maximal timespan of 24 hours in the future.
         reason: Optional[:class:`str`]
