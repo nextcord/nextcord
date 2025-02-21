@@ -1727,7 +1727,7 @@ class Guild(Hashable):
 
         await self._state.http.delete_guild(self.id)
 
-    async def edit(
+    async def edit(  # noqa: PLR0912
         self,
         *,
         reason: Optional[str] = MISSING,
