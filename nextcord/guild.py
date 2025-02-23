@@ -2028,6 +2028,28 @@ class Guild(Hashable):
             )
 
         if incidents_data_payload:
+            if cur_incidents := self._incidents:
+                now = utils.utcnow()
+
+                _inv_time = cur_incidents.invites_disabled_until
+                if (
+                    _inv_time
+                    and isinstance(_inv_time, datetime.datetime)
+                    and _inv_time > now
+                    and "invites_disabled_until" not in incidents_data_payload
+                ):
+                    incidents_data_payload["invites_disabled_until"] = _inv_time.isoformat()
+
+                _dms_time = cur_incidents.dms_disabled_until
+
+                if (
+                    _dms_time
+                    and isinstance(_dms_time, datetime.datetime)
+                    and _dms_time > now
+                    and "dms_disabled_until" not in incidents_data_payload
+                ):
+                    incidents_data_payload["dms_disabled_until"] = _dms_time.isoformat()
+
             incidents_data: IncidentsData = await http.edit_incidents(
                 guild_id=self.id, data=incidents_data_payload
             )
