@@ -579,7 +579,7 @@ class Guild(Hashable):
         self._safety_alerts_channel_id: Optional[int] = utils.get_as_snowflake(
             guild, "safety_alerts_channel_id"
         )
-        self._incidents: Incidents = Incidents(guild.get("incidents"))
+        self._incidents: Incidents = Incidents(guild.get("incidents_data"))
 
     # TODO: refactor/remove?
     def _sync(self, data: GuildPayload) -> None:
