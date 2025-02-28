@@ -3104,7 +3104,7 @@ class Client:
         data = await self.http.create_application_emoji(
             self.application_id, name=name, image=img_base64
         )
-        return Emoji(state=self._connection, data=data)
+        return Emoji(state=self._connection, data=data, application_id=self.application_id)
 
     async def fetch_application_emojis(self) -> list[Emoji]:
         """|coro|
@@ -3124,7 +3124,7 @@ class Client:
         if self.application_id is None:
             raise TypeError("Could not get the current application's id")
         data = await self.http.list_application_emojis(self.application_id)
-        return [Emoji(state=self._connection, data=emoji) for emoji in data.get("items", [])]
+        return [Emoji(state=self._connection, data=emoji, application_id=self.application_id) for emoji in data.get("items", [])]
 
     async def fetch_application_emoji(self, emoji_id: int) -> Emoji:
         """|coro|
@@ -3152,4 +3152,4 @@ class Client:
             raise TypeError("Could not get the current application's id")
 
         data = await self.http.get_application_emoji(self.application_id, emoji_id)
-        return Emoji(state=self._connection, data=data)
+        return Emoji(state=self._connection, data=data, application_id=self.application_id)
