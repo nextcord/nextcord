@@ -152,7 +152,7 @@ class BaseUser(_UserTag):
         ..versionchanged:: 2.6
             Added handling for the new username system for users without a discriminator.
         """
-        if self.discriminator != "0":
+        if self.discriminator == "0":
             avatar_index = (self.id >> 22) % len(DefaultAvatar)
         else:
             avatar_index = int(self.discriminator) % 5
