@@ -14,7 +14,11 @@ if TYPE_CHECKING:
     import datetime
 
     from .state import ConnectionState
-    from .types.widget import Widget as WidgetPayload, WidgetMember as WidgetMemberPayload
+    from .types.widget import (
+        Widget as WidgetPayload,
+        WidgetImageStyle,
+        WidgetMember as WidgetMemberPayload,
+    )
 
 __all__ = (
     "WidgetChannel",
@@ -269,6 +273,9 @@ class Widget:
     def json_url(self) -> str:
         """:class:`str`: The JSON URL of the widget."""
         return f"https://discord.com/api/guilds/{self.id}/widget.json"
+
+    def image_url(self, style: WidgetImageStyle = "shield") -> str:
+        return f"https://discord.com/api/guilds/{self.id}/widget.png?style={style}"
 
     @property
     def invite_url(self) -> str:

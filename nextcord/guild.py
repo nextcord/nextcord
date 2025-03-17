@@ -45,6 +45,7 @@ from .enums import (
     AutoModerationTriggerType,
     ChannelType,
     ContentFilter,
+    Locale,
     NotificationLevel,
     NSFWLevel,
     ScheduledEventEntityType,
@@ -69,6 +70,7 @@ from .scheduled_events import EntityMetadata, ScheduledEvent
 from .stage_instance import StageInstance
 from .sticker import GuildSticker
 from .threads import Thread, ThreadMember
+from .types.guild import IncidentsData
 from .user import User
 from .widget import Widget
 
@@ -156,7 +158,7 @@ class Guild(Hashable):
         All stickers that the guild owns.
 
         .. versionadded:: 2.0
-    region: :class:`VoiceRegion`
+    region: Optional[:class:`VoiceRegion`]
         The region the guild belongs on. There is a chance that the region
         will be a :class:`str` if the value is not recognised by the enumerator.
     afk_timeout: :class:`int`
@@ -233,7 +235,7 @@ class Guild(Hashable):
         The number goes from 0 to 3 inclusive.
     premium_subscription_count: :class:`int`
         The number of "boosts" this guild currently has.
-    preferred_locale: Optional[:class:`str`]
+    preferred_locale: Optional[:class:`Locale`]
         The preferred locale for the guild. Used when filtering Server Discovery
         results to a specific language.
     nsfw_level: :class:`NSFWLevel`
@@ -259,6 +261,11 @@ class Guild(Hashable):
         The maximum amount of users in a stage channel when video is being broadcasted.
 
         .. versionadded:: 2.6
+
+    incidents: Optional[:class:`IncidentsData`]
+        The incidents data for this guild.
+
+        .. versionadded:: 3.0
     """
 
     __slots__ = (
@@ -308,6 +315,7 @@ class Guild(Hashable):
         "_premium_progress_bar_enabled",
         "_safety_alerts_channel_id",
         "max_stage_video_channel_users",
+        "_incidents",
     )
 
     _PREMIUM_GUILD_LIMITS: ClassVar[Dict[Optional[int], _GuildLimit]] = {
@@ -455,7 +463,7 @@ class Guild(Hashable):
             self._member_count: int = member_count
 
         self.name: str = guild.get("name")
-        self.region: VoiceRegion = try_enum(VoiceRegion, guild.get("region"))
+        self.region: Optional[VoiceRegion] = try_enum(VoiceRegion, guild.get("region"))
         self.verification_level: VerificationLevel = try_enum(
             VerificationLevel, guild.get("verification_level")
         )
@@ -496,7 +504,7 @@ class Guild(Hashable):
         self.premium_tier: int = guild.get("premium_tier", 0)
         self.premium_subscription_count: int = guild.get("premium_subscription_count") or 0
         self._system_channel_flags: int = guild.get("system_channel_flags", 0)
-        self.preferred_locale: Optional[str] = guild.get("preferred_locale")
+        self.preferred_locale: Locale = try_enum(Locale, guild.get("preferred_locale"))
         self._discovery_splash: Optional[str] = guild.get("discovery_splash")
         self._rules_channel_id: Optional[int] = utils.get_as_snowflake(guild, "rules_channel_id")
         self._public_updates_channel_id: Optional[int] = utils.get_as_snowflake(
@@ -530,13 +538,13 @@ class Guild(Hashable):
         for event in guild.get("guild_scheduled_events") or []:
             self._store_scheduled_event(event)
 
-        self._premium_progress_bar_enabled: Optional[bool] = guild.get(
-            "premium_progress_bar_enabled"
-        )
+        self._premium_progress_bar_enabled: bool = guild.get("premium_progress_bar_enabled")
 
         self._safety_alerts_channel_id: Optional[int] = utils.get_as_snowflake(
             guild, "safety_alerts_channel_id"
         )
+
+        self._incidents: Optional[IncidentsData] = guild.get("incidents_data")
 
     # TODO: refactor/remove?
     def _sync(self, data: GuildPayload) -> None:
@@ -672,8 +680,8 @@ class Guild(Hashable):
         return list(self._scheduled_events.values())
 
     @property
-    def premium_progress_bar_enabled(self) -> Optional[bool]:
-        """Optional[:class:`bool`:] Whether the premium boost progress bar is enabled.
+    def premium_progress_bar_enabled(self) -> bool:
+        """:class:`bool`: Whether the premium boost progress bar is enabled.
 
         .. versionadded:: 2.6
         """
@@ -824,6 +832,10 @@ class Guild(Hashable):
         """
         channel_id = self._safety_alerts_channel_id
         return channel_id and self._channels.get(channel_id)  # type: ignore
+
+    @property
+    def incidents(self) -> Optional[IncidentsData]:
+        return self._incidents
 
     @property
     def emoji_limit(self) -> int:
@@ -1701,7 +1713,7 @@ class Guild(Hashable):
         vanity_code: str = MISSING,
         system_channel: Optional[TextChannel] = MISSING,
         system_channel_flags: SystemChannelFlags = MISSING,
-        preferred_locale: str = MISSING,
+        preferred_locale: Locale = MISSING,
         rules_channel: Optional[TextChannel] = MISSING,
         public_updates_channel: Optional[TextChannel] = MISSING,
         invites_disabled: bool = MISSING,
@@ -1780,7 +1792,7 @@ class Guild(Hashable):
             The new channel that is used for the system channel. Could be ``None`` for no system channel.
         system_channel_flags: :class:`SystemChannelFlags`
             The new system channel settings to use with the new system channel.
-        preferred_locale: :class:`str`
+        preferred_locale: :class:`Locale`
             The new preferred locale for the guild. Used as the primary language in the guild.
             If set, this must be an ISO 639 code, e.g. ``en-US`` or ``ja`` or ``zh-CN``.
         rules_channel: Optional[:class:`TextChannel`]
@@ -3314,7 +3326,11 @@ class Guild(Hashable):
         return Widget(state=self._state, data=data)
 
     async def edit_widget(
-        self, *, enabled: bool = MISSING, channel: Optional[Snowflake] = MISSING
+        self,
+        *,
+        enabled: bool = MISSING,
+        channel: Optional[Snowflake] = MISSING,
+        reason: Optional[str] = None,
     ) -> None:
         """|coro|
 
@@ -3331,6 +3347,8 @@ class Guild(Hashable):
             Whether to enable the widget for the guild.
         channel: Optional[:class:`~nextcord.abc.Snowflake`]
             The new widget channel. ``None`` removes the widget channel.
+        reason: Optional[:class:`str`]
+            The reason for editing this widget. Shows up in the audit logs.
 
         Raises
         ------
@@ -3339,13 +3357,13 @@ class Guild(Hashable):
         HTTPException
             Editing the widget failed.
         """
-        payload = {}
+        payload: Dict[str, Any] = {}
         if channel is not MISSING:
             payload["channel_id"] = None if channel is None else channel.id
         if enabled is not MISSING:
             payload["enabled"] = enabled
 
-        await self._state.http.edit_widget(self.id, payload=payload)
+        await self._state.http.edit_widget(self.id, reason=reason, **payload)
 
     async def chunk(self, *, cache: bool = True) -> Optional[List[Member]]:
         """|coro|

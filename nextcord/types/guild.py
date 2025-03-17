@@ -67,6 +67,13 @@ GuildFeature = Literal[
 ]
 
 
+class IncidentsData(TypedDict):
+    invites_disabled_until: Optional[str]
+    dms_disabled_until: Optional[str]
+    dm_spam_detected_at: NotRequired[Optional[str]]
+    raid_detected_at: NotRequired[Optional[str]]
+
+
 class _BaseGuildPreview(UnavailableGuild):
     name: str
     icon: Optional[str]
@@ -88,7 +95,7 @@ class GuildPreview(_BaseGuildPreview, _GuildPreviewUnique): ...
 
 class Guild(_BaseGuildPreview):
     owner_id: Snowflake
-    region: str
+    region: NotRequired[Optional[str]]
     afk_channel_id: Optional[Snowflake]
     afk_timeout: int
     verification_level: VerificationLevel
@@ -126,8 +133,9 @@ class Guild(_BaseGuildPreview):
     max_video_channel_users: NotRequired[int]
     max_stage_video_channel_users: NotRequired[int]
     stickers: NotRequired[List[GuildSticker]]
-    premium_progress_bar_enabled: Optional[bool]
+    premium_progress_bar_enabled: bool
     safety_alerts_channel_id: Optional[Snowflake]
+    incidents_data: Optional[IncidentsData]
 
 
 class InviteGuild(Guild, total=False):
