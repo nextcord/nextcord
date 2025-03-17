@@ -67,6 +67,16 @@ GuildFeature = Literal[
 ]
 
 
+class BaseIncidentsData(TypedDict, total=False):
+    invites_disabled_until: Optional[str]
+    dms_disabled_until: Optional[str]
+
+
+class IncidentsData(BaseIncidentsData):
+    dm_spam_detected_at: NotRequired[Optional[str]]
+    raid_detected_at: NotRequired[Optional[str]]
+
+
 class _BaseGuildPreview(UnavailableGuild):
     name: str
     icon: Optional[str]
@@ -128,6 +138,7 @@ class Guild(_BaseGuildPreview):
     stickers: NotRequired[List[GuildSticker]]
     premium_progress_bar_enabled: Optional[bool]
     safety_alerts_channel_id: Optional[Snowflake]
+    incidents_data: Optional[IncidentsData]
 
 
 class InviteGuild(Guild, total=False):

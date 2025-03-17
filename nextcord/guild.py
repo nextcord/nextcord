@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import contextlib
 import copy
+import datetime
 import unicodedata
 import warnings
 from asyncio import Future
@@ -77,7 +78,6 @@ __all__ = ("Guild",)
 MISSING = utils.MISSING
 
 if TYPE_CHECKING:
-    import datetime
     from typing import cast
 
     from .abc import Snowflake, SnowflakeTime
@@ -95,8 +95,10 @@ if TYPE_CHECKING:
     from .types.channel import GuildChannel as GuildChannelPayload
     from .types.guild import (
         Ban as BanPayload,
+        BaseIncidentsData,
         Guild as GuildPayload,
         GuildFeature,
+        IncidentsData,
         MFALevel,
         RolePositionUpdate,
     )
@@ -114,6 +116,41 @@ if TYPE_CHECKING:
     VocalGuildChannel = Union[VoiceChannel, StageChannel]
     GuildChannel = Union[VoiceChannel, StageChannel, TextChannel, CategoryChannel, ForumChannel]
     ByCategoryItem = Tuple[Optional[CategoryChannel], List[GuildChannel]]
+
+
+class Incidents:
+    def __init__(self, data: Optional[IncidentsData]) -> None:
+        self._invites_disabled_until: Optional[datetime.datetime] = None
+        self._dms_disabled_until: Optional[datetime.datetime] = None
+        self._dm_spam_detected_at: Optional[datetime.datetime] = None
+        self._raid_detected_at: Optional[datetime.datetime] = None
+        if data:
+            self._from_data(data)
+
+    def _from_data(self, data: IncidentsData) -> None:
+        self._invites_disabled_until = utils.parse_time(data.get("invites_disabled_until"))
+        self._dms_disabled_until = utils.parse_time(data.get("dms_disabled_until"))
+        self._dm_spam_detected_at = utils.parse_time(data.get("dm_spam_detected_at"))
+        self._raid_detected_at = utils.parse_time(data.get("raid_detected_at"))
+
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__} invites_disabled_until={self.invites_disabled_until!r} dms_disabled_until={self.dms_disabled_until!r} dm_spam_detected_at={self.dm_spam_detected_at!r} raid_detected_at={self.raid_detected_at!r}>"
+
+    @property
+    def invites_disabled_until(self) -> Optional[datetime.datetime]:
+        return self._invites_disabled_until
+
+    @property
+    def dms_disabled_until(self) -> Optional[datetime.datetime]:
+        return self._dms_disabled_until
+
+    @property
+    def dm_spam_detected_at(self) -> Optional[datetime.datetime]:
+        return self._dm_spam_detected_at
+
+    @property
+    def raid_detected_at(self) -> Optional[datetime.datetime]:
+        return self._raid_detected_at
 
 
 class _GuildLimit(NamedTuple):
@@ -259,6 +296,10 @@ class Guild(Hashable):
         The maximum amount of users in a stage channel when video is being broadcasted.
 
         .. versionadded:: 2.6
+
+    incidents: :class:`Incidents`
+        Currently applied security actions to guild.
+        .. versionadded:: 3.1
     """
 
     __slots__ = (
@@ -308,6 +349,7 @@ class Guild(Hashable):
         "_premium_progress_bar_enabled",
         "_safety_alerts_channel_id",
         "max_stage_video_channel_users",
+        "_incidents",
     )
 
     _PREMIUM_GUILD_LIMITS: ClassVar[Dict[Optional[int], _GuildLimit]] = {
@@ -537,6 +579,7 @@ class Guild(Hashable):
         self._safety_alerts_channel_id: Optional[int] = utils.get_as_snowflake(
             guild, "safety_alerts_channel_id"
         )
+        self._incidents: Incidents = Incidents(guild.get("incidents_data"))
 
     # TODO: refactor/remove?
     def _sync(self, data: GuildPayload) -> None:
@@ -1056,6 +1099,10 @@ class Guild(Hashable):
     def created_at(self) -> datetime.datetime:
         """:class:`datetime.datetime`: Returns the guild's creation time in UTC."""
         return utils.snowflake_time(self.id)
+
+    @property
+    def incidents(self) -> Incidents:
+        return self._incidents
 
     def get_member_named(self, name: str, /) -> Optional[Member]:
         """Returns the first member found that matches the name provided.
@@ -1680,7 +1727,7 @@ class Guild(Hashable):
 
         await self._state.http.delete_guild(self.id)
 
-    async def edit(
+    async def edit(  # noqa: PLR0912
         self,
         *,
         reason: Optional[str] = MISSING,
@@ -1706,6 +1753,8 @@ class Guild(Hashable):
         public_updates_channel: Optional[TextChannel] = MISSING,
         invites_disabled: bool = MISSING,
         premium_progress_bar_enabled: bool = MISSING,
+        invites_disabled_until: Optional[Union[datetime.datetime, datetime.timedelta]] = MISSING,
+        dms_disabled_until: Optional[Union[datetime.datetime, datetime.timedelta]] = MISSING,
     ) -> Guild:
         r"""|coro|
 
@@ -1732,6 +1781,10 @@ class Guild(Hashable):
 
         .. versionchanged:: 2.6
             The ``premium_progress_bar_enabled`` parameter has been added.
+
+        .. versionchanged:: 3.1
+            The ``invites_disabled_until`` parameter has been added.
+            The ``dms_disabled_until`` parameter has been added.
 
         Parameters
         ----------
@@ -1796,6 +1849,15 @@ class Guild(Hashable):
             This will prevent new users from joining said guild.
         premium_progress_bar_enabled: :class:`bool`
             Whether the premium guild boost progress bar is enabled.
+        invites_disabled_until: Optional[Union[:class:`~datetime.datetime`, :class:`~datetime.timedelta`]
+            The time until guild invites should be disabled.
+            Set this to None to enable invites.
+            Can be enabled for a maximal timespan of 24 hours in the future.
+        dms_disabled_until: Optional[Union[:class:`~datetime.datetime`, :class:`~datetime.timedelta`]
+            The time until guild direct messages between members should be disabled.
+            Friends can still DM each other, moderators can still DM members, and Applications can still DM members.
+            Set this to None to enable direct messages between members.
+            Can be enabled for a maximal timespan of 24 hours in the future.
         reason: Optional[:class:`str`]
             The reason for editing this guild. Shows up on the audit log.
 
@@ -1931,6 +1993,67 @@ class Guild(Hashable):
                 features.remove("INVITES_DISABLED")
 
             fields["features"] = features
+        incidents_data_payload: BaseIncidentsData = {}
+
+        if invites_disabled_until is MISSING:
+            pass
+        elif invites_disabled_until is None:
+            incidents_data_payload["invites_disabled_until"] = None
+        elif isinstance(invites_disabled_until, datetime.timedelta):
+            incidents_data_payload["invites_disabled_until"] = (
+                utils.utcnow() + invites_disabled_until
+            ).isoformat()
+        elif isinstance(invites_disabled_until, datetime.datetime):
+            incidents_data_payload["invites_disabled_until"] = invites_disabled_until.isoformat()
+        else:
+            raise TypeError(
+                "invites_disabled_until must be a `datetime.datetime` or `datetime.timedelta`"
+                f"not {invites_disabled_until.__class__.__name__}"
+            )
+
+        if dms_disabled_until is MISSING:
+            pass
+        elif dms_disabled_until is None:
+            incidents_data_payload["dms_disabled_until"] = None
+        elif isinstance(dms_disabled_until, datetime.timedelta):
+            incidents_data_payload["dms_disabled_until"] = (
+                utils.utcnow() + dms_disabled_until
+            ).isoformat()
+        elif isinstance(dms_disabled_until, datetime.datetime):
+            incidents_data_payload["dms_disabled_until"] = dms_disabled_until.isoformat()
+        else:
+            raise TypeError(
+                "dms_disabled_until must be a `datetime.datetime` or `datetime.timedelta`"
+                f"not {dms_disabled_until.__class__.__name__}"
+            )
+
+        if incidents_data_payload:
+            if cur_incidents := self._incidents:
+                now = utils.utcnow()
+
+                _inv_time = cur_incidents.invites_disabled_until
+                if (
+                    _inv_time
+                    and isinstance(_inv_time, datetime.datetime)
+                    and _inv_time > now
+                    and "invites_disabled_until" not in incidents_data_payload
+                ):
+                    incidents_data_payload["invites_disabled_until"] = _inv_time.isoformat()
+
+                _dms_time = cur_incidents.dms_disabled_until
+
+                if (
+                    _dms_time
+                    and isinstance(_dms_time, datetime.datetime)
+                    and _dms_time > now
+                    and "dms_disabled_until" not in incidents_data_payload
+                ):
+                    incidents_data_payload["dms_disabled_until"] = _dms_time.isoformat()
+
+            incidents_data: IncidentsData = await http.edit_incidents(
+                guild_id=self.id, data=incidents_data_payload
+            )
+            self._incidents = Incidents(incidents_data)
 
         data = await http.edit_guild(self.id, reason=reason, **fields)
         return Guild(data=data, state=self._state)
