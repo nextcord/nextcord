@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import time
 from collections import deque
-from typing import TYPE_CHECKING, Any, Callable, Deque, Dict, Optional, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, Deque, Dict, Optional, TypeVar, Union
 
 from nextcord.enums import IntEnum
 
@@ -179,14 +179,14 @@ class CooldownMapping:
     def __init__(
         self,
         original: Optional[Cooldown],
-        type: Callable[[Message], Any],
+        type: Union[Callable[[Message], Any], BucketType],
     ) -> None:
         if not callable(type):
             raise TypeError("Cooldown type must be a BucketType or callable")
 
         self._cache: Dict[Any, Cooldown] = {}
         self._cooldown: Optional[Cooldown] = original
-        self._type: Callable[[Message], Any] = type
+        self._type: Union[Callable[[Message], Any], BucketType] = type
 
     def copy(self) -> CooldownMapping:
         ret = CooldownMapping(self._cooldown, self._type)
@@ -198,7 +198,7 @@ class CooldownMapping:
         return self._cooldown is not None
 
     @property
-    def type(self) -> Callable[[Message], Any]:
+    def type(self) -> Union[Callable[[Message], Any], BucketType]:
         return self._type
 
     @classmethod
@@ -206,6 +206,9 @@ class CooldownMapping:
         return cls(Cooldown(rate, per), type)
 
     def _bucket_key(self, msg: Message) -> Any:
+        if isinstance(self._type, BucketType):
+            raise TypeError("Cannot call _bucket_key on a BucketType")
+
         return self._type(msg)
 
     def _verify_cache_integrity(self, current: Optional[float] = None) -> None:

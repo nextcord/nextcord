@@ -12,7 +12,7 @@ import time
 import traceback
 import zlib
 from collections import deque, namedtuple
-from typing import TYPE_CHECKING, Awaitable, Callable, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Awaitable, Callable, Dict, List, Optional, Union, cast
 
 import aiohttp
 
@@ -502,7 +502,8 @@ class DiscordWebSocket:
                 return
 
             if op == self.INVALIDATE_SESSION:
-                if data is True:
+                resumable = cast(bool, data)
+                if resumable is True:
                     await self.close()
                     raise ReconnectWebSocket(self.shard_id)
 

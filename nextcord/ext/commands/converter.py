@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import inspect
 import re
+from types import GenericAlias
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -970,7 +971,7 @@ class clean_content(Converter[str]):
                     f"@{m.display_name if self.use_nicknames else m.name}" if m else "@deleted-user"
                 )
 
-            def resolve_role(id: int) -> str:  # pyright: ignore[reportGeneralTypeIssues]
+            def resolve_role(id: int) -> str:  # pyright: ignore[reportRedeclaration]
                 r = _utils_get(msg.role_mentions, id=id) or ctx.guild.get_role(id)  # type: ignore
                 return f"@{r.name}" if r else "@deleted-role"
 
@@ -1061,12 +1062,13 @@ class Greedy(List[T]):
             raise TypeError("Greedy[...] expects a type or a Converter instance.")
 
         if converter in (str, type(None)) or origin is Greedy:
-            raise TypeError(f"Greedy[{converter.__class__.__name__}] is invalid.")
+            raise TypeError(f"Greedy[{type(converter).__name__}] is invalid.")
 
         if origin is Union and type(None) in args:
             raise TypeError(f"Greedy[{converter!r}] is invalid.")
 
-        return cls(converter=converter)
+        # The type variable T is completely lost by this point.
+        return cls(converter=converter)  # pyright: ignore
 
 
 def _convert_to_bool(argument: str) -> bool:
@@ -1088,11 +1090,8 @@ def get_converter(param: inspect.Parameter) -> Any:
     return converter
 
 
-_GenericAlias = type(List[T])
-
-
-def is_generic_type(tp: Any, *, _GenericAlias: Type = _GenericAlias) -> bool:
-    return isinstance(tp, type) and issubclass(tp, Generic) or isinstance(tp, _GenericAlias)
+def is_generic_type(tp: Any) -> bool:
+    return isinstance(tp, type) and issubclass(tp, Generic) or isinstance(tp, GenericAlias)
 
 
 CONVERTER_MAPPING: Dict[Type[Any], Any] = {
@@ -1119,7 +1118,7 @@ CONVERTER_MAPPING: Dict[Type[Any], Any] = {
 }
 
 
-async def _actual_conversion(ctx: Context, converter, argument: str, param: inspect.Parameter):
+async def _actual_conversion(ctx: Context, converter: Any, argument: str, param: inspect.Parameter):
     if converter is bool:
         return _convert_to_bool(argument)
 
@@ -1140,14 +1139,16 @@ async def _actual_conversion(ctx: Context, converter, argument: str, param: insp
             return await converter().convert(ctx, argument)
 
         if isinstance(converter, Converter):
-            return await converter.convert(ctx, argument)  # type: ignore
+            return await converter.convert(ctx, argument)
     except CommandError:
         raise
     except Exception as exc:
         raise ConversionError(converter, exc) from exc  # type: ignore
 
     try:
-        return converter(argument)
+        # pyright believes this to be Any | type[object], which is fine anyway
+        # but claims 0 positional arguments
+        return converter(argument)  # pyright: ignore
     except CommandError:
         raise
     except Exception as exc:

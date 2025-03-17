@@ -149,9 +149,9 @@ class User(Snowflake, Protocol):
     __slots__ = ()
 
     name: str
-    global_name: str
+    global_name: Optional[str]
     discriminator: str
-    avatar: Asset
+    avatar: Optional[Asset]
     bot: bool
 
     @property

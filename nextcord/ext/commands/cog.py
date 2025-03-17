@@ -95,7 +95,7 @@ class CogMeta(type):
     __cog_commands__: List[Command]
     __cog_listeners__: List[Tuple[str, str]]
 
-    def __new__(cls, *args: Any, **kwargs: Any) -> Self:
+    def __new__(cls, *args: Any, **kwargs: Any) -> CogMeta:
         name, bases, attrs = args
         attrs["__cog_name__"] = kwargs.pop("name", name)
         attrs["__cog_settings__"] = kwargs.pop("command_attrs", {})
