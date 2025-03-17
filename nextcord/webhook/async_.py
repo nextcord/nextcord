@@ -39,10 +39,10 @@ from ..mixins import Hashable
 from ..user import BaseUser, User
 
 __all__ = (
-    "Webhook",
-    "WebhookMessage",
     "PartialWebhookChannel",
     "PartialWebhookGuild",
+    "Webhook",
+    "WebhookMessage",
 )
 
 _log = logging.getLogger(__name__)
@@ -644,7 +644,7 @@ class PartialWebhookGuild(Hashable):
         The partial guild's name.
     """
 
-    __slots__ = ("id", "name", "_icon", "_state")
+    __slots__ = ("_icon", "_state", "id", "name")
 
     def __init__(self, *, data, state) -> None:
         self._state = state
@@ -860,18 +860,18 @@ class WebhookMessage(Message):
 
 class BaseWebhook(Hashable):
     __slots__: Tuple[str, ...] = (
-        "id",
-        "type",
-        "guild_id",
-        "channel_id",
-        "token",
-        "auth_token",
-        "user",
-        "name",
         "_avatar",
+        "_state",
+        "auth_token",
+        "channel_id",
+        "guild_id",
+        "id",
+        "name",
         "source_channel",
         "source_guild",
-        "_state",
+        "token",
+        "type",
+        "user",
     )
 
     def __init__(

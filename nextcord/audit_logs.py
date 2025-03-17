@@ -28,8 +28,8 @@ from .object import Object
 from .permissions import PermissionOverwrite, Permissions
 
 __all__ = (
-    "AuditLogDiff",
     "AuditLogChanges",
+    "AuditLogDiff",
     "AuditLogEntry",
 )
 
@@ -174,7 +174,7 @@ def _transform_type(entry: AuditLogEntry, data: int) -> Union[enums.ChannelType,
 
 
 def _list_transformer(
-    func: Callable[[AuditLogEntry, Any], T]
+    func: Callable[[AuditLogEntry, Any], T],
 ) -> Callable[[AuditLogEntry, Any], List[T]]:
     def _transform(entry: AuditLogEntry, data: Any) -> List[T]:
         if not data:

@@ -13,8 +13,8 @@ from .permissions import Permissions
 from .utils import MISSING, get_as_snowflake, obj_to_base64_data, snowflake_time
 
 __all__ = (
-    "RoleTags",
     "Role",
+    "RoleTags",
 )
 
 if TYPE_CHECKING:
@@ -55,12 +55,12 @@ class RoleTags:
     """
 
     __slots__ = (
-        "bot_id",
-        "integration_id",
-        "_premium_subscriber",
-        "subscription_listing_id",
         "_available_for_purchase",
         "_guild_connections",
+        "_premium_subscriber",
+        "bot_id",
+        "integration_id",
+        "subscription_listing_id",
     )
 
     def __init__(self, data: RoleTagPayload) -> None:
@@ -182,19 +182,19 @@ class Role(Hashable):
     """
 
     __slots__ = (
-        "id",
-        "name",
-        "_permissions",
         "_colour",
-        "position",
+        "_flags",
+        "_icon",
+        "_permissions",
+        "_state",
+        "guild",
+        "hoist",
+        "id",
         "managed",
         "mentionable",
-        "hoist",
-        "guild",
+        "name",
+        "position",
         "tags",
-        "_icon",
-        "_state",
-        "_flags",
     )
 
     def __init__(self, *, guild: Guild, state: ConnectionState, data: RolePayload) -> None:
