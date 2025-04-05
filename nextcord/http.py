@@ -3152,6 +3152,8 @@ class HTTPClient:
             retry_request=retry_request,
         )
 
+    # Guild Emojis
+
     def get_all_custom_emojis(
         self,
         guild_id: Snowflake,
@@ -3238,6 +3240,101 @@ class HTTPClient:
             r,
             json=payload,
             reason=reason,
+            auth=auth,
+            retry_request=retry_request,
+        )
+
+    # Application Emojis
+
+    def list_application_emojis(
+        self,
+        application_id: Snowflake,
+        *,
+        auth: Optional[str] = MISSING,
+        retry_request: bool = True,
+    ) -> Response[emoji.ListApplicationEmojis]:
+        return self.request(
+            Route("GET", "/applications/{application_id}/emojis", application_id=application_id),
+            auth=auth,
+            retry_request=retry_request,
+        )
+
+    def get_application_emoji(
+        self,
+        application_id: Snowflake,
+        emoji_id: Snowflake,
+        *,
+        auth: Optional[str] = MISSING,
+        retry_request: bool = True,
+    ) -> Response[emoji.Emoji]:
+        return self.request(
+            Route(
+                "GET",
+                "/applications/{application_id}/emojis/{emoji_id}",
+                application_id=application_id,
+                emoji_id=emoji_id,
+            ),
+            auth=auth,
+            retry_request=retry_request,
+        )
+
+    def create_application_emoji(
+        self,
+        application_id: Snowflake,
+        name: str,
+        image: str | None = None,
+        *,
+        auth: Optional[str] = MISSING,
+        retry_request: bool = True,
+    ) -> Response[emoji.Emoji]:
+        payload = {
+            "name": name,
+            "image": image,
+        }
+
+        return self.request(
+            Route("POST", "/applications/{application_id}/emojis", application_id=application_id),
+            json=payload,
+            auth=auth,
+            retry_request=retry_request,
+        )
+
+    def edit_application_emoji(
+        self,
+        application_id: Snowflake,
+        emoji_id: Snowflake,
+        *,
+        payload: dict[str, Any],
+        auth: Optional[str] = MISSING,
+        retry_request: bool = True,
+    ) -> Response[emoji.Emoji]:
+        return self.request(
+            Route(
+                "PATCH",
+                "/applications/{application_id}/emojis/{emoji_id}",
+                application_id=application_id,
+                emoji_id=emoji_id,
+            ),
+            json=payload,
+            auth=auth,
+            retry_request=retry_request,
+        )
+
+    def delete_application_emoji(
+        self,
+        application_id: Snowflake,
+        emoji_id: Snowflake,
+        *,
+        auth: Optional[str] = MISSING,
+        retry_request: bool = True,
+    ) -> Response[None]:
+        return self.request(
+            Route(
+                "DELETE",
+                "/applications/{application_id}/emojis/{emoji_id}",
+                application_id=application_id,
+                emoji_id=emoji_id,
+            ),
             auth=auth,
             retry_request=retry_request,
         )
