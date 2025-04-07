@@ -1448,7 +1448,7 @@ class Client:
 
         for guild in self._connection.guilds:
             me = guild.me
-            if me is None:  # pyright: ignore[reportUnnecessaryComparison]
+            if me is None:
                 continue
 
             if activity is not None:

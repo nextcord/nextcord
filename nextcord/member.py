@@ -366,10 +366,9 @@ class Member(abc.Messageable, _UserTag):
     def _update(self, data: MemberPayload) -> None:
         # the nickname change is optional,
         # if it isn't in the payload then it didn't change
-        with contextlib.suppress(KeyError):
+        if "nick" in data:
             self.nick = data["nick"]
-
-        with contextlib.suppress(KeyError):
+        if "pending" in data:
             self.pending = data["pending"]
 
         self.premium_since = utils.parse_time(data.get("premium_since"))

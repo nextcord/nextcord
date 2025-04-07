@@ -373,13 +373,9 @@ class Invite(Hashable):
 
     @classmethod
     def from_incomplete(cls, *, state: ConnectionState, data: InvitePayload) -> Self:
-        guild: Optional[Union[Guild, PartialInviteGuild]]
-        try:
-            guild_data = data["guild"]
-        except KeyError:
-            # If we're here, then this is a group DM
-            guild = None
-        else:
+        # If guild is None, this is a Group DM
+        guild: Optional[Union[Guild, PartialInviteGuild]] = None
+        if guild_data := data.get("guild"):
             guild_id = int(guild_data["id"])
             guild = state._get_guild(guild_id)
             if guild is None:

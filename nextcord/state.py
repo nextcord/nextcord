@@ -512,17 +512,16 @@ class ConnectionState:
         self, data: MessagePayload
     ) -> Tuple[Union[Channel, Thread], Optional[Guild]]:
         channel_id = int(data["channel_id"])
-        try:
-            guild = self._get_guild(int(data["guild_id"]))
-        except KeyError:
+        if guild_id := data.get("guild_id"):
+            guild = self._get_guild(int(guild_id))
+            channel = guild and guild._resolve_channel(channel_id)
+        else:
             channel = self.get_channel(channel_id)
 
             if channel is None:
                 channel = DMChannel._from_message(self, channel_id)
 
             guild = getattr(channel, "guild", None)
-        else:
-            channel = guild and guild._resolve_channel(channel_id)
 
         return channel or PartialMessageable(state=self, id=channel_id), guild
 
@@ -2162,7 +2161,7 @@ class ConnectionState:
         self.dispatch("raw_typing", raw)
 
         channel, guild = self._get_guild_channel(data)
-        if channel is not None:  # pyright: ignore[reportUnnecessaryComparison]
+        if channel is not None:
             user = raw.member or self._get_typing_user(channel, raw.user_id)  # type: ignore
             # will be messageable channel if we get here
 
@@ -2448,9 +2447,7 @@ class AutoShardedConnectionState(ConnectionState):
         for shard_id, info in itertools.groupby(guilds, key=key):
             children: Tuple[Guild]
             futures: Tuple[Future]
-            # zip with `*` should, and will, return 2 tuples since every element is 2 length
-            # but pyright believes otherwise.
-            children, futures = zip(*info, strict=False)  # type: ignore
+            children, futures = zip(*info, strict=False)
             # 110 reqs/minute w/ 1 req/guild plus some buffer
             timeout = 61 * (len(children) / 110)
             try:
