@@ -296,9 +296,7 @@ class VoiceClient(VoiceProtocol):
             return
 
         self.endpoint, _, _ = endpoint.rpartition(":")
-        if self.endpoint.startswith("wss://"):
-            # Just in case, strip it off since we're going to add it later
-            self.endpoint = self.endpoint[6:]
+        self.endpoint = self.endpoint.removeprefix("wss://")
 
         # This gets set later
         self.endpoint_ip = MISSING
