@@ -897,9 +897,6 @@ class InteractionResponse:
         if embed is not MISSING:
             embeds = [embed]
 
-        if embeds:
-            payload["embeds"] = [e.to_dict() for e in embeds]
-
         if file is not MISSING and files is not MISSING:
             raise InvalidArgument("Cannot mix file and files keyword arguments")
 
@@ -908,6 +905,14 @@ class InteractionResponse:
 
         if files and not all(isinstance(f, File) for f in files):
             raise TypeError("Files parameter must be a list of type File")
+
+        if not files:
+            files = []
+
+        if embeds:
+            for embed in embeds:
+                files.extend(set(embed._local_files.values()))
+            payload["embeds"] = [e.to_dict() for e in embeds]
 
         if content is not None:
             payload["content"] = str(content)
@@ -1080,9 +1085,6 @@ class InteractionResponse:
         if embed is not MISSING:
             embeds = [] if embed is None else [embed]
 
-        if embeds is not MISSING:
-            payload["embeds"] = [e.to_dict() for e in embeds]
-
         if file is not MISSING and files is not MISSING:
             raise InvalidArgument("Cannot mix file and files keyword arguments")
 
@@ -1091,6 +1093,12 @@ class InteractionResponse:
 
         if files and not all(isinstance(f, File) for f in files):
             raise TypeError("Files parameter must be a list of type File")
+
+        if embeds is not MISSING:
+            files = files or []
+            for em in embeds:
+                files.extend(set(em._local_files.values()))
+            payload["embeds"] = [e.to_dict() for e in embeds]
 
         if attachments is not MISSING:
             payload["attachments"] = [a.to_dict() for a in attachments]
