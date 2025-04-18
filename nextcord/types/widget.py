@@ -1,12 +1,14 @@
 # SPDX-License-Identifier: MIT
 
-from typing import List, Optional, TypedDict
+from typing import List, Literal, Optional, TypedDict
 
 from typing_extensions import NotRequired
 
 from .activity import Activity
 from .snowflake import Snowflake
 from .user import User
+
+WidgetImageStyle = Literal["shield", "banner1", "banner2", "banner3", "banner4"]
 
 
 class WidgetChannel(TypedDict):
