@@ -152,7 +152,7 @@ class BaseUser(_UserTag):
         ..versionchanged:: 2.6
             Added handling for the new username system for users without a discriminator.
         """
-        if self.discriminator != "0":
+        if self.discriminator == "0":
             avatar_index = (self.id >> 22) % len(DefaultAvatar)
         else:
             avatar_index = int(self.discriminator) % 5
@@ -484,7 +484,7 @@ class User(BaseUser, abc.Messageable):
             pass
 
     @classmethod
-    def _copy(cls, user: User):
+    def _copy(cls, user: Self) -> Self:
         self = super()._copy(user)
         self._stored = False
         return self

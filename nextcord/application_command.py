@@ -19,6 +19,7 @@ from typing import (
     List,
     Literal,
     Optional,
+    Self,
     Set,
     Tuple,
     Type,
@@ -120,6 +121,7 @@ DEFAULT_SLASH_DESCRIPTION = "No description provided."
 
 T = TypeVar("T")
 FuncT = TypeVar("FuncT", bound=Callable[..., Any])
+CmdT = TypeVar("CmdT", bound="Union[BaseApplicationCommand, SlashApplicationCommand]")
 # As nextcord.types exist, we cannot import types
 if TYPE_CHECKING:
     EllipsisType = ellipsis  # noqa: F821
@@ -170,6 +172,14 @@ class CallbackWrapper:
         async def test(interaction):
             await interaction.send("The description of this command should be in all uppercase!")
     """
+
+    @overload
+    def __new__(
+        cls, callback: Union[Callable, CallbackWrapper], *args: Any, **kwargs: Any
+    ) -> Self: ...
+
+    @overload
+    def __new__(cls, callback: CmdT, *args: Any, **kwargs: Any) -> CmdT: ...
 
     def __new__(
         cls,
@@ -1968,6 +1978,14 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         :exc:`.ApplicationError` should be used. Note that if the checks fail then
         :exc:`.ApplicationCheckFailure` exception is raised to the :func:`.on_application_command_error`
         event.
+    integration_types: Optional[Iterable[Union[:class:`IntegrationType`, :class:`int`]]]
+        Where the command is available, only for globally-scoped commands.
+
+        .. versionadded:: 3.0
+    contexts: Optional[Iterable[Union[:class:`InteractionContextType`, :class:`int`]]]
+        Where the command can be used, only for globally-scoped commands.
+
+        .. versionadded:: 3.0
     """
 
     def __init__(

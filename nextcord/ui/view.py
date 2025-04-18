@@ -500,7 +500,10 @@ class ViewStore:
         self._state: ConnectionState = state
 
     def all_views(self) -> List[View]:
-        return [v for (v, _) in self._views.values()]
+        # Create a unique list of views, as _views stores the same view multiple times,
+        # one for each dispatchable item.
+        views = {view.id: view for view, _ in self._views.values()}
+        return list(views.values())
 
     def views(self, persistent: bool = True) -> List[View]:
         views = self.all_views()

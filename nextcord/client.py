@@ -11,6 +11,7 @@ import traceback
 from typing import (
     TYPE_CHECKING,
     Any,
+    AsyncIterator,
     Callable,
     Coroutine,
     Dict,
@@ -57,7 +58,7 @@ from .guild_preview import GuildPreview
 from .http import HTTPClient
 from .interactions import Interaction
 from .invite import Invite
-from .iterators import GuildIterator
+from .iterators import guild_iterator
 from .mentions import AllowedMentions
 from .object import Object
 from .stage_instance import StageInstance
@@ -1447,7 +1448,7 @@ class Client:
 
         for guild in self._connection.guilds:
             me = guild.me
-            if me is None:  # pyright: ignore[reportUnnecessaryComparison]
+            if me is None:
                 continue
 
             if activity is not None:
@@ -1466,8 +1467,10 @@ class Client:
         with_counts: bool = False,
         before: Optional[SnowflakeTime] = None,
         after: Optional[SnowflakeTime] = None,
-    ) -> GuildIterator:
-        """Retrieves an :class:`.AsyncIterator` that enables receiving your guilds.
+    ) -> AsyncIterator[Guild]:
+        """|asynciter|
+
+        Returns an async iterator that enables receiving your guilds.
 
         .. note::
 
@@ -1485,11 +1488,6 @@ class Client:
 
             async for guild in client.fetch_guilds(limit=150):
                 print(guild.name)
-
-        Flattening into a list ::
-
-            guilds = await client.fetch_guilds(limit=150).flatten()
-            # guilds is now a list of Guild...
 
         All parameters are optional.
 
@@ -1527,7 +1525,9 @@ class Client:
         :class:`.Guild`
             The guild with the guild data parsed.
         """
-        return GuildIterator(self, limit=limit, before=before, after=after, with_counts=with_counts)
+        return guild_iterator(
+            self, limit=limit, before=before, after=after, with_counts=with_counts
+        )
 
     async def fetch_template(self, code: Union[Template, str]) -> Template:
         """|coro|
@@ -3067,3 +3067,92 @@ class Client:
 
         self._application_command_after_invoke = coro
         return coro
+
+    async def create_application_emoji(
+        self,
+        *,
+        name: str,
+        image: bytes | Asset | Attachment | File,
+    ) -> Emoji:
+        """|coro|
+
+        Creates an emoji for the current application.
+
+        Parameters
+        ----------
+        name: :class:`str`
+            The name of the emoji.
+        image: Union[:class:`bytes`, :class:`~nextcord.Asset`, :class:`~nextcord.Attachment`, :class:`~nextcord.File`]
+            The image data to create the emoji with.
+
+        Returns
+        -------
+        :class:`~nextcord.Emoji`
+            The created emoji.
+
+        Raises
+        ------
+        HTTPException
+            An error occurred creating the emoji.
+        TypeError
+            The client's application ID was not set.
+        """
+        if self.application_id is None:
+            raise TypeError("Could not get the current application's id")
+
+        img_base64 = await utils.obj_to_base64_data(image)
+        data = await self.http.create_application_emoji(
+            self.application_id, name=name, image=img_base64
+        )
+        return Emoji(state=self._connection, data=data, application_id=self.application_id)
+
+    async def fetch_application_emojis(self) -> list[Emoji]:
+        """|coro|
+
+        Fetches the emojis that the current application has.
+
+        Raises
+        ------
+        TypeError
+            The client's application ID was not set.
+
+        Returns
+        -------
+        List[:class:`~nextcord.Emoji`]
+            The emojis that the application has.
+        """
+        if self.application_id is None:
+            raise TypeError("Could not get the current application's id")
+        data = await self.http.list_application_emojis(self.application_id)
+        return [
+            Emoji(state=self._connection, data=emoji, application_id=self.application_id)
+            for emoji in data.get("items", [])
+        ]
+
+    async def fetch_application_emoji(self, emoji_id: int) -> Emoji:
+        """|coro|
+
+        Fetches an emoji that the current application has.
+
+        Parameters
+        ----------
+        emoji_id: :class:`int`
+            The ID of the emoji to fetch.
+
+        Raises
+        ------
+        TypeError
+            The client's application ID was not set.
+        NotFound
+            The emoji requested was not found.
+
+        Returns
+        -------
+        :class:`~nextcord.Emoji`
+            The emoji that the application has.
+        """
+        if self.application_id is None:
+            raise TypeError("Could not get the current application's id")
+
+        data = await self.http.get_application_emoji(self.application_id, emoji_id)
+        return Emoji(state=self._connection, data=data, application_id=self.application_id)

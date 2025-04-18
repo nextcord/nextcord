@@ -23,6 +23,11 @@ class Ban(TypedDict):
     user: User
 
 
+class BulkBan(TypedDict):
+    banned_users: List[Snowflake]
+    failed_users: List[Snowflake]
+
+
 class UnavailableGuild(TypedDict):
     id: Snowflake
     unavailable: NotRequired[bool]

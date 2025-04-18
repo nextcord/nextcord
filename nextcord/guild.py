@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import contextlib
 import copy
 import unicodedata
 import warnings
@@ -10,6 +9,7 @@ from asyncio import Future
 from typing import (
     TYPE_CHECKING,
     Any,
+    AsyncIterator,
     Callable,
     ClassVar,
     Dict,
@@ -26,7 +26,7 @@ from typing import (
 from . import abc, utils
 from .asset import Asset
 from .auto_moderation import AutoModerationRule, AutoModerationTriggerMetadata
-from .bans import BanEntry
+from .bans import BanEntry, BulkBan
 from .channel import (
     CategoryChannel,
     ForumChannel,
@@ -59,9 +59,10 @@ from .flags import SystemChannelFlags
 from .guild_onboarding import Onboarding, OnboardingPrompt
 from .integrations import Integration, _integration_factory
 from .invite import Invite
-from .iterators import AuditLogIterator, BanIterator, MemberIterator, ScheduledEventIterator
+from .iterators import audit_log_iterator, ban_iterator, member_iterator, scheduled_event_iterator
 from .member import Member, VoiceState
 from .mixins import Hashable
+from .object import Object
 from .partial_emoji import PartialEmoji
 from .permissions import PermissionOverwrite
 from .role import Role
@@ -82,6 +83,7 @@ if TYPE_CHECKING:
 
     from .abc import Snowflake, SnowflakeTime
     from .application_command import BaseApplicationCommand
+    from .audit_logs import AuditLogEntry
     from .auto_moderation import AutoModerationAction
     from .channel import ForumTag
     from .enums import ForumLayoutType, SortOrderType
@@ -415,11 +417,8 @@ class Guild(Hashable):
             self._voice_states[user_id] = after
 
         member = self.get_member(user_id)
-        if member is None:
-            try:
-                member = Member(data=data["member"], state=self._state, guild=self)
-            except KeyError:
-                member = None
+        if member is None and (member_data := data.get("member")):
+            member = Member(data=member_data, guild=self, state=self._state)
 
         return member, before, after
 
@@ -539,8 +538,8 @@ class Guild(Hashable):
 
     # TODO: refactor/remove?
     def _sync(self, data: GuildPayload) -> None:
-        with contextlib.suppress(KeyError):
-            self._large = data["large"]
+        if large := data.get("large") is not None:
+            self._large = large
 
         empty_tuple = ()
         for presence in data.get("presences", []):
@@ -2000,8 +1999,10 @@ class Guild(Hashable):
     # TODO: Remove Optional typing here when async iterators are refactored
     def fetch_members(
         self, *, limit: Optional[int] = 1000, after: Optional[SnowflakeTime] = None
-    ) -> MemberIterator:
-        """Retrieves an :class:`.AsyncIterator` that enables receiving the guild's members. In order to use this,
+    ) -> AsyncIterator[Member]:
+        """|asynciter|
+
+        Returns an async iterator that enables receiving the guild's members. In order to use this,
         :meth:`Intents.members` must be enabled.
 
         .. note::
@@ -2041,17 +2042,12 @@ class Guild(Hashable):
 
             async for member in guild.fetch_members(limit=150):
                 print(member.name)
-
-        Flattening into a list ::
-
-            members = await guild.fetch_members(limit=150).flatten()
-            # members is now a list of Member...
         """
 
         if not self._state._intents.members:
             raise ClientException("Intents.members must be enabled to use this.")
 
-        return MemberIterator(self, limit=limit, after=after)
+        return member_iterator(self, limit=limit, after=after)
 
     async def fetch_member(self, member_id: int, /) -> Member:
         """|coro|
@@ -2244,8 +2240,10 @@ class Guild(Hashable):
         limit: Optional[int] = 1000,
         before: Optional[Snowflake] = None,
         after: Optional[Snowflake] = None,
-    ) -> BanIterator:
-        """Returns an :class:`~nextcord.AsyncIterator` that enables receiving the destination's bans.
+    ) -> AsyncIterator[BanEntry]:
+        """|asynciter|
+
+        Returns an async iterator that enables receiving the destination's bans.
 
         You must have the :attr:`~Permissions.ban_members` permission to get this information.
 
@@ -2261,11 +2259,6 @@ class Guild(Hashable):
             async for ban in guild.bans(limit=200):
                 if not ban.user.bot:
                     counter += 1
-
-        Flattening into a list: ::
-
-            bans = await guild.bans(limit=123).flatten()
-            # bans is now a list of BanEntry...
 
         All parameters are optional.
 
@@ -2294,7 +2287,7 @@ class Guild(Hashable):
             The ban with the ban data parsed.
         """
 
-        return BanIterator(self, limit=limit, before=before, after=after)
+        return ban_iterator(self, limit=limit, before=before, after=after)
 
     async def prune_members(
         self,
@@ -2884,6 +2877,33 @@ class Guild(Hashable):
 
         return roles
 
+    async def fetch_role(self, role_id: int, /) -> Role:
+        """|coro|
+
+        Retrieve a :class:`Role` from this guild by its ID.
+
+        .. versionadded:: 3.0
+
+        Parameters
+        ----------
+        role_id: int
+            The ID of the role to fetch.
+
+        Raises
+        ------
+        HTTPException
+            Retrieving the role failed.
+        NotFound
+            The role was not found.
+
+        Returns
+        -------
+        :class:`Role`
+            The role in the guild.
+        """
+        data = await self._state.http.get_role(self.id, role_id)
+        return Role(guild=self, state=self._state, data=data)
+
     @overload
     async def create_role(
         self,
@@ -3137,6 +3157,67 @@ class Guild(Hashable):
 
         await self._state.http.ban(user.id, self.id, delete_message_seconds, reason=reason)
 
+    async def bulk_ban(
+        self,
+        users: List[Snowflake],
+        *,
+        delete_message_seconds: Optional[int] = None,
+        reason: Optional[str] = None,
+    ) -> BulkBan:
+        """|coro|
+
+        Bans a list of users. This is similar to :meth:`Guild.ban` except it bulk bans multiple users.
+
+        You must have the :attr:`~Permissions.ban_members` and :attr:`~Permissions.manage_guild` permissions to
+        do this.
+
+        .. versionadded:: 3.0
+
+        Parameters
+        ----------
+        users: List[:class:`abc.Snowflake`]
+            The users to ban from a guild.
+        delete_message_seconds: Optional[:class:`int`]
+            The number of seconds worth of messages to delete from these users.
+            Can range from 0 to 604800 seconds (7 days).
+
+            Defaults to 0.
+        reason: Optional[:class:`str`]
+            The reason these users got banned.
+
+        Raises
+        ------
+        Forbidden
+            You do not have the proper permissions to bulk ban.
+        HTTPException
+            Bulk banning failed.
+
+            This may occur if all provided users failed to be banned due to the following reasons:
+
+            - The users are already banned
+            - You do not have the proper permissions to ban a user
+
+        Returns
+        -------
+        :class:`BulkBan`
+            The failed and banned users in the form of :class:`Object`.
+        """
+
+        if delete_message_seconds is None:
+            delete_message_seconds = 0
+
+        data = await self._state.http.bulk_ban(
+            user_ids=[u.id for u in users],
+            guild_id=self.id,
+            delete_message_seconds=delete_message_seconds,
+            reason=reason,
+        )
+
+        banned_users = [Object(id=u) for u in data["banned_users"]]
+        failed_users = [Object(id=u) for u in data["failed_users"]]
+
+        return BulkBan(banned_users, failed_users)
+
     async def unban(self, user: Snowflake, *, reason: Optional[str] = None) -> None:
         """|coro|
 
@@ -3214,8 +3295,10 @@ class Guild(Hashable):
         oldest_first: Optional[bool] = None,
         user: Optional[Snowflake] = None,
         action: Optional[AuditLogAction] = None,
-    ) -> AuditLogIterator:
-        """Returns an :class:`AsyncIterator` that enables receiving the guild's audit logs.
+    ) -> AsyncIterator[AuditLogEntry]:
+        """|asynciter|
+
+        Returns an async iterator that enables receiving the guild's audit logs.
 
         You must have the :attr:`~Permissions.view_audit_log` permission to use this.
 
@@ -3234,7 +3317,7 @@ class Guild(Hashable):
 
         Getting entries made by a specific user: ::
 
-            entries = await guild.audit_logs(limit=None, user=guild.me).flatten()
+            entries = [entry async for entry in guild.audit_logs(limit=None, user=guild.me)]
             await channel.send(f'I made {len(entries)} moderation actions.')
 
         Parameters
@@ -3271,7 +3354,7 @@ class Guild(Hashable):
         """
         user_id = user.id if user is not None else None
 
-        return AuditLogIterator(
+        return audit_log_iterator(
             self,
             before=before,
             after=after,
@@ -3479,9 +3562,11 @@ class Guild(Hashable):
         channel_id = channel.id if channel else None
         await ws.voice_state(self.id, channel_id, self_mute, self_deaf)
 
-    def fetch_scheduled_events(self, *, with_users: bool = False) -> ScheduledEventIterator:
-        """Retrieves an :class:`.AsyncIterator` that enables receiving scheduled
-        events on this guild
+    def fetch_scheduled_events(self, *, with_users: bool = False) -> AsyncIterator[ScheduledEvent]:
+        """|asynciter|
+
+        Returns an async iterator that enables receiving scheduled
+        events on this guild.
 
         .. note::
 
@@ -3514,13 +3599,8 @@ class Guild(Hashable):
 
             async for event in guild.fetch_scheduled_events():
                 print(event.name)
-
-        Flattening into a list ::
-
-            events = await guild.fetch_scheduled_events().flatten()
-            # events is now a list of ScheduledEvent...
         """
-        return ScheduledEventIterator(self, with_users=with_users)
+        return scheduled_event_iterator(self, with_users=with_users)
 
     def get_scheduled_event(self, event_id: int) -> Optional[ScheduledEvent]:
         """Get a scheduled event from cache by id.
