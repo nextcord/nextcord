@@ -286,7 +286,7 @@ class MessageType(IntEnum):
     role_subscription_purchase = 25
     """The system message denoting that a role subscription was purchased.
 
-    .. versionadded:: 3.0
+    .. versionadded:: 3.2
     """
     stage_start = 27
     """The system message denoting that a stage channel has started.

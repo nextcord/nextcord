@@ -222,7 +222,7 @@ class SystemChannelFlags(BaseFlags):
     def role_subscription_purchase_notifications(self) -> int:
         """:class:`bool`: Returns ``True`` if the system channel is used for role subscription purchase notifications.
 
-        .. versionadded:: 2.6
+        .. versionadded:: 3.2
         """
         return 16
 
@@ -230,7 +230,7 @@ class SystemChannelFlags(BaseFlags):
     def role_subscription_purchase_notification_replies(self) -> int:
         """:class:`bool`: Returns ``True`` if the button to reply with a sticker to role subscription purchase notifications is shown.
 
-        .. versionadded:: 2.6
+        .. versionadded:: 3.2
         """
         return 32
 

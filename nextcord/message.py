@@ -758,7 +758,7 @@ class MessageRoleSubscription:
 
     This is accessed through the :attr:`Message.role_subscription` attribute if the :attr:`Message.type` is :attr:`MessageType.role_subscription_purchase`.
 
-    .. versionadded:: 3.0
+    .. versionadded:: 3.2
 
     Attributes
     ----------
@@ -1042,7 +1042,7 @@ class Message(Hashable):
     role_subscription: Optional[:class:`MessageRoleSubscription`]
         The role subscription data of a message, if applicable.
 
-        .. versionadded:: 2.6
+        .. versionadded:: 3.2
     """
 
     __slots__ = (
