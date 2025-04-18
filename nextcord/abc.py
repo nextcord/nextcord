@@ -38,6 +38,7 @@ from .sticker import GuildSticker, StickerItem
 from .types.components import Component as ComponentPayload
 from .utils import MISSING, get, snowflake_time
 from .voice_client import VoiceClient, VoiceProtocol
+from .voice_recording import RecorderClient
 
 __all__ = (
     "Snowflake",
@@ -85,6 +86,7 @@ if TYPE_CHECKING:
     )
     from .ui.view import View
     from .user import ClientUser
+    from .voice_recording import RecordingFilter, TmpType
 
     PartialMessageableChannel = Union[
         TextChannel, Thread, DMChannel, PartialMessageable, VoiceChannel, StageChannel
@@ -1747,6 +1749,12 @@ class Connectable(Protocol):
         timeout: float = 60.0,
         reconnect: bool = True,
         cls: Callable[[Client, Connectable], T] = VoiceClient,
+        recordable: bool = False,
+        auto_deaf: bool = True,
+        tmp_type: TmpType = MISSING,
+        filters: Optional[RecordingFilter] = MISSING,
+        periodic_write_seconds: Optional[int] = 5,
+        prevent_leakage: bool = False,
     ) -> T:
         """|coro|
 
@@ -1767,6 +1775,34 @@ class Connectable(Protocol):
             A type that subclasses :class:`~nextcord.VoiceProtocol` to connect with.
             Defaults to :class:`~nextcord.VoiceClient`.
 
+            .. versionadded:: 3.0
+        recordable: :class:`bool` = False
+            Whether or not should use the VoiceRecorder client instead of VoiceClient
+            This allows for receiving audio data from voice connection on top of being
+            able to play audio. Will override cls if True.
+        auto_deaf: :class:`bool` = True
+            Effective only with `recordable=True`.
+            Whether to automatically deafen when not receiving audio.
+        tmp_type: :class:`TmpType` = TmpType.File
+            Effective only with `recordable=True`.
+            The type of temporary storage to contain recorded data.
+        filters: Optional[:class:`RecordingFilter`] = None
+            Effective only with `recordable=True`.
+            The filter used to filter out certain users from a recording.
+        periodic_write_seconds: Optional[:class:`int`] = 5
+            Effective only with `recordable=True`.
+            The delay between periodic silence writes.
+            Setting this to None turns off periodic writes and may result
+            in huge silence writes all at once causing the recording to
+            be obstructed by the blocking write call.
+        prevent_leakage: Optional[:class:`bool`] = False
+            Attempts to prevent leekage of audio from the end of the previous recording
+            when starting a 2nd recording without reconnecting.
+            This oversight is due to discord sending more data after we stop
+            receiving from the socket.
+            Keep in mind this feature is unstable, and may cause the recording to start
+            late, but should only be up to a second late.
+
         Raises
         ------
         asyncio.TimeoutError
@@ -1781,7 +1817,6 @@ class Connectable(Protocol):
         :class:`~nextcord.VoiceProtocol`
             A voice client that is fully connected to the voice server.
         """
-
         key_id, _ = self._get_voice_client_key()
         state = self._state
 
@@ -1789,7 +1824,12 @@ class Connectable(Protocol):
             raise ClientException("Already connected to a voice channel.")
 
         client = state._get_client()
-        voice = cls(client, self)
+        if recordable:
+            voice = RecorderClient(
+                client, self, auto_deaf, tmp_type, filters, periodic_write_seconds, prevent_leakage
+            )
+        else:
+            voice = cls(client, self)
 
         if not isinstance(voice, VoiceProtocol):
             raise TypeError("Type must meet VoiceProtocol abstract base class.")
@@ -1804,4 +1844,4 @@ class Connectable(Protocol):
                 await voice.disconnect(force=True)
             raise  # re-raise
 
-        return voice
+        return voice  # type: ignore
