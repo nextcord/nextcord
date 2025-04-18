@@ -554,8 +554,7 @@ class SelectOption:
 
     @classmethod
     def from_dict(cls, data: SelectOptionPayload) -> SelectOption:
-        if "emoji" in data:
-            emoji = PartialEmoji.from_dict(data["emoji"])
+        emoji = PartialEmoji.from_dict(data["emoji"]) if "emoji" in data else None
 
         return cls(
             label=data["label"],
