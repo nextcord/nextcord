@@ -20,6 +20,8 @@ if TYPE_CHECKING:
 
 
 ApplicationCommandType = Literal[1, 2, 3]
+IntegrationType = Literal[0, 1]
+InteractionContextType = Literal[0, 1, 2]
 
 
 class ApplicationCommand(TypedDict):
@@ -33,8 +35,9 @@ class ApplicationCommand(TypedDict):
     guild_id: NotRequired[Snowflake]
     options: NotRequired[List[ApplicationCommandOption]]
     default_permission: NotRequired[bool]
-    dm_permission: NotRequired[bool]
     nsfw: NotRequired[bool]
+    integration_types: NotRequired[List[IntegrationType]]
+    contexts: NotRequired[List[InteractionContextType]]
     name_localizations: NotRequired[Dict[str, str]]
     description_localizations: NotRequired[Dict[str, str]]
 
@@ -195,6 +198,7 @@ class ModalSubmitInteractionData(TypedDict):
 InteractionData = Union[
     ApplicationCommandInteractionData, ComponentInteractionData, ModalSubmitInteractionData
 ]
+AuthorizingIntegrationOwners = Dict[str, str]
 
 
 class Interaction(TypedDict):
@@ -212,6 +216,8 @@ class Interaction(TypedDict):
     locale: NotRequired[str]
     guild_locale: NotRequired[str]
     app_permissions: NotRequired[str]
+    authorizing_integration_owners: NotRequired[AuthorizingIntegrationOwners]
+    context: NotRequired[InteractionContextType]
     entitlements: List[Entitlement]
 
 
@@ -238,6 +244,17 @@ class MessageInteraction(TypedDict):
     name: str
     user: User
     member: NotRequired[Member]
+
+
+class MessageInteractionMetadata(TypedDict):
+    id: Snowflake
+    type: InteractionType
+    user: User
+    authorizing_integration_owners: AuthorizingIntegrationOwners
+    name: NotRequired[str]
+    original_response_message_id: NotRequired[Snowflake]
+    interacted_message_id: NotRequired[Snowflake]
+    triggering_interaction_metadata: NotRequired[MessageInteractionMetadata]
 
 
 class EditApplicationCommand(TypedDict):

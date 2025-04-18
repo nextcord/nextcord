@@ -8,7 +8,7 @@ import datetime
 import itertools
 import sys
 from operator import attrgetter
-from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 from . import abc, utils
 from .activity import ActivityTypes, create_activity
@@ -248,6 +248,7 @@ class Member(abc.Messageable, _UserTag):
         "_avatar",
         "_timeout",
         "_flags",
+        "_banner",
     )
 
     if TYPE_CHECKING:
@@ -288,6 +289,7 @@ class Member(abc.Messageable, _UserTag):
             data.get("communication_disabled_until")
         )
         self._flags: int = data.get("flags", 0)
+        self._banner: Optional[str] = data.get("banner")
 
     def __str__(self) -> str:
         return str(self._user)
@@ -352,6 +354,7 @@ class Member(abc.Messageable, _UserTag):
         self._avatar = member._avatar
         self._timeout = member._timeout
         self._flags = member._flags
+        self._banner = member._banner
 
         # Reference will not be copied unless necessary by PRESENCE_UPDATE
         # See below
@@ -364,10 +367,9 @@ class Member(abc.Messageable, _UserTag):
     def _update(self, data: MemberPayload) -> None:
         # the nickname change is optional,
         # if it isn't in the payload then it didn't change
-        with contextlib.suppress(KeyError):
+        if "nick" in data:
             self.nick = data["nick"]
-
-        with contextlib.suppress(KeyError):
+        if "pending" in data:
             self.pending = data["pending"]
 
         self.premium_since = utils.parse_time(data.get("premium_since"))
@@ -375,6 +377,7 @@ class Member(abc.Messageable, _UserTag):
         self._avatar = data.get("avatar")
         self._timeout = utils.parse_time(data.get("communication_disabled_until"))
         self._flags = data.get("flags", 0)
+        self._banner = data.get("banner")
 
     def _presence_update(
         self, data: PartialPresenceUpdate, user: UserPayload
@@ -391,17 +394,19 @@ class Member(abc.Messageable, _UserTag):
 
     def _update_inner_user(self, user: UserPayload) -> Optional[Tuple[User, User]]:
         u = self._user
-        original = (u.name, u._avatar, u.discriminator, u._public_flags)
+        original = (u.name, u._avatar, u.discriminator, u.global_name, u._public_flags, u._banner)
         # These keys seem to always be available
         modified = (
             user["username"],
             user["avatar"],
             user["discriminator"],
+            user.get("global_name"),
             user.get("public_flags", 0),
+            user.get("banner"),
         )
         if original != modified:
             to_return = User._copy(self._user)
-            u.name, u._avatar, u.discriminator, u._public_flags = modified
+            u.name, u._avatar, u.discriminator, u.global_name, u._public_flags, u._banner = modified
             # Signal to dispatch on_user_update
             return to_return, u
         return None
@@ -503,11 +508,13 @@ class Member(abc.Messageable, _UserTag):
     def display_name(self) -> str:
         """:class:`str`: Returns the user's display name.
 
-        For regular users this is just their username, but
-        if they have a guild specific nickname then that
-        is returned instead.
+        This will return the name using the following hierachy:
+
+        1. Guild specific nickname
+        2. Global Name (also known as 'Display Name' in the Discord UI)
+        3. Unique username
         """
-        return self.nick or self.name
+        return self.nick or self.global_name or self.name
 
     @property
     def display_avatar(self) -> Asset:
@@ -531,6 +538,30 @@ class Member(abc.Messageable, _UserTag):
         if self._avatar is None:
             return None
         return Asset._from_guild_avatar(self._state, self.guild.id, self.id, self._avatar)
+
+    @property
+    def guild_banner(self) -> Optional[Asset]:
+        """Optional[:class:`Asset`]: Returns an :class:`Asset` for the guild member's banner.
+        If unavailable, ``None`` is returned.
+
+        .. versionadded:: 3.0
+        """
+        if self._banner is None:
+            return None
+        return Asset._from_guild_banner(self._state, self.guild.id, self.id, self._banner)
+
+    @property
+    def display_banner(self) -> Optional[Asset]:
+        """Optional[:class:`Asset`]: Returns the member's display banner.
+        If unavailable, ``None`` is returned
+
+        For regular members this is just their banner, if any, but
+        if they have a guild specific banner then that
+        is returned instead.
+
+        .. versionadded:: 3.0
+        """
+        return self.guild_banner or self._user.banner
 
     @property
     def activity(self) -> Optional[ActivityTypes]:
@@ -642,7 +673,6 @@ class Member(abc.Messageable, _UserTag):
         self,
         *,
         delete_message_seconds: Optional[int] = None,
-        delete_message_days: Optional[Literal[0, 1, 2, 3, 4, 5, 6, 7]] = None,
         reason: Optional[str] = None,
     ) -> None:
         """|coro|
@@ -653,7 +683,6 @@ class Member(abc.Messageable, _UserTag):
             self,
             reason=reason,
             delete_message_seconds=delete_message_seconds,
-            delete_message_days=delete_message_days,
         )
 
     async def unban(self, *, reason: Optional[str] = None) -> None:

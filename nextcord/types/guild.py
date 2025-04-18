@@ -23,6 +23,11 @@ class Ban(TypedDict):
     user: User
 
 
+class BulkBan(TypedDict):
+    banned_users: List[Snowflake]
+    failed_users: List[Snowflake]
+
+
 class UnavailableGuild(TypedDict):
     id: Snowflake
     unavailable: NotRequired[bool]
@@ -78,8 +83,7 @@ class _GuildPreviewUnique(TypedDict):
     approximate_presence_count: int
 
 
-class GuildPreview(_BaseGuildPreview, _GuildPreviewUnique):
-    ...
+class GuildPreview(_BaseGuildPreview, _GuildPreviewUnique): ...
 
 
 class Guild(_BaseGuildPreview):
@@ -130,8 +134,7 @@ class InviteGuild(Guild, total=False):
     welcome_screen: WelcomeScreen
 
 
-class GuildWithCounts(Guild, _GuildPreviewUnique):
-    ...
+class GuildWithCounts(Guild, _GuildPreviewUnique): ...
 
 
 class GuildPrune(TypedDict):

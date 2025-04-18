@@ -12,7 +12,7 @@ import time
 import traceback
 import zlib
 from collections import deque, namedtuple
-from typing import TYPE_CHECKING, Awaitable, Callable, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Awaitable, Callable, Dict, List, Optional, Union, cast
 
 import aiohttp
 
@@ -30,8 +30,7 @@ if TYPE_CHECKING:
     from .voice_client import VoiceClient
 
     class VariadicArgNone(Protocol):
-        def __call__(self, *args: Any) -> None:
-            ...
+        def __call__(self, *args: Any) -> None: ...
 
 
 _log = logging.getLogger(__name__)
@@ -342,7 +341,7 @@ class DiscordWebSocket:
         ws = cls(socket, loop=client.loop)
 
         # dynamically add attributes needed
-        ws.token = client.http.token  # type: ignore
+        ws.token = client._token  # type: ignore
         ws._connection = client._connection
         ws._discord_parsers = client._connection.parsers
         ws._dispatch = client.dispatch
@@ -503,7 +502,8 @@ class DiscordWebSocket:
                 return
 
             if op == self.INVALIDATE_SESSION:
-                if data is True:
+                resumable = cast(bool, data)
+                if resumable is True:
                     await self.close()
                     raise ReconnectWebSocket(self.shard_id)
 
@@ -582,7 +582,10 @@ class DiscordWebSocket:
 
     def _can_handle_close(self) -> bool:
         code = self._close_code or self.socket.close_code
-        return code not in (1000, 4004, 4010, 4011, 4012, 4013, 4014)
+        # If the socket is closed remotely with 1000 and it's not our own explicit close
+        # then it's an improper close that should be handled and reconnected
+        is_improper_close = self._close_code is None and self.socket.close_code == 1000
+        return is_improper_close or code not in (1000, 4004, 4010, 4011, 4012, 4013, 4014)
 
     async def poll_event(self) -> None:
         """Polls for a DISPATCH event and handles the general gateway loop.
@@ -597,8 +600,8 @@ class DiscordWebSocket:
             if msg.type is aiohttp.WSMsgType.TEXT or msg.type is aiohttp.WSMsgType.BINARY:
                 await self.received_message(msg.data)
             elif msg.type is aiohttp.WSMsgType.ERROR:
-                _log.debug("Received %s", msg)
-                raise msg.data
+                _log.debug("Received error %s", msg)
+                raise WebSocketClosure
             elif msg.type in (
                 aiohttp.WSMsgType.CLOSED,
                 aiohttp.WSMsgType.CLOSING,
@@ -795,8 +798,7 @@ class DiscordVoiceWebSocket:
             hook or getattr(self, "_hook", None) or self._default_hook
         )
 
-    async def _default_hook(self, *args: Any) -> None:
-        ...
+    async def _default_hook(self, *args: Any) -> None: ...
 
     async def send_as_json(self, data: Any) -> None:
         _log.debug("Sending voice websocket frame: %s.", data)
