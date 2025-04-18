@@ -1278,7 +1278,7 @@ to handle it, which defaults to print a traceback and ignoring the exception.
 
     Called when an :class:`Entitlement` is created.
 
-    .. versionadded:: 3.0
+    .. versionadded:: 3.2
 
     :param entitlement: The entitlement that was created.
     :type entitlement: :class:`Entitlement`
@@ -1288,7 +1288,7 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     Called when an :class:`Entitlement` is updated.
     This is the case when a user's subscription renews for the next billing period.
 
-    .. versionadded:: 3.0
+    .. versionadded:: 3.2
 
     :param entitlement: The entitlement that was updated.
     :type entitlement: :class:`Entitlement`
@@ -1299,7 +1299,7 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     This is the case when Discord issues a refund for a purchase or
     Discord removes an entitlement via internal tooling.
 
-    .. versionadded:: 3.0
+    .. versionadded:: 3.2
 
     :param entitlement: The entitlement that was deleted.
     :type entitlement: :class:`Entitlement`

@@ -1426,6 +1426,8 @@ class RoleFlags(BaseFlags):
 class SKUFlags(BaseFlags):
     r"""Wraps up the Discord SKU Flags.
 
+    .. versionadded:: 3.2
+
     .. container:: operations
 
         .. describe:: x == y
@@ -1442,8 +1444,6 @@ class SKUFlags(BaseFlags):
             Returns an iterator of ``(name, value)`` pairs. This allows it
             to be, for example, constructed as a dict or a list of pairs.
             Note that aliases are not shown.
-
-    .. versionadded:: 3.0
 
     Attributes
     ----------

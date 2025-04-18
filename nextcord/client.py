@@ -1839,7 +1839,7 @@ class Client:
 
         Retrieves a list of :class:`.SKU` for the current application.
 
-        .. versionadded:: 3.0
+        .. versionadded:: 3.2
 
         Raises
         ------
@@ -1870,7 +1870,7 @@ class Client:
 
         Retrieves a list of :class:`.Entitlement` for the current application.
 
-        .. versionadded:: 3.0
+        .. versionadded:: 3.2
 
         Parameters
         ----------
@@ -1943,7 +1943,7 @@ class Client:
         Creates a test :class:`.Entitlement` for the current application.
         This makes Discord behave as if the user or guild has purchased the SKU.
 
-        .. versionadded:: 3.0
+        .. versionadded:: 3.2
 
         Parameters
         ----------
@@ -1979,7 +1979,7 @@ class Client:
 
         Deletes a test :class:`.Entitlement` for the current application.
 
-        .. versionadded:: 3.0
+        .. versionadded:: 3.2
 
         Parameters
         ----------

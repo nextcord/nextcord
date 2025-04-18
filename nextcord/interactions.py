@@ -1143,6 +1143,8 @@ class InteractionResponse:
         Responds to this interaction by sending a message indicating that the command requires
         an active premium `.Entitlement` subscription.
 
+        .. versionadded:: 3.2
+
         Raises
         ------
         HTTPException

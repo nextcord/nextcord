@@ -1078,6 +1078,8 @@ class Member(abc.Messageable, _UserTag):
 
         Creates a test entitlement for this member.
 
+        .. versionadded:: 3.2
+
         Parameters
         ----------
         sku_id: :class:`int`
@@ -1102,6 +1104,8 @@ class Member(abc.Messageable, _UserTag):
         """|coro|
 
         Fetches the entitlements for this member.
+
+        .. versionadded:: 3.2
 
         Parameters
         ----------

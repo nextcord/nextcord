@@ -18,6 +18,8 @@ if TYPE_CHECKING:
 class Entitlement(Hashable):
     """Represents a Discord premium entitlement. This class should not be initialized manually.
 
+    .. versionadded:: 3.2
+
     Attributes
     ----------
     id: :class:`int`
@@ -71,6 +73,8 @@ class Entitlement(Hashable):
 
 class SKU(Object):
     """Represents a Discord premium SKU. This class should not be initialized manually.
+
+    .. versionadded:: 3.2
 
     Attributes
     ----------

@@ -3941,7 +3941,7 @@ class Guild(Hashable):
         Creates a test entitlement for the guild.
         This makes Discord behave as if the guild has purchased the SKU.
 
-        .. versionadded:: 3.0
+        .. versionadded:: 3.2
 
         Parameters
         ----------
@@ -3975,7 +3975,7 @@ class Guild(Hashable):
 
         Fetches the entitlements for the guild.
 
-        .. versionadded:: 3.0
+        .. versionadded:: 3.2
 
         Parameters
         ----------

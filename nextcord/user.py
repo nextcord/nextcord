@@ -541,6 +541,8 @@ class User(BaseUser, abc.Messageable):
 
         Creates a test entitlement for this user.
 
+        .. versionadded:: 3.2
+
         Parameters
         ----------
         sku_id: :class:`int`
@@ -565,6 +567,8 @@ class User(BaseUser, abc.Messageable):
         """|coro|
 
         Fetches the entitlements for this user.
+
+        .. versionadded:: 3.2
 
         Parameters
         ----------
