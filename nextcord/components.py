@@ -169,11 +169,9 @@ class Button(Component):
         self.url: Optional[str] = data.get("url")
         self.disabled: bool = data.get("disabled", False)
         self.label: Optional[str] = data.get("label")
-        self.emoji: Optional[PartialEmoji]
-        try:
+        self.emoji: Optional[PartialEmoji] = None
+        if "emoji" in data:
             self.emoji = PartialEmoji.from_dict(data["emoji"])
-        except KeyError:
-            self.emoji = None
 
     def to_dict(self) -> ButtonComponentPayload:
         payload = {
@@ -548,10 +546,7 @@ class SelectOption:
         )
 
     def __str__(self) -> str:
-        if self.emoji:
-            base = f"{self.emoji} {self.label}"
-        else:
-            base = self.label
+        base = f"{self.emoji} {self.label}" if self.emoji else self.label
 
         if self.description:
             return f"{base}\n{self.description}"
@@ -559,10 +554,7 @@ class SelectOption:
 
     @classmethod
     def from_dict(cls, data: SelectOptionPayload) -> SelectOption:
-        try:
-            emoji = PartialEmoji.from_dict(data["emoji"])
-        except KeyError:
-            emoji = None
+        emoji = PartialEmoji.from_dict(data["emoji"]) if "emoji" in data else None
 
         return cls(
             label=data["label"],
@@ -647,12 +639,11 @@ def _component_factory(data: ComponentPayload) -> Component:
     component_type = data["type"]
     if component_type == 1:
         return ActionRow(data)
-    elif component_type == 2:
+    if component_type == 2:
         return Button(data)  # type: ignore
-    elif component_type == 3:
+    if component_type == 3:
         return SelectMenu(data)  # type: ignore
-    elif component_type == 4:
+    if component_type == 4:
         return TextInput(data)  # type: ignore
-    else:
-        as_enum = try_enum(ComponentType, component_type)
-        return Component._raw_construct(type=as_enum)
+    as_enum = try_enum(ComponentType, component_type)
+    return Component._raw_construct(type=as_enum)

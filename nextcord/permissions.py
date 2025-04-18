@@ -97,19 +97,13 @@ class Permissions(BaseFlags):
         """Returns ``True`` if self has the same or fewer permissions as other."""
         if isinstance(other, Permissions):
             return (self.value & other.value) == self.value
-        else:
-            raise TypeError(
-                f"cannot compare {self.__class__.__name__} with {other.__class__.__name__}"
-            )
+        raise TypeError(f"cannot compare {self.__class__.__name__} with {other.__class__.__name__}")
 
     def is_superset(self, other: Permissions) -> bool:
         """Returns ``True`` if self has the same or more permissions as other."""
         if isinstance(other, Permissions):
             return (self.value | other.value) == self.value
-        else:
-            raise TypeError(
-                f"cannot compare {self.__class__.__name__} with {other.__class__.__name__}"
-            )
+        raise TypeError(f"cannot compare {self.__class__.__name__} with {other.__class__.__name__}")
 
     def is_strict_subset(self, other: Permissions) -> bool:
         """Returns ``True`` if the permissions on other are a strict subset of those on self."""
@@ -143,7 +137,7 @@ class Permissions(BaseFlags):
         ``True`` and the guild-specific ones set to ``False``. The guild-specific
         permissions are currently:
 
-        - :attr:`manage_emojis`
+        - :attr:`manage_emojis_and_stickers`
         - :attr:`view_audit_log`
         - :attr:`view_guild_insights`
         - :attr:`manage_guild`
@@ -152,6 +146,10 @@ class Permissions(BaseFlags):
         - :attr:`kick_members`
         - :attr:`ban_members`
         - :attr:`administrator`
+        - :attr:`create_expressions`
+        - :attr:`moderate_members`
+        - :attr:`create_events`
+        - :attr:`manage_events`
 
         .. versionchanged:: 1.7
            Added :attr:`stream`, :attr:`priority_speaker` and :attr:`use_slash_commands` permissions.
@@ -160,8 +158,11 @@ class Permissions(BaseFlags):
            Added :attr:`create_public_threads`, :attr:`create_private_threads`, :attr:`manage_threads`,
            :attr:`use_external_stickers`, :attr:`send_messages_in_threads` and
            :attr:`request_to_speak` permissions.
+
+        .. versionchanged:: 3.0
+            Added :attr:`start_embedded_activities`, :attr:`create_expressions` permissions.
         """
-        return cls(0b111110110110011111101111111111101010001)
+        return cls(0b10001111110110110011111101111111111101010001)
 
     @classmethod
     def general(cls) -> Self:
@@ -173,8 +174,11 @@ class Permissions(BaseFlags):
            permissions :attr:`administrator`, :attr:`create_instant_invite`, :attr:`kick_members`,
            :attr:`ban_members`, :attr:`change_nickname` and :attr:`manage_nicknames` are
            no longer part of the general permissions.
+
+        .. versionchanged:: 3.0
+            Added :attr:`create_expressions` permission.
         """
-        return cls(0b01110000000010000000010010110000)
+        return cls(0b10000000000001110000000010000000010010110000)
 
     @classmethod
     def membership(cls) -> Self:
@@ -334,7 +338,10 @@ class Permissions(BaseFlags):
 
     @flag_value
     def send_messages(self) -> int:
-        """:class:`bool`: Returns ``True`` if a user can send messages from all or specific text channels."""
+        """:class:`bool`: Returns ``True`` if a user can send messages from all or specific text channels.
+
+        This falls under ``Create Posts`` on the UI specifically for Forum Channels.
+        """
         return 1 << 11
 
     @flag_value
@@ -535,6 +542,8 @@ class Permissions(BaseFlags):
     def send_messages_in_threads(self) -> int:
         """:class:`bool`: Returns ``True`` if a user can send messages in threads.
 
+        This falls under ``Send Messages in Posts`` on the UI specifically for Forum channels.
+
         .. versionadded:: 2.0
         """
         return 1 << 38
@@ -556,6 +565,32 @@ class Permissions(BaseFlags):
         .. versionadded:: 2.0
         """
         return 1 << 40
+
+    @flag_value
+    def create_expressions(self) -> int:
+        """:class:`bool`: Returns ``True`` if a user can create expressions.
+
+        This includes creating emojis, stickers, and soundboard sounds.
+
+        .. versionadded:: 3.0
+        """
+        return 1 << 43
+
+    @flag_value
+    def create_events(self) -> int:
+        """:class:`bool`: Returns ``True`` if a user can create scheduled events.
+
+        .. versionadded:: 3.0
+        """
+        return 1 << 44
+
+    @flag_value
+    def send_voice_messages(self) -> int:
+        """:class:`bool`: Returns ``True`` if a user can send voice messages.
+
+        .. versionadded:: 3.0
+        """
+        return 1 << 46
 
 
 def _augment_from_permissions(cls):
@@ -671,6 +706,8 @@ class PermissionOverwrite:
         use_external_stickers: Optional[bool]
         start_embedded_activities: Optional[bool]
         moderate_members: Optional[bool]
+        create_expressions: Optional[bool]
+        create_events: Optional[bool]
 
     def __init__(self, **kwargs: Optional[bool]) -> None:
         self._values: Dict[str, Optional[bool]] = {}

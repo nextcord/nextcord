@@ -45,12 +45,10 @@ class flag_value:
         self.__doc__ = func.__doc__
 
     @overload
-    def __get__(self, instance: None, owner: Type[BF]) -> Self:
-        ...
+    def __get__(self, instance: None, owner: Type[BF]) -> Self: ...
 
     @overload
-    def __get__(self, instance: BF, owner: Type[BF]) -> bool:
-        ...
+    def __get__(self, instance: BF, owner: Type[BF]) -> bool: ...
 
     def __get__(self, instance: Optional[BF], owner: Type[BF]) -> Any:
         if instance is None:
@@ -70,13 +68,11 @@ class alias_flag_value(flag_value):
 
 def fill_with_flags(*, inverted: bool = False):
     def decorator(cls: Type[BF]):
-        # fmt: off
         cls.VALID_FLAGS = {
             name: value.flag
             for name, value in cls.__dict__.items()
             if isinstance(value, flag_value)
         }
-        # fmt: on
 
         if inverted:
             max_bits = max(cls.VALID_FLAGS.values()).bit_length()
@@ -396,6 +392,14 @@ class MessageFlags(BaseFlags):
         .. versionadded:: 2.6
         """
         return 1 << 12
+
+    @flag_value
+    def is_voice_message(self) -> int:
+        """:class:`bool`: Returns ``True`` if the message is a voice message.
+
+        .. versionadded:: 3.0
+        """
+        return 1 << 13
 
 
 @fill_with_flags()

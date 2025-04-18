@@ -24,3 +24,6 @@ __pycache__
 # Exception for images in assets folder
 !assets/*
 build/
+
+# locks don't belong in libraries
+poetry.lock

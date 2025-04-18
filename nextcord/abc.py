@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import copy
 from typing import (
     TYPE_CHECKING,
     Any,
+    AsyncIterator,
     Callable,
     Dict,
     List,
@@ -27,7 +29,7 @@ from .errors import ClientException, InvalidArgument
 from .file import File
 from .flags import ChannelFlags, MessageFlags
 from .invite import Invite
-from .iterators import HistoryIterator
+from .iterators import history_iterator
 from .mentions import AllowedMentions
 from .partial_emoji import PartialEmoji
 from .permissions import PermissionOverwrite, Permissions
@@ -147,9 +149,9 @@ class User(Snowflake, Protocol):
     __slots__ = ()
 
     name: str
-    global_name: str
+    global_name: Optional[str]
     discriminator: str
-    avatar: Asset
+    avatar: Optional[Asset]
     bot: bool
 
     @property
@@ -265,8 +267,7 @@ class GuildChannel:
 
         def __init__(
             self, *, state: ConnectionState, guild: Guild, data: GuildChannelPayload
-        ) -> None:
-            ...
+        ) -> None: ...
 
     def __str__(self) -> str:
         return self.name
@@ -329,10 +330,8 @@ class GuildChannel:
         else:
             parent_id = parent and parent.id
 
-        try:
+        with contextlib.suppress(KeyError):
             options["rate_limit_per_user"] = options.pop("slowmode_delay")
-        except KeyError:
-            pass
 
         try:
             rtc_region = options.pop("rtc_region")
@@ -386,7 +385,7 @@ class GuildChannel:
                 position, parent_id=parent_id, lock_permissions=lock_permissions, reason=reason
             )
 
-        overwrites = options.get("overwrites", None)
+        overwrites = options.get("overwrites")
         if overwrites is not None:
             perms = []
             for target, perm in overwrites.items():
@@ -419,12 +418,10 @@ class GuildChannel:
                 raise InvalidArgument("type field must be of type ChannelType")
             options["type"] = ch_type.value
 
-        try:
+        with contextlib.suppress(KeyError):
             options["default_thread_rate_limit_per_user"] = options.pop(
                 "default_thread_slowmode_delay"
             )
-        except KeyError:
-            pass
 
         try:
             default_reaction = options.pop("default_reaction")
@@ -455,6 +452,7 @@ class GuildChannel:
 
         if options:
             return await self._state.http.edit_channel(self.id, reason=reason, **options)
+        return None
 
     def _fill_overwrites(self, data: GuildChannelPayload) -> None:
         self._overwrites = []
@@ -528,7 +526,7 @@ class GuildChannel:
         elif isinstance(obj, Role):
             predicate = lambda p: p.is_role()
         else:
-            predicate = lambda p: True
+            predicate = lambda _: True
 
         for overwrite in filter(predicate, self._overwrites):
             if overwrite.id == obj.id:
@@ -779,8 +777,7 @@ class GuildChannel:
         *,
         overwrite: Optional[PermissionOverwrite] = ...,
         reason: Optional[str] = ...,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     async def set_permissions(
@@ -789,8 +786,7 @@ class GuildChannel:
         *,
         reason: Optional[str] = ...,
         **permissions: bool,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     async def set_permissions(
         self,
@@ -883,11 +879,10 @@ class GuildChannel:
                 raise InvalidArgument("No overwrite provided.")
             try:
                 overwrite = PermissionOverwrite(**permissions)
-            except (ValueError, TypeError):
-                raise InvalidArgument("Invalid permissions given to keyword arguments.")
-        else:
-            if len(permissions) > 0:
-                raise InvalidArgument("Cannot mix overwrite and keyword arguments.")
+            except (ValueError, TypeError) as e:
+                raise InvalidArgument("Invalid permissions given to keyword arguments.") from e
+        elif len(permissions) > 0:
+            raise InvalidArgument("Cannot mix overwrite and keyword arguments.")
 
         # TODO: wait for event
 
@@ -964,8 +959,7 @@ class GuildChannel:
         category: Optional[Snowflake] = ...,
         sync_permissions: bool = ...,
         reason: Optional[str] = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     async def move(
@@ -976,8 +970,7 @@ class GuildChannel:
         category: Optional[Snowflake] = ...,
         sync_permissions: bool = ...,
         reason: Optional[str] = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     async def move(
@@ -988,8 +981,7 @@ class GuildChannel:
         category: Optional[Snowflake] = ...,
         sync_permissions: bool = ...,
         reason: Optional[str] = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @overload
     async def move(
@@ -1000,8 +992,7 @@ class GuildChannel:
         category: Optional[Snowflake] = ...,
         sync_permissions: bool = ...,
         reason: Optional[str] = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     async def move(
         self,
@@ -1081,34 +1072,28 @@ class GuildChannel:
             raise InvalidArgument("Only one of [before, after, end, beginning] can be used.")
 
         bucket = self._sorting_bucket
-        # fmt: off
         channels: List[GuildChannel]
         if category:
             parent_id = category.id
             channels = [
                 ch
                 for ch in self.guild.channels
-                if ch._sorting_bucket == bucket
-                and ch.category_id == parent_id
+                if ch._sorting_bucket == bucket and ch.category_id == parent_id
             ]
         else:
             parent_id = None
             channels = [
                 ch
                 for ch in self.guild.channels
-                if ch._sorting_bucket == bucket
-                and ch.category_id == self.category_id
+                if ch._sorting_bucket == bucket and ch.category_id == self.category_id
             ]
-        # fmt: on
 
         channels.sort(key=lambda c: (c.position, c.id))
 
-        try:
+        with contextlib.suppress(ValueError):
             # Try to remove ourselves from the channel list
-            channels.remove(self)
-        except ValueError:
             # If we're not there then it's probably due to not being in the category
-            pass
+            channels.remove(self)
 
         index = None
         if beginning:
@@ -1279,8 +1264,7 @@ class Messageable:
         view: Optional[View] = ...,
         flags: Optional[MessageFlags] = ...,
         suppress_embeds: Optional[bool] = ...,
-    ) -> Message:
-        ...
+    ) -> Message: ...
 
     @overload
     async def send(
@@ -1299,8 +1283,7 @@ class Messageable:
         view: Optional[View] = ...,
         flags: Optional[MessageFlags] = ...,
         suppress_embeds: Optional[bool] = ...,
-    ) -> Message:
-        ...
+    ) -> Message: ...
 
     @overload
     async def send(
@@ -1319,8 +1302,7 @@ class Messageable:
         view: Optional[View] = ...,
         flags: Optional[MessageFlags] = ...,
         suppress_embeds: Optional[bool] = ...,
-    ) -> Message:
-        ...
+    ) -> Message: ...
 
     @overload
     async def send(
@@ -1339,8 +1321,7 @@ class Messageable:
         view: Optional[View] = ...,
         flags: Optional[MessageFlags] = ...,
         suppress_embeds: Optional[bool] = ...,
-    ) -> Message:
-        ...
+    ) -> Message: ...
 
     async def send(
         self,
@@ -1584,6 +1565,29 @@ class Messageable:
             await ret.delete(delay=delete_after)
         return ret
 
+    async def forward(self, message: Message) -> Message:
+        """Forward a message to this channel.
+
+        Parameters
+        ----------
+        message: :class:`~nextcord.Message`
+            The message to forward.
+
+        .. note::
+            It is not possible to forward messages through interactions.
+            It is only possible to forward a message to a channel as a message.
+
+        Raises
+        ------
+        ~nextcord.HTTPException
+            Forwarding/sending the message failed.
+        ~nextcord.Forbidden
+            You do not have the proper permissions to send the message.
+
+        .. versionadded:: 3.0
+        """
+        return await message.forward(self)
+
     async def trigger_typing(self) -> None:
         """|coro|
 
@@ -1653,8 +1657,10 @@ class Messageable:
         after: Optional[SnowflakeTime] = None,
         around: Optional[SnowflakeTime] = None,
         oldest_first: Optional[bool] = None,
-    ) -> HistoryIterator:
-        """Returns an :class:`~nextcord.AsyncIterator` that enables receiving the destination's message history.
+    ) -> AsyncIterator[Message]:
+        """|asynciter|
+
+        Returns an async iterator that enables receiving the destination's message history.
 
         You must have :attr:`~nextcord.Permissions.read_message_history` permissions to use this.
 
@@ -1667,11 +1673,6 @@ class Messageable:
             async for message in channel.history(limit=200):
                 if message.author == client.user:
                     counter += 1
-
-        Flattening into a list: ::
-
-            messages = await channel.history(limit=123).flatten()
-            # messages is now a list of Message...
 
         All parameters are optional.
 
@@ -1711,7 +1712,7 @@ class Messageable:
         :class:`~nextcord.Message`
             The message with the message data parsed.
         """
-        return HistoryIterator(
+        return history_iterator(
             self, limit=limit, before=before, after=after, around=around, oldest_first=oldest_first
         )
 
@@ -1798,11 +1799,9 @@ class Connectable(Protocol):
         try:
             await voice.connect(timeout=timeout, reconnect=reconnect)
         except asyncio.TimeoutError:
-            try:
+            # we don't care if disconnect failed because connection failed
+            with contextlib.suppress(Exception):
                 await voice.disconnect(force=True)
-            except Exception:
-                # we don't care if disconnect failed because connection failed
-                pass
             raise  # re-raise
 
         return voice

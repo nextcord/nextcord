@@ -269,12 +269,7 @@ class Role(Hashable):
         if self._icon is None:
             self._icon: Optional[str] = data.get("unicode_emoji", None)
         self.tags: Optional[RoleTags]
-
-        try:
-            self.tags = RoleTags(data["tags"])
-        except KeyError:
-            self.tags = None
-
+        self.tags = RoleTags(data["tags"]) if "tags" in data else None
         self._flags: int = data.get("flags", 0)
 
     def is_default(self) -> bool:
@@ -346,8 +341,7 @@ class Role(Hashable):
         """:class:`str`: Returns a string that allows you to mention a role."""
         if self.id != self.guild.id:
             return f"<@&{self.id}>"
-        else:
-            return "@everyone"
+        return "@everyone"
 
     @property
     def members(self) -> List[Member]:
@@ -392,7 +386,7 @@ class Role(Hashable):
             roles.append(self.id)
 
         payload: List[RolePositionUpdate] = [
-            {"id": z[0], "position": z[1]} for z in zip(roles, change_range)
+            {"id": z[0], "position": z[1]} for z in zip(roles, change_range, strict=False)
         ]
         await http.move_role_position(self.guild.id, payload, reason=reason)
 

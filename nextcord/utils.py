@@ -12,13 +12,13 @@ import functools
 import inspect
 import json
 import re
-import sys
 import unicodedata
 import warnings
 from base64 import b64encode
 from bisect import bisect_left
 from inspect import isawaitable as _isawaitable, signature as _signature
 from operator import attrgetter
+from types import UnionType
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -39,9 +39,11 @@ from typing import (
     Type,
     TypeVar,
     Union,
+    get_args,
     overload,
 )
 
+from .enums import IntegrationType
 from .errors import InvalidArgument
 from .file import File
 
@@ -65,18 +67,6 @@ else:
 
 HAS_ORJSON = _orjson_defined
 
-
-PY_310 = sys.version_info >= (3, 10)
-
-
-if PY_310:
-    from types import UnionType  # type: ignore
-
-    # UnionType is the annotation origin when doing Python 3.10 unions. Example: "str | None"
-else:
-    UnionType = None
-
-
 if TYPE_CHECKING:
     from typing_extensions import Self
 
@@ -98,6 +88,7 @@ __all__ = (
     "as_chunks",
     "format_dt",
     "format_ts",
+    "cached_property",
 )
 
 DISCORD_EPOCH = 1420070400000
@@ -123,7 +114,7 @@ MISSING: Any = _MissingSentinel()
 class _cached_property:
     def __init__(self, function: Callable[..., Any]) -> None:
         self.function = function
-        self.__doc__ = getattr(function, "__doc__")
+        self.__doc__ = function.__doc__
 
     def __get__(self, instance: Any, owner: Any):
         if instance is None:
@@ -136,7 +127,7 @@ class _cached_property:
 
 
 if TYPE_CHECKING:
-    from functools import cached_property as cached_property
+    from functools import cached_property
 
     from typing_extensions import ParamSpec
 
@@ -162,15 +153,13 @@ class CachedSlotProperty(Generic[T, T_co]):
     def __init__(self, name: str, function: Callable[[T], T_co]) -> None:
         self.name = name
         self.function = function
-        self.__doc__ = getattr(function, "__doc__")
+        self.__doc__ = function.__doc__
 
     @overload
-    def __get__(self, instance: None, owner: Type[T]) -> CachedSlotProperty[T, T_co]:
-        ...
+    def __get__(self, instance: None, owner: Type[T]) -> CachedSlotProperty[T, T_co]: ...
 
     @overload
-    def __get__(self, instance: T, owner: Type[T]) -> T_co:
-        ...
+    def __get__(self, instance: T, owner: Type[T]) -> T_co: ...
 
     def __get__(self, instance: Optional[T], owner: Type[T]) -> Any:
         if instance is None:
@@ -236,18 +225,15 @@ class SequenceProxy(Sequence[T_co], Generic[T_co]):
 
 
 @overload
-def parse_time(timestamp: None) -> None:
-    ...
+def parse_time(timestamp: None) -> None: ...
 
 
 @overload
-def parse_time(timestamp: str) -> datetime.datetime:
-    ...
+def parse_time(timestamp: str) -> datetime.datetime: ...
 
 
 @overload
-def parse_time(timestamp: Optional[str]) -> Optional[datetime.datetime]:
-    ...
+def parse_time(timestamp: Optional[str]) -> Optional[datetime.datetime]: ...
 
 
 def parse_time(timestamp: Optional[str]) -> Optional[datetime.datetime]:
@@ -294,6 +280,7 @@ def oauth_url(
     redirect_uri: str = MISSING,
     scopes: Iterable[str] = MISSING,
     disable_guild_select: bool = False,
+    integration_type: IntegrationType = MISSING,
 ) -> str:
     """A helper function that returns the OAuth2 URL for inviting the bot
     into guilds.
@@ -317,6 +304,10 @@ def oauth_url(
         Whether to disallow the user from changing the guild dropdown.
 
         .. versionadded:: 2.0
+    integration_type: :class:`~nextcord.IntegrationType`
+        The integration type (otherwise known as installation context) that the invite is for.
+
+        .. versionadded:: 3.0
 
     Returns
     -------
@@ -335,6 +326,8 @@ def oauth_url(
         url += "&response_type=code&" + urlencode({"redirect_uri": redirect_uri})
     if disable_guild_select:
         url += "&disable_guild_select=true"
+    if integration_type is not MISSING:
+        url += f"&integration_type={integration_type.value}"
     return url
 
 
@@ -416,8 +409,7 @@ def _key_fmt(key: str) -> str:
 
     if key.startswith("__") and key.endswith("__"):
         return re.sub(r"_{6}", "__.__", key)
-    else:
-        return re.sub(r"__(?!_)", ".", key)
+    return re.sub(r"__(?!_)", ".", key)
 
 
 def get(iterable: Iterable[T], **attrs: Any) -> Optional[T]:
@@ -486,7 +478,7 @@ def get(iterable: Iterable[T], **attrs: Any) -> Optional[T]:
 
 
 def unique(iterable: Iterable[T]) -> List[T]:
-    return [x for x in dict.fromkeys(iterable)]
+    return list(dict.fromkeys(iterable))
 
 
 def get_as_snowflake(data: Any, key: str) -> Optional[int]:
@@ -501,14 +493,14 @@ def get_as_snowflake(data: Any, key: str) -> Optional[int]:
 def _get_mime_type_for_image(data: bytes) -> str:
     if data.startswith(b"\x89\x50\x4E\x47\x0D\x0A\x1A\x0A"):
         return "image/png"
-    elif data[0:3] == b"\xff\xd8\xff" or data[6:10] in (b"JFIF", b"Exif"):
+    if data[0:3] == b"\xff\xd8\xff" or data[6:10] in (b"JFIF", b"Exif"):
         return "image/jpeg"
-    elif data.startswith((b"\x47\x49\x46\x38\x37\x61", b"\x47\x49\x46\x38\x39\x61")):
+    if data.startswith((b"\x47\x49\x46\x38\x37\x61", b"\x47\x49\x46\x38\x39\x61")):
         return "image/gif"
-    elif data.startswith(b"RIFF") and data[8:12] == b"WEBP":
+    if data.startswith(b"RIFF") and data[8:12] == b"WEBP":
         return "image/webp"
-    else:
-        raise InvalidArgument("Unsupported image type given")
+
+    raise InvalidArgument("Unsupported image type given")
 
 
 def _bytes_to_base64_data(data: bytes) -> str:
@@ -523,10 +515,9 @@ async def obj_to_base64_data(obj: Optional[Union[bytes, Attachment, Asset, File]
         return obj
     if isinstance(obj, bytes):
         return _bytes_to_base64_data(obj)
-    elif isinstance(obj, File):
+    if isinstance(obj, File):
         return _bytes_to_base64_data(obj.fp.read())
-    else:
-        return _bytes_to_base64_data(await obj.read())
+    return _bytes_to_base64_data(await obj.read())
 
 
 def parse_ratelimit_header(request: Any, *, use_clock: bool = False) -> float:
@@ -536,8 +527,7 @@ def parse_ratelimit_header(request: Any, *, use_clock: bool = False) -> float:
         now = datetime.datetime.now(utc)
         reset = datetime.datetime.fromtimestamp(float(request.headers["X-Ratelimit-Reset"]), utc)
         return (reset - now).total_seconds()
-    else:
-        return float(reset_after)
+    return float(reset_after)
 
 
 async def maybe_coroutine(
@@ -546,10 +536,7 @@ async def maybe_coroutine(
     value = f(*args, **kwargs)
     if _isawaitable(value):
         return await value
-    else:
-        return value  # type: ignore
-        # type ignored as `_isawaitable` provides `TypeGuard[Awaitable[Any]]`
-        # yet we need a more specific type guard
+    return value
 
 
 async def async_all(
@@ -570,7 +557,7 @@ async def sane_wait_for(
     done, pending = await asyncio.wait(ensured, timeout=timeout, return_when=asyncio.ALL_COMPLETED)
 
     if len(pending) != 0:
-        raise asyncio.TimeoutError()
+        raise asyncio.TimeoutError
 
     return done
 
@@ -578,7 +565,7 @@ async def sane_wait_for(
 def get_slots(cls: Type[Any]) -> Iterator[str]:
     for mro in reversed(cls.__mro__):
         try:
-            yield from mro.__slots__  # type: ignore # handled below
+            yield from mro.__slots__
         except AttributeError:
             continue
 
@@ -650,8 +637,7 @@ class SnowflakeList(array.array):  # pyright: ignore[reportMissingTypeArgument]
 
     if TYPE_CHECKING:
 
-        def __init__(self, data: Iterable[int], *, is_sorted: bool = False) -> None:
-            ...
+        def __init__(self, data: Iterable[int], *, is_sorted: bool = False) -> None: ...
 
     def __new__(cls, data: Iterable[int], *, is_sorted: bool = False) -> Self:
         return array.array.__new__(cls, "Q", data if is_sorted else sorted(data))  # type: ignore
@@ -704,11 +690,12 @@ def resolve_invite(invite: Union[Invite, str]) -> str:
             raise NotImplementedError("Can not resolve the invite if the code is `None`")
 
         return invite.code
-    else:
-        rx = r"(?:https?\:\/\/)?discord(?:\.gg|(?:app)?\.com\/invite)\/(.+)"
-        m = re.match(rx, invite)
-        if m:
-            return m.group(1)
+
+    rx = r"(?:https?\:\/\/)?discord(?:\.gg|(?:app)?\.com\/invite)\/(.+)"
+    m = re.match(rx, invite)
+    if m:
+        return m.group(1)
+
     return invite
 
 
@@ -732,11 +719,10 @@ def resolve_template(code: Union[Template, str]) -> str:
 
     if isinstance(code, Template):
         return code.code
-    else:
-        rx = r"(?:https?\:\/\/)?discord(?:\.new|(?:app)?\.com\/template)\/(.+)"
-        m = re.match(rx, code)
-        if m:
-            return m.group(1)
+    rx = r"(?:https?\:\/\/)?discord(?:\.new|(?:app)?\.com\/template)\/(.+)"
+    m = re.match(rx, code)
+    if m:
+        return m.group(1)
     return code
 
 
@@ -787,7 +773,7 @@ def remove_markdown(text: str, *, ignore_links: bool = True) -> str:
     regex = _MARKDOWN_STOCK_REGEX
     if ignore_links:
         regex = f"(?:{_URL_REGEX}|{regex})"
-    return re.sub(regex, replacement, text, 0, re.MULTILINE)
+    return re.sub(regex, replacement, text, count=0, flags=re.MULTILINE)
 
 
 def escape_markdown(text: str, *, as_needed: bool = False, ignore_links: bool = True) -> str:
@@ -827,10 +813,10 @@ def escape_markdown(text: str, *, as_needed: bool = False, ignore_links: bool = 
         regex = _MARKDOWN_STOCK_REGEX
         if ignore_links:
             regex = f"(?:{_URL_REGEX}|{regex})"
-        return re.sub(regex, replacement, text, 0, re.MULTILINE)
-    else:
-        text = re.sub(r"\\", r"\\\\", text)
-        return _MARKDOWN_ESCAPE_REGEX.sub(r"\\\1", text)
+        return re.sub(regex, replacement, text, count=0, flags=re.MULTILINE)
+
+    text = re.sub(r"\\", r"\\\\", text)
+    return _MARKDOWN_ESCAPE_REGEX.sub(r"\\\1", text)
 
 
 def escape_mentions(text: str) -> str:
@@ -950,13 +936,11 @@ async def _achunk(iterator: AsyncIterator[T], max_size: int) -> AsyncIterator[Li
 
 
 @overload
-def as_chunks(iterator: Iterator[T], max_size: int) -> Iterator[List[T]]:
-    ...
+def as_chunks(iterator: Iterator[T], max_size: int) -> Iterator[List[T]]: ...
 
 
 @overload
-def as_chunks(iterator: AsyncIterator[T], max_size: int) -> AsyncIterator[List[T]]:
-    ...
+def as_chunks(iterator: AsyncIterator[T], max_size: int) -> AsyncIterator[List[T]]: ...
 
 
 def as_chunks(iterator: _Iter[T], max_size: int) -> _Iter[List[T]]:
@@ -990,11 +974,11 @@ def as_chunks(iterator: _Iter[T], max_size: int) -> _Iter[List[T]]:
 
 
 def flatten_literal_params(parameters: Iterable[Any]) -> Tuple[Any, ...]:
-    params = []
+    params: list[Any] = []
     literal_cls = type(Literal[0])
     for p in parameters:
         if isinstance(p, literal_cls):
-            params.extend(p.__args__)
+            params.extend(get_args(p))
         else:
             params.append(p)
     return tuple(params)
@@ -1002,7 +986,7 @@ def flatten_literal_params(parameters: Iterable[Any]) -> Tuple[Any, ...]:
 
 def normalise_optional_params(parameters: Iterable[Any]) -> Tuple[Any, ...]:
     none_cls = type(None)
-    return tuple(p for p in parameters if p is not none_cls) + (none_cls,)
+    return (*tuple(p for p in parameters if p is not none_cls), none_cls)
 
 
 def evaluate_annotation(
@@ -1021,7 +1005,8 @@ def evaluate_annotation(
     if implicit_str and isinstance(tp, str):
         if tp in cache:
             return cache[tp]
-        evaluated = eval(tp, globals, locals)
+        evaluated = eval(tp, globals, locals)  # noqa: S307
+        # eval() here uses the type annotation from the user, eval is all under control.
         cache[tp] = evaluated
         return evaluate_annotation(evaluated, globals, locals, cache)
 
@@ -1030,8 +1015,8 @@ def evaluate_annotation(
         is_literal = False
         args = tp.__args__
         if not hasattr(tp, "__origin__"):
-            if PY_310 and tp.__class__ is UnionType:
-                converted = Union[args]  # type: ignore
+            if tp.__class__ is UnionType:
+                converted = Union[args]
                 return evaluate_annotation(converted, globals, locals, cache)
 
             return tp
@@ -1042,8 +1027,6 @@ def evaluate_annotation(
             except ValueError:
                 pass
         if tp.__origin__ is Literal:
-            if not PY_310:
-                args = flatten_literal_params(tp.__args__)
             implicit_str = False
             is_literal = True
 

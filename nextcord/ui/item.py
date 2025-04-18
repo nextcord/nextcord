@@ -20,11 +20,11 @@ if TYPE_CHECKING:
     from .view import View
 
 I = TypeVar("I", bound="Item")
-V = TypeVar("V", bound="View", covariant=True)
+V_co = TypeVar("V_co", bound="View", covariant=True)
 ItemCallbackType = Callable[[Any, I, Interaction[ClientT]], Coroutine[Any, Any, Any]]
 
 
-class Item(Generic[V]):
+class Item(Generic[V_co]):
     """Represents the base UI item that all UI components inherit from.
 
     The current UI items supported are:
@@ -43,7 +43,7 @@ class Item(Generic[V]):
     __item_repr_attributes__: Tuple[str, ...] = ("row",)
 
     def __init__(self) -> None:
-        self._view: Optional[V] = None
+        self._view: Optional[V_co] = None
         self._row: Optional[int] = None
         self._rendered_row: Optional[int] = None
         # This works mostly well but there is a gotcha with
@@ -101,7 +101,7 @@ class Item(Generic[V]):
         return 1
 
     @property
-    def view(self) -> Optional[V]:
+    def view(self) -> Optional[V_co]:
         """Optional[:class:`View`]: The underlying view for this item."""
         return self._view
 
@@ -117,4 +117,3 @@ class Item(Generic[V]):
         interaction: :class:`.Interaction`
             The interaction that triggered this UI item.
         """
-        pass

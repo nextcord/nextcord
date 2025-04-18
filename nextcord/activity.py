@@ -113,6 +113,7 @@ class BaseActivity:
             return datetime.datetime.fromtimestamp(
                 self._created_at / 1000, tz=datetime.timezone.utc
             )
+        return None
 
     def to_dict(self) -> ActivityPayload:
         raise NotImplementedError
@@ -255,22 +256,16 @@ class Activity(BaseActivity):
     @property
     def start(self) -> Optional[datetime.datetime]:
         """Optional[:class:`datetime.datetime`]: When the user started doing this activity in UTC, if applicable."""
-        try:
-            timestamp = self.timestamps["start"] / 1000
-        except KeyError:
-            return None
-        else:
-            return datetime.datetime.fromtimestamp(timestamp, tz=datetime.timezone.utc)
+        if (timestamp := self.timestamps.get("start")) is not None:
+            return datetime.datetime.fromtimestamp(timestamp / 1000, tz=datetime.timezone.utc)
+        return None
 
     @property
     def end(self) -> Optional[datetime.datetime]:
         """Optional[:class:`datetime.datetime`]: When the user will stop doing this activity in UTC, if applicable."""
-        try:
-            timestamp = self.timestamps["end"] / 1000
-        except KeyError:
-            return None
-        else:
-            return datetime.datetime.fromtimestamp(timestamp, tz=datetime.timezone.utc)
+        if (timestamp := self.timestamps.get("end")) is not None:
+            return datetime.datetime.fromtimestamp(timestamp / 1000, tz=datetime.timezone.utc)
+        return None
 
     @property
     def large_image_url(self) -> Optional[str]:
@@ -278,12 +273,11 @@ class Activity(BaseActivity):
         if self.application_id is None:
             return None
 
-        try:
-            large_image = self.assets["large_image"]
-        except KeyError:
-            return None
-        else:
-            return Asset.BASE + f"/app-assets/{self.application_id}/{large_image}.png"
+        if "large_image" in self.assets:
+            return (
+                Asset.BASE + f"/app-assets/{self.application_id}/{self.assets['large_image']}.png"
+            )
+        return None
 
     @property
     def small_image_url(self) -> Optional[str]:
@@ -291,12 +285,11 @@ class Activity(BaseActivity):
         if self.application_id is None:
             return None
 
-        try:
-            small_image = self.assets["small_image"]
-        except KeyError:
-            return None
-        else:
-            return Asset.BASE + f"/app-assets/{self.application_id}/{small_image}.png"
+        if "small_image" in self.assets:
+            return (
+                Asset.BASE + f"/app-assets/{self.application_id}/{self.assets['small_image']}.png"
+            )
+        return None
 
     @property
     def large_image_text(self) -> Optional[str]:
@@ -394,13 +387,11 @@ class Game(BaseActivity):
         if self._end:
             timestamps["end"] = self._end
 
-        # fmt: off
         return {
-            'type': ActivityType.playing.value,
-            'name': str(self.name),
-            'timestamps': timestamps
+            "type": ActivityType.playing.value,
+            "name": str(self.name),
+            "timestamps": timestamps,
         }
-        # fmt: on
 
     def __eq__(self, other: Any) -> bool:
         return isinstance(other, Game) and other.name == self.name
@@ -490,22 +481,17 @@ class Streaming(BaseActivity):
         dictionary if it starts with ``twitch:``. Typically set by the Discord client.
         """
 
-        try:
-            name = self.assets["large_image"]
-        except KeyError:
-            return None
-        else:
+        if (name := self.assets.get("large_image")) is not None:
             return name[7:] if name[:7] == "twitch:" else None
+        return None
 
     def to_dict(self) -> Dict[str, Any]:
-        # fmt: off
         ret: Dict[str, Any] = {
-            'type': ActivityType.streaming.value,
-            'name': str(self.name),
-            'url': str(self.url),
-            'assets': self.assets
+            "type": ActivityType.streaming.value,
+            "name": str(self.name),
+            "url": str(self.url),
+            "assets": self.assets,
         }
-        # fmt: on
         if self.details:
             ret["details"] = self.details
         return ret
@@ -582,6 +568,7 @@ class Spotify:
             return datetime.datetime.fromtimestamp(
                 self._created_at / 1000, tz=datetime.timezone.utc
             )
+        return None
 
     @property
     def colour(self) -> Colour:
@@ -819,8 +806,7 @@ class CustomActivity(BaseActivity):
             if self.name:
                 return f"{self.emoji} {self.name}"
             return str(self.emoji)
-        else:
-            return str(self.name)
+        return str(self.name)
 
     def __repr__(self) -> str:
         return f"<CustomActivity name={self.name!r} emoji={self.emoji!r}>"
@@ -830,13 +816,11 @@ ActivityTypes = Union[Activity, Game, CustomActivity, Streaming, Spotify]
 
 
 @overload
-def create_activity(state: ConnectionState, data: ActivityPayload) -> ActivityTypes:
-    ...
+def create_activity(state: ConnectionState, data: ActivityPayload) -> ActivityTypes: ...
 
 
 @overload
-def create_activity(state: ConnectionState, data: None) -> None:
-    ...
+def create_activity(state: ConnectionState, data: None) -> None: ...
 
 
 def create_activity(
@@ -850,19 +834,19 @@ def create_activity(
         if "application_id" in data or "session_id" in data:
             return Activity(**data)
         return Game(**data)
-    elif game_type is ActivityType.custom:
-        try:
-            name = data.pop("name")  # pyright: ignore[reportGeneralTypeIssues]
-        except KeyError:
-            return Activity(**data)
-        else:
-            # we removed the name key from data already
-            return CustomActivity(name=name, _connection_state=state, **data)  # type: ignore
-    elif game_type is ActivityType.streaming:
+
+    if game_type is ActivityType.custom:
+        if "name" in data:
+            return CustomActivity(_connection_state=state, **data)  # type: ignore
+        return Activity(**data)
+
+    if game_type is ActivityType.streaming:
         if "url" in data:
             # the URL won't be None here
             return Streaming(**data)  # type: ignore
         return Activity(**data)
-    elif game_type is ActivityType.listening and "sync_id" in data and "session_id" in data:
+
+    if game_type is ActivityType.listening and "sync_id" in data and "session_id" in data:
         return Spotify(**data)
+
     return Activity(**data)
