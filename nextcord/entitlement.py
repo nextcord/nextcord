@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING, Optional
 from .enums import EntitlementType, SKUType
 from .flags import SKUFlags
 from .mixins import Hashable
-from .object import Object
 from .utils import parse_time
 
 if TYPE_CHECKING:
@@ -71,7 +70,7 @@ class Entitlement(Hashable):
         return f"<Entitlement id={self.id!r} sku_id={self.sku_id!r} application_id={self.application_id!r} user_id={self.user_id!r} guild_id={self.guild_id!r}"
 
 
-class SKU(Object):
+class SKU(Hashable):
     """Represents a Discord premium SKU. This class should not be initialized manually.
 
     .. versionadded:: 3.2
