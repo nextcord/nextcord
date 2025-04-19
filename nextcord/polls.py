@@ -273,7 +273,7 @@ class PollCreateRequest:
         Whether voters can select more than one choice. Defaults to False.
     answers: Optional[List[:class:`PollAnswer`]]
         The answers to the poll.
-        If omitted then it must be added later through :func:`PollCreateRequest.add_answer`.
+        If omitted, answers must be added later with :func:`PollCreateRequest.add_answer`.
     layout_type: Optional[:class:`PollLayoutType`]
         The layout type of the poll. Defaults to :attr:`PollLayoutType.default`
     """
