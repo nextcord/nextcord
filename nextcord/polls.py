@@ -223,7 +223,7 @@ class PollResults:
     answer_counts: List[:class:`PollAnswerCount`]
         The counts for each answer.
     poll: :class:`Poll`
-        The poll this poll result represents.
+        The poll associated with this result.
     """
 
     __slots__ = (
