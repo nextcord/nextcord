@@ -84,13 +84,14 @@ if TYPE_CHECKING:
 
 __all__ = (
     "Attachment",
-    "Message",
-    "PartialMessage",
-    "MessageReference",
     "DeletedReferencedMessage",
+    "Message",
+    "MessageCall",
     "MessageInteraction",
     "MessageInteractionMetadata",
+    "MessageReference",
     "MessageSnapshot",
+    "PartialMessage",
 )
 
 
@@ -887,7 +888,7 @@ class MessageCall:
         The raw data from the call.
     """
 
-    __slots__ = ("_state", "data", "_participants", "_ended_timestamp", "_cs_participants")
+    __slots__ = ("_cs_participants", "_ended_timestamp", "_participants", "_state", "data")
 
     def __init__(self, *, data: MessageCallPayload, state: ConnectionState) -> None:
         self._state: ConnectionState = state
@@ -1043,42 +1044,41 @@ class Message(Hashable):
     """
 
     __slots__ = (
-        "_state",
-        "_call",
-        "_edited_timestamp",
+        "_background_tasks",
         "_cs_channel_mentions",
-        "_cs_raw_mentions",
         "_cs_clean_content",
         "_cs_raw_channel_mentions",
+        "_cs_raw_mentions",
         "_cs_raw_role_mentions",
         "_cs_system_content",
-        "tts",
+        "_edited_timestamp",
+        "_state",
+        "activity",
+        "application",
+        "attachments",
+        "author",
         "call",
-        "content",
         "channel",
-        "webhook_id",
-        "mention_everyone",
+        "components",
+        "content",
         "embeds",
+        "flags",
+        "guild",
         "id",
         "interaction",
         "interaction_metadata",
+        "mention_everyone",
         "mentions",
-        "author",
-        "attachments",
         "nonce",
         "pinned",
-        "role_mentions",
-        "type",
-        "flags",
         "reactions",
         "reference",
-        "application",
-        "activity",
-        "stickers",
-        "components",
-        "_background_tasks",
-        "guild",
+        "role_mentions",
         "snapshots",
+        "stickers",
+        "tts",
+        "type",
+        "webhook_id",
     )
 
     if TYPE_CHECKING:
