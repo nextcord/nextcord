@@ -73,7 +73,10 @@ from .threads import Thread, ThreadMember
 from .user import User
 from .widget import Widget
 
-__all__ = ("Guild",)
+__all__ = (
+    "Guild",
+    "Incidents",
+)
 
 MISSING = utils.MISSING
 
@@ -123,7 +126,7 @@ class Incidents:
 
     .. versionadded:: 3.2
 
-    Attributes:
+    Attributes
     ----------
     invites_disabled_until: Optional[datetime.datetime]
         Time until invites are disabled for the guild, or None if not restricted.
