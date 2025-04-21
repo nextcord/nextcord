@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, List, Optional, Union
+from typing import TYPE_CHECKING, Any, AsyncIterator, List, Optional, Union
 
 from .colour import Colour
 from .enums import ReactionType
-from .iterators import ReactionIterator
+from .iterators import reaction_iterator
 from .utils import cached_slot_property
 
 __all__ = ("Reaction",)
@@ -14,12 +14,14 @@ __all__ = ("Reaction",)
 if TYPE_CHECKING:
     from .abc import Snowflake
     from .emoji import Emoji
+    from .member import Member
     from .message import Message
     from .partial_emoji import PartialEmoji
     from .types.message import (
         Reaction as ReactionPayload,
         ReactionCountDetails as ReactionCountDetailsPayload,
     )
+    from .user import User
 
 
 class ReactionCountDetails:
@@ -213,7 +215,7 @@ class Reaction:
         limit: Optional[int] = None,
         after: Optional[Snowflake] = None,
         type: ReactionType = ReactionType.normal,
-    ) -> ReactionIterator:
+    ) -> AsyncIterator[User | Member]:
         """Returns an :class:`AsyncIterator` representing the users that have reacted to the message.
 
         The ``after`` parameter must represent a member
@@ -227,13 +229,6 @@ class Reaction:
             # I do not actually recommend doing this.
             async for user in reaction.users():
                 await channel.send(f'{user} has reacted with {reaction.emoji}!')
-
-        Flattening into a list: ::
-
-            users = await reaction.users().flatten()
-            # users is now a list of User...
-            winner = random.choice(users)
-            await channel.send(f'{winner} has won the raffle.')
 
         Parameters
         ----------
@@ -271,4 +266,4 @@ class Reaction:
         if limit is None:
             limit = self.count
 
-        return ReactionIterator(self.message, emoji, limit, after, type)
+        return reaction_iterator(self.message, emoji, limit, after, type)

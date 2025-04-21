@@ -70,10 +70,7 @@ class RawMessageDeleteEvent(_RawReprMixin):
         self.message_id: int = int(data["id"])
         self.channel_id: int = int(data["channel_id"])
         self.cached_message: Optional[Message] = None
-        try:
-            self.guild_id: Optional[int] = int(data["guild_id"])
-        except KeyError:
-            self.guild_id: Optional[int] = None
+        self.guild_id: Optional[int] = int(data["guild_id"]) if "guild_id" in data else None
 
 
 class RawBulkMessageDeleteEvent(_RawReprMixin):
@@ -97,11 +94,7 @@ class RawBulkMessageDeleteEvent(_RawReprMixin):
         self.message_ids: Set[int] = {int(x) for x in data.get("ids", [])}
         self.channel_id: int = int(data["channel_id"])
         self.cached_messages: List[Message] = []
-
-        try:
-            self.guild_id: Optional[int] = int(data["guild_id"])
-        except KeyError:
-            self.guild_id: Optional[int] = None
+        self.guild_id: Optional[int] = int(data["guild_id"]) if "guild_id" in data else None
 
 
 class RawMessageUpdateEvent(_RawReprMixin):
@@ -134,11 +127,7 @@ class RawMessageUpdateEvent(_RawReprMixin):
         self.channel_id: int = int(data["channel_id"])
         self.data: MessageUpdateEvent = data
         self.cached_message: Optional[Message] = None
-
-        try:
-            self.guild_id: Optional[int] = int(data["guild_id"])
-        except KeyError:
-            self.guild_id: Optional[int] = None
+        self.guild_id: Optional[int] = int(data["guild_id"]) if "guild_id" in data else None
 
 
 class RawReactionActionEvent(_RawReprMixin):
@@ -194,6 +183,7 @@ class RawReactionActionEvent(_RawReprMixin):
         self.emoji: PartialEmoji = emoji
         self.event_type: str = event_type
         self.member: Optional[Member] = None
+        self.guild_id: Optional[int] = int(data["guild_id"]) if "guild_id" in data else None
         self.burst: bool = data["burst"]
         self.type: ReactionType = data["type"]
 
@@ -201,14 +191,6 @@ class RawReactionActionEvent(_RawReprMixin):
             self.burst_colors: Optional[List[Colour]] = [
                 Colour(value=int(c.strip("#"), base=16)) for c in _burst_colors
             ]
-
-        else:
-            self.burst_colors = None
-
-        try:
-            self.guild_id: Optional[int] = int(data["guild_id"])
-        except KeyError:
-            self.guild_id: Optional[int] = None
 
 
 class RawReactionClearEvent(_RawReprMixin):
@@ -229,11 +211,7 @@ class RawReactionClearEvent(_RawReprMixin):
     def __init__(self, data: ReactionClearEvent) -> None:
         self.message_id: int = int(data["message_id"])
         self.channel_id: int = int(data["channel_id"])
-
-        try:
-            self.guild_id: Optional[int] = int(data["guild_id"])
-        except KeyError:
-            self.guild_id: Optional[int] = None
+        self.guild_id: Optional[int] = int(data["guild_id"]) if "guild_id" in data else None
 
 
 class RawReactionClearEmojiEvent(_RawReprMixin):
@@ -259,11 +237,7 @@ class RawReactionClearEmojiEvent(_RawReprMixin):
         self.emoji: PartialEmoji = emoji
         self.message_id: int = int(data["message_id"])
         self.channel_id: int = int(data["channel_id"])
-
-        try:
-            self.guild_id: Optional[int] = int(data["guild_id"])
-        except KeyError:
-            self.guild_id: Optional[int] = None
+        self.guild_id: Optional[int] = int(data["guild_id"]) if "guild_id" in data else None
 
 
 class RawIntegrationDeleteEvent(_RawReprMixin):
@@ -286,11 +260,8 @@ class RawIntegrationDeleteEvent(_RawReprMixin):
     def __init__(self, data: IntegrationDeleteEvent) -> None:
         self.integration_id: int = int(data["id"])
         self.guild_id: int = int(data["guild_id"])
-
-        try:
-            self.application_id: Optional[int] = int(data["application_id"])
-        except KeyError:
-            self.application_id: Optional[int] = None
+        self.application_id: Optional[int]
+        self.application_id = int(data["application_id"]) if "application_id" in data else None
 
 
 class RawTypingEvent(_RawReprMixin):
@@ -321,11 +292,7 @@ class RawTypingEvent(_RawReprMixin):
             data.get("timestamp"), tz=datetime.timezone.utc
         )
         self.member: Optional[Member] = None
-
-        try:
-            self.guild_id: Optional[int] = int(data["guild_id"])
-        except KeyError:
-            self.guild_id: Optional[int] = None
+        self.guild_id: Optional[int] = int(data["guild_id"]) if "guild_id" in data else None
 
 
 class RawMemberRemoveEvent(_RawReprMixin):

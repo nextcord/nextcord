@@ -2116,6 +2116,6 @@ def try_enum(cls: Type[T], val: Any) -> T:
     """
 
     try:
-        return cls(val)
+        return cls(val)  # pyright: ignore[reportCallIssue]
     except ValueError:
         return UnknownEnumValue(name=f"unknown_{val}", value=val)  # type: ignore

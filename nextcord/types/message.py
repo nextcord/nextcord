@@ -49,6 +49,8 @@ class Attachment(TypedDict):
     description: NotRequired[str]
     content_type: NotRequired[str]
     spoiler: NotRequired[bool]
+    duration_secs: NotRequired[float]
+    waveform: NotRequired[str]
     flags: NotRequired[int]
 
 

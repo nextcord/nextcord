@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import asyncio
+import base64
 import contextlib
 import datetime
 import io
 import re
+from array import array
 from os import PathLike
 from typing import (
     TYPE_CHECKING,
@@ -160,6 +162,10 @@ class Attachment(Hashable):
         The attachment's description. This is used for alternative text in the Discord client.
 
         .. versionadded:: 2.0
+    duration_secs: Optional[:class:`float`]
+        The duration of the audio file (currently for voice messages).
+
+        .. versionadded:: 3.0
     """
 
     __slots__ = (
@@ -173,6 +179,9 @@ class Attachment(Hashable):
         "_http",
         "content_type",
         "description",
+        "duration_secs",
+        "_waveform",
+        "_cs_waveform",
         "_flags",
     )
 
@@ -187,6 +196,8 @@ class Attachment(Hashable):
         self._http = state.http
         self.content_type: Optional[str] = data.get("content_type")
         self.description: Optional[str] = data.get("description")
+        self.duration_secs: Optional[float] = data.get("duration_secs")
+        self._waveform: Optional[str] = data.get("waveform")
         self._flags: int = data.get("flags", 0)
 
     def is_spoiler(self) -> bool:
@@ -376,9 +387,23 @@ class Attachment(Hashable):
             result["content_type"] = self.content_type
         if self.description:
             result["description"] = self.description
+        if self.duration_secs:
+            result["duration_secs"] = self.duration_secs
+        if self._waveform:
+            result["waveform"] = self._waveform
         return result
 
-    @property
+    @utils.cached_slot_property("_cs_waveform")
+    def waveform(self) -> Optional[array[int]]:
+        """Optional[array[:class:`int`]]: The base64 decoded data representing a sampled waveform
+        (currently for voice messages).
+
+        .. versionadded:: 3.0
+        """
+        if self._waveform is not None:
+            return array("B", base64.b64decode(self._waveform))
+        return None
+
     def flags(self) -> AttachmentFlags:
         """Optional[:class:`AttachmentFlags`]: The avaliable flags that the attachment has.
 
@@ -458,6 +483,10 @@ class MessageReference:
         Currently, this is mainly the replied to message when a user replies to a message.
 
         .. versionadded:: 1.6
+    type: :class:`~nextcord.MessageReferenceType`
+        The type of reference that the message is. Defaults to a reply.
+
+        .. versionadded:: 3.0
     """
 
     __slots__ = (
@@ -759,7 +788,9 @@ class MessageInteractionMetadata(Hashable):
         Mapping of installation contexts that the interaction was authorized for to related user or guild IDs.
         You can find out about this field in the `official Discord documentation`__.
 
-        .. _DiscordDocs: https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-authorizing-integration-owners-object
+        .. _integration_owners_docs: https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-authorizing-integration-owners-object
+
+        __ integration_owners_docs_
 
         .. versionadded:: 3.0
     name: Optional[:class:`str`]
@@ -969,6 +1000,10 @@ class Message(Hashable):
         The interaction metadata of a message. Present if the message is sent as a result of an interaction.
 
         .. versionadded:: 3.0
+    snapshots: List[:class:`MessageSnapshot`]
+        A list of message snapshots that the message contains.
+
+        .. versionadded:: 3.0
     """
 
     __slots__ = (
@@ -1075,17 +1110,12 @@ class Message(Hashable):
             MessageSnapshot(state=self._state, data=s) for s in data.get("message_snapshots", [])
         ]
 
-        try:
-            ref = data["message_reference"]
-        except KeyError:
-            self.reference = None
-        else:
+        self.reference = None
+        if ref := data.get("message_reference"):
             self.reference = ref = MessageReference.with_state(state, ref)
-            try:
+
+            if "referenced_message" in data:
                 resolved = data["referenced_message"]
-            except KeyError:
-                pass
-            else:
                 if resolved is None:
                     ref.resolved = DeletedReferencedMessage(ref)
                 else:
@@ -1099,10 +1129,9 @@ class Message(Hashable):
                     ref.resolved = self.__class__(channel=chan, data=resolved, state=state)  # type: ignore
 
         for handler in ("author", "member", "mentions", "mention_roles"):
-            try:
-                getattr(self, f"_handle_{handler}")(data[handler])
-            except KeyError:
-                continue
+            if handler in data:
+                # Even after this check, pyright believes this may error out.
+                getattr(self, f"_handle_{handler}")(data[handler])  # pyright: ignore
 
         self.interaction: Optional[MessageInteraction] = (
             MessageInteraction(data=data["interaction"], guild=self.guild, state=self._state)
@@ -2344,7 +2373,7 @@ class PartialMessage(Hashable):
 
         if fields:
             # data isn't unbound
-            msg = self._state.create_message(channel=self.channel, data=data)  # type: ignore
+            msg = self._state.create_message(channel=self.channel, data=data)
             if view and not view.is_finished() and view.prevent_update:
                 self._state.store_view(view, self.id)
             return msg

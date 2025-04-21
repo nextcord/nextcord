@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8]
+        python-version: [3.12]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -34,11 +34,11 @@ jobs:
           cache: poetry
           cache-dependency-path: pyproject.toml
 
-      - name: Export dependencies
-        run: poetry export --no-interaction -f requirements.txt --output requirements.txt --with docs,dev -E voice -E speed
-
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: poetry install --all-groups -E voice -E speed
+
+      - name: Configure Poetry for docs
+        run: echo "$(poetry env info --path)/bin" >> $GITHUB_PATH
 
       - name: Compile docs
         run: |

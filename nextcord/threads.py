@@ -171,11 +171,8 @@ class Thread(Messageable, Hashable, PinsMixin):
         self._unroll_metadata(data["thread_metadata"])
         self.flags: ChannelFlags = ChannelFlags._from_value(data.get("flags", 0))
 
-        try:
-            member = data["member"]
-        except KeyError:
-            self.me = None
-        else:
+        self.me = None
+        if member := data.get("member"):
             self.me = ThreadMember(self, member)
 
         self.applied_tag_ids: List[int] = [int(tag_id) for tag_id in data.get("applied_tags", [])]
