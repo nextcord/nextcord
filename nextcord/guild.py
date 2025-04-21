@@ -2012,67 +2012,48 @@ class Guild(Hashable):
                 features.remove("INVITES_DISABLED")
 
             fields["features"] = features
-        incidents_data_payload: BaseIncidentsData = {}
 
-        if invites_disabled_until is MISSING:
-            pass
+        incidents_payload: BaseIncidentsData = {}
+
+        now = utils.utcnow()
+
+        if invites_disabled_until is MISSING and self._incidents:
+            _inv_time: datetime.datetime | None = self._incidents.invites_disabled_until
+            if _inv_time and _inv_time > now:
+                incidents_payload["invites_disabled_until"] = _inv_time.isoformat()
         elif invites_disabled_until is None:
-            incidents_data_payload["invites_disabled_until"] = None
+            incidents_payload["invites_disabled_until"] = None
         elif isinstance(invites_disabled_until, datetime.timedelta):
-            incidents_data_payload["invites_disabled_until"] = (
-                utils.utcnow() + invites_disabled_until
-            ).isoformat()
+            incidents_payload["invites_disabled_until"] = (now + invites_disabled_until).isoformat()
         elif isinstance(invites_disabled_until, datetime.datetime):
-            incidents_data_payload["invites_disabled_until"] = invites_disabled_until.isoformat()
+            incidents_payload["invites_disabled_until"] = invites_disabled_until.isoformat()
         else:
             raise TypeError(
                 "invites_disabled_until must be a `datetime.datetime` or `datetime.timedelta`"
                 f"not {invites_disabled_until.__class__.__name__}"
             )
 
-        if dms_disabled_until is MISSING:
-            pass
+        if dms_disabled_until is MISSING and self._incidents:
+            _dms_time: datetime.datetime | None = self._incidents.dms_disabled_until
+            if _dms_time and _dms_time > now:
+                incidents_payload["dms_disabled_until"] = _dms_time.isoformat()
         elif dms_disabled_until is None:
-            incidents_data_payload["dms_disabled_until"] = None
+            incidents_payload["dms_disabled_until"] = None
         elif isinstance(dms_disabled_until, datetime.timedelta):
-            incidents_data_payload["dms_disabled_until"] = (
-                utils.utcnow() + dms_disabled_until
-            ).isoformat()
+            incidents_payload["dms_disabled_until"] = (now + dms_disabled_until).isoformat()
         elif isinstance(dms_disabled_until, datetime.datetime):
-            incidents_data_payload["dms_disabled_until"] = dms_disabled_until.isoformat()
+            incidents_payload["dms_disabled_until"] = dms_disabled_until.isoformat()
         else:
             raise TypeError(
                 "dms_disabled_until must be a `datetime.datetime` or `datetime.timedelta`"
                 f"not {dms_disabled_until.__class__.__name__}"
             )
 
-        if incidents_data_payload:
-            if cur_incidents := self._incidents:
-                now = utils.utcnow()
-
-                _inv_time = cur_incidents.invites_disabled_until
-                if (
-                    _inv_time
-                    and isinstance(_inv_time, datetime.datetime)
-                    and _inv_time > now
-                    and "invites_disabled_until" not in incidents_data_payload
-                ):
-                    incidents_data_payload["invites_disabled_until"] = _inv_time.isoformat()
-
-                _dms_time = cur_incidents.dms_disabled_until
-
-                if (
-                    _dms_time
-                    and isinstance(_dms_time, datetime.datetime)
-                    and _dms_time > now
-                    and "dms_disabled_until" not in incidents_data_payload
-                ):
-                    incidents_data_payload["dms_disabled_until"] = _dms_time.isoformat()
-
-            incidents_data: IncidentsData = await http.edit_incidents(
-                guild_id=self.id, data=incidents_data_payload
+        if incidents_payload:
+            await http.edit_incidents(
+                guild_id=self.id,
+                data=incidents_payload,
             )
-            self._incidents = Incidents(incidents_data)
 
         data = await http.edit_guild(self.id, reason=reason, **fields)
         return Guild(data=data, state=self._state)
