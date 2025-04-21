@@ -169,16 +169,6 @@ class Embed:
         if timestamp:
             self.timestamp = timestamp
 
-    @property
-    def Empty(self) -> None:
-        warnings.warn(
-            "Empty is deprecated and will be removed in a future version. Use None instead.",
-            FutureWarning,
-            stacklevel=2,
-        )
-        return None
-
-
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> Self:
         """Converts a :class:`dict` to a :class:`Embed` provided it is in the
@@ -407,8 +397,6 @@ class Embed:
         if url is None:
             with contextlib.suppress(AttributeError):
                 del self._image
-            except AttributeError:
-                pass
 
             self._local_files.pop("image", None)
 
@@ -457,8 +445,6 @@ class Embed:
         if url is None:
             with contextlib.suppress(AttributeError):
                 del self._thumbnail
-            except AttributeError:
-                pass
 
             self._local_files.pop("thumbnail", None)
 
