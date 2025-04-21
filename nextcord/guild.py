@@ -119,6 +119,25 @@ if TYPE_CHECKING:
 
 
 class Incidents:
+    """Represents incident-related metadata for a guild.
+
+    .. versionadded:: 3.2
+
+    Attributes:
+    ----------
+    invites_disabled_until: Optional[datetime.datetime]
+        Time until invites are disabled for the guild, or None if not restricted.
+
+    dms_disabled_until: Optional[datetime.datetime]
+        Time until direct messages are disabled, or None if not restricted.
+
+    dm_spam_detected_at: Optional[datetime.datetime]
+        Time when potential DM spam activity was detected.
+
+    raid_detected_at: Optional[datetime.datetime]
+        Time when a raid was detected in the guild.
+    """
+
     def __init__(self, data: Optional[IncidentsData]) -> None:
         self._invites_disabled_until: Optional[datetime.datetime] = None
         self._dms_disabled_until: Optional[datetime.datetime] = None
