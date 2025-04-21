@@ -880,7 +880,7 @@ class MessageInteractionMetadata(Hashable):
 class MessageCall:
     """Represents a message's call data.
 
-    .. versionadded:: 3.0
+    .. versionadded:: 3.2
 
     Attributes
     ----------
@@ -1040,7 +1040,7 @@ class Message(Hashable):
     call: Optional[:class:`MessageCall`]
         The call associated with the message.
 
-        .. versionadded:: 3.1
+        .. versionadded:: 3.2
     """
 
     __slots__ = (
