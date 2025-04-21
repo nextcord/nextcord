@@ -2097,7 +2097,7 @@ class MessageReferenceType(IntEnum):
 class ReactionType(IntEnum):
     """Represents the type of a message reaction.
 
-    .. versionadded:: 3.0
+    .. versionadded:: 3.2
     """
 
     normal = 0

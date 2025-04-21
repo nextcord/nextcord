@@ -153,7 +153,7 @@ class RawReactionActionEvent(_RawReprMixin):
     burst: :class:`bool`
         If the reaction is a super/burst reaction.
 
-        .. versionadded:: 3.0
+        .. versionadded:: 3.2
 
     event_type: :class:`str`
         The event type that triggered this action. Can be

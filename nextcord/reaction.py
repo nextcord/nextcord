@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 class ReactionCountDetails:
     """Represents a reaction's count details.
 
-    .. versionadded:: 3.0
+    .. versionadded:: 3.2
 
     Attributes
     ----------
@@ -79,13 +79,13 @@ class Reaction:
     count_details: :class:`ReactionCountDetails`
         The count details for this reaction.
 
-        .. versionadded:: 3.0
+        .. versionadded:: 3.2
     me: :class:`bool`
         If the user sent this reaction.
     me_burst: :class:`bool`
         If the user sent a burst reaction.
 
-        .. versionadded:: 3.0
+        .. versionadded:: 3.2
     message: :class:`Message`
         Message this reaction is for.
     """
@@ -145,7 +145,7 @@ class Reaction:
     def burst_colours(self) -> List[Colour]:
         """List[:class:`Colour`]: The HEX colours used for a burst reaction.
 
-        .. versionadded:: 3.0
+        .. versionadded:: 3.2
         """
         return [Colour(value=int(c.strip("#"), base=16)) for c in self._burst_colours]
 
@@ -153,7 +153,7 @@ class Reaction:
     def burst_colors(self) -> List[Colour]:
         """List[:class:`Colour`]: An alias of :attr:`.burst_colours`.
 
-        .. versionadded:: 3.0
+        .. versionadded:: 3.2
         """
         return self.burst_colours
 
@@ -240,7 +240,7 @@ class Reaction:
             The type of reactions to return.
             Defaults to `~ReactionType.normal` if not provided.
 
-            .. versionadded:: 3.0
+            .. versionadded:: 3.2
 
         Raises
         ------
