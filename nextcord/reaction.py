@@ -40,8 +40,8 @@ class ReactionCountDetails:
     __slots__ = ("burst", "normal")
 
     def __init__(self, data: ReactionCountDetailsPayload) -> None:
-        self.burst: int = data.get("burst")
-        self.normal: int = data.get("normal")
+        self.burst: int = data["burst"]
+        self.normal: int = data["normal"]
 
 
 class Reaction:
@@ -91,14 +91,14 @@ class Reaction:
     """
 
     __slots__ = (
-        "message",
+        "_burst_colours",
+        "_cs_burst_colours",
         "count",
+        "count_details",
         "emoji",
         "me",
         "me_burst",
-        "count_details",
-        "_burst_colours",
-        "_cs_burst_colours",
+        "message",
     )
 
     def __init__(
@@ -115,9 +115,7 @@ class Reaction:
         self.count: int = data.get("count", 1)
         self.me: bool = data.get("me")
         self.me_burst: bool = data.get("me_burst")
-        self.count_details: ReactionCountDetails = ReactionCountDetails(
-            data=data.get("count_details")
-        )
+        self.count_details: ReactionCountDetails = ReactionCountDetails(data=data["count_details"])
 
         self._burst_colours: List[str] = data.get("burst_colors")
 
