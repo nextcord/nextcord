@@ -1856,6 +1856,21 @@ class HTTPClient:
             retry_request=retry_request,
         )
 
+    def bulk_ban(
+        self,
+        user_ids: List[Snowflake],
+        guild_id: Snowflake,
+        delete_message_seconds: int = 0,
+        reason: Optional[str] = None,
+        *,
+        auth: Optional[str] = MISSING,
+        retry_request: bool = True,
+    ) -> Response[guild.BulkBan]:
+        r = Route("POST", "/guilds/{guild_id}/bulk-ban", guild_id=guild_id)
+        data = {"user_ids": user_ids, "delete_message_seconds": delete_message_seconds}
+
+        return self.request(r, json=data, reason=reason, auth=auth, retry_request=retry_request)
+
     def unban(
         self,
         user_id: Snowflake,
@@ -3137,6 +3152,8 @@ class HTTPClient:
             retry_request=retry_request,
         )
 
+    # Guild Emojis
+
     def get_all_custom_emojis(
         self,
         guild_id: Snowflake,
@@ -3223,6 +3240,101 @@ class HTTPClient:
             r,
             json=payload,
             reason=reason,
+            auth=auth,
+            retry_request=retry_request,
+        )
+
+    # Application Emojis
+
+    def list_application_emojis(
+        self,
+        application_id: Snowflake,
+        *,
+        auth: Optional[str] = MISSING,
+        retry_request: bool = True,
+    ) -> Response[emoji.ListApplicationEmojis]:
+        return self.request(
+            Route("GET", "/applications/{application_id}/emojis", application_id=application_id),
+            auth=auth,
+            retry_request=retry_request,
+        )
+
+    def get_application_emoji(
+        self,
+        application_id: Snowflake,
+        emoji_id: Snowflake,
+        *,
+        auth: Optional[str] = MISSING,
+        retry_request: bool = True,
+    ) -> Response[emoji.Emoji]:
+        return self.request(
+            Route(
+                "GET",
+                "/applications/{application_id}/emojis/{emoji_id}",
+                application_id=application_id,
+                emoji_id=emoji_id,
+            ),
+            auth=auth,
+            retry_request=retry_request,
+        )
+
+    def create_application_emoji(
+        self,
+        application_id: Snowflake,
+        name: str,
+        image: str | None = None,
+        *,
+        auth: Optional[str] = MISSING,
+        retry_request: bool = True,
+    ) -> Response[emoji.Emoji]:
+        payload = {
+            "name": name,
+            "image": image,
+        }
+
+        return self.request(
+            Route("POST", "/applications/{application_id}/emojis", application_id=application_id),
+            json=payload,
+            auth=auth,
+            retry_request=retry_request,
+        )
+
+    def edit_application_emoji(
+        self,
+        application_id: Snowflake,
+        emoji_id: Snowflake,
+        *,
+        payload: dict[str, Any],
+        auth: Optional[str] = MISSING,
+        retry_request: bool = True,
+    ) -> Response[emoji.Emoji]:
+        return self.request(
+            Route(
+                "PATCH",
+                "/applications/{application_id}/emojis/{emoji_id}",
+                application_id=application_id,
+                emoji_id=emoji_id,
+            ),
+            json=payload,
+            auth=auth,
+            retry_request=retry_request,
+        )
+
+    def delete_application_emoji(
+        self,
+        application_id: Snowflake,
+        emoji_id: Snowflake,
+        *,
+        auth: Optional[str] = MISSING,
+        retry_request: bool = True,
+    ) -> Response[None]:
+        return self.request(
+            Route(
+                "DELETE",
+                "/applications/{application_id}/emojis/{emoji_id}",
+                application_id=application_id,
+                emoji_id=emoji_id,
+            ),
             auth=auth,
             retry_request=retry_request,
         )
@@ -3507,6 +3619,20 @@ class HTTPClient:
             retry_request=retry_request,
         )
 
+    def get_role(
+        self,
+        guild_id: Snowflake,
+        role_id: Snowflake,
+        *,
+        auth: Optional[str] = MISSING,
+        retry_request: bool = True,
+    ) -> Response[role.Role]:
+        return self.request(
+            Route("GET", "/guilds/{guild_id}/roles/{role_id}", guild_id=guild_id, role_id=role_id),
+            auth=auth,
+            retry_request=retry_request,
+        )
+
     def edit_role(
         self,
         guild_id: Snowflake,
@@ -3755,6 +3881,8 @@ class HTTPClient:
             "channel_id",
             "topic",
             "privacy_level",
+            "send_start_notification",
+            "guild_scheduled_event_id",
         )
         payload = {k: v for k, v in payload.items() if k in valid_keys}
 
@@ -4490,7 +4618,7 @@ class HTTPClient:
     ) -> Response[scheduled_events.ScheduledEvent]:
         valid_keys = {
             "channel_id",
-            "event_metadata",
+            "entity_metadata",
             "name",
             "privacy_level",
             "scheduled_start_time",

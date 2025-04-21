@@ -63,13 +63,20 @@ class Emoji(_EmojiTag, AssetMixin):
         Whether an emoji is animated or not.
     managed: :class:`bool`
         If this emoji is managed by a Twitch integration.
-    guild_id: :class:`int`
-        The guild ID the emoji belongs to.
+    guild_id: Optional[:class:`int`]
+        The guild ID the emoji belongs to, if applicable. This is ```None`` for application emojis.
+
+        .. versionchanged:: 3.1
+            This attribute is now optional to account for application emojis.
     available: :class:`bool`
         Whether the emoji is available for use.
     user: Optional[:class:`User`]
         The user that created the emoji. This can only be retrieved using :meth:`Guild.fetch_emoji` and
         having the :attr:`~Permissions.manage_emojis` permission.
+    application_id: Optional[:class:`int`]
+        The ID of the application that this emoji belongs to, if applicable. This is ```None`` for guild emojis.
+
+        .. versionadded:: 3.1
     """
 
     __slots__: Tuple[str, ...] = (
@@ -83,12 +90,19 @@ class Emoji(_EmojiTag, AssetMixin):
         "_state",
         "user",
         "available",
+        "application_id",
     )
 
     def __init__(
-        self, *, guild: Union[Guild, GuildPreview], state: ConnectionState, data: EmojiPayload
+        self,
+        *,
+        state: ConnectionState,
+        data: EmojiPayload,
+        guild: Union[Guild, GuildPreview, None] = None,
+        application_id: Optional[int] = None,
     ) -> None:
-        self.guild_id: int = guild.id
+        self.guild_id: int | None = guild.id if guild else None
+        self.application_id: int | None = application_id
         self._state: ConnectionState = state
         self._from_data(data)
 
@@ -148,25 +162,33 @@ class Emoji(_EmojiTag, AssetMixin):
         If roles is empty, the emoji is unrestricted.
         """
         guild = self.guild
-        if guild is None:  # pyright: ignore[reportUnnecessaryComparison]
+        if guild is None:
             return []
 
         return [role for role in guild.roles if self._roles.has(role.id)]
 
     @property
-    def guild(self) -> Guild:
-        """:class:`Guild`: The guild this emoji belongs to."""
-        return self._state._get_guild(self.guild_id)  # type: ignore
+    def guild(self) -> Guild | None:
+        """:class:`Guild`: The guild this emoji belongs to, if applicable."""
+        return self._state._get_guild(self.guild_id)
 
     def is_usable(self) -> bool:
         """:class:`bool`: Whether the bot can use this emoji.
 
         .. versionadded:: 1.3
+
+        .. versionchanged:: 3.1
+            This now accounts for application emojis as well by comparing the application ID.
         """
         if not self.available:
             return False
+        if self.is_application_emoji() and self.application_id != self._state.application_id:
+            return False
+        if self.guild is None:
+            return False
         if not self._roles:
             return True
+
         emoji_roles, my_roles = self._roles, self.guild.me._roles
         return any(my_roles.has(role_id) for role_id in emoji_roles)
 
@@ -183,15 +205,26 @@ class Emoji(_EmojiTag, AssetMixin):
         reason: Optional[:class:`str`]
             The reason for deleting this emoji. Shows up on the audit log.
 
+            This is only available when deleting an emoji in a guild.
+
         Raises
         ------
         Forbidden
             You are not allowed to delete emojis.
         HTTPException
             An error occurred deleting the emoji.
+        ValueError
+            The emoji does not belong to a guild or application.
         """
+        if self.guild is None and self.application_id is None:
+            raise ValueError("Cannot delete an emoji without a guild_id or application_id.")
 
-        await self._state.http.delete_custom_emoji(self.guild.id, self.id, reason=reason)
+        if self.application_id is not None:
+            await self._state.http.delete_application_emoji(self.application_id, self.id)
+            return
+
+        if self.guild is not None:
+            await self._state.http.delete_custom_emoji(self.guild.id, self.id, reason=reason)
 
     async def edit(
         self, *, name: str = MISSING, roles: List[Snowflake] = MISSING, reason: Optional[str] = None
@@ -212,8 +245,12 @@ class Emoji(_EmojiTag, AssetMixin):
             The new emoji name.
         roles: Optional[List[:class:`~nextcord.abc.Snowflake`]]
             A list of roles that can use this emoji. An empty list can be passed to make it available to everyone.
+
+            This is only available when editing an emoji in a guild.
         reason: Optional[:class:`str`]
             The reason for editing this emoji. Shows up on the audit log.
+
+            This is only available when editing an emoji in a guild.
 
         Raises
         ------
@@ -221,20 +258,42 @@ class Emoji(_EmojiTag, AssetMixin):
             You are not allowed to edit emojis.
         HTTPException
             An error occurred editing the emoji.
+        ValueError
+            The emoji does not belong to a guild or application
 
         Returns
         -------
         :class:`Emoji`
             The newly updated emoji.
         """
+        if self.guild is None and self.application_id is None:
+            raise ValueError("Cannot edit an emoji without a guild_id or application_id.")
 
         payload = {}
         if name is not MISSING:
             payload["name"] = name
+
+        if self.application_id is not None:
+            data = await self._state.http.edit_application_emoji(
+                self.application_id, self.id, payload=payload
+            )
+            return Emoji(state=self._state, data=data, application_id=self.application_id)
+
         if roles is not MISSING:
             payload["roles"] = [role.id for role in roles]
 
-        data = await self._state.http.edit_custom_emoji(
-            self.guild.id, self.id, payload=payload, reason=reason
-        )
-        return Emoji(guild=self.guild, data=data, state=self._state)
+        if self.guild is not None:
+            data = await self._state.http.edit_custom_emoji(
+                self.guild.id, self.id, payload=payload, reason=reason
+            )
+            return Emoji(guild=self.guild, data=data, state=self._state)
+
+        raise ValueError("Cannot edit an emoji without a guild_id or application_id.")
+
+    def is_application_emoji(self) -> bool:
+        """:class:`bool`: Whether the emoji is an application emoji."""
+        return self.application_id is not None
+
+    def is_guild_emoji(self) -> bool:
+        """:class:`bool`: Whether the emoji is a guild emoji."""
+        return self.guild is not None

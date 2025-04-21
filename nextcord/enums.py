@@ -52,6 +52,7 @@ __all__ = (
     "InviteType",
     "IntegrationType",
     "InteractionContextType",
+    "MessageReferenceType",
 )
 
 
@@ -2080,6 +2081,18 @@ class InteractionContextType(IntEnum):
     """The :class:`BaseApplicationCommand` can be used within Group DMs and DMs other than the app's bot user, or the :class:`Interaction` originates from such channels."""
 
 
+class MessageReferenceType(IntEnum):
+    """Represents the type of reference that a message is.
+
+    .. versionadded:: 3.0
+    """
+
+    default = 0
+    """The reference is used as a reply."""
+    forward = 1
+    """The reference is used to point to a message."""
+
+
 T = TypeVar("T")
 
 
@@ -2090,6 +2103,6 @@ def try_enum(cls: Type[T], val: Any) -> T:
     """
 
     try:
-        return cls(val)
+        return cls(val)  # pyright: ignore[reportCallIssue]
     except ValueError:
         return UnknownEnumValue(name=f"unknown_{val}", value=val)  # type: ignore
