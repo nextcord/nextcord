@@ -52,6 +52,7 @@ __all__ = (
 if TYPE_CHECKING:
     from aiohttp import ClientSession
 
+    from . import componentsv2 as compv2
     from .abc import MessageableChannel
     from .application_command import BaseApplicationCommand, SlashApplicationSubcommand
     from .channel import CategoryChannel, ForumChannel, StageChannel, TextChannel, VoiceChannel
@@ -810,6 +811,7 @@ class InteractionResponse:
         flags: Optional[MessageFlags] = None,
         ephemeral: Optional[bool] = None,
         suppress_embeds: Optional[bool] = None,
+        components: list[compv2.Component] | None = None,
     ) -> PartialInteractionMessage:
         """|coro|
 
@@ -918,6 +920,9 @@ class InteractionResponse:
             flags.suppress_embeds = suppress_embeds
         if ephemeral is not None:
             flags.ephemeral = ephemeral
+        if components is not None:
+            flags.is_components_v2 = True
+            payload["components"] = [comp.to_dict() for comp in components]
 
         if flags.value != 0:
             payload["flags"] = flags.value
