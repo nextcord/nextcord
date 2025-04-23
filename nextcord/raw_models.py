@@ -8,6 +8,8 @@ from typing import TYPE_CHECKING, List, Optional, Set
 from .user import User
 
 if TYPE_CHECKING:
+    from .colour import Colour
+    from .enums import ReactionType
     from .guild import Guild
     from .member import Member
     from .message import Message
@@ -148,6 +150,10 @@ class RawReactionActionEvent(_RawReprMixin):
         The member who added the reaction. Only available if ``event_type`` is ``REACTION_ADD`` and the reaction is inside a guild.
 
         .. versionadded:: 1.3
+    burst: :class:`bool`
+        If the reaction is a super/burst reaction.
+
+        .. versionadded:: 3.2
 
     event_type: :class:`str`
         The event type that triggered this action. Can be
@@ -157,7 +163,18 @@ class RawReactionActionEvent(_RawReprMixin):
         .. versionadded:: 1.3
     """
 
-    __slots__ = ("message_id", "user_id", "channel_id", "guild_id", "emoji", "event_type", "member")
+    __slots__ = (
+        "message_id",
+        "user_id",
+        "channel_id",
+        "guild_id",
+        "emoji",
+        "event_type",
+        "member",
+        "burst",
+        "burst_colors",
+        "type",
+    )
 
     def __init__(self, data: ReactionActionEvent, emoji: PartialEmoji, event_type: str) -> None:
         self.message_id: int = int(data["message_id"])
@@ -167,6 +184,13 @@ class RawReactionActionEvent(_RawReprMixin):
         self.event_type: str = event_type
         self.member: Optional[Member] = None
         self.guild_id: Optional[int] = int(data["guild_id"]) if "guild_id" in data else None
+        self.burst: bool = data["burst"]
+        self.type: ReactionType = data["type"]
+
+        if _burst_colors := data.get("burst_colors"):
+            self.burst_colors: Optional[List[Colour]] = [
+                Colour(value=int(c.strip("#"), base=16)) for c in _burst_colors
+            ]
 
 
 class RawReactionClearEvent(_RawReprMixin):
