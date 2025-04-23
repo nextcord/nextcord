@@ -44,6 +44,8 @@ if TYPE_CHECKING:
     )
     from .user import ClientUser
 
+    nacl = MISSING
+
 
 has_nacl: bool
 
