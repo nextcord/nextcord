@@ -1829,6 +1829,7 @@ class ButtonStyle(IntEnum):
     """Represents a red button for dangerous actions."""
     link = 5
     """Represents a link button."""
+    premium = 6
 
     # Aliases
     blurple = 1

@@ -20,7 +20,7 @@ from typing import (
     Union,
 )
 
-from . import utils
+from . import componentsv2 as compv2, utils
 from .channel import ChannelType, PartialMessageable
 from .embeds import Embed
 from .enums import (
@@ -52,7 +52,6 @@ __all__ = (
 if TYPE_CHECKING:
     from aiohttp import ClientSession
 
-    from . import componentsv2 as compv2
     from .abc import MessageableChannel
     from .application_command import BaseApplicationCommand, SlashApplicationSubcommand
     from .channel import CategoryChannel, ForumChannel, StageChannel, TextChannel, VoiceChannel
@@ -961,6 +960,18 @@ class InteractionResponse:
                 view.timeout = 15 * 60.0
 
             self._parent._state.store_view(view)
+
+        if components is not None and (
+            inter_comps := compv2.get_interactive_components(components)
+        ):
+            comp_tasks = set()
+            for inter_comp in inter_comps:
+                if inter_comp.callback is not None:
+                    comp_task = asyncio.create_task(
+                        inter_comp._wait_for_interaction(self._parent._state._get_client())
+                    )
+                    comp_tasks.add(comp_task)
+                    comp_task.add_done_callback(comp_tasks.discard)
 
         self._responded = True
 
