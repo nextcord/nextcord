@@ -2,19 +2,25 @@
 
 from __future__ import annotations
 
-import asyncio
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
+from .application_command import (
+    get_users_from_interaction,
+)  # TODO: Move this somewhere else, this is dumb.
 from .enums import ButtonStyle, ComponentType, InteractionType, try_enum
 from .utils import MISSING
 
 if TYPE_CHECKING:
-    from typing import Any, Awaitable, Callable, Literal
+    from collections.abc import Callable
+    from typing import Any, Coroutine, Literal
 
     from .client import Client
     from .interactions import Interaction
+    from .member import Member
     from .partial_emoji import PartialEmoji
+    from .types import interactions as inter_payloads
+    from .user import User
 
 
 # TODO: This is just a draft, ignore the fact that it's not in the components file rn. I don't want to break views or
@@ -47,34 +53,39 @@ class Component:
 
 
 class InteractiveComponent(Component):
-    """Base class for components that should have an async callback associated with them.
+    """Base class for components that have a custom_id and should have callback-related helper funcs.
 
     This class is intended to be abstract and not instantiated.
     """
 
-    callback: Callable[[Interaction], Awaitable[Any]] | None
     custom_id: str  # Can be MISSING
 
     def __init__(
         self,
-        callback: Callable[[Interaction], Awaitable[Any]] | None,
         custom_id: str | None = MISSING,
         *,
         component_type: int | ComponentType,
         component_id: int = MISSING,
     ) -> None:
         super().__init__(component_type=component_type, component_id=component_id)
-        self.callback = callback
         if custom_id is None:
             self.custom_id = os.urandom(16).hex()  # TODO: Use UUID lib instead?
         else:
             self.custom_id = custom_id
 
-    # TODO: I'm vaguely unhappy with this entire thing. I'm not sure if "InteractiveComponent" should even exist, but
-    #  not having some sort of callback-able class seems too low level/simple IMO.
-    async def _wait_for_interaction(self, bot: Client, timeout: float | None = 180.0) -> None:
-        if self.callback is None:
-            raise ValueError("Missing callback to trigger on matching interaction.")
+    def _get_args_from_interaction[
+        ClientT: Client, *T
+    ](self, interaction: Interaction[ClientT]) -> tuple[Interaction[ClientT], *T]:
+        return (interaction,)
+
+    async def wait_for_interaction[
+        ClientT: Client, *T
+    ](
+        self,
+        bot: Client,
+        callback: Callable[[Interaction[ClientT], *T], Coroutine[None, None, Any]],
+        timeout: float | None = 180.0,
+    ) -> None:
         if self.custom_id is MISSING:
             raise ValueError("Missing custom_id to match with interaction.")
 
@@ -85,12 +96,18 @@ class InteractiveComponent(Component):
                 and inter.data.get("custom_id", None) == self.custom_id
             )
 
-        try:
-            interaction = await bot.wait_for("interaction", check=inter_check, timeout=timeout)
-        except asyncio.TimeoutError:
-            pass
-        else:
-            await self.callback(interaction)
+        interaction: Interaction[ClientT] = await bot.wait_for(
+            "interaction", check=inter_check, timeout=timeout
+        )
+        args = self._get_args_from_interaction(interaction)
+        await callback(*args)
+
+    def to_dict(self) -> dict:
+        ret = super().to_dict()
+        if self.custom_id is not MISSING:
+            ret["custom_id"] = self.custom_id
+
+        return ret
 
 
 def get_interactive_components(components: list[Component]) -> set[InteractiveComponent]:
@@ -144,7 +161,7 @@ class ActionRow(HolderComponent):  # Component type 1
 
 
 # TODO: Think about moving Premium and Link buttons to a "NoninteractiveButtonComponent" thing?
-class ButtonComponent(InteractiveComponent):
+class ButtonComponent(InteractiveComponent):  # Component type 2
     style: ButtonStyle
     label: str  # Can be MISSING
     emoji: PartialEmoji  # Can be MISSING
@@ -155,7 +172,6 @@ class ButtonComponent(InteractiveComponent):
     def __init__(
         self,
         style: ButtonStyle | int,
-        callback: Callable[[Interaction], Awaitable[Any]] | None = None,
         *,
         label: str = MISSING,
         emoji: PartialEmoji = MISSING,
@@ -165,9 +181,7 @@ class ButtonComponent(InteractiveComponent):
         disabled: bool = MISSING,
         component_id: int = MISSING,
     ) -> None:
-        super().__init__(
-            callback, custom_id, component_type=ComponentType.button, component_id=component_id
-        )
+        super().__init__(custom_id, component_type=ComponentType.button, component_id=component_id)
         if isinstance(style, ButtonStyle):
             self.style = style
         else:
@@ -188,10 +202,6 @@ class ButtonComponent(InteractiveComponent):
         if self.emoji is not MISSING:
             ret["emoji"] = self.emoji.to_dict()
 
-        # Normally custom_id is required, but Link (style 5) and Premium (style 6) buttons are not allowed to have it.
-        if self.custom_id is not MISSING:
-            ret["custom_id"] = self.custom_id
-
         if self.sku_id is not MISSING:
             ret["sku_id"] = self.sku_id
 
@@ -203,11 +213,20 @@ class ButtonComponent(InteractiveComponent):
 
         return ret
 
+    async def wait_for_interaction[
+        ClientT: Client
+    ](
+        self,
+        bot: Client,
+        callback: Callable[[Interaction[ClientT]], Coroutine[None, None, Any]],
+        timeout: float | None = 180.0,
+    ) -> None:
+        return await super().wait_for_interaction(bot, callback, timeout)
+
     @classmethod
     def as_primary(  # Style 1
         cls,
         custom_id: str | None = None,
-        callback: Callable[[Interaction], Awaitable[Any]] | None = None,
         *,
         label: str = MISSING,
         emoji: PartialEmoji = MISSING,
@@ -216,7 +235,6 @@ class ButtonComponent(InteractiveComponent):
     ):
         return cls(
             style=ButtonStyle.primary,
-            callback=callback,
             custom_id=custom_id,
             label=label,
             emoji=emoji,
@@ -228,7 +246,6 @@ class ButtonComponent(InteractiveComponent):
     def as_secondary(  # Style 2
         cls,
         custom_id: str | None = None,
-        callback: Callable[[Interaction], Awaitable[Any]] | None = None,
         *,
         label: str = MISSING,
         emoji: PartialEmoji = MISSING,
@@ -237,7 +254,6 @@ class ButtonComponent(InteractiveComponent):
     ):
         return cls(
             style=ButtonStyle.secondary,
-            callback=callback,
             custom_id=custom_id,
             label=label,
             emoji=emoji,
@@ -249,7 +265,6 @@ class ButtonComponent(InteractiveComponent):
     def as_success(  # Style 3
         cls,
         custom_id: str | None = None,
-        callback: Callable[[Interaction], Awaitable[Any]] | None = None,
         *,
         label: str = MISSING,
         emoji: PartialEmoji = MISSING,
@@ -258,7 +273,6 @@ class ButtonComponent(InteractiveComponent):
     ):
         return cls(
             style=ButtonStyle.success,
-            callback=callback,
             custom_id=custom_id,
             label=label,
             emoji=emoji,
@@ -270,7 +284,6 @@ class ButtonComponent(InteractiveComponent):
     def as_danger(  # Style 4
         cls,
         custom_id: str | None = None,
-        callback: Callable[[Interaction], Awaitable[Any]] | None = None,
         *,
         label: str = MISSING,
         emoji: PartialEmoji = MISSING,
@@ -279,7 +292,6 @@ class ButtonComponent(InteractiveComponent):
     ):
         return cls(
             style=ButtonStyle.danger,
-            callback=callback,
             custom_id=custom_id,
             label=label,
             emoji=emoji,
@@ -299,7 +311,6 @@ class ButtonComponent(InteractiveComponent):
     ):
         return cls(
             style=ButtonStyle.link,
-            callback=None,
             url=url,
             label=label,
             emoji=emoji,
@@ -313,11 +324,82 @@ class ButtonComponent(InteractiveComponent):
     ):  # Style 6
         return cls(
             style=ButtonStyle.premium,
-            callback=None,
             sku_id=sku_id,
             disabled=disabled,
             component_id=component_id,
         )
+
+
+class UserSelect(InteractiveComponent):
+    placeholder: str  # Can be MISSING
+    default_values: list  # Can be MISSING  # TODO: Fill the list part in.
+    min_values: int  # Can be MISSING
+    max_values: int  # Can be MISSING
+    disabled: bool  # Can be MISSING
+
+    def __init__(
+        self,
+        custom_id: str | None = None,
+        *,
+        placeholder: str = MISSING,
+        default_values: list = MISSING,
+        min_values: int = MISSING,
+        max_values: int = MISSING,
+        disabled: bool = MISSING,
+        component_id: int = MISSING,
+    ) -> None:
+        super().__init__(
+            custom_id, component_type=ComponentType.user_select, component_id=component_id
+        )
+        self.placeholder = placeholder
+        self.default_values = default_values
+        self.min_values = min_values
+        self.max_values = max_values
+        self.disabled = disabled
+
+    def _get_args_from_interaction[
+        ClientT: Client
+    ](self, interaction: Interaction[ClientT]) -> tuple[
+        Interaction[ClientT], tuple[User | Member, ...]
+    ]:
+        resolved_peeps = get_users_from_interaction(interaction._state, interaction)
+        resolved_dict = {peep.id: peep for peep in resolved_peeps}
+        interaction.data = cast(inter_payloads.ComponentInteractionData, interaction.data)
+        if "values" in interaction.data:
+            return interaction, tuple(
+                [resolved_dict[int(val)] for val in interaction.data["values"]]
+            )
+        raise ValueError("Interaction data does not include values key.")
+
+    async def wait_for_interaction[
+        ClientT: Client
+    ](
+        self,
+        bot: Client,
+        callback: Callable[
+            [Interaction[ClientT], tuple[User | Member, ...]], Coroutine[None, None, Any]
+        ],
+        timeout: float | None = 180.0,
+    ) -> None:
+        return await super().wait_for_interaction(bot, callback, timeout)
+
+    def to_dict(self) -> dict:
+        ret = super().to_dict()
+        if self.placeholder is not MISSING:
+            ret["placeholder"] = self.placeholder
+
+        # if self.default_values is not MISSING:  # TODO: Add this.
+
+        if self.min_values is not MISSING:
+            ret["min_values"] = self.min_values
+
+        if self.max_values is not MISSING:
+            ret["max_values"] = self.max_values
+
+        if self.disabled is not MISSING:
+            ret["disabled"] = self.disabled
+
+        return ret
 
 
 class Section(HolderComponent):  # Component type 9
