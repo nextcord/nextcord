@@ -9,6 +9,7 @@ from .application_command import (
     get_users_from_interaction,
 )  # TODO: Move this somewhere else, this is dumb.
 from .enums import ButtonStyle, ComponentType, InteractionType, try_enum
+from .types import interactions as inter_payloads
 from .utils import MISSING
 
 if TYPE_CHECKING:
@@ -19,7 +20,6 @@ if TYPE_CHECKING:
     from .interactions import Interaction
     from .member import Member
     from .partial_emoji import PartialEmoji
-    from .types import interactions as inter_payloads
     from .user import User
 
 
@@ -73,34 +73,41 @@ class InteractiveComponent(Component):
         else:
             self.custom_id = custom_id
 
-    def _get_args_from_interaction[
-        ClientT: Client, *T
-    ](self, interaction: Interaction[ClientT]) -> tuple[Interaction[ClientT], *T]:
-        return (interaction,)
-
-    async def wait_for_interaction[
+    async def _wait_for_interaction[
         ClientT: Client, *T
     ](
         self,
-        bot: Client,
+        bot: ClientT,
         callback: Callable[[Interaction[ClientT], *T], Coroutine[None, None, Any]],
         timeout: float | None = 180.0,
-    ) -> None:
+        *,
+        _inter_arg_func: Callable[[Interaction[ClientT]], tuple[Interaction[ClientT], *T]],
+    ):
         if self.custom_id is MISSING:
             raise ValueError("Missing custom_id to match with interaction.")
 
-        def inter_check(inter: Interaction[Client]) -> bool:
+        def inter_check(inter: Interaction[ClientT]) -> bool:
             return (
                 inter.type == InteractionType.component
-                and inter.data
+                and inter.data is not None
                 and inter.data.get("custom_id", None) == self.custom_id
             )
 
         interaction: Interaction[ClientT] = await bot.wait_for(
             "interaction", check=inter_check, timeout=timeout
         )
-        args = self._get_args_from_interaction(interaction)
-        await callback(*args)
+        args = _inter_arg_func(interaction)
+        return await callback(*args)
+
+    async def wait_for_interaction(
+        self,
+        bot: Client,
+        callback: Callable[..., Coroutine[None, None, Any]],
+        timeout: float | None = 180.0,
+    ):
+        return await self._wait_for_interaction(
+            bot, callback, timeout, _inter_arg_func=lambda i: (i,)
+        )
 
     def to_dict(self) -> dict:
         ret = super().to_dict()
@@ -217,11 +224,13 @@ class ButtonComponent(InteractiveComponent):  # Component type 2
         ClientT: Client
     ](
         self,
-        bot: Client,
+        bot: ClientT,
         callback: Callable[[Interaction[ClientT]], Coroutine[None, None, Any]],
         timeout: float | None = 180.0,
-    ) -> None:
-        return await super().wait_for_interaction(bot, callback, timeout)
+    ):
+        return await super()._wait_for_interaction(
+            bot, callback, timeout, _inter_arg_func=lambda i: (i,)
+        )
 
     @classmethod
     def as_primary(  # Style 1
@@ -357,31 +366,27 @@ class UserSelect(InteractiveComponent):
         self.max_values = max_values
         self.disabled = disabled
 
-    def _get_args_from_interaction[
-        ClientT: Client
-    ](self, interaction: Interaction[ClientT]) -> tuple[
-        Interaction[ClientT], tuple[User | Member, ...]
-    ]:
-        resolved_peeps = get_users_from_interaction(interaction._state, interaction)
-        resolved_dict = {peep.id: peep for peep in resolved_peeps}
-        interaction.data = cast(inter_payloads.ComponentInteractionData, interaction.data)
-        if "values" in interaction.data:
-            return interaction, tuple(
-                [resolved_dict[int(val)] for val in interaction.data["values"]]
-            )
-        raise ValueError("Interaction data does not include values key.")
-
     async def wait_for_interaction[
         ClientT: Client
     ](
         self,
-        bot: Client,
+        bot: ClientT,
         callback: Callable[
             [Interaction[ClientT], tuple[User | Member, ...]], Coroutine[None, None, Any]
         ],
         timeout: float | None = 180.0,
-    ) -> None:
-        return await super().wait_for_interaction(bot, callback, timeout)
+    ):
+        def inter_arg_func(inter: Interaction[ClientT]):
+            resolved_peeps = get_users_from_interaction(inter._state, inter)
+            resolved_dict = {peep.id: peep for peep in resolved_peeps}
+            inter.data = cast(inter_payloads.ComponentInteractionData, inter.data)
+            if "values" in inter.data:
+                return inter, tuple([resolved_dict[int(val)] for val in inter.data["values"]])
+            raise ValueError("Interaction data does not include values key.")
+
+        return await super()._wait_for_interaction(
+            bot, callback, timeout, _inter_arg_func=inter_arg_func
+        )
 
     def to_dict(self) -> dict:
         ret = super().to_dict()
