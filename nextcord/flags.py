@@ -218,6 +218,22 @@ class SystemChannelFlags(BaseFlags):
         """
         return 8
 
+    @flag_value
+    def role_subscription_purchase_notifications(self) -> int:
+        """:class:`bool`: Returns ``True`` if the system channel is used for role subscription purchase notifications.
+
+        .. versionadded:: 3.2
+        """
+        return 16
+
+    @flag_value
+    def role_subscription_purchase_notification_replies(self) -> int:
+        """:class:`bool`: Returns ``True`` if the button to reply with a sticker to role subscription purchase notifications is shown.
+
+        .. versionadded:: 3.2
+        """
+        return 32
+
 
 @fill_with_flags()
 class ChannelFlags(BaseFlags):
@@ -376,6 +392,14 @@ class MessageFlags(BaseFlags):
         .. versionadded:: 2.6
         """
         return 1 << 12
+
+    @flag_value
+    def is_voice_message(self) -> int:
+        """:class:`bool`: Returns ``True`` if the message is a voice message.
+
+        .. versionadded:: 3.0
+        """
+        return 1 << 13
 
 
 @fill_with_flags()

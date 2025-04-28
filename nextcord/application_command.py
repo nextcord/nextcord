@@ -19,6 +19,7 @@ from typing import (
     List,
     Literal,
     Optional,
+    Self,
     Set,
     Tuple,
     Type,
@@ -120,6 +121,7 @@ DEFAULT_SLASH_DESCRIPTION = "No description provided."
 
 T = TypeVar("T")
 FuncT = TypeVar("FuncT", bound=Callable[..., Any])
+CmdT = TypeVar("CmdT", bound="Union[BaseApplicationCommand, SlashApplicationCommand]")
 # As nextcord.types exist, we cannot import types
 if TYPE_CHECKING:
     EllipsisType = ellipsis  # noqa: F821
@@ -170,6 +172,14 @@ class CallbackWrapper:
         async def test(interaction):
             await interaction.send("The description of this command should be in all uppercase!")
     """
+
+    @overload
+    def __new__(
+        cls, callback: Union[Callable, CallbackWrapper], *args: Any, **kwargs: Any
+    ) -> Self: ...
+
+    @overload
+    def __new__(cls, callback: CmdT, *args: Any, **kwargs: Any) -> CmdT: ...
 
     def __new__(
         cls,
@@ -950,13 +960,13 @@ class CallbackMixin:
 
         if can_run:
             if self._callback_before_invoke is not None:
-                await self._callback_before_invoke(interaction)  # type: ignore
+                await self._invoke_hook_param_check(self._callback_before_invoke, interaction)
 
             if (before_invoke := self.cog_before_invoke) is not None:
-                await before_invoke(interaction)  # type: ignore
+                await self._invoke_hook_param_check(before_invoke, interaction)
 
             if (before_invoke := interaction.client._application_command_before_invoke) is not None:
-                await before_invoke(interaction)
+                await self._invoke_hook_param_check(before_invoke, interaction)
 
             try:
                 await self(interaction, *args, **kwargs)
@@ -971,15 +981,24 @@ class CallbackMixin:
                 state.dispatch("application_command_completion", interaction)
             finally:
                 if self._callback_after_invoke is not None:
-                    await self._callback_after_invoke(interaction)  # type: ignore
+                    await self._invoke_hook_param_check(self._callback_after_invoke, interaction)
 
                 if (after_invoke := self.cog_after_invoke) is not None:
-                    await after_invoke(interaction)  # type: ignore
+                    await self._invoke_hook_param_check(after_invoke, interaction)
 
                 if (
                     after_invoke := interaction.client._application_command_after_invoke
                 ) is not None:
-                    await after_invoke(interaction)
+                    await self._invoke_hook_param_check(after_invoke, interaction)
+
+    async def _invoke_hook_param_check(
+        self, hook: ApplicationHook, interaction: Interaction
+    ) -> None:
+        # invoke with self parameter if it exists
+        if len(signature(hook).parameters) == 2:
+            await hook(self.parent_cog, interaction)  # type: ignore
+        else:
+            await hook(interaction)  # type: ignore
 
     async def invoke_callback(self, interaction: Interaction, *args, **kwargs) -> None:
         """|coro|
@@ -1959,6 +1978,14 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         :exc:`.ApplicationError` should be used. Note that if the checks fail then
         :exc:`.ApplicationCheckFailure` exception is raised to the :func:`.on_application_command_error`
         event.
+    integration_types: Optional[Iterable[Union[:class:`IntegrationType`, :class:`int`]]]
+        Where the command is available, only for globally-scoped commands.
+
+        .. versionadded:: 3.0
+    contexts: Optional[Iterable[Union[:class:`InteractionContextType`, :class:`int`]]]
+        Where the command can be used, only for globally-scoped commands.
+
+        .. versionadded:: 3.0
     """
 
     def __init__(

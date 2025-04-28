@@ -8,6 +8,7 @@ import time
 from typing import (
     TYPE_CHECKING,
     Any,
+    AsyncIterator,
     Callable,
     Dict,
     Iterable,
@@ -37,7 +38,7 @@ from .enums import (
 from .errors import ClientException, InvalidArgument
 from .file import File
 from .flags import ChannelFlags, MessageFlags
-from .iterators import ArchivedThreadIterator
+from .iterators import archived_thread_iterator
 from .mentions import AllowedMentions
 from .mixins import Hashable, PinsMixin
 from .object import Object
@@ -296,7 +297,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
     @overload
     async def edit(self) -> Optional[TextChannel]: ...
 
-    async def edit(self, *, reason: Optional[str] = None, **options):
+    async def edit(self, *, reason: Optional[str] = None, **options) -> Optional[TextChannel]:
         """|coro|
 
         Edits the channel.
@@ -794,8 +795,10 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
         joined: bool = False,
         limit: Optional[int] = 50,
         before: Optional[Union[Snowflake, datetime.datetime]] = None,
-    ) -> ArchivedThreadIterator:
-        """Returns an :class:`~nextcord.AsyncIterator` that iterates over all archived threads in the guild.
+    ) -> AsyncIterator[Thread]:
+        """|asynciter|
+
+        Returns an async iterator that iterates over all archived threads in the guild.
 
         You must have :attr:`~Permissions.read_message_history` to use this. If iterating over private threads
         then :attr:`~Permissions.manage_threads` is also required.
@@ -835,7 +838,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
             The archived threads.
         """
 
-        return ArchivedThreadIterator(
+        return archived_thread_iterator(
             self.id, self.guild, limit=limit, joined=joined, private=private, before=before
         )
 
@@ -1382,8 +1385,10 @@ class ForumChannel(abc.GuildChannel, Hashable):
         joined: bool = False,
         limit: Optional[int] = 50,
         before: Optional[Union[Snowflake, datetime.datetime]] = None,
-    ) -> ArchivedThreadIterator:
-        """Returns an :class:`~nextcord.AsyncIterator` that iterates over all archived threads in the guild.
+    ) -> AsyncIterator[Thread]:
+        """|asynciter|
+
+        Returns an async iterator that iterates over all archived threads in the guild.
 
         You must have :attr:`~Permissions.read_message_history` to use this.
         If iterating over private threads then :attr:`~Permissions.manage_threads` is also required.
@@ -1418,7 +1423,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
         :class:`Thread`
             The archived threads.
         """
-        return ArchivedThreadIterator(
+        return archived_thread_iterator(
             self.id, self.guild, limit=limit, joined=joined, private=private, before=before
         )
 
@@ -1749,7 +1754,7 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
     @overload
     async def edit(self) -> Optional[VoiceChannel]: ...
 
-    async def edit(self, *, reason: Optional[str] = None, **options):
+    async def edit(self, *, reason: Optional[str] = None, **options) -> Optional[VoiceChannel]:
         """|coro|
 
         Edits the channel.
@@ -2216,6 +2221,8 @@ class StageChannel(VocalGuildChannel, abc.Messageable):
         *,
         topic: str,
         privacy_level: StagePrivacyLevel = MISSING,
+        send_start_notification: bool = False,
+        scheduled_event: Snowflake = MISSING,
         reason: Optional[str] = None,
     ) -> StageInstance:
         """|coro|
@@ -2233,6 +2240,14 @@ class StageChannel(VocalGuildChannel, abc.Messageable):
             The stage instance's topic.
         privacy_level: :class:`StagePrivacyLevel`
             The stage instance's privacy level. Defaults to :attr:`StagePrivacyLevel.guild_only`.
+        send_start_notification: :class:`bool`
+            Whether to notify ``@everyone`` that the stage instance has started. Defaults to ``False``.
+
+            .. versionadded:: 3.0
+        scheduled_event: :class:`abc.Snowflake`
+            The scheduled event associated with this stage instance.
+
+            .. versionadded:: 3.0
         reason: :class:`str`
             The reason the stage instance was created. Shows up on the audit log.
 
@@ -2258,6 +2273,11 @@ class StageChannel(VocalGuildChannel, abc.Messageable):
                 raise InvalidArgument("privacy_level field must be of type PrivacyLevel")
 
             payload["privacy_level"] = privacy_level.value
+
+        if scheduled_event is not MISSING:
+            payload["guild_scheduled_event_id"] = scheduled_event.id
+
+        payload["send_start_notification"] = send_start_notification
 
         data = await self._state.http.create_stage_instance(**payload, reason=reason)
         return StageInstance(guild=self.guild, state=self._state, data=data)
@@ -2304,7 +2324,7 @@ class StageChannel(VocalGuildChannel, abc.Messageable):
     @overload
     async def edit(self) -> Optional[StageChannel]: ...
 
-    async def edit(self, *, reason: Optional[str] = None, **options):
+    async def edit(self, *, reason: Optional[str] = None, **options) -> Optional[StageChannel]:
         """|coro|
 
         Edits the channel.
@@ -2509,7 +2529,7 @@ class CategoryChannel(abc.GuildChannel, Hashable):
     @overload
     async def edit(self) -> Optional[CategoryChannel]: ...
 
-    async def edit(self, *, reason: Optional[str] = None, **options):
+    async def edit(self, *, reason: Optional[str] = None, **options) -> Optional[CategoryChannel]:
         """|coro|
 
         Edits the channel.

@@ -33,9 +33,10 @@ packages = [
     { include = "nextcord/ext/tasks" },
 ]
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.12"
 aiohttp = "^3.8.0"
 typing_extensions = "^4.2.0"
+audioop-lts = { version = "^0.2.1", python = "^3.13" }
 
 PyNaCl = { version = ">=1.3.0,<1.5", optional = true }
 orjson = { version = ">=3.5.4", optional = true }
@@ -55,13 +56,13 @@ brotlicffi = { version = "*", optional = true, markers = "platform_python_implem
 [tool.poetry.group.dev.dependencies]
 pre-commit = "3.5.0"
 taskipy = "1.10.3"
-slotscheck = "0.14.0"
+slotscheck = "0.19.1"
 python-dotenv = "0.20.0"
-pyright = "1.1.317"
+pyright = "1.1.391"
 sphinx_autobuild = "2021.3.14"
 
 [tool.poetry.group.docs.dependencies]
-sphinx = "5.2.3"
+sphinx = "6.2.0"
 sphinxcontrib-trio = "1.1.2"
 sphinxcontrib-websupport = "^1.2.4"
 
@@ -109,7 +110,7 @@ build-backend = "poetry_dynamic_versioning.backend"
 # credit to https://github.com/disnakeDev/disnake/blob/master/pyproject.toml for config
 [tool.black]
 line-length = 100
-target-version = ["py38", "py39", "py310", "py311", "py312"]
+target-version = ["py312", "py313"]
 
 
 [tool.taskipy.tasks]
@@ -138,7 +139,7 @@ exclude-modules = '''
 typeCheckingMode = "basic"
 include = ["nextcord", "docs", "*.py"]
 ignore = ["examples"]
-pythonVersion = "3.8"
+pythonVersion = "3.12"
 
 # https://github.com/microsoft/pyright/blob/main/docs/configuration.md
 reportInvalidStringEscapeSequence = false
@@ -168,6 +169,7 @@ ignore = [
     "ANN102",  # `cls` does not need a type annotation
     "ARG002",  # TODO:
     "ARG003",  # TODO:
+    "ASYNC109",# TODO:
     "B008",    # SlashOption() as default, it is okay (Annotated is technically better but verbose)
     "BLE",     # TODO:
     "C90",     # TODO:
@@ -204,7 +206,7 @@ ignore = [
     "UP",      # TODO:
 ]
 exclude = [".github/*"]
-target-version = "py38"
+target-version = "py312"
 
 [tool.ruff.per-file-ignores]
 "__init__.py" = [
