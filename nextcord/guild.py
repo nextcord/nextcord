@@ -226,6 +226,8 @@ class Guild(Hashable):
         - ``VERIFIED``: Guild is a verified server.
         - ``VIP_REGIONS``: Guild has VIP voice regions.
         - ``WELCOME_SCREEN_ENABLED``: Guild has enabled the welcome screen.
+        - ``ROLE_SUBSCRIPTIONS_ENABLED``: Guild has enabled role subscriptions.
+        - ``ROLE_SUBSCRIPTIONS_AVAILABLE_FOR_PURCHASE``: Guild has role subscriptions that can be purchased.
 
     premium_tier: :class:`int`
         The premium tier for this guild. Corresponds to "Boost Level" in the official UI.
