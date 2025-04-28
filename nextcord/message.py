@@ -933,9 +933,9 @@ class MessageCall:
         self._ended_timestamp: Optional[str] = data.get("ended_timestamp")
 
     @cached_slot_property("_cs_participants")
-    def participants(self) -> List[Optional[User]]:
+    def participants(self) -> List[User | Object]:
         """List[Optional[:class:`~User`]]: The list of users that participated in the call."""
-        return [self._state.get_user(p) for p in self._participants]
+        return [self._state.get_user(p) or Object(id=p) for p in self._participants]
 
     @property
     def ended_timestamp(self) -> Optional[datetime.datetime]:
