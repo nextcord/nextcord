@@ -1945,7 +1945,7 @@ class AutoModerationEventType(IntEnum):
     member_update = 2
     """A member edits their profile.
 
-    .. versionadded:: 3.0
+    .. versionadded:: 3.2
     """
 
 
@@ -1973,7 +1973,7 @@ class AutoModerationTriggerType(IntEnum):
     member_profile = 6
     """This rule checks if member profile contains words from a user defined list of keywords.
 
-    .. versionadded:: 3.0
+    .. versionadded:: 3.2
     """
 
 
@@ -2011,7 +2011,7 @@ class AutoModerationActionType(IntEnum):
     block_member_interaction = 4
     """Prevents a member from using text, voice, or other interactions.
 
-    .. versionadded:: 3.0
+    .. versionadded:: 3.2
     """
 
 
