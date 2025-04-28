@@ -102,7 +102,7 @@ class InteractiveComponent(Component):
     async def wait_for_interaction(
         self,
         bot: Client,
-        callback: Callable[..., Coroutine[None, None, Any]],
+        callback: Callable[[Interaction], Coroutine[None, None, Any]],
         timeout: float | None = 180.0,
     ):
         return await self._wait_for_interaction(
