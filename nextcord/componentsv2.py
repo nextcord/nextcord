@@ -7,8 +7,8 @@ from typing import TYPE_CHECKING, cast
 
 from .application_command import (
     get_users_from_interaction,
-)  # TODO: Move this somewhere else, this is dumb.
-from .enums import ButtonStyle, ComponentType, InteractionType, try_enum
+)  # TODO: Move this function outside of app cmds, it's dumb to keep it there IMO.
+from .enums import ButtonStyle, ComponentType, InteractionType, SelectDefaultValueType, try_enum
 from .types import interactions as inter_payloads
 from .utils import MISSING
 
@@ -30,7 +30,7 @@ if TYPE_CHECKING:
 class Component:
     """Base class for components.
 
-    This class is intended to be abstract and not instantiated.
+    This class is intended to be abstract, but will be used if no other component class is available.
     """
 
     type: ComponentType
@@ -44,12 +44,19 @@ class Component:
 
         self.id = component_id
 
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__} type={self.type} id={self.id} at {hex(id(self))}>"
+
     def to_dict(self) -> dict:
         ret = {"type": self.type.value}
         if self.id is not MISSING:
             ret["id"] = self.id
 
         return ret
+
+    @classmethod
+    def from_dict(cls, payload: dict):
+        return cls(component_type=payload["type"], component_id=payload["id"])
 
 
 class InteractiveComponent(Component):
@@ -166,9 +173,16 @@ class ActionRow(HolderComponent):  # Component type 1
             components, component_type=ComponentType.action_row, component_id=component_id
         )
 
+    @classmethod
+    def from_dict(cls, payload: dict):
+        return cls(
+            components=[resolve_component(comp_data) for comp_data in payload["components"]],
+            component_id=payload["id"],
+        )
 
-# TODO: Think about moving Premium and Link buttons to a "NoninteractiveButtonComponent" thing?
-class ButtonComponent(InteractiveComponent):  # Component type 2
+
+# TODO: Think about moving Premium and Link buttons to a "NoninteractiveButton" thing?
+class Button(InteractiveComponent):  # Component type 2
     style: ButtonStyle
     label: str  # Can be MISSING
     emoji: PartialEmoji  # Can be MISSING
@@ -219,6 +233,23 @@ class ButtonComponent(InteractiveComponent):  # Component type 2
             ret["disabled"] = self.disabled
 
         return ret
+
+    @classmethod
+    def from_dict(cls, payload: dict):
+        emoji = PartialEmoji.from_dict(payload["emoji"]) if "emoji" in payload else MISSING
+
+        return cls(
+            style=payload["style"],
+            label=payload.get("label", MISSING),
+            emoji=emoji,
+            custom_id=payload.get(
+                "custom_id", MISSING
+            ),  # Marked as required in Discord docs, but Premium cant have it
+            sku_id=payload.get("sku_id", MISSING),
+            url=payload.get("url", MISSING),
+            disabled=payload.get("disabled", MISSING),
+            component_id=payload["id"],
+        )
 
     async def wait_for_interaction[
         ClientT: Client
@@ -341,7 +372,7 @@ class ButtonComponent(InteractiveComponent):  # Component type 2
 
 class UserSelect(InteractiveComponent):
     placeholder: str  # Can be MISSING
-    default_values: list  # Can be MISSING  # TODO: Fill the list part in.
+    default_values: list[SelectDefaultValue]  # Can be MISSING
     min_values: int  # Can be MISSING
     max_values: int  # Can be MISSING
     disabled: bool  # Can be MISSING
@@ -393,7 +424,8 @@ class UserSelect(InteractiveComponent):
         if self.placeholder is not MISSING:
             ret["placeholder"] = self.placeholder
 
-        # if self.default_values is not MISSING:  # TODO: Add this.
+        if self.default_values is not MISSING:  # TODO: Add this.
+            ret["default_values"] = [def_val.to_dict() for def_val in self.default_values]
 
         if self.min_values is not MISSING:
             ret["min_values"] = self.min_values
@@ -406,6 +438,25 @@ class UserSelect(InteractiveComponent):
 
         return ret
 
+    @classmethod
+    def from_dict(cls, payload: dict):
+        if "default_values" in payload:
+            default_values = [
+                SelectDefaultValue.from_dict(val_data) for val_data in payload["default_values"]
+            ]
+        else:
+            default_values = MISSING
+
+        return cls(
+            custom_id=payload["custom_id"],
+            placeholder=payload.get("placeholder", MISSING),
+            default_values=default_values,
+            min_values=payload.get("min_values", MISSING),
+            max_values=payload.get("max_values", MISSING),
+            disabled=payload.get("disabled", MISSING),
+            component_id=payload["id"],
+        )
+
 
 class Section(HolderComponent):  # Component type 9
     accessory: Component
@@ -413,7 +464,7 @@ class Section(HolderComponent):  # Component type 9
     def __init__(
         self,
         accessory: Component,
-        components: list[TextDisplay] | None = None,
+        components: list[TextDisplay | Component] | None = None,
         *,
         component_id: int = MISSING,
     ) -> None:
@@ -435,6 +486,14 @@ class Section(HolderComponent):  # Component type 9
 
         return ret
 
+    @classmethod
+    def from_dict(cls, payload: dict):
+        return cls(
+            accessory=resolve_component(payload["accessory"]),
+            components=[resolve_component(comp_data) for comp_data in payload["components"]],
+            component_id=payload["id"],
+        )
+
 
 class TextDisplay(Component):  # Component type 10
     content: str
@@ -447,6 +506,10 @@ class TextDisplay(Component):  # Component type 10
         ret = super().to_dict()
         ret["content"] = self.content
         return ret
+
+    @classmethod
+    def from_dict(cls, payload: dict):
+        return cls(content=payload["content"], component_id=payload["id"])
 
 
 class Thumbnail(Component):  # Component type 11
@@ -504,6 +567,14 @@ class Separator(Component):
 
         return ret
 
+    @classmethod
+    def from_dict(cls, payload: dict):
+        return cls(
+            divider=payload["divider"],
+            spacing=payload["spacing"],
+            component_id=payload["id"],
+        )
+
 
 class Container(HolderComponent):  # Component type 17
     accent_color: int | None  # Can be MISSING
@@ -533,6 +604,54 @@ class Container(HolderComponent):  # Component type 17
 
         return ret
 
+    @classmethod
+    def from_dict(cls, payload: dict):
+        return cls(
+            components=[resolve_component(comp_data) for comp_data in payload["components"]],
+            accent_color=payload["accent_color"],
+            spoiler=payload["spoiler"],
+            component_id=payload["id"],
+        )
+
+
+class SelectDefaultValue:
+    id: int
+    type: SelectDefaultValueType
+
+    def __init__(self, value_id: int, value_type: SelectDefaultValueType | str) -> None:
+        self.id = value_id
+        if isinstance(value_type, SelectDefaultValueType):
+            self.type = value_type
+        else:
+            self.type = try_enum(SelectDefaultValueType, value_type)
+
+    def to_dict(self) -> dict:
+        return {"id": self.id, "type": self.type.value}
+
+    @classmethod
+    def from_dict(cls, payload: dict):
+        return cls(value_id=payload["id"], value_type=payload["type"])
+
 
 class UnfurledMedia:
     pass
+
+
+def resolve_component(payload: dict) -> Component:
+    match payload["type"]:
+        case 1:
+            return ActionRow.from_dict(payload)
+        case 2:
+            return Button.from_dict(payload)
+        case 5:
+            return UserSelect.from_dict(payload)
+        case 9:
+            return Section.from_dict(payload)
+        case 10:
+            return TextDisplay.from_dict(payload)
+        case 14:
+            return Separator.from_dict(payload)
+        case 17:
+            return Container.from_dict(payload)
+        case _:
+            return Component.from_dict(payload)

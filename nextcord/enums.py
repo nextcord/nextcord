@@ -53,6 +53,7 @@ __all__ = (
     "IntegrationType",
     "InteractionContextType",
     "MessageReferenceType",
+    "SelectDefaultValueType",
 )
 
 
@@ -2104,6 +2105,12 @@ class MessageReferenceType(IntEnum):
     """The reference is used as a reply."""
     forward = 1
     """The reference is used to point to a message."""
+
+
+class SelectDefaultValueType(StrEnum):
+    channel = "channel"
+    role = "role"
+    user = "user"
 
 
 T = TypeVar("T")
