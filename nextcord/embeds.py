@@ -123,19 +123,19 @@ class Embed:
     """
 
     __slots__ = (
-        "title",
-        "url",
-        "type",
-        "_timestamp",
+        "_author",
         "_colour",
+        "_fields",
         "_footer",
         "_image",
-        "_thumbnail",
-        "_video",
         "_provider",
-        "_author",
-        "_fields",
+        "_thumbnail",
+        "_timestamp",
+        "_video",
         "description",
+        "title",
+        "type",
+        "url",
     )
 
     def __init__(
