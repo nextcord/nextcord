@@ -32,7 +32,7 @@ class ButtonComponent(TypedDict):
 class SelectOption(TypedDict):
     label: str
     value: str
-    default: bool
+    default: NotRequired[bool]
     description: NotRequired[str]
     emoji: NotRequired[PartialEmoji]
 
@@ -68,6 +68,7 @@ class ChannelSelectMenu(SelectMenuBase):
 
 
 class TextInputComponent(TypedDict):
+    id: NotRequired[int]
     type: Literal[4]
     custom_id: str
     style: TextInputStyle

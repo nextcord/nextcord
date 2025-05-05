@@ -8,8 +8,19 @@ from typing import TYPE_CHECKING, cast
 from .application_command import (
     get_users_from_interaction,
 )  # TODO: Move this function outside of app cmds, it's dumb to keep it there IMO.
-from .enums import ButtonStyle, ComponentType, InteractionType, SelectDefaultValueType, try_enum
-from .types import interactions as inter_payloads
+from .enums import (
+    ButtonStyle,
+    ComponentType,
+    InteractionType,
+    SelectDefaultValueType,
+    TextInputStyle,
+    try_enum,
+)
+from .types import (
+    components as comp_payloads,
+    emoji as emoji_payloads,
+    interactions as inter_payloads,
+)
 from .utils import MISSING
 
 if TYPE_CHECKING:
@@ -65,7 +76,8 @@ class InteractiveComponent(Component):
     This class is intended to be abstract and not instantiated.
     """
 
-    custom_id: str  # Can be MISSING
+    custom_id: str  # Can be MISSING, specifically for link and premium buttons. If those 2 button types no longer
+    #  subclass InteractiveComponent, this should no longer be set to missing.
 
     def __init__(
         self,
@@ -370,6 +382,210 @@ class Button(InteractiveComponent):  # Component type 2
         )
 
 
+class StringSelect(InteractiveComponent):  # Component type 3
+    options: list[SelectOption]  # TODO: This.
+    placeholder: str  # Can be MISSING
+    min_values: int  # Can be MISSING
+    max_values: int  # Can be MISSING
+    disabled: bool  # Can be MISSING
+
+    def __init__(
+        self,
+        custom_id: str | None = None,
+        options: list[SelectOption] | None = None,
+        *,
+        placeholder: str = MISSING,
+        min_values: int = MISSING,
+        max_values: int = MISSING,
+        disabled: bool = MISSING,
+        component_id: int = MISSING,
+    ) -> None:
+        super().__init__(
+            custom_id, component_type=ComponentType.string_select, component_id=component_id
+        )
+        self.options = options if options is not None else []
+        self.placeholder = placeholder
+        self.min_values = min_values
+        self.max_values = max_values
+        self.disabled = disabled
+
+    async def wait_for_interaction(
+        self,
+        bot: Client,
+        callback: Callable[[Interaction, tuple[str, ...]], Coroutine[None, None, Any]],
+        timeout: float | None = 180.0,
+    ):
+        def inter_arg_func(inter: Interaction[Client]):
+            data = cast(inter_payloads.ComponentInteractionData, inter.data)
+            if "values" not in data:
+                raise ValueError('Missing "values" key from interaction data.')
+
+            return inter, tuple(data["values"])
+
+        return await super()._wait_for_interaction(
+            bot, callback, timeout, _inter_arg_func=inter_arg_func
+        )
+
+    def to_dict(self) -> comp_payloads.SelectMenu:
+        ret = super().to_dict()
+        ret["options"] = [option.to_dict() for option in self.options]
+        ret = cast(comp_payloads.SelectMenu, ret)
+
+        if self.placeholder is not MISSING:
+            ret["placeholder"] = self.placeholder
+
+        if self.min_values is not MISSING:
+            ret["min_values"] = self.min_values
+
+        if self.max_values is not MISSING:
+            ret["max_values"] = self.max_values
+
+        if self.disabled is not MISSING:
+            ret["disabled"] = self.disabled
+
+        return ret
+
+    @classmethod
+    def from_dict(cls, payload: comp_payloads.SelectMenu | dict):
+        return cls(
+            custom_id=payload["custom_id"],
+            options=[SelectOption.from_dict(opt_data) for opt_data in payload["options"]],
+            placeholder=payload.get("placeholder", MISSING),
+            min_values=payload.get("min_values", MISSING),
+            max_values=payload.get("max_values", MISSING),
+            disabled=payload.get("disabled", MISSING),
+            component_id=payload.get("id", MISSING),
+        )
+
+
+class TextInput(InteractiveComponent):  # Component type 4
+    # TODO: These can only be used in modals? uhhhhhhhhhhhhhhhhhhhhhhhh...
+
+    style: TextInputStyle
+    label: str
+    min_length: int  # Can be MISSING
+    max_length: int  # Can be MISSING
+    required: bool  # Can be MISSING
+    value: str  # Can be MISSING
+    """Pre-filled value."""
+    placeholder: str  # Can be MISSING
+
+    def __init__(
+        self,
+        style: TextInputStyle | int,
+        label: str,
+        custom_id: str | None = None,
+        *,
+        min_length: int = MISSING,
+        max_length: int = MISSING,
+        required: bool = MISSING,
+        value: str = MISSING,
+        placeholder: str = MISSING,
+        component_id: int = MISSING,
+    ) -> None:
+        super().__init__(
+            custom_id, component_type=ComponentType.text_input, component_id=component_id
+        )
+        if isinstance(style, TextInputStyle):
+            self.style = style
+        else:
+            self.style = try_enum(TextInputStyle, style)
+
+        self.label = label
+        self.min_length = min_length
+        self.max_length = max_length
+        self.required = required
+        self.value = value
+        self.placeholder = placeholder
+
+    def to_dict(self) -> comp_payloads.TextInputComponent:
+        ret = super().to_dict()
+        ret["style"] = self.style.value
+        ret["label"] = self.label
+        ret = cast(comp_payloads.TextInputComponent, ret)
+
+        if self.min_length is not MISSING:
+            ret["min_length"] = self.min_length
+
+        if self.max_length is not MISSING:
+            ret["max_length"] = self.max_length
+
+        if self.required is not MISSING:
+            ret["required"] = self.required
+
+        if self.value is not MISSING:
+            ret["value"] = self.value
+
+        if self.placeholder is not MISSING:
+            ret["placeholder"] = self.placeholder
+
+        return ret
+
+    @classmethod
+    def from_dict(cls, payload: comp_payloads.TextInputComponent | dict):
+        return cls(
+            payload["style"],
+            payload["label"],
+            payload["custom_id"],
+            min_length=payload.get("min_length", MISSING),
+            max_length=payload.get("max_length", MISSING),
+            required=payload.get("required", MISSING),
+            value=payload.get("value", MISSING),
+            placeholder=payload.get("placeholder", MISSING),
+            component_id=payload.get("id", MISSING),
+        )
+
+    @classmethod
+    def as_short(
+        cls,
+        label: str,
+        custom_id: str | None = None,
+        *,
+        min_length: int = MISSING,
+        max_length: int = MISSING,
+        required: bool = MISSING,
+        value: str = MISSING,
+        placeholder: str = MISSING,
+        component_id: int = MISSING,
+    ):
+        return cls(
+            TextInputStyle.short,
+            label,
+            custom_id,
+            min_length=min_length,
+            max_length=max_length,
+            required=required,
+            value=value,
+            placeholder=placeholder,
+            component_id=component_id,
+        )
+
+    @classmethod
+    def as_paragraph(
+        cls,
+        label: str,
+        custom_id: str | None = None,
+        *,
+        min_length: int = MISSING,
+        max_length: int = MISSING,
+        required: bool = MISSING,
+        value: str = MISSING,
+        placeholder: str = MISSING,
+        component_id: int = MISSING,
+    ):
+        return cls(
+            TextInputStyle.paragraph,
+            label,
+            custom_id,
+            min_length=min_length,
+            max_length=max_length,
+            required=required,
+            value=value,
+            placeholder=placeholder,
+            component_id=component_id,
+        )
+
+
 class UserSelect(InteractiveComponent):
     placeholder: str  # Can be MISSING
     default_values: list[SelectDefaultValue]  # Can be MISSING
@@ -614,7 +830,67 @@ class Container(HolderComponent):  # Component type 17
         )
 
 
+class SelectOption:
+    """Represents an option for the selects that use it.
+
+    Currently only used by StringSelect.
+    """
+
+    label: str
+    """User-facing name of the option."""
+    value: str
+    """Dev-defined/Bot-facing value of the option."""
+    description: str  # Can be MISSING
+    emoji: PartialEmoji  # Can be MISSING
+    default: bool  # Can be MISSING
+
+    def __init__(
+        self,
+        label: str,
+        value: str,
+        *,
+        description: str = MISSING,
+        emoji: PartialEmoji = MISSING,
+        default: bool = MISSING,
+    ) -> None:
+        self.label = label
+        self.value = value
+        self.description = description
+        self.emoji = emoji
+        self.default = default
+
+    def to_dict(self) -> comp_payloads.SelectOption:
+        ret: comp_payloads.SelectOption = {"label": self.label, "value": self.value}
+        if self.description is not MISSING:
+            ret["description"] = self.description
+
+        if self.emoji is not MISSING:
+            emoji_payload = cast(emoji_payloads.PartialEmoji, self.emoji.to_dict())
+            ret["emoji"] = emoji_payload
+
+        if self.default is not MISSING:
+            ret["default"] = self.default
+
+        return ret
+
+    @classmethod
+    def from_dict(cls, payload: comp_payloads.SelectOption):
+        emoji = PartialEmoji.from_dict(payload["emoji"]) if "emoji" in payload else MISSING
+        return cls(
+            payload["label"],
+            payload["value"],
+            description=payload.get("description", MISSING),
+            emoji=emoji,
+            default=payload.get("default", MISSING),
+        )
+
+
 class SelectDefaultValue:
+    """Represents a default value for the selects that use it.
+
+    Used in UserSelect, RoleSelect, MentionableSelect, and ChannelSelect.
+    """
+
     id: int
     type: SelectDefaultValueType
 
@@ -643,6 +919,10 @@ def resolve_component(payload: dict) -> Component:
             return ActionRow.from_dict(payload)
         case 2:
             return Button.from_dict(payload)
+        case 3:
+            return StringSelect.from_dict(payload)
+        case 4:
+            return TextInput.from_dict(payload)
         case 5:
             return UserSelect.from_dict(payload)
         case 9:

@@ -550,6 +550,7 @@ class Interaction(Hashable, Generic[ClientT]):
         flags: Optional[MessageFlags] = None,
         ephemeral: Optional[bool] = None,
         suppress_embeds: Optional[bool] = None,
+        components: list[compv2.Component] | None = None,
     ) -> Union[PartialInteractionMessage, WebhookMessage]:
         """|coro|
 
@@ -597,6 +598,7 @@ class Interaction(Hashable, Generic[ClientT]):
                 allowed_mentions=allowed_mentions,
                 flags=flags,
                 suppress_embeds=suppress_embeds,
+                components=components,
             )
         return await self.followup.send(
             content=content,  # type: ignore
