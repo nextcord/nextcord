@@ -18,6 +18,7 @@ from .enums import (
     TextInputStyle,
     try_enum,
 )
+from .file import File as DiscordFile
 from .types import (
     components as comp_payloads,
     emoji as emoji_payloads,
@@ -247,16 +248,13 @@ class HolderComponent(Component):
 
     def __init__(
         self,
-        components: list | None = None,
+        components: list,
         *,
         component_type: ComponentType | int,
         component_id: int = MISSING,
     ) -> None:
         super().__init__(component_type=component_type, component_id=component_id)
-        if components is None:
-            self.components = []
-        else:
-            self.components = components
+        self.components = components
 
     def to_dict(self) -> dict:
         ret = super().to_dict()
@@ -270,7 +268,7 @@ class HolderComponent(Component):
 class ActionRow(HolderComponent):  # Component type 1
     components: list[Component]
 
-    def __init__(self, components: list | None = None, *, component_id: int = MISSING) -> None:
+    def __init__(self, components: list[Component], *, component_id: int = MISSING) -> None:
         super().__init__(
             components, component_type=ComponentType.action_row, component_id=component_id
         )
@@ -473,7 +471,7 @@ class Button(InteractiveComponent):  # Component type 2
 
 
 class StringSelect(InteractiveComponent):  # Component type 3
-    options: list[SelectOption]  # TODO: This.
+    options: list[SelectOption]
     placeholder: str  # Can be MISSING
     min_values: int  # Can be MISSING
     max_values: int  # Can be MISSING
@@ -969,7 +967,7 @@ class Section(HolderComponent):  # Component type 9
     def __init__(
         self,
         accessory: Component,
-        components: list[TextDisplay | Component] | None = None,
+        components: list[TextDisplay | Component],
         *,
         component_id: int = MISSING,
     ) -> None:
@@ -1018,16 +1016,16 @@ class TextDisplay(Component):  # Component type 10
 
 
 class Thumbnail(Component):  # Component type 11
-    media: str  # TODO: Unfurled media + attachments support plz.
+    media: UnfurledMedia
     description: str  # Can be MISSING
     spoiler: bool  # Can be MISSING
 
     def __init__(
         self,
-        media: str,
+        media: UnfurledMedia,
+        *,
         description: str = MISSING,
         spoiler: bool = MISSING,
-        *,
         component_id: int = MISSING,
     ) -> None:
         super().__init__(component_type=ComponentType.thumbnail, component_id=component_id)
@@ -1037,7 +1035,7 @@ class Thumbnail(Component):  # Component type 11
 
     def to_dict(self) -> dict:
         ret = super().to_dict()
-        ret["media"] = {"url": self.media}
+        ret["media"] = self.media.to_dict()
         if self.description is not MISSING:
             ret["description"] = self.description
 
@@ -1046,8 +1044,92 @@ class Thumbnail(Component):  # Component type 11
 
         return ret
 
+    @classmethod
+    def from_dict(cls, payload: dict):
+        return cls(
+            media=UnfurledMedia.from_dict(payload["media"]),
+            description=payload.get("description", MISSING),
+            spoiler=payload.get("spoiler", MISSING),
+            component_id=payload["id"],
+        )
 
-class Separator(Component):
+    @classmethod
+    def from_url(
+        cls,
+        url: str,
+        *,
+        description: str = MISSING,
+        spoiler: bool = MISSING,
+        component_id: int = MISSING,
+    ):
+        """Simple helper method, inits this with an UnfurledMedia set to the given url."""
+        return cls(
+            media=UnfurledMedia(url),
+            description=description,
+            spoiler=spoiler,
+            component_id=component_id,
+        )
+
+
+class MediaGallery(Component):  # Component type 12
+    items: list[MediaGalleryItem]
+
+    def __init__(self, items: list[MediaGalleryItem], *, component_id: int = MISSING) -> None:
+        super().__init__(component_type=ComponentType.media_gallery, component_id=component_id)
+        self.items = items
+
+    def to_dict(self) -> dict:
+        ret = super().to_dict()
+        ret["items"] = [media_item.to_dict() for media_item in self.items]
+        return ret
+
+    @classmethod
+    def from_dict(cls, payload: dict):
+        return cls(
+            items=[MediaGalleryItem.from_dict(media_data) for media_data in payload["items"]],
+            component_id=payload["id"],
+        )
+
+
+class File(Component):
+    file: UnfurledMedia
+    spoiler: bool  # Can be MISSING
+
+    def __init__(
+        self, file: UnfurledMedia, *, spoiler: bool = MISSING, component_id: int = MISSING
+    ) -> None:
+        super().__init__(component_type=ComponentType.file, component_id=component_id)
+        self.file = file
+        self.spoiler = spoiler
+
+    def to_dict(self) -> dict:
+        ret = super().to_dict()
+        ret["file"] = self.file.to_dict()
+        if self.spoiler is not MISSING:
+            ret["spoiler"] = self.spoiler
+
+        return ret
+
+    @classmethod
+    def from_dict(cls, payload: dict):
+        return cls(
+            file=UnfurledMedia.from_dict(payload["file"]),
+            spoiler=payload.get("spoiler", MISSING),
+            component_id=payload["id"],
+        )
+
+    @classmethod
+    def from_url(cls, url: str, *, spoiler: bool = MISSING, component_id: int = MISSING):
+        """Simple helper method, inits this with an UnfurledMedia set to the given url."""
+        return cls(file=UnfurledMedia(url), spoiler=spoiler, component_id=component_id)
+
+    @classmethod
+    def from_file(cls, file: DiscordFile, *, spoiler: bool = MISSING, component_id: int = MISSING):
+        media_name = f"attachment://{file.filename}"
+        return cls(file=UnfurledMedia(media_name), spoiler=spoiler, component_id=component_id)
+
+
+class Separator(Component):  # Component type 14
     divider: bool  # Can be MISSING
     spacing: Literal[1, 2]  # Can be MISSING  # TODO: Make enum for this?
 
@@ -1087,7 +1169,7 @@ class Container(HolderComponent):  # Component type 17
 
     def __init__(
         self,
-        components: list[Component] | None = None,
+        components: list[Component],
         accent_color: int | None = MISSING,
         spoiler: bool = MISSING,
         *,
@@ -1199,7 +1281,76 @@ class SelectDefaultValue:
 
 
 class UnfurledMedia:
-    pass
+    url: str
+    proxy_url: str  # Can be MISSING
+    height: int | None  # Can be MISSING
+    width: int | None  # Can be MISSING
+    content_type: str  # Can be MISSING
+
+    def __init__(
+        self,
+        url: str,
+        *,
+        proxy_url: str = MISSING,
+        height: int | None = MISSING,
+        width: int | None = MISSING,
+        content_type: str = MISSING,
+    ) -> None:
+        self.url = url
+        self.proxy_url = proxy_url
+        self.height = height
+        self.width = width
+        self.content_type = content_type
+
+    def to_dict(self) -> dict:
+        # Currently, the 4 other attributes are all ignored by the API, but provided in responses.
+        return {"url": self.url}
+
+    @classmethod
+    def from_dict(cls, payload: dict):
+        return cls(
+            url=payload["url"],
+            proxy_url=payload.get("proxy_url", MISSING),
+            height=payload.get("height", MISSING),
+            width=payload.get("width", MISSING),
+            content_type=payload.get("content_type", MISSING),
+        )
+
+
+class MediaGalleryItem:
+    media: UnfurledMedia
+    description: str  # Can be MISSING
+    spoiler: bool  # Can be MISSING
+
+    def __init__(
+        self, media: UnfurledMedia, *, description: str = MISSING, spoiler: bool = MISSING
+    ) -> None:
+        self.media = media
+        self.description = description
+        self.spoiler = spoiler
+
+    def to_dict(self) -> dict:
+        ret: dict[str, Any] = {"media": self.media.to_dict()}
+        if self.description is not MISSING:
+            ret["description"] = self.description
+
+        if self.spoiler is not MISSING:
+            ret["spoiler"] = self.spoiler
+
+        return ret
+
+    @classmethod
+    def from_dict(cls, payload: dict):
+        return cls(
+            media=UnfurledMedia.from_dict(payload["media"]),
+            description=payload.get("description", MISSING),
+            spoiler=payload.get("spoiler", MISSING),
+        )
+
+    @classmethod
+    def from_url(cls, url: str, *, description: str = MISSING, spoiler: bool = MISSING):
+        """Simple helper method, inits this with an UnfurledMedia set to the given url."""
+        return cls(media=UnfurledMedia(url), description=description, spoiler=spoiler)
 
 
 def resolve_component(payload: dict) -> Component:
@@ -1224,11 +1375,17 @@ def resolve_component(payload: dict) -> Component:
             return Section.from_dict(payload)
         case 10:
             return TextDisplay.from_dict(payload)
+        case 11:
+            return Thumbnail.from_dict(payload)
+        case 12:
+            return MediaGallery.from_dict(payload)
+        case 13:
+            return File.from_dict(payload)
         case 14:
             return Separator.from_dict(payload)
         case 17:
             return Container.from_dict(payload)
-        case _:
+        case _:  # Just in case new components are added that we don't have yet.
             return Component.from_dict(payload)
 
 
