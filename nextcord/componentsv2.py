@@ -6,10 +6,12 @@ import os
 from typing import TYPE_CHECKING, cast
 
 from .application_command import (
+    get_roles_from_interaction,
     get_users_from_interaction,
 )  # TODO: Move this function outside of app cmds, it's dumb to keep it there IMO.
 from .enums import (
     ButtonStyle,
+    ChannelType,
     ComponentType,
     InteractionType,
     SelectDefaultValueType,
@@ -27,11 +29,15 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from typing import Any, Coroutine, Literal
 
+    from . import abc
     from .client import Client
     from .interactions import Interaction
     from .member import Member
     from .partial_emoji import PartialEmoji
+    from .role import Role
     from .user import User
+
+    DiscordChannel = abc.GuildChannel | abc.PrivateChannel
 
 
 # TODO: This is just a draft, ignore the fact that it's not in the components file rn. I don't want to break views or
@@ -145,6 +151,90 @@ def get_interactive_components(components: list[Component]) -> set[InteractiveCo
             ret.add(comp)
 
     return ret
+
+
+class _SelectComponent(InteractiveComponent):
+    """Base class for shared code between the User/Role/Mentionable/Channel Select components. Any
+    additions/changes specific to a select type should be made to those specific subclasses, not this one.
+
+    String select should not subclass this, as it is (currently) different enough.
+
+    This class is intended to be abstract and not instantiated.
+    """
+
+    placeholder: str  # Can be MISSING
+    default_values: list[SelectDefaultValue]  # Can be MISSING
+    min_values: int  # Can be MISSING
+    max_values: int  # Can be MISSING
+    disabled: bool  # Can be MISSING
+
+    def __init__(
+        self,
+        component_type: ComponentType | int,
+        custom_id: str | None = None,
+        *,
+        placeholder: str = MISSING,
+        default_values: list = MISSING,
+        min_values: int = MISSING,
+        max_values: int = MISSING,
+        disabled: bool = MISSING,
+        component_id: int = MISSING,
+    ) -> None:
+        super().__init__(custom_id, component_type=component_type, component_id=component_id)
+        self.placeholder = placeholder
+        self.default_values = default_values
+        self.min_values = min_values
+        self.max_values = max_values
+        self.disabled = disabled
+
+    def add_default_value(
+        self,
+        value_id: int,
+        value_type: SelectDefaultValueType | str | Literal["user", "role", "channel"],
+    ) -> None:
+        if self.default_values is MISSING:
+            self.default_values = []
+
+        self.default_values.append(SelectDefaultValue(value_id, value_type))
+
+    def to_dict(self) -> dict:
+        ret = super().to_dict()
+        if self.placeholder is not MISSING:
+            ret["placeholder"] = self.placeholder
+
+        if self.default_values is not MISSING:
+            ret["default_values"] = [def_val.to_dict() for def_val in self.default_values]
+
+        if self.min_values is not MISSING:
+            ret["min_values"] = self.min_values
+
+        if self.max_values is not MISSING:
+            ret["max_values"] = self.max_values
+
+        if self.disabled is not MISSING:
+            ret["disabled"] = self.disabled
+
+        return ret
+
+    @classmethod
+    def from_dict(cls, payload: dict):
+        if "default_values" in payload:
+            default_values = [
+                SelectDefaultValue.from_dict(val_data) for val_data in payload["default_values"]
+            ]
+        else:
+            default_values = MISSING
+
+        return cls(
+            component_type=payload["type"],
+            custom_id=payload["custom_id"],
+            placeholder=payload.get("placeholder", MISSING),
+            default_values=default_values,
+            min_values=payload.get("min_values", MISSING),
+            max_values=payload.get("max_values", MISSING),
+            disabled=payload.get("disabled", MISSING),
+            component_id=payload["id"],
+        )
 
 
 class HolderComponent(Component):
@@ -426,10 +516,9 @@ class StringSelect(InteractiveComponent):  # Component type 3
             bot, callback, timeout, _inter_arg_func=inter_arg_func
         )
 
-    def to_dict(self) -> comp_payloads.SelectMenu:
+    def to_dict(self) -> dict:
         ret = super().to_dict()
         ret["options"] = [option.to_dict() for option in self.options]
-        ret = cast(comp_payloads.SelectMenu, ret)
 
         if self.placeholder is not MISSING:
             ret["placeholder"] = self.placeholder
@@ -498,11 +587,10 @@ class TextInput(InteractiveComponent):  # Component type 4
         self.value = value
         self.placeholder = placeholder
 
-    def to_dict(self) -> comp_payloads.TextInputComponent:
+    def to_dict(self) -> dict:
         ret = super().to_dict()
         ret["style"] = self.style.value
         ret["label"] = self.label
-        ret = cast(comp_payloads.TextInputComponent, ret)
 
         if self.min_length is not MISSING:
             ret["min_length"] = self.min_length
@@ -586,13 +674,7 @@ class TextInput(InteractiveComponent):  # Component type 4
         )
 
 
-class UserSelect(InteractiveComponent):
-    placeholder: str  # Can be MISSING
-    default_values: list[SelectDefaultValue]  # Can be MISSING
-    min_values: int  # Can be MISSING
-    max_values: int  # Can be MISSING
-    disabled: bool  # Can be MISSING
-
+class UserSelect(_SelectComponent):  # Component type 5
     def __init__(
         self,
         custom_id: str | None = None,
@@ -605,13 +687,20 @@ class UserSelect(InteractiveComponent):
         component_id: int = MISSING,
     ) -> None:
         super().__init__(
-            custom_id, component_type=ComponentType.user_select, component_id=component_id
+            component_type=ComponentType.user_select,
+            custom_id=custom_id,
+            placeholder=placeholder,
+            default_values=default_values,
+            min_values=min_values,
+            max_values=max_values,
+            disabled=disabled,
+            component_id=component_id,
         )
-        self.placeholder = placeholder
-        self.default_values = default_values
-        self.min_values = min_values
-        self.max_values = max_values
-        self.disabled = disabled
+
+    def add_default_value(
+        self, value_id: int, value_type: SelectDefaultValueType | str = SelectDefaultValueType.user
+    ):
+        return super().add_default_value(value_id, value_type)
 
     async def wait_for_interaction[
         ClientT: Client
@@ -635,22 +724,221 @@ class UserSelect(InteractiveComponent):
             bot, callback, timeout, _inter_arg_func=inter_arg_func
         )
 
+    @classmethod
+    def from_dict(cls, payload: dict):
+        if "default_values" in payload:
+            default_values = [
+                SelectDefaultValue.from_dict(val_data) for val_data in payload["default_values"]
+            ]
+        else:
+            default_values = MISSING
+
+        return cls(
+            custom_id=payload["custom_id"],
+            placeholder=payload.get("placeholder", MISSING),
+            default_values=default_values,
+            min_values=payload.get("min_values", MISSING),
+            max_values=payload.get("max_values", MISSING),
+            disabled=payload.get("disabled", MISSING),
+            component_id=payload["id"],
+        )
+
+
+class RoleSelect(_SelectComponent):  # Component type 6
+    def __init__(
+        self,
+        custom_id: str | None = None,
+        *,
+        placeholder: str = MISSING,
+        default_values: list = MISSING,
+        min_values: int = MISSING,
+        max_values: int = MISSING,
+        disabled: bool = MISSING,
+        component_id: int = MISSING,
+    ) -> None:
+        super().__init__(
+            component_type=ComponentType.role_select,
+            custom_id=custom_id,
+            placeholder=placeholder,
+            default_values=default_values,
+            min_values=min_values,
+            max_values=max_values,
+            disabled=disabled,
+            component_id=component_id,
+        )
+
+    def add_default_value(
+        self, value_id: int, value_type: SelectDefaultValueType | str = SelectDefaultValueType.role
+    ):
+        return super().add_default_value(value_id, value_type)
+
+    async def wait_for_interaction(
+        self,
+        bot: Client,
+        callback: Callable[[Interaction, tuple[Role, ...]], Coroutine[None, None, Any]],
+        timeout: float | None = 180.0,
+    ):
+        def inter_arg_func(inter: Interaction[Client]):
+            resolved_roles = get_roles_from_interaction(inter._state, inter)
+            resolved_dict = {role.id: role for role in resolved_roles}
+            inter.data = cast(inter_payloads.ComponentInteractionData, inter.data)
+            if "values" in inter.data:
+                return inter, tuple([resolved_dict[int(val)] for val in inter.data["values"]])
+            raise ValueError("Interaction data does not include values key.")
+
+        return await super()._wait_for_interaction(
+            bot, callback, timeout, _inter_arg_func=inter_arg_func
+        )
+
+    @classmethod
+    def from_dict(cls, payload: dict):
+        if "default_values" in payload:
+            default_values = [
+                SelectDefaultValue.from_dict(val_data) for val_data in payload["default_values"]
+            ]
+        else:
+            default_values = MISSING
+
+        return cls(
+            custom_id=payload["custom_id"],
+            placeholder=payload.get("placeholder", MISSING),
+            default_values=default_values,
+            min_values=payload.get("min_values", MISSING),
+            max_values=payload.get("max_values", MISSING),
+            disabled=payload.get("disabled", MISSING),
+            component_id=payload["id"],
+        )
+
+
+class MentionableSelect(_SelectComponent):  # Component type 7
+    def __init__(
+        self,
+        custom_id: str | None = None,
+        *,
+        placeholder: str = MISSING,
+        default_values: list = MISSING,
+        min_values: int = MISSING,
+        max_values: int = MISSING,
+        disabled: bool = MISSING,
+        component_id: int = MISSING,
+    ) -> None:
+        super().__init__(
+            component_type=ComponentType.mentionable_select,
+            custom_id=custom_id,
+            placeholder=placeholder,
+            default_values=default_values,
+            min_values=min_values,
+            max_values=max_values,
+            disabled=disabled,
+            component_id=component_id,
+        )
+
+    def add_default_value(
+        self, value_id: int, value_type: SelectDefaultValueType | str | Literal["user", "role"]
+    ):
+        return super().add_default_value(value_id, value_type)
+
+    async def wait_for_interaction(
+        self,
+        bot: Client,
+        callback: Callable[
+            [Interaction, tuple[User | Member | Role, ...]], Coroutine[None, None, Any]
+        ],
+        timeout: float | None = 180.0,
+    ):
+        def inter_arg_func(inter: Interaction):
+            resolved_peeps = get_users_from_interaction(inter._state, inter)
+            resolved_dict: dict[int, User | Member | Role] = {
+                peep.id: peep for peep in resolved_peeps
+            }
+            resolved_roles = get_roles_from_interaction(inter._state, inter)
+            resolved_dict.update({role.id: role for role in resolved_roles})
+            inter.data = cast(inter_payloads.ComponentInteractionData, inter.data)
+            if "values" in inter.data:
+                return inter, tuple([resolved_dict[int(val)] for val in inter.data["values"]])
+            raise ValueError("Interaction data does not include values key.")
+
+        return await self._wait_for_interaction(
+            bot, callback, timeout, _inter_arg_func=inter_arg_func
+        )
+
+    @classmethod
+    def from_dict(cls, payload: dict):
+        if "default_values" in payload:
+            default_values = [
+                SelectDefaultValue.from_dict(val_data) for val_data in payload["default_values"]
+            ]
+        else:
+            default_values = MISSING
+
+        return cls(
+            custom_id=payload["custom_id"],
+            placeholder=payload.get("placeholder", MISSING),
+            default_values=default_values,
+            min_values=payload.get("min_values", MISSING),
+            max_values=payload.get("max_values", MISSING),
+            disabled=payload.get("disabled", MISSING),
+            component_id=payload["id"],
+        )
+
+
+class ChannelSelect(_SelectComponent):  # Component type 8
+    channel_types: list[ChannelType]  # Can be MISSING
+
+    def __init__(
+        self,
+        custom_id: str | None = None,
+        *,
+        channel_types: list[ChannelType | int] = MISSING,
+        placeholder: str = MISSING,
+        default_values: list = MISSING,
+        min_values: int = MISSING,
+        max_values: int = MISSING,
+        disabled: bool = MISSING,
+        component_id: int = MISSING,
+    ) -> None:
+        super().__init__(
+            component_type=ComponentType.channel_select,
+            custom_id=custom_id,
+            placeholder=placeholder,
+            default_values=default_values,
+            min_values=min_values,
+            max_values=max_values,
+            disabled=disabled,
+            component_id=component_id,
+        )
+        if channel_types is not MISSING:
+            self.channel_types = []
+            for channel_type in channel_types:
+                if isinstance(channel_type, ChannelType):
+                    self.channel_types.append(channel_type)
+                else:
+                    self.channel_types.append(try_enum(ChannelType, channel_type))
+        else:
+            self.channel_types = MISSING
+
+    async def wait_for_interaction(
+        self,
+        bot: Client,
+        callback: Callable[[Interaction, tuple[DiscordChannel, ...]], Coroutine[None, None, Any]],
+        timeout: float | None = 180.0,
+    ):
+        def inter_arg_func(inter: Interaction):
+            resolved_channels = get_channels_from_interaction(inter)
+            resolved_dict = {channel.id: channel for channel in resolved_channels}
+            inter.data = cast(inter_payloads.ComponentInteractionData, inter.data)
+            if "values" in inter.data:
+                return inter, tuple([resolved_dict[int(val)] for val in inter.data["values"]])
+            raise ValueError("Interaction data does not include values key.")
+
+        return await self._wait_for_interaction(
+            bot, callback, timeout, _inter_arg_func=inter_arg_func
+        )
+
     def to_dict(self) -> dict:
         ret = super().to_dict()
-        if self.placeholder is not MISSING:
-            ret["placeholder"] = self.placeholder
-
-        if self.default_values is not MISSING:  # TODO: Add this.
-            ret["default_values"] = [def_val.to_dict() for def_val in self.default_values]
-
-        if self.min_values is not MISSING:
-            ret["min_values"] = self.min_values
-
-        if self.max_values is not MISSING:
-            ret["max_values"] = self.max_values
-
-        if self.disabled is not MISSING:
-            ret["disabled"] = self.disabled
+        if self.channel_types is not MISSING:
+            ret["channel_types"] = [channel_type.value for channel_type in self.channel_types]
 
         return ret
 
@@ -665,6 +953,7 @@ class UserSelect(InteractiveComponent):
 
         return cls(
             custom_id=payload["custom_id"],
+            channel_types=payload.get("channel_types", MISSING),
             placeholder=payload.get("placeholder", MISSING),
             default_values=default_values,
             min_values=payload.get("min_values", MISSING),
@@ -859,8 +1148,8 @@ class SelectOption:
         self.emoji = emoji
         self.default = default
 
-    def to_dict(self) -> comp_payloads.SelectOption:
-        ret: comp_payloads.SelectOption = {"label": self.label, "value": self.value}
+    def to_dict(self) -> dict:
+        ret: dict = {"label": self.label, "value": self.value}
         if self.description is not MISSING:
             ret["description"] = self.description
 
@@ -874,7 +1163,7 @@ class SelectOption:
         return ret
 
     @classmethod
-    def from_dict(cls, payload: comp_payloads.SelectOption):
+    def from_dict(cls, payload: comp_payloads.SelectOption | dict):
         emoji = PartialEmoji.from_dict(payload["emoji"]) if "emoji" in payload else MISSING
         return cls(
             payload["label"],
@@ -925,6 +1214,12 @@ def resolve_component(payload: dict) -> Component:
             return TextInput.from_dict(payload)
         case 5:
             return UserSelect.from_dict(payload)
+        case 6:
+            return RoleSelect.from_dict(payload)
+        case 7:
+            return MentionableSelect.from_dict(payload)
+        case 8:
+            return ChannelSelect.from_dict(payload)
         case 9:
             return Section.from_dict(payload)
         case 10:
@@ -935,3 +1230,21 @@ def resolve_component(payload: dict) -> Component:
             return Container.from_dict(payload)
         case _:
             return Component.from_dict(payload)
+
+
+def get_channels_from_interaction(
+    interaction: Interaction,
+) -> list[DiscordChannel]:
+    ret = []
+    state = interaction._state
+    data = cast(inter_payloads.ApplicationCommandInteractionData, interaction.data)
+
+    if "resolved" in data and "channels" in data["resolved"]:
+        channel_payloads = data["resolved"]["channels"]
+        for ch_id in channel_payloads:
+            # TODO: This is stupid, actually resolve these from the payload you dinkus.
+            if channel := state.get_channel(int(ch_id)):
+                ret.append(channel)
+                continue
+
+    return ret
