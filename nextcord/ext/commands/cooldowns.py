@@ -71,7 +71,7 @@ class Cooldown:
         The length of the cooldown period in seconds.
     """
 
-    __slots__ = ("rate", "per", "_window", "_tokens", "_last")
+    __slots__ = ("_last", "_tokens", "_window", "per", "rate")
 
     def __init__(self, rate: float, per: float) -> None:
         self.rate: int = int(rate)
@@ -285,7 +285,7 @@ class _Semaphore:
     overkill for what is basically a counter.
     """
 
-    __slots__ = ("value", "loop", "_waiters")
+    __slots__ = ("_waiters", "loop", "value")
 
     def __init__(self, number: int) -> None:
         self.value: int = number
@@ -333,7 +333,7 @@ class _Semaphore:
 
 
 class MaxConcurrency:
-    __slots__ = ("number", "per", "wait", "_mapping")
+    __slots__ = ("_mapping", "number", "per", "wait")
 
     def __init__(self, number: int, *, per: BucketType, wait: bool) -> None:
         self._mapping: Dict[Any, _Semaphore] = {}
