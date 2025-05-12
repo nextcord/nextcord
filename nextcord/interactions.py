@@ -408,6 +408,7 @@ class Interaction(Hashable, Generic[ClientT]):
         attachments: List[Attachment] = MISSING,
         view: Optional[View] = MISSING,
         allowed_mentions: Optional[AllowedMentions] = None,
+        components: list[compv2.Component] | None = None,
     ) -> InteractionMessage:
         """|coro|
 
@@ -472,6 +473,7 @@ class Interaction(Hashable, Generic[ClientT]):
             view=view,
             allowed_mentions=allowed_mentions,
             previous_allowed_mentions=previous_mentions,
+            components=components,
         )
         adapter = async_context.get()
         data = await adapter.edit_original_interaction_response(
@@ -1017,6 +1019,7 @@ class InteractionResponse:
         attachments: List[Attachment] = MISSING,
         view: Optional[View] = MISSING,
         delete_after: Optional[float] = None,
+        components: list[compv2.Component] | None = None,
     ) -> Optional[Message]:
         """|coro|
 
@@ -1109,6 +1112,8 @@ class InteractionResponse:
                 payload["components"] = []
             else:
                 payload["components"] = view.to_components()
+        elif components is not None:
+            payload["components"] = [comp.to_dict() for comp in components]
 
         adapter = async_context.get()
         try:
@@ -1151,6 +1156,7 @@ class _InteractionMessageMixin:
         view: Optional[View] = MISSING,
         allowed_mentions: Optional[AllowedMentions] = None,
         delete_after: Optional[float] = None,
+        components: list[compv2.Component] | None = None,
     ) -> InteractionMessage:
         """|coro|
 
@@ -1210,6 +1216,7 @@ class _InteractionMessageMixin:
             attachments=attachments,
             view=view,
             allowed_mentions=allowed_mentions,
+            components=components,
         )
 
         if delete_after is not None:
