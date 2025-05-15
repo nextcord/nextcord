@@ -1278,6 +1278,8 @@ to handle it, which defaults to print a traceback and ignoring the exception.
 
     Called when an application command is invoked.
 
+    .. versionadded:: 3.2
+
     :param interaction: The interaction for the application command invoke. Note that the application command object is not linked to the interaction object.
     :type interaction: :class:`Interaction`
     :param app_cmd: The application command that was invoked.
