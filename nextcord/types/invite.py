@@ -13,6 +13,7 @@ from .snowflake import Snowflake
 from .user import PartialUser
 
 InviteTargetType = Literal[0, 1, 2]
+InviteType = Literal[0, 1, 2]
 
 
 class _InviteMetadata(TypedDict, total=False):
@@ -35,6 +36,7 @@ class IncompleteInvite(_InviteMetadata):
 
 
 class Invite(IncompleteInvite, total=False):
+    type: InviteType
     guild: InviteGuild
     inviter: PartialUser
     target_user: PartialUser
@@ -42,8 +44,7 @@ class Invite(IncompleteInvite, total=False):
     target_application: PartialAppInfo
 
 
-class InviteWithCounts(Invite, _GuildPreviewUnique):
-    ...
+class InviteWithCounts(Invite, _GuildPreviewUnique): ...
 
 
 class GatewayInviteCreate(TypedDict):

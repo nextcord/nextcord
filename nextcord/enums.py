@@ -49,6 +49,10 @@ __all__ = (
     "SortOrderType",
     "RoleConnectionMetadataType",
     "ForumLayoutType",
+    "InviteType",
+    "IntegrationType",
+    "InteractionContextType",
+    "MessageReferenceType",
 )
 
 
@@ -129,7 +133,7 @@ class IntEnum(int, Enum):
         return self.value
 
 
-class StrEnum(str, Enum):  # noqa: SLOT000
+class StrEnum(str, Enum):
     """An enum that supports comparing and hashing as a string."""
 
     def __str__(self) -> str:
@@ -278,6 +282,11 @@ class MessageType(IntEnum):
     """The system message denoting that an auto moderation action was executed.
 
     .. versionadded:: 2.1
+    """
+    role_subscription_purchase = 25
+    """The system message denoting that a role subscription was purchased.
+
+    .. versionadded:: 3.2
     """
     stage_start = 27
     """The system message denoting that a stage channel has started.
@@ -2037,6 +2046,58 @@ class ForumLayoutType(IntEnum):
     """Display posts as a collection of posts with images, this is more image focused."""
 
 
+class InviteType(IntEnum):
+    """Represents the type of an invite.
+
+    .. versionadded:: 3.0
+    """
+
+    guild = 0
+    """The invite is for a guild."""
+    group_dm = 1
+    """The invite is for a group DM."""
+    friend = 2
+    """The invite is for a Discord user."""
+
+
+class IntegrationType(IntEnum):
+    """Where a :class:`BaseApplicationCommand` is available, only for globally-scoped commands.
+
+    .. versionadded:: 3.0
+    """
+
+    guild_install = 0
+    """App is installable to servers."""
+    user_install = 1
+    """App is installable to users."""
+
+
+class InteractionContextType(IntEnum):
+    """Where a :class:`BaseApplicationCommand` can be used, only for globally-scoped commands, or where a :class:`Interaction` originates from.
+
+    .. versionadded:: 3.0
+    """
+
+    guild = 0
+    """The :class:`BaseApplicationCommand` can be used within servers, or the :class:`Interaction` originates from a server."""
+    bot_dm = 1
+    """The :class:`BaseApplicationCommand` can be used within DMs with the app's bot user, or the :class:`Interaction` originates from such DMs."""
+    private_channel = 2
+    """The :class:`BaseApplicationCommand` can be used within Group DMs and DMs other than the app's bot user, or the :class:`Interaction` originates from such channels."""
+
+
+class MessageReferenceType(IntEnum):
+    """Represents the type of reference that a message is.
+
+    .. versionadded:: 3.0
+    """
+
+    default = 0
+    """The reference is used as a reply."""
+    forward = 1
+    """The reference is used to point to a message."""
+
+
 T = TypeVar("T")
 
 
@@ -2047,6 +2108,6 @@ def try_enum(cls: Type[T], val: Any) -> T:
     """
 
     try:
-        return cls(val)
+        return cls(val)  # pyright: ignore[reportCallIssue]
     except ValueError:
         return UnknownEnumValue(name=f"unknown_{val}", value=val)  # type: ignore

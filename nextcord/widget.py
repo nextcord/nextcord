@@ -154,16 +154,7 @@ class WidgetMember(BaseUser):
         self.deafened: Optional[bool] = data.get("deaf", False) or data.get("self_deaf", False)
         self.muted: Optional[bool] = data.get("mute", False) or data.get("self_mute", False)
         self.suppress: Optional[bool] = data.get("suppress", False)
-
-        try:
-            game = data["game"]
-        except KeyError:
-            activity = None
-        else:
-            activity = create_activity(state, game)
-
-        self.activity = activity
-
+        self.activity = create_activity(state, data["game"]) if "game" in data else None
         self.connected_channel: Optional[WidgetChannel] = connected_channel
 
     def __repr__(self) -> str:
@@ -174,8 +165,15 @@ class WidgetMember(BaseUser):
 
     @property
     def display_name(self) -> str:
-        """:class:`str`: Returns the member's display name."""
-        return self.nick or self.name
+        """:class:`str`: Returns the user's display name.
+
+        This will return the name using the following hierarchy:
+
+        1. Guild specific nickname
+        2. Global Name (also known as 'Display Name' in the Discord UI)
+        3. Unique username
+        """
+        return self.nick or self.global_name or self.name
 
 
 class Widget:

@@ -93,7 +93,7 @@ class AssetMixin:
                 fp.seek(0)
             return written
 
-        with open(fp, "wb") as f:  # noqa: ASYNC101
+        with open(fp, "wb") as f:  # noqa: ASYNC230
             return f.write(data)
 
     async def to_file(
@@ -228,6 +228,17 @@ class Asset(AssetMixin):
             state,
             url=f"{cls.BASE}/guilds/{guild_id}/users/{member_id}/avatars/{avatar}.{format}?size=1024",
             key=avatar,
+            animated=animated,
+        )
+
+    @classmethod
+    def _from_guild_banner(cls, state, guild_id: int, member_id: int, banner: str) -> Asset:
+        animated = banner.startswith("a_")
+        format = "gif" if animated else "png"
+        return cls(
+            state,
+            url=f"{cls.BASE}/guilds/{guild_id}/users/{member_id}/banners/{banner}.{format}",
+            key=banner,
             animated=animated,
         )
 

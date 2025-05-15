@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.12", "3.13"]
       fail-fast: false
     steps:
       - name: Checkout code
@@ -35,11 +35,11 @@ jobs:
           cache: poetry
           cache-dependency-path: pyproject.toml
 
-      - name: Export dependencies
-        run: poetry export --no-interaction -f requirements.txt --output requirements.txt --with docs,dev -E voice -E speed
-
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: poetry install --all-groups -E voice -E speed
+
+      - name: Configure Poetry for pyright
+        run: echo "$(poetry env info --path)/bin" >> $GITHUB_PATH
 
       - name: Set up pyright
         run: echo "PYRIGHT_VERSION=$(python -c 'import pyright; print(pyright.__pyright_version__)')" >> $GITHUB_ENV
@@ -50,8 +50,8 @@ jobs:
           version: ${{ env.PYRIGHT_VERSION }}
           python-version: ${{ matrix.python-version }}
           python-platform: Linux
-          # only add comments for 3.8
-          no-comments: ${{ matrix.python-version != '3.8' }}
+          # only add comments for 3.12
+          no-comments: ${{ matrix.python-version != '3.12' }}
           warnings: true
 
       - name: Run pyright (Windows)
@@ -84,18 +84,18 @@ jobs:
       - name: Install Poetry
         uses: snok/install-poetry@v1
 
-      - name: Set up python 3.8
+      - name: Set up python 3.12
         uses: actions/setup-python@v4
         with:
-          python-version: 3.8
+          python-version: 3.12
           cache: poetry
           cache-dependency-path: pyproject.toml
 
-      - name: Export dependencies
-        run: poetry export --no-interaction -f requirements.txt --output requirements.txt --with docs,dev -E voice -E speed
-
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: poetry install --all-groups -E voice -E speed
+
+      - name: Configure Poetry for slotscheck
+        run: echo "$(poetry env info --path)/bin" >> $GITHUB_PATH
 
       - name: Run slotscheck
         run: task slotscheck
