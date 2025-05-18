@@ -1197,7 +1197,7 @@ class AuditLogAction(IntEnum):
     the :class:`BaseApplicationCommand` or :class:`Object` with the ID of the command which
     was updated.
 
-    .. versionadded:: 3.0
+    .. versionadded:: 3.2
     """
     auto_moderation_rule_create = 140
     """An auto moderation rule was created.

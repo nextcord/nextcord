@@ -1380,7 +1380,7 @@ class InteractionMessage(_InteractionMessageMixin, Message):
 class ApplicationCommandPermissions:
     """Represents an application command's permissions.
 
-    .. versionadded:: 3.0
+    .. versionadded:: 3.2
 
     Attributes
     ----------
@@ -1408,7 +1408,7 @@ class ApplicationCommandPermissions:
 class GuildApplicationCommandPermissions:
     """Represents the permissions for an application command when fetched from a guild.
 
-    .. versionadded:: 3.0
+    .. versionadded:: 3.2
 
     Attributes
     ----------
