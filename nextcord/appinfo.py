@@ -21,9 +21,9 @@ if TYPE_CHECKING:
     from .user import User
 
 __all__ = (
-    "InstallParams",
-    "ApplicationIntegrationTypeConfig",
     "AppInfo",
+    "ApplicationIntegrationTypeConfig",
+    "InstallParams",
     "PartialAppInfo",
 )
 
@@ -42,8 +42,8 @@ class InstallParams:
     """
 
     __slots__ = (
-        "scopes",
         "permissions",
+        "scopes",
     )
 
     def __init__(self, data: InstallParamsPayload) -> None:
@@ -131,21 +131,21 @@ class AppInfo:
     """
 
     __slots__ = (
+        "_icon",
+        "_integration_types_config",
         "_state",
-        "description",
-        "id",
-        "name",
-        "rpc_origins",
         "bot_public",
         "bot_require_code_grant",
+        "description",
+        "id",
+        "integration_types_config",
+        "name",
         "owner",
-        "_icon",
-        "verify_key",
+        "privacy_policy_url",
+        "rpc_origins",
         "team",
         "terms_of_service_url",
-        "privacy_policy_url",
-        "_integration_types_config",
-        "integration_types_config",
+        "verify_key",
     )
 
     def __init__(self, state: ConnectionState, data: AppInfoPayload) -> None:
@@ -223,16 +223,16 @@ class PartialAppInfo:
     """
 
     __slots__ = (
-        "_state",
-        "id",
-        "name",
-        "description",
-        "rpc_origins",
-        "verify_key",
-        "terms_of_service_url",
-        "privacy_policy_url",
         "_icon",
+        "_state",
+        "description",
+        "id",
         "integration_types_config",
+        "name",
+        "privacy_policy_url",
+        "rpc_origins",
+        "terms_of_service_url",
+        "verify_key",
     )
 
     def __init__(self, *, state: ConnectionState, data: PartialAppInfoPayload) -> None:
