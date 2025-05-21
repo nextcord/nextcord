@@ -3539,9 +3539,10 @@ def get_users_from_interaction(
         #  users that read from interaction.data further down the line.
         for member_id, member_payload in member_payloads.copy().items():
             # If a member isn't in the cache, construct a new one.
-            if interaction.guild is None or (
-                not (member := interaction.guild.get_member(int(member_id)))
-                and "users" in data["resolved"]
+            member = None
+            if "users" in data["resolved"] and (
+                interaction.guild is None
+                or (not (member := interaction.guild.get_member(int(member_id))))
             ):
                 user_payload = data["resolved"]["users"][member_id]
                 # This is required to construct the Member.
