@@ -3538,19 +3538,16 @@ def get_users_from_interaction(
         # Because the payload is modified further down, a copy is made to avoid affecting methods or
         #  users that read from interaction.data further down the line.
         for member_id, member_payload in member_payloads.copy().items():
-            if interaction.guild is None:
-                raise TypeError("Cannot resolve members if Interaction.guild is None")
-
             # If a member isn't in the cache, construct a new one.
-            if (
+            if interaction.guild is None or (
                 not (member := interaction.guild.get_member(int(member_id)))
                 and "users" in data["resolved"]
             ):
                 user_payload = data["resolved"]["users"][member_id]
                 # This is required to construct the Member.
                 member_payload["user"] = user_payload
-                member = Member(data=member_payload, guild=interaction.guild, state=state)  # type: ignore
-                interaction.guild._add_member(member)
+                # Currently the guild ID isn't bundled with the member data, so we use the interaction's guild ID.
+                member = Member(data=member_payload, guild=interaction.guild, state=state, guild_id=interaction.guild_id)  # type: ignore
 
             if member is not None:
                 ret.append(member)

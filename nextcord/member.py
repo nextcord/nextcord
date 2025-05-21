@@ -220,8 +220,8 @@ class Member(abc.Messageable, _UserTag):
             if they are listening to a song with a title longer
             than 128 characters. See :dpyissue:`1738` for more information.
 
-    guild: :class:`Guild`
-        The guild that the member belongs to.
+    guild: Optinoal[:class:`Guild`]
+        The guild that the member belongs to. May be ``None`` if the bot is not in the guild.
     nick: Optional[:class:`str`]
         The guild specific nickname of the user.
     pending: :class:`bool`
@@ -239,6 +239,7 @@ class Member(abc.Messageable, _UserTag):
         "premium_since",
         "activities",
         "guild",
+        "guild_id",
         "pending",
         "nick",
         "_client_status",
@@ -269,11 +270,17 @@ class Member(abc.Messageable, _UserTag):
         accent_colour: Optional[Colour]
 
     def __init__(
-        self, *, data: MemberWithUserPayload, guild: Guild, state: ConnectionState
+        self,
+        *,
+        data: MemberWithUserPayload,
+        guild: Guild | None,
+        state: ConnectionState,
+        guild_id: int | None = None,
     ) -> None:
         self._state: ConnectionState = state
         self._user: User = state.store_user(data["user"])
-        self.guild: Guild = guild
+        self.guild: Guild | None = guild
+        self.guild_id: int | None = guild_id if guild_id or guild is None else guild.id
         self.joined_at: Optional[datetime.datetime] = utils.parse_time(data.get("joined_at"))
         self.premium_since: Optional[datetime.datetime] = utils.parse_time(
             data.get("premium_since")
@@ -297,7 +304,7 @@ class Member(abc.Messageable, _UserTag):
         return (
             f"<Member id={self._user.id} name={self._user.name!r} global_name={self._user.global_name!r}"
             + (f" discriminator={self._user.discriminator!r}" if self.discriminator != "0" else "")
-            + f" bot={self._user.bot} nick={self.nick!r} guild={self.guild!r}>"
+            + f" bot={self._user.bot} nick={self.nick!r} guild={self.guild!r} guild_id={self.guild_id!r}>"
         )
 
     def __eq__(self, other: Any) -> bool:
@@ -346,6 +353,7 @@ class Member(abc.Messageable, _UserTag):
         self.premium_since = member.premium_since
         self._client_status = member._client_status.copy()
         self.guild = member.guild
+        self.guild_id = member.guild_id
         self.nick = member.nick
         self.pending = member.pending
         self.activities = member.activities
@@ -477,6 +485,11 @@ class Member(abc.Messageable, _UserTag):
         return self.colour
 
     @property
+    def role_ids(self) -> list[int]:
+        """:class:`list`[:class:`int`]: A :class:`list` of :class:`int` role IDs that the member belongs to."""
+        return list(self._roles)
+
+    @property
     def roles(self) -> List[Role]:
         """List[:class:`Role`]: A :class:`list` of :class:`Role` that the member belongs to. Note
         that the first element of this list is always the default '@everyone'
@@ -534,9 +547,10 @@ class Member(abc.Messageable, _UserTag):
 
         .. versionadded:: 2.0
         """
-        if self._avatar is None:
+        if self._avatar is None or self.guild_id is None:
             return None
-        return Asset._from_guild_avatar(self._state, self.guild.id, self.id, self._avatar)
+
+        return Asset._from_guild_avatar(self._state, self.guild_id, self.id, self._avatar)
 
     @property
     def guild_banner(self) -> Optional[Asset]:
@@ -545,9 +559,10 @@ class Member(abc.Messageable, _UserTag):
 
         .. versionadded:: 3.0
         """
-        if self._banner is None:
+        if self._banner is None or self.guild_id is None:
             return None
-        return Asset._from_guild_banner(self._state, self.guild.id, self.id, self._banner)
+
+        return Asset._from_guild_banner(self._state, self.guild_id, self.id, self._banner)
 
     @property
     def display_banner(self) -> Optional[Asset]:
@@ -602,7 +617,7 @@ class Member(abc.Messageable, _UserTag):
         :class:`bool`
             Indicates if the member is mentioned in the message.
         """
-        if message.guild is None or message.guild.id != self.guild.id:
+        if message.guild is None or message.guild.id != self.guild_id:
             return False
 
         if self._user.mentioned_in(message):
@@ -611,12 +626,15 @@ class Member(abc.Messageable, _UserTag):
         return any(self._roles.has(role.id) for role in message.role_mentions)
 
     @property
-    def top_role(self) -> Role:
+    def top_role(self) -> Role | None:
         """:class:`Role`: Returns the member's highest role.
 
         This is useful for figuring where a member stands in the role
         hierarchy chain.
         """
+        if self.guild is None:
+            return None
+
         guild = self.guild
         if len(self._roles) == 0:
             return guild.default_role
@@ -624,7 +642,7 @@ class Member(abc.Messageable, _UserTag):
         return max(guild.get_role(rid) or guild.default_role for rid in self._roles)
 
     @property
-    def guild_permissions(self) -> Permissions:
+    def guild_permissions(self) -> Permissions | None:
         """:class:`Permissions`: Returns the member's guild permissions.
 
         This only takes into consideration the guild permissions
@@ -635,6 +653,8 @@ class Member(abc.Messageable, _UserTag):
         This does take into consideration guild ownership and the
         administrator implication.
         """
+        if self.guild is None:
+            return None
 
         if self.guild.owner_id == self.id:
             return Permissions.all()
@@ -651,6 +671,8 @@ class Member(abc.Messageable, _UserTag):
     @property
     def voice(self) -> Optional[VoiceState]:
         """Optional[:class:`VoiceState`]: Returns the member's current voice state."""
+        if self.guild is None:
+            return None
         return self.guild._voice_state_for(self._user.id)
 
     @property
@@ -678,11 +700,13 @@ class Member(abc.Messageable, _UserTag):
 
         Bans this member. Equivalent to :meth:`Guild.ban`.
         """
-        await self.guild.ban(
-            self,
-            reason=reason,
-            delete_message_seconds=delete_message_seconds,
-        )
+        # TODO: ...FC, what do? Since we don't actually need the guild object to ban them, should we do the HTTP call
+        #  ourselves? After all, that's what Guild.ban is doing. This would reduce reliance on guild objects/intents.
+        kwargs = {}
+        if delete_message_seconds is not None:
+            kwargs["delete_message_seconds"] = delete_message_seconds
+
+        await self._state.http.ban(self.id, self.guild_id, reason=reason, **kwargs)
 
     async def unban(self, *, reason: Optional[str] = None) -> None:
         """|coro|
