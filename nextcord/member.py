@@ -279,8 +279,11 @@ class Member(abc.Messageable, _UserTag):
     ) -> None:
         self._state: ConnectionState = state
         self._user: User = state.store_user(data["user"])
+        if guild is None and guild_id is None:
+            raise ValueError("guild and guild_id cannot be None.")
+
         self.guild: Guild | None = guild
-        self.guild_id: int | None = guild_id if guild_id or guild is None else guild.id
+        self.guild_id: int = guild_id or guild.id
         self.joined_at: Optional[datetime.datetime] = utils.parse_time(data.get("joined_at"))
         self.premium_since: Optional[datetime.datetime] = utils.parse_time(
             data.get("premium_since")
@@ -456,15 +459,19 @@ class Member(abc.Messageable, _UserTag):
         return "mobile" in self._client_status
 
     @property
-    def colour(self) -> Colour:
+    def colour(self) -> Colour | None:
         """:class:`Colour`: A property that returns a colour denoting the rendered colour
-        for the member. If the default colour is the one rendered then an instance
-        of :meth:`Colour.default` is returned.
+        for the member.
+        If no guild object was provided on instantiation, None will be returned.
+        If the default colour is the one rendered then an instance of :meth:`Colour.default`
+        is returned.
 
         There is an alias for this named :attr:`color`.
         """
+        if (roles := self.roles) is None:
+            return None
 
-        roles = self.roles[1:]  # remove @everyone
+        roles = roles[1:]  # remove @everyone
 
         # highest order of the colour is the one that gets rendered.
         # if the highest is the default colour then the next one with a colour
@@ -475,9 +482,11 @@ class Member(abc.Messageable, _UserTag):
         return Colour.default()
 
     @property
-    def color(self) -> Colour:
+    def color(self) -> Colour | None:
         """:class:`Colour`: A property that returns a color denoting the rendered color for
-        the member. If the default color is the one rendered then an instance of :meth:`Colour.default`
+        the member.
+        If no guild object was provided on instantiation, None will be returned.
+        If the default color is the one rendered then an instance of :meth:`Colour.default`
         is returned.
 
         There is an alias for this named :attr:`colour`.
@@ -490,13 +499,16 @@ class Member(abc.Messageable, _UserTag):
         return list(self._roles)
 
     @property
-    def roles(self) -> List[Role]:
-        """List[:class:`Role`]: A :class:`list` of :class:`Role` that the member belongs to. Note
-        that the first element of this list is always the default '@everyone'
-        role.
+    def roles(self) -> list[Role] | None:
+        """Optional[List[:class:`Role`]]: A :class:`list` of :class:`Role` that the member belongs to.
+        If no guild object was provided on instantiation, None will be returned.
+        Note that the first element of this list is always the default '@everyone' role.
 
         These roles are sorted by their position in the role hierarchy.
         """
+        if self.guild is None:
+            return None
+
         result = []
         g = self.guild
         for role_id in self._roles:
@@ -547,7 +559,7 @@ class Member(abc.Messageable, _UserTag):
 
         .. versionadded:: 2.0
         """
-        if self._avatar is None or self.guild_id is None:
+        if self._avatar is None:
             return None
 
         return Asset._from_guild_avatar(self._state, self.guild_id, self.id, self._avatar)
@@ -559,7 +571,7 @@ class Member(abc.Messageable, _UserTag):
 
         .. versionadded:: 3.0
         """
-        if self._banner is None or self.guild_id is None:
+        if self._banner is None:
             return None
 
         return Asset._from_guild_banner(self._state, self.guild_id, self.id, self._banner)
@@ -660,7 +672,7 @@ class Member(abc.Messageable, _UserTag):
             return Permissions.all()
 
         base = Permissions.none()
-        for r in self.roles:
+        for r in self.roles:  # type: ignore  # This cannot be None if self.guild is not None.
             base.value |= r.permissions.value
 
         if base.administrator:
@@ -713,14 +725,14 @@ class Member(abc.Messageable, _UserTag):
 
         Unbans this member. Equivalent to :meth:`Guild.unban`.
         """
-        await self.guild.unban(self, reason=reason)
+        await self._state.http.unban(self.id, self.guild_id, reason=reason)
 
     async def kick(self, *, reason: Optional[str] = None) -> None:
         """|coro|
 
         Kicks this member. Equivalent to :meth:`Guild.kick`.
         """
-        await self.guild.kick(self, reason=reason)
+        await self._state.http.kick(self.id, self.guild_id, reason=reason)
 
     async def timeout(
         self,
@@ -845,7 +857,7 @@ class Member(abc.Messageable, _UserTag):
         """
 
         http = self._state.http
-        guild_id = self.guild.id
+        guild_id = self.guild_id
         me = self._state.self_id == self.id
         payload: Dict[str, Any] = {}
 
@@ -912,7 +924,7 @@ class Member(abc.Messageable, _UserTag):
 
         if payload:
             data = await http.edit_member(guild_id, self.id, reason=reason, **payload)
-            return Member(data=data, guild=self.guild, state=self._state)
+            return Member(data=data, guild=self.guild, state=self._state, guild_id=self.guild_id)
         return None
 
     async def request_to_speak(self) -> None:
@@ -943,9 +955,9 @@ class Member(abc.Messageable, _UserTag):
 
         if self._state.self_id != self.id:
             payload["suppress"] = False
-            await self._state.http.edit_voice_state(self.guild.id, self.id, payload)
+            await self._state.http.edit_voice_state(self.guild_id, self.id, payload)
         else:
-            await self._state.http.edit_my_voice_state(self.guild.id, payload)
+            await self._state.http.edit_my_voice_state(self.guild_id, payload)
 
     async def move_to(
         self, channel: Optional[VocalGuildChannel], *, reason: Optional[str] = None
@@ -1027,7 +1039,7 @@ class Member(abc.Messageable, _UserTag):
             await self.edit(roles=new_roles, reason=reason)
         else:
             req = self._state.http.add_role
-            guild_id = self.guild.id
+            guild_id = self.guild_id
             user_id = self.id
             for role in roles:
                 await req(guild_id, user_id, role.id, reason=reason)
@@ -1074,7 +1086,7 @@ class Member(abc.Messageable, _UserTag):
             await self.edit(roles=new_roles, reason=reason)
         else:
             req = self._state.http.remove_role
-            guild_id = self.guild.id
+            guild_id = self.guild_id
             user_id = self.id
             for role in roles:
                 await req(guild_id, user_id, role.id, reason=reason)
@@ -1092,6 +1104,8 @@ class Member(abc.Messageable, _UserTag):
         Returns
         -------
         Optional[:class:`Role`]
-            The role or ``None`` if not found in the member's roles.
+            The role or ``None`` if not found in the member's roles, or no guild object is available.
         """
+        if self.guild is None:
+            return None
         return self.guild.get_role(role_id) if self._roles.has(role_id) else None
