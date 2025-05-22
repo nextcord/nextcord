@@ -1800,9 +1800,6 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
 
             value = Attachment(data=resolved_attachment_data, state=state)
         elif self.type is ApplicationCommandOptionType.mentionable:
-            # user_role_list: List[Union[User, Member, Role]] = get_users_from_interaction(
-            #     state, interaction
-            # ) + get_roles_from_interaction(state, interaction)
             user_role_list: List[Union[User, Member, Role]] = (
                 interaction._resolve_users() + interaction._resolve_roles()
             )
