@@ -12,11 +12,11 @@ from .mixins import Hashable
 from .utils import MISSING, cached_slot_property, find, get, snowflake_time
 
 __all__ = (
-    "StickerPack",
-    "StickerItem",
-    "Sticker",
-    "StandardSticker",
     "GuildSticker",
+    "StandardSticker",
+    "Sticker",
+    "StickerItem",
+    "StickerPack",
 )
 
 if TYPE_CHECKING:
@@ -74,15 +74,15 @@ class StickerPack(Hashable):
     """
 
     __slots__ = (
+        "_banner",
         "_state",
+        "cover_sticker",
+        "cover_sticker_id",
+        "description",
         "id",
-        "stickers",
         "name",
         "sku_id",
-        "cover_sticker_id",
-        "cover_sticker",
-        "description",
-        "_banner",
+        "stickers",
     )
 
     def __init__(self, *, state: ConnectionState, data: StickerPackPayload) -> None:
@@ -179,7 +179,7 @@ class StickerItem(_StickerTag):
         The URL for the sticker's image.
     """
 
-    __slots__ = ("_state", "name", "id", "format", "url")
+    __slots__ = ("_state", "format", "id", "name", "url")
 
     def __init__(self, *, state: ConnectionState, data: StickerItemPayload) -> None:
         self._state: ConnectionState = state
@@ -249,7 +249,7 @@ class Sticker(_StickerTag):
         The URL for the sticker's image.
     """
 
-    __slots__ = ("_state", "id", "name", "description", "format", "url")
+    __slots__ = ("_state", "description", "format", "id", "name", "url")
 
     def __init__(self, *, state: ConnectionState, data: StickerPayload) -> None:
         self._state: ConnectionState = state
@@ -311,7 +311,7 @@ class StandardSticker(Sticker):
         The sticker's sort order within its pack.
     """
 
-    __slots__ = ("sort_value", "pack_id", "type", "tags")
+    __slots__ = ("pack_id", "sort_value", "tags", "type")
 
     def _from_data(self, data: StandardStickerPayload) -> None:
         super()._from_data(data)
@@ -393,7 +393,7 @@ class GuildSticker(Sticker):
         The name of a unicode emoji that represents this sticker.
     """
 
-    __slots__ = ("available", "guild_id", "user", "emoji", "type", "_cs_guild")
+    __slots__ = ("_cs_guild", "available", "emoji", "guild_id", "type", "user")
 
     def _from_data(self, data: GuildStickerPayload) -> None:
         super()._from_data(data)
@@ -498,7 +498,7 @@ class GuildSticker(Sticker):
 
 
 def _sticker_factory(
-    sticker_type: Literal[1, 2]
+    sticker_type: Literal[1, 2],
 ) -> Tuple[Type[Union[StandardSticker, GuildSticker, Sticker]], StickerType]:
     value = try_enum(StickerType, sticker_type)
     if value == StickerType.standard:
