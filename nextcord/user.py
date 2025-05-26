@@ -26,8 +26,8 @@ if TYPE_CHECKING:
 
 
 __all__ = (
-    "User",
     "ClientUser",
+    "User",
 )
 
 
@@ -38,17 +38,17 @@ class _UserTag:
 
 class BaseUser(_UserTag):
     __slots__ = (
-        "name",
-        "id",
-        "discriminator",
+        "_accent_colour",
         "_avatar",
         "_banner",
-        "_accent_colour",
-        "bot",
-        "system",
         "_public_flags",
         "_state",
+        "bot",
+        "discriminator",
         "global_name",
+        "id",
+        "name",
+        "system",
     )
 
     if TYPE_CHECKING:
@@ -327,7 +327,7 @@ class ClientUser(BaseUser):
         Specifies if the user has MFA turned on and working.
     """
 
-    __slots__ = ("locale", "_flags", "verified", "mfa_enabled", "__weakref__")
+    __slots__ = ("__weakref__", "_flags", "locale", "mfa_enabled", "verified")
 
     if TYPE_CHECKING:
         verified: bool
