@@ -186,10 +186,10 @@ class Asset(AssetMixin):
     """
 
     __slots__: Tuple[str, ...] = (
-        "_state",
-        "_url",
         "_animated",
         "_key",
+        "_state",
+        "_url",
     )
 
     BASE = "https://cdn.discordapp.com"

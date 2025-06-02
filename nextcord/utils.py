@@ -72,23 +72,23 @@ if TYPE_CHECKING:
 
 
 __all__ = (
-    "oauth_url",
-    "snowflake_time",
-    "time_snowflake",
-    "find",
-    "get",
-    "sleep_until",
-    "utcnow",
-    "remove_markdown",
+    "as_chunks",
+    "cached_property",
     "escape_markdown",
     "escape_mentions",
-    "parse_raw_mentions",
-    "parse_raw_role_mentions",
-    "parse_raw_channel_mentions",
-    "as_chunks",
+    "find",
     "format_dt",
     "format_ts",
-    "cached_property",
+    "get",
+    "oauth_url",
+    "parse_raw_channel_mentions",
+    "parse_raw_mentions",
+    "parse_raw_role_mentions",
+    "remove_markdown",
+    "sleep_until",
+    "snowflake_time",
+    "time_snowflake",
+    "utcnow",
 )
 
 DISCORD_EPOCH = 1420070400000
@@ -491,7 +491,7 @@ def get_as_snowflake(data: Any, key: str) -> Optional[int]:
 
 
 def _get_mime_type_for_image(data: bytes) -> str:
-    if data.startswith(b"\x89\x50\x4E\x47\x0D\x0A\x1A\x0A"):
+    if data.startswith(b"\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"):
         return "image/png"
     if data[0:3] == b"\xff\xd8\xff" or data[6:10] in (b"JFIF", b"Exif"):
         return "image/jpeg"

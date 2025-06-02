@@ -10,8 +10,8 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
 __all__ = (
-    "Colour",
     "Color",
+    "Colour",
 )
 
 CT = TypeVar("CT", bound="Colour")
