@@ -4,8 +4,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, List, Literal, Optional, Tuple, TypeVar, Union, cast
 
-from .enums import ButtonStyle, ComponentType, TextInputStyle, try_enum
+from .abc import GuildChannel
+from .channel import PartialMessageable
+from .enums import ButtonStyle, ComponentType, SelectDefaultType, TextInputStyle, try_enum
+from .member import Member
 from .partial_emoji import PartialEmoji, _EmojiTag
+from .role import Role
+from .user import User
 from .utils import MISSING, get_slots
 
 if TYPE_CHECKING:
@@ -20,6 +25,7 @@ if TYPE_CHECKING:
         Component as ComponentPayload,
         MentionableSelectMenu as MentionableSelectMenuPayload,
         RoleSelectMenu as RoleSelectMenuPayload,
+        SelectDefault as SelectDefaultPayload,
         SelectMenu as SelectMenuPayload,
         SelectMenuBase as SelectMenuBasePayload,
         SelectOption as SelectOptionPayload,
@@ -32,6 +38,7 @@ __all__ = (
     "Component",
     "ActionRow",
     "Button",
+    "SelectDefault",
     "SelectMenu",
     "SelectOption",
     "TextInput",
@@ -328,18 +335,23 @@ class UserSelectMenu(SelectMenuBase):
         Defaults to 1 and must be between 1 and 25.
     disabled: :class:`bool`
         Whether the select is disabled or not. Defaults to ``False``.
+    defaults: Optional[List[Union[:class:`.Member`, :class:`nextcord.User`, :class:`.SelectDefault`]]]
+        The default users that are automatically selected.
     """
 
-    __slots__: Tuple[str, ...] = ()
+    __slots__: Tuple[str, ...] = ("defaults",)
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
     type: Literal[ComponentType.user_select] = ComponentType.user_select
 
     def __init__(self, data: UserSelectMenuPayload) -> None:
         super().__init__(data)
+        self.defaults: Optional[List[SelectDefaultPayload]] = data.get("default_values", None)
 
     def to_dict(self) -> UserSelectMenuPayload:
         payload: UserSelectMenuPayload = {"type": self.type.value, **super().to_dict()}
+        if self.defaults:
+            payload["default_values"] = self.defaults
 
         return payload
 
@@ -371,18 +383,23 @@ class RoleSelectMenu(SelectMenuBase):
         Defaults to 1 and must be between 1 and 25.
     disabled: :class:`bool`
         Whether the select is disabled or not. Defaults to ``False``.
+    defaults: Optional[List[Union[:class:`.Role`, :class:`.SelectDefault`]]]
+        The default roles that are automatically selected.
     """
 
-    __slots__: Tuple[str, ...] = ()
+    __slots__: Tuple[str, ...] = ("defaults",)
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
     type: Literal[ComponentType.role_select] = ComponentType.role_select
 
     def __init__(self, data: RoleSelectMenuPayload) -> None:
         super().__init__(data)
+        self.defaults: Optional[List[SelectDefaultPayload]] = data.get("default_values", None)
 
     def to_dict(self) -> RoleSelectMenuPayload:
         payload: RoleSelectMenuPayload = {"type": self.type.value, **super().to_dict()}
+        if self.defaults:
+            payload["default_values"] = self.defaults
 
         return payload
 
@@ -414,18 +431,23 @@ class MentionableSelectMenu(SelectMenuBase):
         Defaults to 1 and must be between 1 and 25.
     disabled: :class:`bool`
         Whether the select is disabled or not. Defaults to ``False``.
+    defaults: Optional[List[Union[:class:`.Role`, :class:`.Member`, :class:`nextcord.User`, :class:`.SelectDefault`]]]
+        The default roles or users that are automatically selected.
     """
 
-    __slots__: Tuple[str, ...] = ()
+    __slots__: Tuple[str, ...] = ("defaults",)
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
     type: Literal[ComponentType.mentionable_select] = ComponentType.mentionable_select
 
     def __init__(self, data: MentionableSelectMenuPayload) -> None:
         super().__init__(data)
+        self.defaults: Optional[List[SelectDefaultPayload]] = data.get("default_values", None)
 
     def to_dict(self) -> MentionableSelectMenuPayload:
         payload: MentionableSelectMenuPayload = {"type": self.type.value, **super().to_dict()}
+        if self.defaults:
+            payload["default_values"] = self.defaults
 
         return payload
 
@@ -459,9 +481,14 @@ class ChannelSelectMenu(SelectMenuBase):
         Whether the select is disabled or not. Defaults to ``False``.
     channel_types: List[:class:`ChannelType`]
         The types of channels that can be selected. If not given, all channel types are allowed.
+    defaults: Optional[List[Union[:class:`.SelectDefault`, :class:`.abc.GuildChannel`, :class:`.abc.PartialMessageable`]]]
+        The default channels that are automatically selected.
     """
 
-    __slots__: Tuple[str, ...] = ("channel_types",)
+    __slots__: Tuple[str, ...] = (
+        "channel_types",
+        "defaults",
+    )
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
     type: Literal[ComponentType.channel_select] = ComponentType.channel_select
@@ -471,11 +498,14 @@ class ChannelSelectMenu(SelectMenuBase):
         self.channel_types: List[ChannelType] = [
             ChannelType(t) for t in data.get("channel_types", [])
         ]
+        self.defaults: Optional[List[SelectDefaultPayload]] = data.get("default_values", None)
 
     def to_dict(self) -> ChannelSelectMenuPayload:
         payload: ChannelSelectMenuPayload = {"type": self.type.value, **super().to_dict()}
         if self.channel_types:
             payload["channel_types"] = [t.value for t in self.channel_types]
+        if self.defaults:
+            payload["default_values"] = self.defaults
 
         return payload
 
@@ -578,6 +608,100 @@ class SelectOption:
             payload["description"] = self.description
 
         return payload
+
+
+class SelectDefault:
+    """Represents an autopopulated select menu's default value.
+
+    .. versionadded:: 3.0
+
+    Attributes
+    ----------
+    id: :class:`int`
+        The ID of the value.
+    type: :class:`SelectDefaultType`
+        The type of value."""
+
+    __slots__: Tuple[str, ...] = (
+        "id",
+        "type",
+    )
+
+    def __init__(self, id: int, *, type: SelectDefaultType) -> None:
+        self.id: int = id
+        self.type: SelectDefaultType = type
+
+    @classmethod
+    def channel(cls, id: int) -> SelectDefault:
+        """Constructs a channel select default.
+
+        Parameters
+        ----------
+        id: :class:`int`
+            The ID of the channel."""
+
+        return cls(id, type=SelectDefaultType.channel)
+
+    @classmethod
+    def role(cls, id: int) -> SelectDefault:
+        """Constructs a role select default.
+
+        Parameters
+        ----------
+        id: :class:`int`
+            The ID of the role."""
+
+        return cls(id, type=SelectDefaultType.role)
+
+    @classmethod
+    def user(cls, id: int) -> SelectDefault:
+        """Constructs a user select default.
+
+        Parameters
+        ----------
+        id: :class:`int`
+            The ID of the user."""
+
+        return cls(id, type=SelectDefaultType.user)
+
+    @classmethod
+    def from_value(
+        cls, value: Union[GuildChannel, Member, PartialMessageable, Role, User]
+    ) -> SelectDefault:
+        """Constructs a select default from a value.
+
+        Currently, the following types are supported: :class:`.abc.GuildChannel`, :class:`.Member`,
+        :class:`.abc.PartialMessageable`, :class:`.Role`, and :class:`.User`. If the value is not
+        one of these types, then a :exc:`TypeError` is raised. If the value is one of these types,
+        then the type of this select default is automatically inferred.
+
+        Parameters
+        ----------
+        value: Union[:class:`.abc.GuildChannel`, :class:`.Member`, :class:`.abc.PartialMessageable`, :class:`.Role`, :class:`.User`]
+            The value to construct from."""
+
+        if isinstance(value, (GuildChannel, PartialMessageable)):
+            return cls.channel(value.id)
+        if isinstance(value, (Member, User)):
+            return cls.user(value.id)
+        if isinstance(value, Role):
+            return cls.role(value.id)
+        raise TypeError(
+            f"Expected object to be GuildChannel, Member, PartialMessageable, Role, or User not {value.__class__}"
+        )
+
+    @classmethod
+    def from_dict(cls, data: SelectDefaultPayload) -> SelectDefault:
+        return cls(
+            id=data["id"],
+            type=try_enum(SelectDefaultType, data["type"]),
+        )
+
+    def to_dict(self) -> SelectDefaultPayload:
+        return {
+            "id": self.id,
+            "type": self.type.value,
+        }
 
 
 class TextInput(Component):

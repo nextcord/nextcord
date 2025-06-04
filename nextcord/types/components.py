@@ -45,26 +45,35 @@ class SelectMenuBase(TypedDict):
     disabled: NotRequired[bool]
 
 
+class AutoPopulatedSelectMenu(TypedDict):
+    default_values: NotRequired[List[SelectDefault]]
+
+
 class SelectMenu(SelectMenuBase):
     type: Literal[3]
     options: List[SelectOption]
 
 
-class UserSelectMenu(SelectMenuBase):
+class UserSelectMenu(SelectMenuBase, AutoPopulatedSelectMenu):
     type: Literal[5]
 
 
-class RoleSelectMenu(SelectMenuBase):
+class RoleSelectMenu(SelectMenuBase, AutoPopulatedSelectMenu):
     type: Literal[6]
 
 
-class MentionableSelectMenu(SelectMenuBase):
+class MentionableSelectMenu(SelectMenuBase, AutoPopulatedSelectMenu):
     type: Literal[7]
 
 
-class ChannelSelectMenu(SelectMenuBase):
+class ChannelSelectMenu(SelectMenuBase, AutoPopulatedSelectMenu):
     type: Literal[8]
     channel_types: NotRequired[List[ChannelType]]
+
+
+class SelectDefault(TypedDict):
+    id: int
+    type: Literal["channel", "role", "user"]
 
 
 class TextInputComponent(TypedDict):
