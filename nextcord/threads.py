@@ -116,28 +116,28 @@ class Thread(Messageable, Hashable, PinsMixin):
     """
 
     __slots__ = (
-        "name",
-        "id",
-        "guild",
-        "_type",
-        "_state",
         "_members",
-        "owner_id",
-        "parent_id",
-        "last_message_id",
-        "message_count",
-        "member_count",
-        "slowmode_delay",
-        "me",
-        "locked",
+        "_state",
+        "_type",
+        "applied_tag_ids",
+        "archive_timestamp",
         "archived",
-        "invitable",
         "archiver_id",
         "auto_archive_duration",
-        "archive_timestamp",
         "create_timestamp",
         "flags",
-        "applied_tag_ids",
+        "guild",
+        "id",
+        "invitable",
+        "last_message_id",
+        "locked",
+        "me",
+        "member_count",
+        "message_count",
+        "name",
+        "owner_id",
+        "parent_id",
+        "slowmode_delay",
     )
 
     def __init__(self, *, guild: Guild, state: ConnectionState, data: ThreadPayload) -> None:
@@ -818,12 +818,12 @@ class ThreadMember(Hashable):
     """
 
     __slots__ = (
-        "id",
-        "thread_id",
-        "joined_at",
-        "flags",
         "_state",
+        "flags",
+        "id",
+        "joined_at",
         "parent",
+        "thread_id",
     )
 
     def __init__(self, parent: Thread, data: ThreadMemberPayload) -> None:
