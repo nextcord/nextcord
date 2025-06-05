@@ -44,6 +44,7 @@ if TYPE_CHECKING:
     )
     from .types.user import User as UserPayload
     from .types.voice import VoiceState as VoiceStatePayload
+    from .user import AvatarDecoration
 
     VocalGuildChannel = Union[VoiceChannel, StageChannel]
 
@@ -267,6 +268,7 @@ class Member(abc.Messageable, _UserTag):
         banner: Optional[Asset]
         accent_color: Optional[Colour]
         accent_colour: Optional[Colour]
+        avatar_decoration: Optional[AvatarDecoration]
 
     def __init__(
         self, *, data: MemberWithUserPayload, guild: Guild, state: ConnectionState
