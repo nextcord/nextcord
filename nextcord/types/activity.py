@@ -69,11 +69,11 @@ class SendableActivity(TypedDict):
     url: NotRequired[Optional[str]]
 
 
-class _BaseActivity(SendableActivity):
+class BaseActivity(SendableActivity):
     created_at: int
 
 
-class Activity(_BaseActivity, total=False):
+class Activity(BaseActivity, total=False):
     state: Optional[str]
     details: Optional[str]
     timestamps: ActivityTimestamps
