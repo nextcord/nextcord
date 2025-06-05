@@ -3026,6 +3026,13 @@ RoleConnectionMetadata
 .. autoclass:: RoleConnectionMetadata
     :members:
 
+Incidents
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. attributetable:: Incidents
+
+.. autoclass:: Incidents
+    :members:
 
 .. _discord_ui_kit:
 
