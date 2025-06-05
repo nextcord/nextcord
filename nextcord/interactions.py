@@ -24,6 +24,7 @@ from typing import (
 from . import utils
 from .channel import ChannelType, PartialMessageable
 from .embeds import Embed
+from .entitlement import Entitlement
 from .enums import (
     IntegrationType,
     InteractionContextType,
@@ -182,6 +183,10 @@ class Interaction(Hashable, Generic[ClientT]):
         Context where the interaction was triggered from.
 
         .. versionadded:: 3.0
+    entitlements: Optional[List[:class:`.Entitlement`]]
+        The premium entitlements the user and guild of the interaction has.
+
+        ..versionadded:: 3.2
     """
 
     __slots__: Tuple[str, ...] = (
@@ -201,6 +206,7 @@ class Interaction(Hashable, Generic[ClientT]):
         "channel_id",
         "context",
         "data",
+        "entitlements",
         "guild_id",
         "guild_locale",
         "id",
@@ -235,6 +241,9 @@ class Interaction(Hashable, Generic[ClientT]):
         self.application_id: int = int(data["application_id"])
         self.locale: Optional[str] = data.get("locale")
         self.guild_locale: Optional[str] = data.get("guild_locale")
+        self.entitlements: List[Entitlement] = [
+            Entitlement(payload) for payload in data["entitlements"]
+        ]
 
         self.message: Optional[Message] = None
         if message := data.get("message"):
@@ -1225,6 +1234,33 @@ class InteractionResponse:
             await parent.delete_original_message(delay=delete_after)
 
         return state._get_message(message_id)
+
+    async def premium_required(self) -> None:
+        """|coro|
+
+        Responds to this interaction by sending a message indicating that the command requires
+        an active premium `.Entitlement` subscription.
+
+        .. versionadded:: 3.2
+
+        Raises
+        ------
+        HTTPException
+            Sending the message failed.
+        InteractionResponded
+            This interaction has already been responded to before.
+
+        .. versionadded:: 3.0"""
+
+        adapter = async_context.get()
+        parent = self._parent
+        await adapter.create_interaction_response(
+            parent.id,
+            parent.token,
+            session=parent._session,
+            type=InteractionResponseType.premium_required.value,
+            data={},
+        )
 
 
 class _InteractionMessageMixin:

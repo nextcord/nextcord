@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import datetime
 import logging
 import signal
 import sys
@@ -43,9 +44,11 @@ from .application_command import (
 from .backoff import ExponentialBackoff
 from .channel import PartialMessageable, _threaded_channel_factory
 from .emoji import Emoji
+from .entitlement import SKU, Entitlement
 from .enums import (
     ApplicationCommandType,
     ChannelType,
+    EntitlementOwnerType,
     InteractionType,
     Status,
     VoiceRegion,
@@ -1830,6 +1833,171 @@ class Client:
         if "rpc_origins" not in data:
             data["rpc_origins"] = None
         return AppInfo(self._connection, data)
+
+    async def skus(self) -> List[SKU]:
+        """|coro|
+
+        Retrieves a list of :class:`.SKU` for the current application.
+
+        .. versionadded:: 3.2
+
+        Raises
+        ------
+        :exc:`.HTTPException`
+            Retrieving the SKUs failed.
+
+        Returns
+        -------
+        List[:class:`.SKU`]
+            The SKUs retrieved.
+        """
+        if self.application_id is None:
+            raise TypeError("Could not get the current application's id")
+        data = await self.http.list_skus(application_id=self.application_id)
+        return [SKU(payload=sku) for sku in data]
+
+    async def entitlements(
+        self,
+        *,
+        before: Optional[SnowflakeTime] = None,
+        after: Optional[SnowflakeTime] = None,
+        limit: Optional[int] = None,
+        guild_id: Optional[int] = None,
+        user_id: Optional[int] = None,
+        exclude_ended: bool = False,
+    ) -> List[Entitlement]:
+        """|coro|
+
+        Retrieves a list of :class:`.Entitlement` for the current application.
+
+        .. versionadded:: 3.2
+
+        Parameters
+        ----------
+        before: Optional[Union[:class:`~datetime.datetime`, :class:`~nextcord.Object`]]
+            Retrieve entitlements before this date or object.
+            If a datetime is provided, it is recommended to use a UTC aware datetime.
+            If the datetime is naive, it is assumed to be local time.
+            Defaults to ``None``.
+        after: Optional[Union[:class:`~datetime.datetime`, :class:`~nextcord.Object`]]
+            Retrieve entitlements after this date or object.
+            If a datetime is provided, it is recommended to use a UTC aware datetime.
+            If the datetime is naive, it is assumed to be local time.
+            Defaults to ``None``.
+        limit: Optional[:class:`int`]
+            The number of entitlements to retrieve.
+            If ``None``, it retrieves every entitlement you have access to. Note, however,
+            that this would make it a slow operation.
+            Defaults to ``None``.
+        guild_id: Optional[:class:`int`]
+            The guild ID to filter entitlements by.
+            If ``None``, it retrieves entitlements from all guilds.
+            Defaults to ``None``.
+        user_id: Optional[:class:`int`]
+            The user ID to filter entitlements by.
+            If ``None``, it retrieves entitlements from all users.
+            Defaults to ``None``.
+        exclude_ended: :class:`bool`
+            Whether to exclude ended entitlements.
+            Defaults to ``False``.
+
+        Raises
+        ------
+        :exc:`.HTTPException`
+            Getting the entitlements failed.
+
+        Returns
+        -------
+        List[:class:`.Entitlement`]
+            The entitlements retrieved.
+        """
+        if self.application_id is None:
+            raise TypeError("Could not get the current application's id")
+
+        if isinstance(before, datetime.datetime):
+            before = Object(id=utils.time_snowflake(before, high=False))
+        if isinstance(after, datetime.datetime):
+            after = Object(id=utils.time_snowflake(after, high=True))
+
+        data = await self.http.list_entitlements(
+            application_id=self.application_id,
+            before=before.id if before else None,
+            after=after.id if after else None,
+            limit=limit,
+            guild_id=guild_id,
+            exclude_ended=exclude_ended,
+            user_id=user_id,
+        )
+
+        return [Entitlement(payload=entitlement) for entitlement in data]
+
+    async def create_test_entitlement(
+        self,
+        *,
+        sku_id: int,
+        owner_id: int,
+        owner_type: EntitlementOwnerType,
+    ) -> None:
+        """|coro|
+
+        Creates a test :class:`.Entitlement` for the current application.
+        This makes Discord behave as if the user or guild has purchased the SKU.
+
+        .. versionadded:: 3.2
+
+        Parameters
+        ----------
+        sku_id: :class:`int`
+            The ID of the SKU to create the entitlement for.
+        owner_id: :class:`int`
+            The ID of the user or team to create the entitlement for.
+        owner_type: :class:`.EntitlementOwnerType`
+            The type of the owner.
+
+        Raises
+        ------
+        :exc:`.HTTPException`
+            Creating the entitlement failed.
+        :exc:`TypeError`
+            Could not get the current application's id.
+        """
+        if self.application_id is None:
+            raise TypeError("Could not get the current application's id")
+
+        await self.http.create_test_entitlement(
+            application_id=self.application_id,
+            sku_id=sku_id,
+            owner_id=owner_id,
+            owner_type=owner_type.value,
+        )
+
+    async def delete_test_entitlement(
+        self,
+        entitlement_id: int,
+    ) -> None:
+        """|coro|
+
+        Deletes a test :class:`.Entitlement` for the current application.
+
+        .. versionadded:: 3.2
+
+        Parameters
+        ----------
+        entitlement_id: :class:`int`
+            The ID of the entitlement to delete.
+
+        Raises
+        ------
+        :exc:`.HTTPException`
+            Deleting the entitlement failed.
+        """
+        if self.application_id is None:
+            raise TypeError("Could not get the current application's id")
+
+        await self.http.delete_test_entitlement(
+            application_id=self.application_id,
+            entitlement_id=entitlement_id,
+        )
 
     async def fetch_user(self, user_id: int, /) -> User:
         """|coro|
