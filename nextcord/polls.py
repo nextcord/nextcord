@@ -188,8 +188,7 @@ class PollAnswerCount:
         ----------
         limit: Optional[:class:`int`]
             The maximum number of results to return.
-            If not provided, returns all the users who
-            voted to the choice.
+            If not provided, return all users who voted for the choice.
         after: Optional[:class:`abc.Snowflake`]
             For pagination, votes are sorted by member.
         """
