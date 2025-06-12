@@ -347,19 +347,19 @@ class Poll:
     Attributes
     ----------
     message: :class:`Message`
-        The message this poll belong to.
+        The message this poll belongs to.
     question: :class:`PollMedia`
-        The question being asked in a poll.
+        The question being asked in this poll.
     answers: List[:class:`PollAnswer`]
-        The answers of the poll.
+        The answers for this poll.
     expiry: :class:`datetime.datetime`
-        The expiry of the poll.
+        The expiry of this poll.
     allow_multiselect: :class:`bool`
-        Whether this poll allow people to select more than 1 option.
+        Whether this poll allows users to select more than one option.
     layout_type: :class:`PollLayoutType`
-        The layout type of the poll.
+        The layout type of this poll.
     results: Optional[:class:`PollResults`]
-        The results of the poll.
+        The results of this poll.
     """
 
     __slots__ = (
