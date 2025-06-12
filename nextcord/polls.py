@@ -436,4 +436,6 @@ class Poll:
     @property
     def expired(self) -> bool:
         """:class:`bool`: Returns True if this poll has been closed."""
-        return self.expiry < utcnow()
+        if self.expiry:
+            return self.expiry < utcnow()
+        return False
