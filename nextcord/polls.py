@@ -365,8 +365,8 @@ class Poll:
         The question being asked in this poll.
     answers: List[:class:`PollAnswer`]
         The answers for this poll.
-    expiry: :class:`datetime.datetime`
-        The expiry of this poll.
+    expiry: Optional[:class:`datetime.datetime`]
+        The expiry of this poll, if present.
     allow_multiselect: :class:`bool`
         Whether this poll allows users to select more than one option.
     layout_type: :class:`PollLayoutType`
@@ -393,7 +393,9 @@ class Poll:
         self.answers: List[PollAnswer] = [
             PollAnswer.from_dict(poll_answer) for poll_answer in data["answers"]
         ]
-        self.expiry: datetime = datetime.fromisoformat(data["expiry"])
+        self.expiry: Optional[datetime] = (
+            datetime.fromisoformat(data["expiry"]) if data["expiry"] else None
+        )
         self.allow_multiselect: bool = data["allow_multiselect"]
         self.layout_type: PollLayoutType = try_enum(PollLayoutType, data["layout_type"])
 
