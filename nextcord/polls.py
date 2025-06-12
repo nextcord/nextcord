@@ -98,7 +98,7 @@ class PollMedia:
 
 
 class PollAnswer:
-    """A choice to answer in a poll.
+    """An answer choice in a poll.
 
     .. versionadded:: 3.0
 
