@@ -170,34 +170,47 @@ class PollAnswerCount:
     ) -> AsyncIterator[Union[User, Member]]:
         """|asynciter|
 
-        Returns an async iterator representing the users who have voted for this option.
+        Returns an async iterator representing the users that have voted to this answer in the poll.
 
-        The ``after`` parameter must represent an user
+        The ``after`` parameter must represent a member
         and meet the :class:`abc.Snowflake` abc.
 
         Examples
         --------
+
         Usage ::
 
             # I do not actually recommend doing this.
-
-            async for voter in count.voters():
-                await channel.send(f"{voter} has voted with choice number {count.id}!")
+            async for user in count.voters():
+                await channel.send(f'{user} has voted for this answer!')
 
         Parameters
         ----------
         limit: Optional[:class:`int`]
             The maximum number of results to return.
-            If not provided, return all users who voted for the choice.
+            If not provided, returns all the users who
+            voted for this answer.
         after: Optional[:class:`abc.Snowflake`]
             For pagination, votes are sorted by member.
+
+        Raises
+        ------
+        HTTPException
+            Getting the users for the votes failed.
+
+        Yields
+        ------
+        Union[:class:`User`, :class:`Member`]
+            The member (if retrievable) or the user that has voted to this answer.
+            The case where it can be a :class:`Member` is
+            in a guild message context. Sometimes it can be a :class:`User`
+            if the member has left the guild.
         """
+
         if limit is None:
             limit = self.count
 
-        return answer_voters_iterator(
-            self.poll.message, answer_id=self.id, limit=limit, after=after
-        )
+        return answer_voters_iterator(self.poll.message, self.id, limit, after)
 
     def to_dict(self) -> PollAnswerCountPayload:
         payload: PollAnswerCountPayload = {

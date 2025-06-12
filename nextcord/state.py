@@ -2398,7 +2398,7 @@ class ConnectionState:
             )
         else:
             _log.debug(
-                "message_poll_vote_remove was not dispatched because the message (%r) if None ",
+                "message_poll_vote_remove was not dispatched because the message (%r) if None",
                 message,
             )
 

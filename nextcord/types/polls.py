@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 
-from typing import List, Literal, TypedDict
+from typing import List, Literal, Optional, TypedDict
 
 from typing_extensions import NotRequired
 
@@ -45,7 +45,7 @@ class PollResults(TypedDict):
 class Poll(TypedDict):
     question: PollMedia
     answers: List[DAPIPollAnswer]
-    expiry: str
+    expiry: Optional[str]
     allow_multiselect: bool
     layout_type: LayoutType
     results: NotRequired[PollResults]
