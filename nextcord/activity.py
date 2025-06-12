@@ -256,22 +256,16 @@ class Activity(BaseActivity):
     @property
     def start(self) -> Optional[datetime.datetime]:
         """Optional[:class:`datetime.datetime`]: When the user started doing this activity in UTC, if applicable."""
-        try:
-            timestamp = self.timestamps["start"] / 1000
-        except KeyError:
-            return None
-        else:
-            return datetime.datetime.fromtimestamp(timestamp, tz=datetime.timezone.utc)
+        if (timestamp := self.timestamps.get("start")) is not None:
+            return datetime.datetime.fromtimestamp(timestamp / 1000, tz=datetime.timezone.utc)
+        return None
 
     @property
     def end(self) -> Optional[datetime.datetime]:
         """Optional[:class:`datetime.datetime`]: When the user will stop doing this activity in UTC, if applicable."""
-        try:
-            timestamp = self.timestamps["end"] / 1000
-        except KeyError:
-            return None
-        else:
-            return datetime.datetime.fromtimestamp(timestamp, tz=datetime.timezone.utc)
+        if (timestamp := self.timestamps.get("end")) is not None:
+            return datetime.datetime.fromtimestamp(timestamp / 1000, tz=datetime.timezone.utc)
+        return None
 
     @property
     def large_image_url(self) -> Optional[str]:
@@ -279,12 +273,11 @@ class Activity(BaseActivity):
         if self.application_id is None:
             return None
 
-        try:
-            large_image = self.assets["large_image"]
-        except KeyError:
-            return None
-        else:
-            return Asset.BASE + f"/app-assets/{self.application_id}/{large_image}.png"
+        if "large_image" in self.assets:
+            return (
+                Asset.BASE + f"/app-assets/{self.application_id}/{self.assets['large_image']}.png"
+            )
+        return None
 
     @property
     def small_image_url(self) -> Optional[str]:
@@ -292,12 +285,11 @@ class Activity(BaseActivity):
         if self.application_id is None:
             return None
 
-        try:
-            small_image = self.assets["small_image"]
-        except KeyError:
-            return None
-        else:
-            return Asset.BASE + f"/app-assets/{self.application_id}/{small_image}.png"
+        if "small_image" in self.assets:
+            return (
+                Asset.BASE + f"/app-assets/{self.application_id}/{self.assets['small_image']}.png"
+            )
+        return None
 
     @property
     def large_image_text(self) -> Optional[str]:
@@ -489,12 +481,9 @@ class Streaming(BaseActivity):
         dictionary if it starts with ``twitch:``. Typically set by the Discord client.
         """
 
-        try:
-            name = self.assets["large_image"]
-        except KeyError:
-            return None
-        else:
+        if (name := self.assets.get("large_image")) is not None:
             return name[7:] if name[:7] == "twitch:" else None
+        return None
 
     def to_dict(self) -> Dict[str, Any]:
         ret: Dict[str, Any] = {
