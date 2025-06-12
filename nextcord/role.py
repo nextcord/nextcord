@@ -52,15 +52,27 @@ class RoleTags:
         The ID of the subscription listing that manages the role.
 
         .. versionadded:: 2.4
+    premium_subscriber: :class:`bool`
+        Whether the role is the premium subscriber, AKA "boost", role for the guild.
+
+        versionadded:: 3.2
+    available_for_purchase: :class:`bool`
+        Whether the role is available for purchase.
+
+        .. versionadded:: 3.2
+    guild_connections: :class:`bool`
+        Whether the role is a guild's linked role.
+
+        .. versionadded:: 3.2
     """
 
     __slots__ = (
         "bot_id",
         "integration_id",
-        "_premium_subscriber",
         "subscription_listing_id",
-        "_available_for_purchase",
-        "_guild_connections",
+        "premium_subscriber",
+        "available_for_purchase",
+        "guild_connections",
     )
 
     def __init__(self, data: RoleTagPayload) -> None:
@@ -70,12 +82,12 @@ class RoleTags:
         # This is different from other fields where "null" means "not there".
         # So in this case, a value of None is the same as True.
         # Which means we would need a different sentinel.
-        self._premium_subscriber: Optional[Any] = data.get("premium_subscriber", MISSING)
         self.subscription_listing_id: Optional[int] = get_as_snowflake(
             data, "subscription_listing_id"
         )
-        self._available_for_purchase: Optional[Any] = data.get("available_for_purchase", MISSING)
-        self._guild_connections: Optional[Any] = data.get("guild_connections", MISSING)
+        self.guild_connections: bool = "guild_connections" in data
+        self.premium_subscriber: bool = "premium_subscriber" in data
+        self.available_for_purchase: bool = "available_for_purchase" in data
 
     def is_bot_managed(self) -> bool:
         """:class:`bool`: Whether the role is associated with a bot."""
@@ -83,7 +95,7 @@ class RoleTags:
 
     def is_premium_subscriber(self) -> bool:
         """:class:`bool`: Whether the role is the premium subscriber, AKA "boost", role for the guild."""
-        return self._premium_subscriber is None
+        return self.premium_subscriber
 
     def is_integration(self) -> bool:
         """:class:`bool`: Whether the role is managed by an integration."""
@@ -94,14 +106,14 @@ class RoleTags:
 
         .. versionadded:: 2.4
         """
-        return self._available_for_purchase is None
+        return self.available_for_purchase
 
     def has_guild_connections(self) -> bool:
         """:class:`bool`: Whether the role is a guild's linked role.
 
         .. versionadded:: 2.4
         """
-        return self._guild_connections is None
+        return self.guild_connections
 
     def __repr__(self) -> str:
         return (
@@ -257,12 +269,7 @@ class Role(Hashable):
         if self._icon is None:
             self._icon: Optional[str] = data.get("unicode_emoji", None)
         self.tags: Optional[RoleTags]
-
-        try:
-            self.tags = RoleTags(data["tags"])
-        except KeyError:
-            self.tags = None
-
+        self.tags = RoleTags(data["tags"]) if "tags" in data else None
         self._flags: int = data.get("flags", 0)
 
     def is_default(self) -> bool:

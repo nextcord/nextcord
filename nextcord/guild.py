@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import contextlib
 import copy
 import unicodedata
 import warnings
@@ -227,6 +226,8 @@ class Guild(Hashable):
         - ``VERIFIED``: Guild is a verified server.
         - ``VIP_REGIONS``: Guild has VIP voice regions.
         - ``WELCOME_SCREEN_ENABLED``: Guild has enabled the welcome screen.
+        - ``ROLE_SUBSCRIPTIONS_ENABLED``: Guild has enabled role subscriptions.
+        - ``ROLE_SUBSCRIPTIONS_AVAILABLE_FOR_PURCHASE``: Guild has role subscriptions that can be purchased.
 
     premium_tier: :class:`int`
         The premium tier for this guild. Corresponds to "Boost Level" in the official UI.
@@ -416,11 +417,8 @@ class Guild(Hashable):
             self._voice_states[user_id] = after
 
         member = self.get_member(user_id)
-        if member is None:
-            try:
-                member = Member(data=data["member"], state=self._state, guild=self)
-            except KeyError:
-                member = None
+        if member is None and (member_data := data.get("member")):
+            member = Member(data=member_data, guild=self, state=self._state)
 
         return member, before, after
 
@@ -540,8 +538,8 @@ class Guild(Hashable):
 
     # TODO: refactor/remove?
     def _sync(self, data: GuildPayload) -> None:
-        with contextlib.suppress(KeyError):
-            self._large = data["large"]
+        if large := data.get("large") is not None:
+            self._large = large
 
         empty_tuple = ()
         for presence in data.get("presences", []):
