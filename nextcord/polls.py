@@ -265,7 +265,7 @@ class PollCreateRequest:
     ----------
     question: Union[:class:`str`, :class:`PollMedia`]
         The question of the poll. Currently only `text` is supported.
-        If a :class:`str` was passed, it automatically converts to a :class:`PollMedia`.
+        If a :class:`str` was passed, it's automatically converted to a :class:`PollMedia`.
     duration: Optional[:class:`int`]
         The number of hours this poll should be open for. Defaults to ``24``. Max ``768`` (32 days).
     allow_multiselect: Optional[:class:`bool`]
