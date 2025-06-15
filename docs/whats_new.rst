@@ -12,6 +12,218 @@ Changelog
 This page keeps a detailed human-friendly rendering of what's new and changed
 in specific versions.
 
+.. _vp3p1p0:
+
+v3.1.0
+------
+
+This version is a minor release, with mostly bug fixes, and the addition of application-managed emojis.
+
+New Features
+~~~~~~~~~~~~
+
+- Add support for application-managed emojis (:issue:`1240`):
+    - :meth:`Client.create_application_emoji`
+    - :meth:`Client.fetch_application_emojis`
+    - :meth:`Client.fetch_application_emoji`
+    - :attr:`Emoji.guild_id` and :attr:`Emoji.guild` are now optional, and will be ``None`` for application-managed emojis
+    - :attr:`Emoji.application_id`
+    - :meth:`Emoji.is_usable` has been modified to account for application emojis
+    - :meth:`Emoji.is_application_emoji`
+    - :meth:`Emoji.is_guild_emoji`
+
+Bug Fixes
+~~~~~~~~~
+
+- Fix scheduled event ``entity_metadata`` not being editable (:issue:`1245`).
+- Fix Opus support for Apple Silicon (:issue:`1251`).
+- Handle false gateway disconnects from Discord (:issue:`1250`).
+- Fix condition for :attr:`User.default_avatar` (:issue:`1237`).
+- Fix ``UnboundLocalError`` with :class:`SelectOption`\s not having emojis (:issue:`1252`).
+
+.. _vp3p0p0:
+
+v3.0.0
+------
+
+This version is a major release with breaking changes and proper support for Python 3.13.
+
+Breaking Changes
+~~~~~~~~~~~~~~~~
+
+- The minimum Python version is now 3.12 (:issue:`1205`, :issue:`1234`).
+- Remove the ``discord`` module alias. You should now use ``nextcord`` instead (:issue:`1095`).
+- Remove deprecations from the 2.x series (:issue:`1129`):
+    - ``Client.persistent_views`` has been replaced with a more flexible system. Use :func:`Client.views` with the ``persistent`` parameter set to ``True``.
+    - ``Client.deploy_application_commands`` has been replaced with :func:`Client.discover_application_commands`.
+    - ``Client.delete_unknown_application_commands``, ``Client.associate_application_commands``, ``Client.update_application_commands``, and ``Client.rollout_application_commands`` have been replaced with :func:`Client.sync_application_commands`.
+    - ``Client.add_startup_application_commands`` has been replaced with :func:`Client.add_all_application_commands`.
+    - ``Embed.Empty`` (and therefore ``EmptyEmbed``) has been removed in favour of :data:`None`. Use ``None`` for missing fields in :class:`Embed`.
+    - ``Guild.ban``'s ``delete_message_days`` parameter has been replaced with the more granular ``delete_message_seconds`` parameter.
+    - ``BaseApplicationCommand.check_against_raw_payload`` has been renamed to :meth:`BaseApplicationCommand.is_payload_valid`.
+    - ``BaseApplicationCommand.get_guild_payload`` has been renamed to :meth:`BaseApplicationCommand.get_payload` with a ``guild_id`` parameter.
+    - ``BaseApplicationCommand.global_payload`` has been replaced with :meth:`BaseApplicationCommand.get_payload(None) <BaseApplicationCommand.get_payload>`.
+- Rework the signature of :meth:`Client.get_application_command_from_signature` (:issue:`756`):
+    - The ``name`` parameter has been renamed to ``qualified_name`` and supports subcommands/groups separated by spaces.
+    - The ``cmd_type`` parameter has been renamed to ``type``, defaults to :attr:`~nextcord.ApplicationCommandType.chat_input`, and is a keyword-only parameter.
+    - The ``guild_id`` parameter has been renamed to ``guild``, defaults to :data:`None`, and is a keyword-only parameter.
+- Rework async iterators to use regular async iterators (:issue:`950`). This removes the following methods with replacements:
+    - ``AsyncIterator.chunk`` can be replaced with :func:`utils.as_chunks`
+    - ``AsyncIterator.flatten`` can be replaced with ``[item async for item in iterator]``
+    - ``AsyncIterator.map`` can be replaced with ``[func(item) async for item in iterator]``
+    - ``AsyncIterator.next`` can be replaced with either a regular ``async for`` loop, or :func:`anext`
+    - ``AsyncIterator.filter`` can be replaced with ``[item async for item in iterator if condition(item)]``
+    - ``AsyncIterator.find`` can be replaced with ``next((item async for item in iterator if condition(item)), None)``
+    - ``AsyncIterator.get`` can be replaced with ``next((item async for item in iterator if condition(item)), None)``
+
+Deprecations
+~~~~~~~~~~~~
+
+- Deprecate :attr:`Message.interaction` in favour of :attr:`Message.interaction_metadata`
+
+New Features
+~~~~~~~~~~~~
+
+- :meth:`Client.get_application_command_from_signature` now supports subcommands and groups separated by spaces (:issue:`756`).
+- :meth:`Client.get_application_command_from_signature` now supports searching a command's localisations too with the ``search_localizations`` boolean parameter (:issue:`756`).
+- Add :meth:`ClientCog.cog_application_command_error` for handling application command errors within the current cog (:issue:`825`, :issue:`989`).
+- Add the ``extras`` parameter to :meth:`commands.Bot.reload_extension <nextcord.ext.commands.Bot.reload_extension>` (:issue:`1154`, :issue:`1158`).
+- Use ``global_name`` in :attr:`User.display_name` and :attr:`Member.display_name` when applicable (:issue:`1123`).
+- Add the ``banner`` parameter to :meth:`ClientUser.edit` (:issue:`1171`).
+- Add :attr:`AutoModerationActionMetadata.custom_message` (:issue:`1192`):
+- Add :attr:`Invite.type` (:issue:`1173`).
+- Add :meth:`ForumChannel.webhooks`, :meth:`StageChannel.webhooks`, and :meth:`VoiceChannel.webhooks` (:issue:`1176`, :issue:`1177`).
+- Add support for user-installable apps (:issue:`1181`):
+    - Add :attr:`AppInfo.integration_types_config`
+    - Add :attr:`BaseApplicationCommand.integration_types`
+    - Add :attr:`BaseApplicationCommand.contexts`
+    - Add :attr:`Interaction.authorizing_integration_owners`
+    - Add :attr:`Interaction.context <nextcord.Interaction.context>`
+- Support editing :class:`Webhook` messages in threads (:issue:`1160`):
+    - Add the ``thread_id`` parameter to :meth:`Webhook.edit_message`
+    - Add the ``thread_id`` parameter to :meth:`SyncWebhook.edit_message`
+- Move listeners to :class:`Client` without requiring ``ext.commands`` (:issue:`917`):
+    - Add :meth:`Client.add_listener`
+    - Add :meth:`Client.remove_listener`
+    - Add :meth:`Client.listen`
+- Add leftover attributes to :class:`StageChannel` related methods (:issue:`1132`):
+    - Add the ``send_start_notification`` and ``scheduled_event`` parameters to :meth:`StageChannel.create_instance`
+    - Add the ``scheduled_event_id`` and ``scheduled_event`` attributes to :class:`StageInstance`
+- Add the ``thread_name`` parameter to :meth:`Webhook.send` and :meth:`SyncWebhook.send` for creating forum posts with webhooks (:issue:`1190`).
+- Support message forwarding (:issue:`1209`).
+    - Add :meth:`abc.Messageable.forward`
+    - Add :attr:`MessageReference.type`
+    - Add :meth:`Message.forward`
+    - Add :attr:`Message.snapshots`
+- Add :meth:`Guild.fetch_role` (:issue:`1206`).
+- Add :meth:`Guild.bulk_ban` (:issue:`1172`).
+- Add :attr:`Permissions.create_expressions` and :attr:`Permissions.create_events` (:issue:`1094`).
+- Add support for receiving voice messages (:issue:`1111`):
+    - Add :attr:`MessageFlags.is_voice_message`
+    - Add :attr:`Attachment.duration_secs`
+    - Add :attr:`Attachment.waveform`
+    - Add :attr:`Permissions.send_voice_messages`
+- Add :attr:`Member.guild_banner` and :attr:`Member.display_banner` (:issue:`1207`).
+- Add the ``integration_type`` parameter to :func:`utils.oauth_url` (:issue:`1208`).
+
+Bug Fixes
+~~~~~~~~~
+
+- Fix an issue where more than ``100`` :class:`AuditLogEntry` objects could not be fetched from :meth:`Guild.audit_logs` (:issue:`1050`).
+- Include the nextcord-specific user agent in CDN requests (:issue:`1002`, :issue:`1114`).
+- Reduce crashes from malformed websocket frames from Discord (:issue:`1170`, :issue:`1180`).
+- Use ``importlib.metadata`` over ``pkg_resources`` for version checking to support later Python versions.
+- Respect :attr:`ui.View.prevent_update` in :class:`Webhook` methods (:issue:`1157`).
+- Fix unnecessary command sync and unsync calls for context commands with spaces (:issue:`1212`).
+- Fix before and after invoke hooks not working within cogs (:issue:`1004`).
+- Add missing permissions to :class:`Permissions`' classmethods (:issue:`1223`).
+
+Miscellaneous
+~~~~~~~~~~~~~
+
+- The HTTP client has been reworked, allowing multiple requests in the same bucket to execute at once, and opening the support for native Oauth2 support (:issue:`1057`).
+- Async iterators now use regular async iterators as opposed to a custom implementation (:issue:`122`, :issue:`950`).
+
+.. _vp2p6p0:
+
+v2.6.0
+------
+
+This release adds even more features and bug fixes, including the new username system, and will likely be the last release of the 2.x series.
+
+v3.0 will have breaking changes and more support for new API features.
+
+Removals
+~~~~~~~~
+
+- ``ApplicationFlags.active`` has been removed as that is not used for active applications anymore (:issue:`1081`).
+
+Deprecations
+~~~~~~~~~~~~
+
+- :attr:`Client.persistent_views` is deprecated in favour of :func:`Client.views` (:issue:`843`).
+
+New Features
+~~~~~~~~~~~~
+
+- Add recent :class:`MessageFlags` values (:issue:`990`):
+    - :attr:`MessageFlags.loading`
+    - :attr:`MessageFlags.failed_to_mention_roles`
+    - :attr:`MessageFlags.suppress_notifications`
+- Add :attr:`ApplicationFlags.application_auto_moderation_rule_create` (:issue:`1026`).
+- Add a ``prevent_update`` parameter to :class:`ui.View` to only store one instance of persistent views (:issue:`886`).
+- Add :attr:`Guild.premium_progress_bar_enabled` (:issue:`1067`).
+- Add application command checks to :class:`Client` (:issue:`1048`). Previously this was only in :class:`commands.Bot <nextcord.ext.commands.Bot>` and :class:`commands.AutoShardedBot <nextcord.ext.commands.AutoShardedBot>`. This means :class:`Client` now has:
+    - :func:`Client.add_application_command_check`
+    - :func:`Client.remove_application_command_check`
+    - :func:`Client.application_command_check`
+    - :func:`Client.application_command_before_invoke`
+    - :func:`Client.application_command_after_invoke`
+- Add support for guild previews (:issue:`1033`). This adds:
+    - :func:`Client.fetch_guild_preview`
+    - :class:`GuildPreview`
+- Track non-persistent :class:`ui.View`\s, and expose them via :attr:`Client.all_views` and :func:`Client.views` (:issue:`843`).
+- Add support for the new "pomelo" username system (:issue:`1060`, :issue:`1061`). :attr:`abc.User.global_name` is used to access the "Display Name", and :attr:`abc.User.discriminator` returns ``0000`` for unmigrated users. This also adds the new default avatar :attr:`DefaultAvatar.fuchsia`.
+- Add the ``default_forum_layout`` parameter to :func:`Guild.create_forum_channel` (:issue:`1013`).
+- Add support to inspect application command permissions (:issue:`1065`). This adds:
+    - :attr:`BaseApplicationCommand.required_permissions`
+    - :attr:`BaseApplicationCommand.required_bot_permissions`
+    - :attr:`BaseApplicationCommand.required_guild_permissions`
+    - :attr:`BaseApplicationCommand.required_bot_guild_permissions`
+- |commands| Add support to inspect prefix command permissions (:issue:`1065`). This adds:
+    - :attr:`Command.required_permissions <nextcord.ext.commands.Command.required_permissions>`
+    - :attr:`Command.required_bot_permissions <nextcord.ext.commands.Command.required_bot_permissions>`
+    - :attr:`Command.required_guild_permissions <nextcord.ext.commands.Command.required_guild_permissions>`
+    - :attr:`Command.required_bot_guild_permissions <nextcord.ext.commands.Command.required_bot_guild_permissions>`
+- Add :class:`AttachmentFlags`, accessible via :attr:`Attachment.flags` and :func:`Attachment.is_remix` (:issue:`1088`).
+- Add :class:`RoleFlags`, accessible via :attr:`Role.flags` and :func:`Role.is_in_prompt` (:issue:`1084`).
+- Add the ``with_counts`` parameter to :func:`Client.fetch_guilds` (:issue:`1093`).
+- Add support for auto moderation mention raids (:issue:`1080`). This adds:
+    - :attr:`AutoModerationTriggerMetadata.mention_raid_protection_enabled`
+    - :attr:`Guild.safety_alerts_channel`
+- Add support for "Text in Stage" and "Video in Stage" (:issue:`1017`). This means that :class:`StageChannel` now inherits :class:`abc.Messageable`. The ``bitrate``, ``user_limit``, ``nsfw``, ``rtc_region`` and ``video_quality_mode`` parameters have been added to :func:`Guild.create_stage_channel`, along with:
+    - :attr:`MessageType.stage_start`
+    - :attr:`MessageType.stage_end`
+    - :attr:`MessageType.stage_speaker`
+    - :attr:`MessageType.stage_topic`
+    - :attr:`Guild.max_stage_video_channel_users`
+- Add :func:`nextcord.utils.format_ts <utils.format_ts>` for formatting integer timestamps without a :class:`datetime.datetime` wrapping it (:issue:`1085`, :issue:`1099`).
+- Add support for custom statuses by making :attr:`CustomActivity.state` fall back to ``name`` so Discord recognises the activity (:issue:`1109`).
+- Add :class:`MemberFlags`, accessible via :attr:`Member.flags`, and modifiable via the ``flags`` and ``bypass_verification`` parameters in :func:`Member.edit` (:issue:`1042`).
+
+Bug Fixes
+~~~~~~~~~
+
+- Fix autocomplete tracebacks due to incomplete :class:`User`/:class:`Member` payloads from Discord (:issue:`1008`).
+- Fix unfocused autocomplete options not being passed into the callback (:issue:`1045`, :issue:`1046`).
+- Fix :attr:`ScheduledEvent.metadata` being missing (:issue:`1105`).
+- Fix :attr:`Thread.applied_tag_ids` not being updated on edit (:issue:`1097`, :issue:`1098`).
+
+Miscellaneous
+~~~~~~~~~~~~~
+
+- Change guild file size limits to the ``25MiB`` limit (:issue:`1063`).
+
 .. _vp2p5p0:
 
 v2.5.0

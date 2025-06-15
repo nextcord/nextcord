@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 import sys
 import warnings
@@ -18,6 +19,7 @@ from typing import (
     List,
     Literal,
     Optional,
+    Self,
     Set,
     Tuple,
     Type,
@@ -40,12 +42,25 @@ from .channel import (
     TextChannel,
     VoiceChannel,
 )
-from .enums import ApplicationCommandOptionType, ApplicationCommandType, ChannelType, Locale
-from .errors import ApplicationCheckFailure, ApplicationCommandOptionMissing, ApplicationInvokeError
+from .enums import (
+    ApplicationCommandOptionType,
+    ApplicationCommandType,
+    ChannelType,
+    IntegrationType,
+    InteractionContextType,
+    Locale,
+)
+from .errors import (
+    ApplicationCheckFailure,
+    ApplicationCommandOptionMissing,
+    ApplicationError,
+    ApplicationInvokeError,
+)
 from .guild import Guild
 from .interactions import Interaction
 from .member import Member
-from .message import Attachment, Message
+from .message import Attachment
+from .object import Object
 from .permissions import Permissions
 from .role import Role
 from .threads import Thread
@@ -106,6 +121,7 @@ DEFAULT_SLASH_DESCRIPTION = "No description provided."
 
 T = TypeVar("T")
 FuncT = TypeVar("FuncT", bound=Callable[..., Any])
+CmdT = TypeVar("CmdT", bound="Union[BaseApplicationCommand, SlashApplicationCommand]")
 # As nextcord.types exist, we cannot import types
 if TYPE_CHECKING:
     EllipsisType = ellipsis  # noqa: F821
@@ -157,6 +173,14 @@ class CallbackWrapper:
             await interaction.send("The description of this command should be in all uppercase!")
     """
 
+    @overload
+    def __new__(
+        cls, callback: Union[Callable, CallbackWrapper], *args: Any, **kwargs: Any
+    ) -> Self: ...
+
+    @overload
+    def __new__(cls, callback: CmdT, *args: Any, **kwargs: Any) -> CmdT: ...
+
     def __new__(
         cls,
         callback: Union[
@@ -170,8 +194,8 @@ class CallbackWrapper:
         if isinstance(callback, (BaseApplicationCommand, SlashApplicationSubcommand)):
             callback.modify_callbacks.extend(wrapper.modify_callbacks)
             return callback
-        else:
-            return wrapper
+
+        return wrapper
 
     def __init__(self, callback: Union[Callable, CallbackWrapper], *args, **kwargs) -> None:
         # noinspection PyTypeChecker
@@ -276,16 +300,16 @@ class ApplicationCommandOption:
         self.name: Optional[str] = name
         self.name_localizations: Optional[Dict[Union[str, Locale], str]] = name_localizations
         self.description: Optional[str] = description
-        self.description_localizations: Optional[
-            Dict[Union[str, Locale], str]
-        ] = description_localizations
+        self.description_localizations: Optional[Dict[Union[str, Locale], str]] = (
+            description_localizations
+        )
         self.required: Optional[bool] = required
         self.choices: Optional[
             Union[Dict[str, Union[str, int, float]], Iterable[Union[str, int, float]]]
         ] = choices
-        self.choice_localizations: Optional[
-            Dict[str, Dict[Union[Locale, str], str]]
-        ] = choice_localizations
+        self.choice_localizations: Optional[Dict[str, Dict[Union[Locale, str], str]]] = (
+            choice_localizations
+        )
         self.channel_types: Optional[List[ChannelType]] = channel_types
         self.min_value: Optional[Union[int, float]] = min_value
         self.max_value: Optional[Union[int, float]] = max_value
@@ -311,7 +335,8 @@ class ApplicationCommandOption:
     def get_choices_localized_payload(self) -> List[Dict[str, Union[str, int, float, dict, None]]]:
         if self.choices is None:
             return []
-        elif isinstance(self.choices, dict):
+
+        if isinstance(self.choices, dict):
             choices = self.choices
         else:
             choices = {value: value for value in self.choices}
@@ -461,7 +486,6 @@ class OptionConverter(_CustomTypingMetaBase):
         option: :class:`BaseCommandOption`
             Command option that's being created.
         """
-        pass
 
 
 class Mentionable(OptionConverter):
@@ -476,11 +500,9 @@ class Mentionable(OptionConverter):
 
 class ClientCog:
     # TODO: I get it's a terrible name, I just don't want it to duplicate current Cog right now.
-    # __cog_application_commands__: List[ApplicationCommand]
-    # __cog_to_register__: List[ApplicationCommand]
     __cog_application_commands__: List[BaseApplicationCommand]
 
-    def __new__(cls, *args: Any, **kwargs: Any):
+    def __new__(cls, *_args: Any, **_kwargs: Any):
         new_cls = super(ClientCog, cls).__new__(cls)
         new_cls._read_application_commands()
         return new_cls
@@ -491,7 +513,7 @@ class ClientCog:
         """
         self.__cog_application_commands__ = []
         for base in reversed(self.__class__.__mro__):
-            for _, value in base.__dict__.items():
+            for value in base.__dict__.values():
                 is_static_method = isinstance(value, staticmethod)
                 if is_static_method:
                     value = value.__func__
@@ -510,6 +532,13 @@ class ClientCog:
                     value.parent_cog = self
                     value.from_callback(value.callback)
                     self.__cog_application_commands__.append(value)
+
+    def has_application_command_error_handler(self) -> bool:
+        """:class:`bool`: Checks whether the cog has an error handler for application commands.
+
+        .. versionadded:: 3.0
+        """
+        return not hasattr(self.cog_application_command_error.__func__, "__cog_special_method__")
 
     @property
     def application_commands(self) -> List[BaseApplicationCommand]:
@@ -538,6 +567,27 @@ class ClientCog:
         return True
 
     @_cog_special_method
+    async def cog_application_command_error(
+        self, interaction: Interaction, error: ApplicationError
+    ) -> None:
+        """A special method that is called whenever an error is dispatched inside this cog.
+
+        This is similar to :func:`.on_application_command_error` except only applying
+        to the commands inside this cog.
+
+        This **must** be a coroutine.
+
+        .. versionadded:: 3.0
+
+        Parameters
+        ----------
+        interaction: :class:`.Interaction`
+            The Interaction where the error happened.
+        error: :class:`ApplicationError`
+            The error that happened.
+        """
+
+    @_cog_special_method
     async def cog_application_command_before_invoke(self, interaction: Interaction) -> None:
         """A special method that acts as a cog local pre-invoke hook.
 
@@ -550,7 +600,6 @@ class ClientCog:
         interaction: :class:`.Interaction`
             The invocation interaction.
         """
-        pass
 
     @_cog_special_method
     async def cog_application_command_after_invoke(self, interaction: Interaction) -> None:
@@ -565,7 +614,6 @@ class ClientCog:
         interaction: :class:`.Interaction`
             The invocation interaction.
         """
-        pass
 
 
 class MissingApplicationCommandParametersWarning(UserWarning):
@@ -581,8 +629,6 @@ class MissingApplicationCommandParametersWarning(UserWarning):
 
         warnings.simplefilter("ignore", MissingApplicationCommandParametersWarning)
     """
-
-    pass
 
 
 class CallbackMixin:
@@ -606,7 +652,6 @@ class CallbackMixin:
         self.callback: Optional[Callable] = callback
         self._callback_before_invoke: Optional[ApplicationHook] = None
         self._callback_after_invoke: Optional[ApplicationHook] = None
-        self.error_callback: Optional[Callable] = None
         self.checks: List[ApplicationCheck] = []
         if self.callback:
             if isinstance(callback, CallbackWrapper):
@@ -617,14 +662,22 @@ class CallbackMixin:
 
         self.parent_cog = parent_cog
 
+        if self.parent_cog:
+            self.error_callback: Optional[Callable] = self.parent_cog._get_overridden_method(
+                self.parent_cog.cog_application_command_error
+            )
+        else:
+            self.error_callback: Optional[Callable] = None
+
     def __call__(self, interaction: Interaction, *args, **kwargs):
         """Invokes the callback, injecting ``self`` if available."""
         if self.callback is None:
             raise ValueError("Cannot call callback when it is not set.")
-        elif self.parent_cog:
+
+        if self.parent_cog:
             return self.callback(self.parent_cog, interaction, *args, **kwargs)
-        else:
-            return self.callback(interaction, *args, **kwargs)
+
+        return self.callback(interaction, *args, **kwargs)
 
     @property
     def error_name(self) -> str:
@@ -702,10 +755,8 @@ class CallbackMixin:
         func: :class:`ApplicationCheck`
             The function to remove from the checks.
         """
-        try:
+        with contextlib.suppress(ValueError):
             self.checks.remove(func)
-        except ValueError:
-            pass
 
         return self
 
@@ -739,6 +790,11 @@ class CallbackMixin:
 
         if self.name is None:
             self.name = self.callback.__name__
+
+        if self.error_callback is None and self.parent_cog:
+            self.error_callback = self.parent_cog._get_overridden_method(
+                self.parent_cog.cog_application_command_error
+            )
 
         try:
             if not asyncio.iscoroutinefunction(self.callback):
@@ -800,7 +856,7 @@ class CallbackMixin:
                         category=MissingApplicationCommandParametersWarning,
                     )
 
-                for name, param in callback_params.items():
+                for param in callback_params.values():
                     if skip_counter:
                         skip_counter -= 1
                     else:
@@ -839,7 +895,7 @@ class CallbackMixin:
             A boolean indicating if the command can be invoked.
         """
         # Global checks
-        for check in interaction.client._connection._application_command_checks:
+        for check in interaction.client._application_command_checks:
             try:
                 check_result = await maybe_coroutine(check, interaction)
             # To catch any subclasses of ApplicationCheckFailure.
@@ -904,16 +960,15 @@ class CallbackMixin:
 
         if can_run:
             if self._callback_before_invoke is not None:
-                await self._callback_before_invoke(interaction)  # type: ignore
+                await self._invoke_hook_param_check(self._callback_before_invoke, interaction)
 
             if (before_invoke := self.cog_before_invoke) is not None:
-                await before_invoke(interaction)  # type: ignore
+                await self._invoke_hook_param_check(before_invoke, interaction)
 
-            if (before_invoke := state._application_command_before_invoke) is not None:
-                await before_invoke(interaction)  # type: ignore
+            if (before_invoke := interaction.client._application_command_before_invoke) is not None:
+                await self._invoke_hook_param_check(before_invoke, interaction)
 
             try:
-                # await self.invoke_callback(interaction, *args, **kwargs)
                 await self(interaction, *args, **kwargs)
             except Exception as error:
                 state.dispatch(
@@ -926,13 +981,24 @@ class CallbackMixin:
                 state.dispatch("application_command_completion", interaction)
             finally:
                 if self._callback_after_invoke is not None:
-                    await self._callback_after_invoke(interaction)  # type: ignore
+                    await self._invoke_hook_param_check(self._callback_after_invoke, interaction)
 
                 if (after_invoke := self.cog_after_invoke) is not None:
-                    await after_invoke(interaction)  # type: ignore
+                    await self._invoke_hook_param_check(after_invoke, interaction)
 
-                if (after_invoke := state._application_command_after_invoke) is not None:
-                    await after_invoke(interaction)  # type: ignore
+                if (
+                    after_invoke := interaction.client._application_command_after_invoke
+                ) is not None:
+                    await self._invoke_hook_param_check(after_invoke, interaction)
+
+    async def _invoke_hook_param_check(
+        self, hook: ApplicationHook, interaction: Interaction
+    ) -> None:
+        # invoke with self parameter if it exists
+        if len(signature(hook).parameters) == 2:
+            await hook(self.parent_cog, interaction)  # type: ignore
+        else:
+            await hook(interaction)  # type: ignore
 
     async def invoke_callback(self, interaction: Interaction, *args, **kwargs) -> None:
         """|coro|
@@ -944,11 +1010,13 @@ class CallbackMixin:
         """|coro|
         Invokes the error handler if available.
         """
-        if self.has_error_handler() and self.error_callback is not None:
-            if self.parent_cog:
-                await self.error_callback(self.parent_cog, interaction, error)
+        if self.has_error_handler():
+            if TYPE_CHECKING:
+                error_callback = cast(Callable, self.error_callback)
             else:
-                await self.error_callback(interaction, error)
+                error_callback = self.error_callback
+
+            await error_callback(interaction, error)
 
     def error(self, callback: ApplicationErrorCallback) -> Callable:
         """Decorates a function, setting it as a callback to be called when a :class:`ApplicationError` or any of
@@ -1036,7 +1104,7 @@ class AutocompleteOptionMixin:
             # If there's a parent cog, there should be a self. Skip it too.
             skip_count += 1
 
-        for name, _ in signature(self.autocomplete_callback).parameters.items():
+        for name in signature(self.autocomplete_callback).parameters:
             if skip_count:
                 skip_count -= 1
             else:
@@ -1057,8 +1125,8 @@ class AutocompleteOptionMixin:
             return await self.autocomplete_callback(
                 self.parent_cog, interaction, option_value, **kwargs
             )
-        else:
-            return await self.autocomplete_callback(interaction, option_value, **kwargs)
+
+        return await self.autocomplete_callback(interaction, option_value, **kwargs)
 
 
 class AutocompleteCommandMixin:
@@ -1173,7 +1241,7 @@ class AutocompleteCommandMixin:
         #  earlier, right?
         for arg_name, callback in self._temp_autocomplete_callbacks.items():
             found = False
-            for _, option in self.options.items():
+            for option in self.options.values():
                 if option.functional_name == arg_name:
                     if option.autocomplete is None:
                         # If autocomplete isn't set, enable it for them.
@@ -1210,6 +1278,10 @@ class AutocompleteCommandMixin:
         .. note::
             To use inputs from other options inputted in the command, you can add them as arguments to the autocomplete
             callback. The order of the arguments does not matter, but the names do.
+
+            If you are using :class:`nextcord.Member` or :class:`nextcord.User` typehints in
+            your autocompletes then just note that the objects provided can be both `None` and
+            :class:`nextcord.Object` depending on the data Discord sends.
 
         Parameters
         ----------
@@ -1343,7 +1415,7 @@ class SlashOption(ApplicationCommandOption, _CustomTypingMetaBase):
 
 class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin):
     command: Union[SlashApplicationCommand, SlashApplicationSubcommand]
-    option_types: Dict[type, ApplicationCommandOptionType] = {
+    option_types: ClassVar[Dict[type, ApplicationCommandOptionType]] = {
         str: ApplicationCommandOptionType.string,
         int: ApplicationCommandOptionType.integer,
         bool: ApplicationCommandOptionType.boolean,
@@ -1365,7 +1437,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
     }
     """Maps Python annotations/typehints to Discord Application Command type values."""
 
-    channel_mapping: Dict[type, Tuple[ChannelType, ...]] = {
+    channel_mapping: ClassVar[Dict[type, Tuple[ChannelType, ...]]] = {
         CategoryChannel: (ChannelType.category,),
         DMChannel: (ChannelType.private,),
         ForumChannel: (ChannelType.forum,),
@@ -1406,7 +1478,8 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
 
         self.name = cmd_arg.name or parameter.name
         # Use the given name, or default to the parameter name.
-        # typehint_origin = typing.get_origin(parameter.annotation)  # TODO: Once Python 3.10 is standard, use this.
+        # typehint_origin = typing.get_origin(parameter.annotation)  # noqa: ERA001
+        # TODO: Once Python 3.10 is standard, use this.
         typehint_origin = typing_extensions.get_origin(parameter.annotation)
 
         annotation_type: ApplicationCommandOptionType
@@ -1467,15 +1540,16 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
                 )
             # Make sure that all literals are only OptionConverters and nothing else.
             for lit in literals:
-                if not isinstance(lit, OptionConverter) or lit is not None:
+                if not isinstance(lit, OptionConverter):
                     raise ValueError(
                         f"{self.error_name} You cannot use non-OptionConverter literals when the base annotation is "
                         f"not Literal."
                     )
 
             # Pyright gets upset at appending these lists together, but not upset when .extend is used?
-            # grouped_annotations: List[Union[type, Annotated[object, OptionConverter]]] = unpacked_annotations + \
-            #                                                                              literals
+            # grouped_annotations: List[Union[type, Annotated[object, OptionConverter]]] = (
+            #     unpacked_annotations + literals
+            # )  noqa: ERA001
             grouped_annotations: List[
                 Union[type, Annotated[Optional[OptionConverter], object], Type[None]]
             ] = []
@@ -1505,10 +1579,9 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
                             f"{self.error_name} | Annotation {anno} is incompatible with {found_type} \n| {typehint_origin}\n| {parameter.annotation}\n| {grouped_annotations}"
                         )
 
-                    if not (
-                        isinstance(anno, ApplicationCommandOptionType)
-                        or isinstance(anno, OptionConverter)
-                    ) and (channel_types := self.channel_mapping.get(anno)):
+                    if not (isinstance(anno, (ApplicationCommandOptionType, OptionConverter))) and (
+                        channel_types := self.channel_mapping.get(anno)
+                    ):
                         found_channel_types.extend(channel_types)
 
             annotation_type = found_type
@@ -1536,10 +1609,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             # If they didn't explicitly enable autocomplete but did add an autocomplete callback...
             self.autocomplete = True
         if self.autocomplete_callback:
-            if not asyncio.iscoroutinefunction(self.autocomplete_callback):
-                raise TypeError(
-                    f"Given autocomplete callback for kwarg {self.functional_name} isn't a coroutine."
-                )
+            self.from_autocomplete_callback(self.autocomplete_callback)
 
         if cmd_arg.required is not None:
             # If the user manually set if it's required...
@@ -1581,12 +1651,11 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         # noinspection PyProtectedMember
         if self._description is not None:
             return self._description
-        elif self.command._parsed_docstring and (
+        if self.command._parsed_docstring and (
             docstring := self.command._parsed_docstring["args"].get(self.functional_name)
         ):
             return docstring
-        else:
-            return DEFAULT_SLASH_DESCRIPTION
+        return DEFAULT_SLASH_DESCRIPTION
 
     @description.setter
     def description(self, value: str) -> None:
@@ -1607,23 +1676,26 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
         # noinspection PyTypeChecker,PyUnboundLocalVariable
         if param_typing is self.parameter.empty:
             return ApplicationCommandOptionType.string
-        elif valid_type := self.option_types.get(param_typing, None):
-            return valid_type
-        elif (
-            # type(None) in typing.get_args(param_typing)  # TODO: Once Python 3.10 is standard, use this
-            type(None) in typing_extensions.get_args(param_typing)
-            and (
-                inner_type := find(
-                    lambda t: t is not type(None), typing_extensions.get_args(param_typing)
+
+        if (
+            # TODO: Once Python 3.10 is standard, use this
+            # type(None) in typing.get_args(param_typing)  # noqa: ERA001
+            (valid_type := self.option_types.get(param_typing, None))
+            or (
+                type(None) in typing_extensions.get_args(param_typing)
+                and (
+                    inner_type := find(
+                        lambda t: t is not type(None), typing_extensions.get_args(param_typing)
+                    )
                 )
+                and (valid_type := self.option_types.get(inner_type, None))
             )
-            and (valid_type := self.option_types.get(inner_type, None))
         ):
             return valid_type
-        else:
-            raise ValueError(
-                f"{self.error_name} Type `{param_typing}` isn't a supported typehint for Application Commands."
-            )
+
+        raise ValueError(
+            f"{self.error_name} Type `{param_typing}` isn't a supported typehint for Application Commands."
+        )
 
     def verify(self) -> bool:
         """This should run through :class:`SlashOption` variables and raise errors when conflicting data is given."""
@@ -1680,8 +1752,27 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             value = state.get_channel(int(value))
         elif self.type is ApplicationCommandOptionType.user:
             user_id = int(value)
-            user_dict = {user.id: user for user in get_users_from_interaction(state, interaction)}
-            value = user_dict[user_id]
+            user_dict = {user.id: user for user in interaction._resolve_users()}
+            try:
+                value = user_dict[user_id]
+            except KeyError:
+                # By here the interaction data doesn't contain
+                # a full member/user object yet so fall back to bot cache
+                value = None
+                data = cast(ApplicationCommandInteractionData, interaction.data)
+                if (guild_id := data.get("guild_id")) and (
+                    guild := state._guilds.get(int(guild_id))
+                ):
+                    value = guild.get_member(user_id)
+
+                if value is None:
+                    # Either we aren't in a guild or
+                    # the member object is not cached
+                    value = state._users.get(user_id)
+
+                    if value is None:
+                        # Fall back to a Object at-least
+                        value = Object(id=user_id)
         elif self.type is ApplicationCommandOptionType.role:
             if interaction.guild is None:
                 raise TypeError("Unable to handle a Role type when guild is None")
@@ -1702,14 +1793,16 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
                 # this looks messy but is too much effort to handle
                 # feel free to use typing.cast and if statements and raises
                 resolved_attachment_data = interaction.data["resolved"]["attachments"][value]  # type: ignore
-            except (AttributeError, ValueError, IndexError):
-                raise ValueError("Discord did not provide us interaction data for the attachment")
+            except (AttributeError, ValueError, IndexError) as e:
+                raise ValueError(
+                    "Discord did not provide us interaction data for the attachment"
+                ) from e
 
             value = Attachment(data=resolved_attachment_data, state=state)
         elif self.type is ApplicationCommandOptionType.mentionable:
-            user_role_list: List[Union[User, Member, Role]] = get_users_from_interaction(
-                state, interaction
-            ) + get_roles_from_interaction(state, interaction)
+            user_role_list: List[Union[User, Member, Role]] = (
+                interaction._resolve_users() + interaction._resolve_roles()
+            )
             mentionables = {mentionable.id: mentionable for mentionable in user_role_list}
             value = mentionables[int(value)]
 
@@ -1718,8 +1811,8 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             for converter in self.converters:
                 ret = await converter.convert(interaction, ret)
             return ret
-        else:
-            return value
+
+        return value
 
 
 class SlashCommandMixin(CallbackMixin):
@@ -1728,10 +1821,11 @@ class SlashCommandMixin(CallbackMixin):
         command_ids: Dict[Optional[int], int]
         qualified_name: str
         _children: Dict[str, SlashApplicationSubcommand]
+        _options: Dict[str, SlashCommandOption]
 
     def __init__(self, callback: Optional[Callable], parent_cog: Optional[ClientCog]) -> None:
         CallbackMixin.__init__(self, callback=callback, parent_cog=parent_cog)
-        self.options: Dict[str, SlashCommandOption] = {}
+        self._options = {}
         self._parsed_docstring: Optional[Dict[str, Any]] = None
         self._children: Dict[str, SlashApplicationSubcommand] = {}
 
@@ -1745,13 +1839,25 @@ class SlashCommandMixin(CallbackMixin):
         return self._children
 
     @property
+    def options(self) -> Dict[str, SlashCommandOption]:
+        """Dict[:class:`str`, :class:`SlashCommandOption`]: Returns the options of the command.
+
+        .. versionchanged:: 2.5
+            This is now a property.
+        """
+        return self._options
+
+    @options.setter
+    def options(self, value: Dict[str, SlashCommandOption]) -> None:
+        self._options = value
+
+    @property
     def description(self) -> str:
         if self._description is not None:
             return self._description
-        elif self._parsed_docstring and (docstring := self._parsed_docstring["description"]):
+        if self._parsed_docstring and (docstring := self._parsed_docstring["description"]):
             return docstring
-        else:
-            return DEFAULT_SLASH_DESCRIPTION
+        return DEFAULT_SLASH_DESCRIPTION
 
     def from_callback(
         self,
@@ -1781,11 +1887,11 @@ class SlashCommandMixin(CallbackMixin):
                 raise ValueError("Discord did not provide us any options data")
 
         kwargs = {}
-        uncalled_args = self.options.copy()
+        uncalled_args = self._options.copy()
         for arg_data in option_data:
             if arg_data["name"] in uncalled_args:
                 uncalled_args.pop(arg_data["name"])
-                kwargs[self.options[arg_data["name"]].functional_name] = await self.options[
+                kwargs[self.options[arg_data["name"]].functional_name] = await self._options[
                     arg_data["name"]
                 ].handle_value(state, arg_data.get("value"), interaction)
             else:
@@ -1872,6 +1978,14 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         :exc:`.ApplicationError` should be used. Note that if the checks fail then
         :exc:`.ApplicationCheckFailure` exception is raised to the :func:`.on_application_command_error`
         event.
+    integration_types: Optional[Iterable[Union[:class:`IntegrationType`, :class:`int`]]]
+        Where the command is available, only for globally-scoped commands.
+
+        .. versionadded:: 3.0
+    contexts: Optional[Iterable[Union[:class:`InteractionContextType`, :class:`int`]]]
+        Where the command can be used, only for globally-scoped commands.
+
+        .. versionadded:: 3.0
     """
 
     def __init__(
@@ -1884,9 +1998,10 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         description_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         callback: Optional[Callable] = None,
         guild_ids: Optional[Iterable[int]] = MISSING,
-        dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         nsfw: bool = False,
+        integration_types: Optional[Iterable[Union[IntegrationType, int]]] = None,
+        contexts: Optional[Iterable[Union[InteractionContextType, int]]] = None,
         parent_cog: Optional[ClientCog] = None,
         force_global: bool = False,
     ) -> None:
@@ -1913,9 +2028,6 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             An iterable list/set/whatever of guild ID's that the application command should register to.
             If not passed and :attr:`Client.default_guild_ids` is set, then those default guild ids will
             be used instead. If both of those are unset, then the command will be a global command.
-        dm_permission: :class:`bool`
-            If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
-            usable in DMs. Only for global commands, but will not error on guild.
         default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
             Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
@@ -1924,6 +2036,14 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             Whether the command can only be used in age-restricted channels. Defaults to ``False``.
 
             .. versionadded:: 2.4
+        integration_types: Optional[Iterable[Union[:class:`IntegrationType`, :class:`int`]]]
+            Where the command is available, only for globally-scoped commands. Defaults to ``guild_install``.
+
+            .. versionadded:: 3.0
+        contexts: Optional[Iterable[Union[:class:`InteractionContextType`, :class:`int`]]]
+            Where the command can be used, only for globally-scoped commands. By default, all interaction context types are included for new commands.
+
+            .. versionadded:: 3.0
         parent_cog: Optional[:class:`ClientCog`]
             ``ClientCog`` to forward to the callback as the ``self`` argument.
         force_global: :class:`bool`
@@ -1936,16 +2056,20 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         self.name: Optional[str] = name
         self.name_localizations: Optional[Dict[Union[str, Locale], str]] = name_localizations
         self._description: Optional[str] = description
-        self.description_localizations: Optional[
-            Dict[Union[str, Locale], str]
-        ] = description_localizations
+        self.description_localizations: Optional[Dict[Union[str, Locale], str]] = (
+            description_localizations
+        )
         self.guild_ids_to_rollout: Set[int] = set(guild_ids) if guild_ids else set()
         self.use_default_guild_ids: bool = guild_ids is MISSING and not force_global
-        self.dm_permission: Optional[bool] = dm_permission
-        self.default_member_permissions: Optional[
-            Union[Permissions, int]
-        ] = default_member_permissions
+        self.default_member_permissions: Optional[Union[Permissions, int]] = (
+            default_member_permissions
+        )
         self.nsfw: bool = nsfw
+        self.integration_types = (
+            None if integration_types is None else [IntegrationType(x) for x in integration_types]
+        )
+
+        self.contexts = None if contexts is None else [InteractionContextType(x) for x in contexts]
 
         self.force_global: bool = force_global
 
@@ -1954,9 +2078,77 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         Dict[Optional[:class:`int`], :class:`int`]:
             Command IDs that this application command currently has. Schema: {Guild ID (None for global): command ID}
         """
-        self.options: Dict[str, ApplicationCommandOption] = {}
+        self._options: Dict[str, ApplicationCommandOption] = {}
 
     # Simple-ish getter + setter methods.
+
+    @property
+    def required_permissions(self) -> Dict[str, bool]:
+        """Returns the permissions required to run this command.
+
+        .. note::
+
+            This returns the permissions set with :func:`ext.application_checks.has_permissions`.
+
+        .. versionadded:: 2.6
+
+        Returns
+        -------
+        Dict[:class:`str`, :class:`bool`]
+            A dictionary of the required permissions for this command.
+        """
+        return getattr(self.callback, "__slash_required_permissions", {})
+
+    @property
+    def required_bot_permissions(self) -> Dict[str, bool]:
+        """Returns the permissions the bot needs to run this command.
+
+        .. note::
+
+            This returns the permissions set with :func:`ext.application_checks.bot_has_permissions`.
+
+        .. versionadded:: 2.6
+
+        Returns
+        -------
+        Dict[:class:`str`, :class:`bool`]
+            A dictionary of the required permissions for this command.
+        """
+        return getattr(self.callback, "__slash_required_bot_permissions", {})
+
+    @property
+    def required_guild_permissions(self) -> Dict[str, bool]:
+        """Returns the guild permissions needed to run this command.
+
+        .. note::
+
+            This returns the permissions set with :func:`ext.application_checks.has_guild_permissions`.
+
+        .. versionadded:: 2.6
+
+        Returns
+        -------
+        Dict[:class:`str`, :class:`bool`]
+            A dictionary of the required permissions for this command.
+        """
+        return getattr(self.callback, "__slash_required_guild_permissions", {})
+
+    @property
+    def required_bot_guild_permissions(self) -> Dict[str, bool]:
+        """Returns the permissions the bot needs to have in this guild in order to run this command.
+
+        .. note::
+
+            This returns the permissions set with :func:`ext.application_checks.bot_has_guild_permissions`.
+
+        .. versionadded:: 2.6
+
+        Returns
+        -------
+        Dict[:class:`str`, :class:`bool`]
+            A dictionary of the required permissions for this command.
+        """
+        return getattr(self.callback, "__slash_required_bot_guild_permissions", {})
 
     @property
     def qualified_name(self) -> str:
@@ -1980,12 +2172,12 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         """:class:`bool`: Returns ``True`` if this command is or should be registered to any guilds."""
         guild_only_ids = set(self.command_ids.keys())
         guild_only_ids.discard(None)
-        return True if (self.guild_ids_to_rollout or guild_only_ids) else False
+        return bool(self.guild_ids_to_rollout or guild_only_ids)
 
     @property
     def guild_ids(self) -> Set[int]:
         """Returns a :class:`set` containing all guild ID's this command is registered to."""
-        # TODO Is this worthwhile?
+        # TODO: Is this worthwhile?
         guild_only_ids = set(self.command_ids.keys())
         guild_only_ids.discard(None)
         # ignore explanation: Mypy says that guild_only_ids can contain None due to self.command_ids.keys() having
@@ -2000,20 +2192,12 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         guild: Union[:class:`int`, :class:`Guild`]
             Guild or Guild ID to add this command to roll out to.
         """
-        if isinstance(guild, Guild):
-            # I don't like doing `guild = guild.id` and this keeps it extendable.
-            guild_id = guild.id
-        else:
-            guild_id = guild
-
-        self.guild_ids_to_rollout.add(guild_id)
+        self.guild_ids_to_rollout.add(guild.id if isinstance(guild, Guild) else guild)
 
     @property
     def is_global(self) -> bool:
         """:class:`bool`: Returns ``True`` if this command is or should be a global command."""
-        return (
-            True if (self.force_global or not self.is_guild or None in self.command_ids) else False
-        )
+        return self.force_global or not self.is_guild or None in self.command_ids
 
     def get_signature(
         self, guild_id: Optional[int] = None
@@ -2082,8 +2266,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
                 else:
                     ret[locale] = name
             return ret
-        else:
-            return None
+        return None
 
     def get_description_localization_payload(self) -> Optional[dict]:
         if self.description_localizations:
@@ -2095,8 +2278,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
                 else:
                     ret[locale] = description
             return ret
-        else:
-            return None
+        return None
 
     def get_default_member_permissions_value(self) -> Optional[int]:
         if (
@@ -2104,8 +2286,7 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             or self.default_member_permissions is None
         ):
             return self.default_member_permissions
-        else:
-            return self.default_member_permissions.value
+        return self.default_member_permissions.value
 
     def get_payload(self, guild_id: Optional[int]) -> dict:
         """Makes an Application Command payload for this command to upsert to Discord with the given Guild ID.
@@ -2139,15 +2320,15 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
 
         if guild_id:  # Guild-command specific payload options.
             ret["guild_id"] = guild_id
-        else:  # Global command specific payload options.
-            if self.dm_permission is not None:
-                ret["dm_permission"] = self.dm_permission
-            else:
-                # Discord seems to send back the DM permission as True regardless if we sent it or not, so we send as
-                #  the default (True) to ensure payload parity for comparisons.
-                ret["dm_permission"] = True
+        # Global command specific payload options.
 
         ret["nsfw"] = self.nsfw
+
+        if self.integration_types is not None:
+            ret["integration_types"] = [x.value for x in self.integration_types]
+
+        if self.contexts is not None:
+            ret["contexts"] = [x.value for x in self.contexts]
 
         return ret
 
@@ -2209,7 +2390,6 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             "name",
             "name_localizations",
             "description_localizations",
-            "dm_permission",
             "nsfw",
         ):
             _log.debug("Failed check dictionary values, not valid payload.")
@@ -2238,6 +2418,26 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             if not found_correct_value:
                 _log.debug("Discord is missing an option we have, not valid payload.")
                 return False
+
+        # Default value for returned "integration_types" when not specified at registration is [0] (only guild_install)
+        if set(cmd_payload.get("integration_types", [0])) != set(
+            raw_payload.get("integration_types", [0])
+        ):
+            _log.debug("Integration types between commands not equal, not valid payload.")
+            return False
+
+        # The API documentation mentions that "all interaction context types included for new commands".
+        # This field can sometimes be explicitly None, so we cannot use the default argument for get
+        raw_contexts = raw_payload.get("contexts")
+        cmd_contexts = cmd_payload.get("contexts")
+
+        if cmd_contexts is None:
+            if raw_contexts is not None:
+                _log.debug("Contexts between commands not equal, not valid payload.")
+                return False
+        elif raw_contexts is None or set(cmd_contexts) != set(raw_contexts):
+            _log.debug("Contexts between commands not equal, not valid payload.")
+            return False
 
         return True
 
@@ -2304,9 +2504,8 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
                 return _recursive_subcommand_check(
                     inter_options[0], found_opt
                 )  # If all of the above pass, recurse.
-            else:
-                # It isn't a subcommand (group), run normal option checks.
-                return _option_check(inter_options, cmd_options)
+
+            return _option_check(inter_options, cmd_options)
 
         def _option_check(inter_options: dict, cmd_options: dict) -> bool:
             """Checks if the two given command payloads have matching options.
@@ -2387,22 +2586,22 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         if not check_dictionary_values(our_payload, data, "name", "guild_id", "type"):  # type: ignore
             _log.debug("%s Failed basic dictionary check.", self.error_name)
             return False
-        else:
-            data_options = data.get("options")
-            payload_options = our_payload.get("options")
-            if data_options and payload_options:
-                return _recursive_subcommand_check(data, our_payload)  # type: ignore
-            elif data_options is None and payload_options is None:
-                return True  # User and Message commands don't have options.
-            else:
-                _log.debug(
-                    "%s Mismatch between data and payload options: %s vs %s",
-                    self.error_name,
-                    data_options,
-                    payload_options,
-                )
-                # There is a mismatch between the two, fail it.
-                return False
+
+        data_options = data.get("options")
+        payload_options = our_payload.get("options")
+        if data_options and payload_options:
+            return _recursive_subcommand_check(data, our_payload)  # type: ignore
+        if data_options is None and payload_options is None:
+            return True  # User and Message commands don't have options.
+
+        _log.debug(
+            "%s Mismatch between data and payload options: %s vs %s",
+            self.error_name,
+            data_options,
+            payload_options,
+        )
+        # There is a mismatch between the two, fail it.
+        return False
 
     def from_callback(
         self,
@@ -2436,33 +2635,6 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
             Interaction corresponding to the use of the command.
         """
         raise NotImplementedError
-
-    def check_against_raw_payload(
-        self, raw_payload: ApplicationCommandPayload, guild_id: Optional[int] = None
-    ) -> bool:
-        warnings.warn(
-            ".check_against_raw_payload() is deprecated, please use .is_payload_valid instead.",
-            stacklevel=2,
-            category=FutureWarning,
-        )
-        return self.is_payload_valid(raw_payload, guild_id)
-
-    def get_guild_payload(self, guild_id: int):
-        warnings.warn(
-            ".get_guild_payload is deprecated, use .get_payload(guild_id) instead.",
-            stacklevel=2,
-            category=FutureWarning,
-        )
-        return self.get_payload(guild_id)
-
-    @property
-    def global_payload(self) -> dict:
-        warnings.warn(
-            ".global_payload is deprecated, use .get_payload(None) instead.",
-            stacklevel=2,
-            category=FutureWarning,
-        )
-        return self.get_payload(None)
 
 
 class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, CallbackWrapperMixin):
@@ -2517,9 +2689,9 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
         self.name: Optional[str] = name
         self.name_localizations: Optional[Dict[Union[str, Locale], str]] = name_localizations
         self._description: Optional[str] = description
-        self.description_localizations: Optional[
-            Dict[Union[str, Locale], str]
-        ] = description_localizations
+        self.description_localizations: Optional[Dict[Union[str, Locale], str]] = (
+            description_localizations
+        )
         self.type = cmd_type
         self.parent_cmd = parent_cmd
         self._inherit_hooks: bool = inherit_hooks
@@ -2574,8 +2746,7 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
                 else:
                     ret[locale] = name
             return ret
-        else:
-            return None
+        return None
 
     def get_description_localization_payload(self) -> Optional[dict]:
         if self.description_localizations:
@@ -2587,8 +2758,7 @@ class SlashApplicationSubcommand(SlashCommandMixin, AutocompleteCommandMixin, Ca
                 else:
                     ret[locale] = description
             return ret
-        else:
-            return None
+        return None
 
     @property
     def payload(self) -> dict:
@@ -2716,9 +2886,10 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
         description_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         callback: Optional[Callable] = None,
         guild_ids: Optional[Iterable[int]] = None,
-        dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         nsfw: bool = False,
+        integration_types: Optional[Iterable[Union[IntegrationType, int]]] = None,
+        contexts: Optional[Iterable[Union[InteractionContextType, int]]] = None,
         parent_cog: Optional[ClientCog] = None,
         force_global: bool = False,
     ) -> None:
@@ -2741,9 +2912,6 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
             Callback to make the application command from, and to run when the application command is called.
         guild_ids: Iterable[:class:`int`]
             An iterable list of guild ID's that the application command should register to.
-        dm_permission: :class:`bool`
-            If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
-            usable in DMs. Only for global commands.
         default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
             Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
@@ -2756,6 +2924,14 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
                 Due to a discord limitation, this can only be set for the parent command in case of a subcommand.
 
             .. versionadded:: 2.4
+        integration_types: Optional[Iterable[Union[:class:`IntegrationType`, :class:`int`]]]
+            Where the command is available, only for globally-scoped commands. Defaults to ``guild_install``.
+
+            .. versionadded:: 3.0
+        contexts: Optional[Iterable[Union[:class:`InteractionContextType`, :class:`int`]]]
+            Where the command can be used, only for globally-scoped commands. By default, all interaction context types included for new commands.
+
+            .. versionadded:: 3.0
         parent_cog: Optional[:class:`ClientCog`]
             ``ClientCog`` to forward to the callback as the ``self`` argument.
         force_global: :class:`bool`
@@ -2771,8 +2947,9 @@ class SlashApplicationCommand(SlashCommandMixin, BaseApplicationCommand, Autocom
             cmd_type=ApplicationCommandType.chat_input,
             guild_ids=guild_ids,
             default_member_permissions=default_member_permissions,
-            dm_permission=dm_permission,
             nsfw=nsfw,
+            integration_types=integration_types,
+            contexts=contexts,
             parent_cog=parent_cog,
             force_global=force_global,
         )
@@ -2890,9 +3067,10 @@ class UserApplicationCommand(BaseApplicationCommand):
         name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         callback: Optional[Callable] = None,
         guild_ids: Optional[Iterable[int]] = None,
-        dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         nsfw: bool = False,
+        integration_types: Optional[Iterable[Union[IntegrationType, int]]] = None,
+        contexts: Optional[Iterable[Union[InteractionContextType, int]]] = None,
         parent_cog: Optional[ClientCog] = None,
         force_global: bool = False,
     ) -> None:
@@ -2910,9 +3088,6 @@ class UserApplicationCommand(BaseApplicationCommand):
             Callback to run with the application command is called.
         guild_ids: Iterable[:class:`int`]
             An iterable list of guild ID's that the application command should register to.
-        dm_permission: :class:`bool`
-            If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
-            usable in DMs. Only for global commands, but will not error on guild.
         default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
             Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
@@ -2921,6 +3096,14 @@ class UserApplicationCommand(BaseApplicationCommand):
             Whether the command can only be used in age-restricted channels. Defaults to ``False``.
 
             .. versionadded:: 2.4
+        integration_types: Optional[Iterable[Union[:class:`IntegrationType`, :class:`int`]]]
+            Where the command is available, only for globally-scoped commands. Defaults to ``guild_install``.
+
+            .. versionadded:: 3.0
+        contexts: Optional[Iterable[Union[:class:`InteractionContextType`, :class:`int`]]]
+            Where the command can be used, only for globally-scoped commands. By default, all interaction context types included for new commands.
+
+            .. versionadded:: 3.0
         parent_cog: Optional[:class:`ClientCog`]
             ``ClientCog`` to forward to the callback as the ``self`` argument.
         force_global: :class:`bool`
@@ -2933,9 +3116,10 @@ class UserApplicationCommand(BaseApplicationCommand):
             callback=callback,
             cmd_type=ApplicationCommandType.user,
             guild_ids=guild_ids,
-            dm_permission=dm_permission,
             default_member_permissions=default_member_permissions,
             nsfw=nsfw,
+            integration_types=integration_types,
+            contexts=contexts,
             parent_cog=parent_cog,
             force_global=force_global,
         )
@@ -2950,7 +3134,7 @@ class UserApplicationCommand(BaseApplicationCommand):
 
     async def call(self, state: ConnectionState, interaction: Interaction) -> None:
         await self.invoke_callback_with_hooks(
-            state, interaction, args=(get_users_from_interaction(state, interaction)[0],)
+            state, interaction, args=(interaction._resolve_users()[0],)
         )
 
     def from_callback(
@@ -2972,9 +3156,10 @@ class MessageApplicationCommand(BaseApplicationCommand):
         name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         callback: Optional[Callable] = None,
         guild_ids: Optional[Iterable[int]] = None,
-        dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         nsfw: bool = False,
+        integration_types: Optional[Iterable[Union[IntegrationType, int]]] = None,
+        contexts: Optional[Iterable[Union[InteractionContextType, int]]] = None,
         parent_cog: Optional[ClientCog] = None,
         force_global: bool = False,
     ) -> None:
@@ -2992,9 +3177,6 @@ class MessageApplicationCommand(BaseApplicationCommand):
             Callback to run with the application command is called.
         guild_ids: Iterable[:class:`int`]
             An iterable list of guild ID's that the application command should register to.
-        dm_permission: :class:`bool`
-            If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
-            usable in DMs. Only for global commands, but will not error on guild.
         default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
             Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
@@ -3003,6 +3185,14 @@ class MessageApplicationCommand(BaseApplicationCommand):
             Whether the command can only be used in age-restricted channels. Defaults to ``False``.
 
             .. versionadded:: 2.4
+        integration_types: Optional[Iterable[Union[:class:`IntegrationType`, :class:`int`]]]
+            Where the command is available, only for globally-scoped commands. Defaults to ``guild_install``.
+
+            .. versionadded:: 3.0
+        contexts: Optional[Iterable[Union[:class:`InteractionContextType`, :class:`int`]]]
+            Where the command can be used, only for globally-scoped commands. By default, all interaction context types included for new commands.
+
+            .. versionadded:: 3.0
         parent_cog: Optional[:class:`ClientCog`]
             ``ClientCog`` to forward to the callback as the ``self`` argument.
         force_global: :class:`bool`
@@ -3015,9 +3205,10 @@ class MessageApplicationCommand(BaseApplicationCommand):
             callback=callback,
             cmd_type=ApplicationCommandType.message,
             guild_ids=guild_ids,
-            dm_permission=dm_permission,
             default_member_permissions=default_member_permissions,
             nsfw=nsfw,
+            integration_types=integration_types,
+            contexts=contexts,
             parent_cog=parent_cog,
             force_global=force_global,
         )
@@ -3032,7 +3223,7 @@ class MessageApplicationCommand(BaseApplicationCommand):
 
     async def call(self, state: ConnectionState, interaction: Interaction) -> None:
         await self.invoke_callback_with_hooks(
-            state, interaction, args=(get_messages_from_interaction(state, interaction)[0],)
+            state, interaction, args=(interaction._resolve_messages()[0],)
         )
 
     def from_callback(
@@ -3051,9 +3242,10 @@ def slash_command(
     name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
     description_localizations: Optional[Dict[Union[Locale, str], str]] = None,
     guild_ids: Optional[Iterable[int]] = MISSING,
-    dm_permission: Optional[bool] = None,
     default_member_permissions: Optional[Union[Permissions, int]] = None,
     nsfw: bool = False,
+    integration_types: Optional[Iterable[Union[IntegrationType, int]]] = None,
+    contexts: Optional[Iterable[Union[InteractionContextType, int]]] = None,
     force_global: bool = False,
 ):
     """Creates a Slash application command from the decorated function.
@@ -3076,9 +3268,6 @@ def slash_command(
         IDs of :class:`Guild`'s to add this command to. If not passed and :attr:`Client.default_guild_ids` is
         set, then those default guild ids will be used instead. If both of those are unset, then the command will
         be a global command.
-    dm_permission: :class:`bool`
-        If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
-        usable in DMs. Only for global commands, but will not error on guild.
     default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
         Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
         example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
@@ -3091,6 +3280,14 @@ def slash_command(
             Due to a discord limitation, this can only be set for the parent command in case of a subcommand.
 
         .. versionadded:: 2.4
+    integration_types: Optional[Iterable[Union[:class:`IntegrationType`, :class:`int`]]]
+        Where the command is available, only for globally-scoped commands. Defaults to ``guild_install``.
+
+        .. versionadded:: 3.0
+    contexts: Optional[Iterable[Union[:class:`InteractionContextType`, :class:`int`]]]
+        Where the command can be used, only for globally-scoped commands. By default, all interaction context types included for new commands.
+
+        .. versionadded:: 3.0
     force_global: :class:`bool`
         If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still
         register to guilds. Has no effect if ``guild_ids`` are never set or added to.
@@ -3100,19 +3297,19 @@ def slash_command(
         if isinstance(func, BaseApplicationCommand):
             raise TypeError("Callback is already an application command.")
 
-        app_cmd = SlashApplicationCommand(
+        return SlashApplicationCommand(
             callback=func,
             name=name,
             name_localizations=name_localizations,
             description=description,
             description_localizations=description_localizations,
             guild_ids=guild_ids,
-            dm_permission=dm_permission,
             default_member_permissions=default_member_permissions,
             nsfw=nsfw,
+            integration_types=integration_types,
+            contexts=contexts,
             force_global=force_global,
         )
-        return app_cmd
 
     return decorator
 
@@ -3122,9 +3319,10 @@ def message_command(
     *,
     name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
     guild_ids: Optional[Iterable[int]] = MISSING,
-    dm_permission: Optional[bool] = None,
     default_member_permissions: Optional[Union[Permissions, int]] = None,
     nsfw: bool = False,
+    integration_types: Optional[Iterable[Union[IntegrationType, int]]] = None,
+    contexts: Optional[Iterable[Union[InteractionContextType, int]]] = None,
     force_global: bool = False,
 ):
     """Creates a Message context command from the decorated function.
@@ -3141,9 +3339,6 @@ def message_command(
         IDs of :class:`Guild`'s to add this command to. If not passed and :attr:`Client.default_guild_ids` is
         set, then those default guild ids will be used instead. If both of those are unset, then the command will
         be a global command.
-    dm_permission: :class:`bool`
-        If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
-        usable in DMs. Only for global commands, but will not error on guild.
     default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
         Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
         example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
@@ -3152,6 +3347,14 @@ def message_command(
         Whether the command can only be used in age-restricted channels. Defaults to ``False``.
 
         .. versionadded:: 2.4
+    integration_types: Optional[Iterable[Union[:class:`IntegrationType`, :class:`int`]]]
+        Where the command is available, only for globally-scoped commands. Defaults to ``guild_install``.
+
+        .. versionadded:: 3.0
+    contexts: Optional[Iterable[Union[:class:`InteractionContextType`, :class:`int`]]]
+        Where the command can be used, only for globally-scoped commands. By default, all interaction context types included for new commands.
+
+        .. versionadded:: 3.0
     force_global: :class:`bool`
         If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still
         register to guilds. Has no effect if ``guild_ids`` are never set or added to.
@@ -3161,17 +3364,17 @@ def message_command(
         if isinstance(func, BaseApplicationCommand):
             raise TypeError("Callback is already an application command.")
 
-        app_cmd = MessageApplicationCommand(
+        return MessageApplicationCommand(
             callback=func,
             name=name,
             name_localizations=name_localizations,
             guild_ids=guild_ids,
-            dm_permission=dm_permission,
             default_member_permissions=default_member_permissions,
             nsfw=nsfw,
+            integration_types=integration_types,
+            contexts=contexts,
             force_global=force_global,
         )
-        return app_cmd
 
     return decorator
 
@@ -3181,9 +3384,10 @@ def user_command(
     *,
     name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
     guild_ids: Optional[Iterable[int]] = MISSING,
-    dm_permission: Optional[bool] = None,
     default_member_permissions: Optional[Union[Permissions, int]] = None,
     nsfw: bool = False,
+    integration_types: Optional[Iterable[Union[IntegrationType, int]]] = None,
+    contexts: Optional[Iterable[Union[InteractionContextType, int]]] = None,
     force_global: bool = False,
 ):
     """Creates a User context command from the decorated function.
@@ -3200,9 +3404,6 @@ def user_command(
         IDs of :class:`Guild`'s to add this command to. If not passed and :attr:`Client.default_guild_ids` is
         set, then those default guild ids will be used instead. If both of those are unset, then the command will
         be a global command.
-    dm_permission: :class:`bool`
-        If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
-        usable in DMs. Only for global commands, but will not error on guild.
     default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
         Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
         example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
@@ -3211,6 +3412,14 @@ def user_command(
         Whether the command can only be used in age-restricted channels. Defaults to ``False``.
 
         .. versionadded:: 2.4
+    integration_types: Optional[Iterable[Union[:class:`IntegrationType`, :class:`int`]]]
+        Where the command is available, only for globally-scoped commands. Defaults to ``guild_install``.
+
+        .. versionadded:: 3.0
+    contexts: Optional[Iterable[Union[:class:`InteractionContextType`, :class:`int`]]]
+        Where the command can be used, only for globally-scoped commands. By default, all interaction context types included for new commands.
+
+        .. versionadded:: 3.0
     force_global: :class:`bool`
         If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still
         register to guilds. Has no effect if ``guild_ids`` are never set or added to.
@@ -3220,17 +3429,17 @@ def user_command(
         if isinstance(func, BaseApplicationCommand):
             raise TypeError("Callback is already an application command.")
 
-        app_cmd = UserApplicationCommand(
+        return UserApplicationCommand(
             callback=func,
             name=name,
             name_localizations=name_localizations,
             guild_ids=guild_ids,
-            dm_permission=dm_permission,
             default_member_permissions=default_member_permissions,
             nsfw=nsfw,
+            integration_types=integration_types,
+            contexts=contexts,
             force_global=force_global,
         )
-        return app_cmd
 
     return decorator
 
@@ -3257,12 +3466,12 @@ def check_dictionary_values(dict1: dict, dict2: dict, *keywords) -> bool:
         True if keyword values in both dictionaries match, False otherwise.
     """
     for keyword in keywords:
-        if dict1.get(keyword, None) != dict2.get(keyword, None):
+        if dict1.get(keyword) != dict2.get(keyword):
             _log.debug(
                 "Failed basic dictionary value check for key %s:\n %s vs %s",
                 keyword,
-                dict1.get(keyword, None),
-                dict2.get(keyword, None),
+                dict1.get(keyword),
+                dict2.get(keyword),
             )
             return False
 
@@ -3286,7 +3495,8 @@ def deep_dictionary_check(dict1: dict, dict2: dict) -> bool:
             and not deep_dictionary_check(dict1[key], dict2[key])
         ):
             return False
-        elif dict1[key] != dict2[key]:
+
+        if dict1[key] != dict2[key]:
             _log.debug(
                 "Dict1 and Dict2 values are not equal, not valid payload.\n Key: %s, values %s vs %s",
                 key,
@@ -3298,138 +3508,7 @@ def deep_dictionary_check(dict1: dict, dict2: dict) -> bool:
     return True
 
 
-def get_users_from_interaction(
-    state: ConnectionState, interaction: Interaction
-) -> List[Union[User, Member]]:
-    """Tries to get a list of resolved :class:`User` objects from the interaction data.
-
-    If possible, it will get resolved :class:`Member` objects instead.
-
-    Parameters
-    ----------
-    state: :class:`ConnectionState`
-        State object to construct members with.
-    interaction: :class:`Interaction`
-        Interaction object to attempt to get users/members from.
-
-    Returns
-    -------
-    List[Union[:class:`User`, :class:`Member`]]
-        List of resolved users, or members if possible
-    """
-    data = interaction.data
-    ret: List[Union[User, Member]] = []
-
-    data = cast(ApplicationCommandInteractionData, data)
-
-    if data is None:
-        raise ValueError("Discord did not provide us with interaction data")
-
-    # Return a Member object if the required data is available, otherwise fall back to User.
-    if "resolved" in data and "members" in data["resolved"]:
-        member_payloads = data["resolved"]["members"]
-        # Because the payload is modified further down, a copy is made to avoid affecting methods or
-        #  users that read from interaction.data further down the line.
-        for member_id, member_payload in member_payloads.copy().items():
-            if interaction.guild is None:
-                raise TypeError("Cannot resolve members if Interaction.guild is None")
-
-            # If a member isn't in the cache, construct a new one.
-            if (
-                not (member := interaction.guild.get_member(int(member_id)))
-                and "users" in data["resolved"]
-            ):
-                user_payload = data["resolved"]["users"][member_id]
-                # This is required to construct the Member.
-                member_payload["user"] = user_payload
-                member = Member(data=member_payload, guild=interaction.guild, state=state)  # type: ignore
-                interaction.guild._add_member(member)
-
-            if member is not None:
-                ret.append(member)
-
-    elif "resolved" in data and "users" in data["resolved"]:
-        resolved_users_payload = data["resolved"]["users"]
-        ret = [state.store_user(user_payload) for user_payload in resolved_users_payload.values()]
-
-    return ret
-
-
-def get_messages_from_interaction(
-    state: ConnectionState, interaction: Interaction
-) -> List[Message]:
-    """Tries to get a list of resolved :class:`Message` objects from the interaction data.
-
-    Parameters
-    ----------
-    state: :class:`ConnectionState`
-        State object to construct messages with.
-    interaction: :class:`Interaction`
-        Interaction object to attempt to get resolved messages from.
-
-    Returns
-    -------
-    List[:class:`Message`]
-        A list of resolved messages.
-    """
-    data = interaction.data
-    ret = []
-
-    data = cast(ApplicationCommandInteractionData, data)
-
-    if data is None:
-        raise ValueError("Discord did not provide us with interaction data")
-
-    if "resolved" in data and "messages" in data["resolved"]:
-        message_payloads = data["resolved"]["messages"]
-        for msg_id, msg_payload in message_payloads.items():
-            if not (message := state._get_message(int(msg_id))):
-                message = Message(channel=interaction.channel, data=msg_payload, state=state)  # type: ignore  # interaction.channel can be VoiceChannel somehow
-
-            ret.append(message)
-
-    return ret
-
-
-def get_roles_from_interaction(state: ConnectionState, interaction: Interaction) -> List[Role]:
-    """Tries to get a list of resolved :class:`Role` objects from the interaction .data
-
-    Parameters
-    ----------
-    state: :class:`ConnectionState`
-        State object to construct roles with.
-    interaction: :class:`Interaction`
-        Interaction object to attempt to get resolved roles from.
-
-    Returns
-    -------
-    List[:class:`Role`]
-        A list of resolved roles.
-    """
-    data = interaction.data
-    ret = []
-
-    if data is None:
-        raise ValueError("Discord did not provide us with interaction data")
-
-    data = cast(ApplicationCommandInteractionData, data)
-
-    if "resolved" in data and "roles" in data["resolved"]:
-        role_payloads = data["resolved"]["roles"]
-        for role_id, role_payload in role_payloads.items():
-            # if True:  # Use this for testing payload -> Role
-            if interaction.guild is None:
-                raise TypeError("Interaction.guild is None when resolving a Role")
-
-            if not (role := interaction.guild.get_role(int(role_id))):
-                role = Role(guild=interaction.guild, state=state, data=role_payload)
-
-            ret.append(role)
-
-    return ret
-
-
-def unpack_annotated(given_annotation: Any, resolve_list: Optional[list[type]] = None) -> type:
+def unpack_annotated(given_annotation: Any, resolve_list: Optional[list[type]] = None) -> Any:
     """Takes an annotation. If the origin is Annotated, it will attempt to resolve it using the given list of accepted
     types, going from the last type and working up to the first. If no matches to the given list is found, the last
     type specified in the Annotated typehint will be returned.
@@ -3451,11 +3530,13 @@ def unpack_annotated(given_annotation: Any, resolve_list: Optional[list[type]] =
     if resolve_list is None:
         resolve_list = []
 
-    # origin = typing.get_origin(given_annotation)  # TODO: Once Python 3.10 is standard, use this.
+    # TODO: Once Python 3.10 is standard, use this.
+    # origin = typing.get_origin(given_annotation)  # noqa: ERA001
     origin = typing_extensions.get_origin(given_annotation)
     if origin is Annotated:
         located_annotation = MISSING
-        # arg_list = typing.get_args(given_annotation)  # TODO: Once Python 3.10 is standard, use this
+        # TODO: Once Python 3.10 is standard, use this
+        # arg_list = typing.get_args(given_annotation)  # noqa: ERA001
         arg_list = typing_extensions.get_args(given_annotation)
         for arg in reversed(arg_list[1:]):
             if arg in resolve_list or isinstance(arg, type) and issubclass(arg, OptionConverter):
@@ -3466,8 +3547,7 @@ def unpack_annotated(given_annotation: Any, resolve_list: Optional[list[type]] =
             located_annotation = arg_list[-1]
 
         return located_annotation
-    else:
-        return given_annotation
+    return given_annotation
 
 
 def unpack_annotation(
@@ -3494,7 +3574,8 @@ def unpack_annotation(
 
     type_ret = []
     literal_ret = []
-    # origin = typing.get_origin(given_annotation)  # TODO: Once Python 3.10 is standard, use this.
+    # TODO: Once Python 3.10 is standard, use this.
+    # origin = typing.get_origin(given_annotation)  # noqa: ERA001
     origin = typing_extensions.get_origin(given_annotation)
     if origin is None:
         # It doesn't have a fancy origin, just a normal type/object.
@@ -3535,8 +3616,7 @@ class RangeMeta(type):
             Tuple[int, EllipsisType],
             Tuple[EllipsisType, int],
         ],
-    ) -> Type[int]:
-        ...
+    ) -> Type[int]: ...
 
     @overload
     def __getitem__(
@@ -3547,8 +3627,7 @@ class RangeMeta(type):
             Tuple[float, EllipsisType],
             Tuple[EllipsisType, float],
         ],
-    ) -> Type[float]:
-        ...
+    ) -> Type[float]: ...
 
     def __getitem__(
         cls,

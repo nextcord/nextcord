@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import time
 from collections import deque
-from typing import TYPE_CHECKING, Any, Callable, Deque, Dict, Optional, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, Deque, Dict, Optional, TypeVar, Union
 
 from nextcord.enums import IntEnum
 
@@ -40,20 +40,21 @@ class BucketType(IntEnum):
     def get_key(self, msg: Message) -> Any:
         if self is BucketType.user:
             return msg.author.id
-        elif self is BucketType.guild:
+        if self is BucketType.guild:
             return (msg.guild or msg.author).id
-        elif self is BucketType.channel:
+        if self is BucketType.channel:
             return msg.channel.id
-        elif self is BucketType.member:
+        if self is BucketType.member:
             return ((msg.guild and msg.guild.id), msg.author.id)
-        elif self is BucketType.category:
+        if self is BucketType.category:
             return (msg.channel.category or msg.channel).id  # type: ignore
-        elif self is BucketType.role:
+        if self is BucketType.role:
             # we return the channel id of a private-channel as there are only roles in guilds
             # and that yields the same result as for a guild with only the @everyone role
             # NOTE: PrivateChannel doesn't actually have an id attribute but we assume we are
             # recieving a DMChannel or GroupChannel which inherit from PrivateChannel and do
             return (msg.channel if isinstance(msg.channel, PrivateChannel) else msg.author.top_role).id  # type: ignore
+        return None
 
     def __call__(self, msg: Message) -> Any:
         return self.get_key(msg)
@@ -153,6 +154,7 @@ class Cooldown:
 
         # we're not so decrement our tokens
         self._tokens -= 1
+        return None
 
     def reset(self) -> None:
         """Reset the cooldown to its initial state."""
@@ -177,14 +179,14 @@ class CooldownMapping:
     def __init__(
         self,
         original: Optional[Cooldown],
-        type: Callable[[Message], Any],
+        type: Union[Callable[[Message], Any], BucketType],
     ) -> None:
         if not callable(type):
             raise TypeError("Cooldown type must be a BucketType or callable")
 
         self._cache: Dict[Any, Cooldown] = {}
         self._cooldown: Optional[Cooldown] = original
-        self._type: Callable[[Message], Any] = type
+        self._type: Union[Callable[[Message], Any], BucketType] = type
 
     def copy(self) -> CooldownMapping:
         ret = CooldownMapping(self._cooldown, self._type)
@@ -196,14 +198,17 @@ class CooldownMapping:
         return self._cooldown is not None
 
     @property
-    def type(self) -> Callable[[Message], Any]:
+    def type(self) -> Union[Callable[[Message], Any], BucketType]:
         return self._type
 
     @classmethod
-    def from_cooldown(cls, rate, per, type) -> Self:
+    def from_cooldown(cls, rate: float, per, type) -> Self:
         return cls(Cooldown(rate, per), type)
 
     def _bucket_key(self, msg: Message) -> Any:
+        if isinstance(self._type, BucketType):
+            raise TypeError("Cannot call _bucket_key on a BucketType")
+
         return self._type(msg)
 
     def _verify_cache_integrity(self, current: Optional[float] = None) -> None:
@@ -230,8 +235,7 @@ class CooldownMapping:
         key = self._bucket_key(message)
         if key not in self._cache:
             bucket = self.create_bucket(message)
-            if bucket is not None:
-                self._cache[key] = bucket
+            self._cache[key] = bucket
         else:
             bucket = self._cache[key]
 
