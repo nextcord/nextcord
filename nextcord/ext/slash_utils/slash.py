@@ -55,6 +55,7 @@ def rename(
         async def my_command(interaction: Interaction, _id: str):
             pass
     """
+
     class RenameWrapper(CallbackWrapper):
         def modify(self, app_cmd: SlashApplicationCommand) -> None:
             new_options: dict[str, SlashCommandOption] = {}
