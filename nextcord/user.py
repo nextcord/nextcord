@@ -52,7 +52,11 @@ class AvatarDecoration:
         The asset of the avatar decoration.
     """
 
-    __slots__ = ("user", "sku_id", "_asset",)
+    __slots__ = (
+        "user",
+        "sku_id",
+        "_asset",
+    )
 
     def __init__(self, *, user: BaseUser, data: AvatarDecorationDataPayload) -> None:
         self._update(user, data)
