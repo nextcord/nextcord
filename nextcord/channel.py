@@ -8,6 +8,7 @@ import time
 from typing import (
     TYPE_CHECKING,
     Any,
+    AsyncIterator,
     Callable,
     Dict,
     Iterable,
@@ -37,7 +38,7 @@ from .enums import (
 from .errors import ClientException, InvalidArgument
 from .file import File
 from .flags import ChannelFlags, MessageFlags
-from .iterators import ArchivedThreadIterator
+from .iterators import archived_thread_iterator
 from .mentions import AllowedMentions
 from .mixins import Hashable, PinsMixin
 from .object import Object
@@ -291,14 +292,12 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
         overwrites: Mapping[Union[Role, Member, Snowflake], PermissionOverwrite] = ...,
         flags: ChannelFlags = ...,
         default_thread_slowmode_delay: int = ...,
-    ) -> Optional[TextChannel]:
-        ...
+    ) -> Optional[TextChannel]: ...
 
     @overload
-    async def edit(self) -> Optional[TextChannel]:
-        ...
+    async def edit(self) -> Optional[TextChannel]: ...
 
-    async def edit(self, *, reason=None, **options):
+    async def edit(self, *, reason: Optional[str] = None, **options) -> Optional[TextChannel]:
         """|coro|
 
         Edits the channel.
@@ -796,8 +795,10 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
         joined: bool = False,
         limit: Optional[int] = 50,
         before: Optional[Union[Snowflake, datetime.datetime]] = None,
-    ) -> ArchivedThreadIterator:
-        """Returns an :class:`~nextcord.AsyncIterator` that iterates over all archived threads in the guild.
+    ) -> AsyncIterator[Thread]:
+        """|asynciter|
+
+        Returns an async iterator that iterates over all archived threads in the guild.
 
         You must have :attr:`~Permissions.read_message_history` to use this. If iterating over private threads
         then :attr:`~Permissions.manage_threads` is also required.
@@ -837,7 +838,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
             The archived threads.
         """
 
-        return ArchivedThreadIterator(
+        return archived_thread_iterator(
             self.id, self.guild, limit=limit, joined=joined, private=private, before=before
         )
 
@@ -1081,14 +1082,12 @@ class ForumChannel(abc.GuildChannel, Hashable):
         default_thread_slowmode_delay: int = ...,
         available_tags: List[ForumTag] = ...,
         default_reaction: Optional[Union[Emoji, PartialEmoji, str]] = ...,
-    ) -> ForumChannel:
-        ...
+    ) -> ForumChannel: ...
 
     @overload
-    async def edit(self) -> ForumChannel:
-        ...
+    async def edit(self) -> ForumChannel: ...
 
-    async def edit(self, *, reason=None, **options) -> ForumChannel:
+    async def edit(self, *, reason: Optional[str] = None, **options) -> ForumChannel:
         """|coro|
 
         Edits the channel.
@@ -1386,8 +1385,10 @@ class ForumChannel(abc.GuildChannel, Hashable):
         joined: bool = False,
         limit: Optional[int] = 50,
         before: Optional[Union[Snowflake, datetime.datetime]] = None,
-    ) -> ArchivedThreadIterator:
-        """Returns an :class:`~nextcord.AsyncIterator` that iterates over all archived threads in the guild.
+    ) -> AsyncIterator[Thread]:
+        """|asynciter|
+
+        Returns an async iterator that iterates over all archived threads in the guild.
 
         You must have :attr:`~Permissions.read_message_history` to use this.
         If iterating over private threads then :attr:`~Permissions.manage_threads` is also required.
@@ -1422,7 +1423,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
         :class:`Thread`
             The archived threads.
         """
-        return ArchivedThreadIterator(
+        return archived_thread_iterator(
             self.id, self.guild, limit=limit, joined=joined, private=private, before=before
         )
 
@@ -1473,6 +1474,31 @@ class ForumChannel(abc.GuildChannel, Hashable):
             self.id, name=str(name), avatar=avatar_base64, reason=reason
         )
         return Webhook.from_state(data, state=self._state)
+
+    async def webhooks(self) -> List[Webhook]:
+        """|coro|
+
+        Gets the list of webhooks from this channel.
+
+        Requires :attr:`~.Permissions.manage_webhooks` permissions.
+
+        .. versionadded:: 3.0
+
+        Raises
+        ------
+        Forbidden
+            You don't have permissions to get the webhooks.
+
+        Returns
+        -------
+        List[:class:`Webhook`]
+            The webhooks for this channel.
+        """
+
+        from .webhook import Webhook
+
+        data = await self._state.http.channel_webhooks(self.id)
+        return [Webhook.from_state(d, state=self._state) for d in data]
 
 
 class VocalGuildChannel(abc.Connectable, abc.GuildChannel, Hashable):
@@ -1723,14 +1749,12 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
         video_quality_mode: VideoQualityMode = ...,
         flags: ChannelFlags = ...,
         reason: Optional[str] = ...,
-    ) -> Optional[VoiceChannel]:
-        ...
+    ) -> Optional[VoiceChannel]: ...
 
     @overload
-    async def edit(self) -> Optional[VoiceChannel]:
-        ...
+    async def edit(self) -> Optional[VoiceChannel]: ...
 
-    async def edit(self, *, reason=None, **options):
+    async def edit(self, *, reason: Optional[str] = None, **options) -> Optional[VoiceChannel]:
         """|coro|
 
         Edits the channel.
@@ -2014,6 +2038,31 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
         )
         return Webhook.from_state(data, state=self._state)
 
+    async def webhooks(self) -> List[Webhook]:
+        """|coro|
+
+        Gets the list of webhooks from this channel.
+
+        Requires :attr:`~.Permissions.manage_webhooks` permissions.
+
+        .. versionadded:: 3.0
+
+        Raises
+        ------
+        Forbidden
+            You don't have permissions to get the webhooks.
+
+        Returns
+        -------
+        List[:class:`Webhook`]
+            The webhooks for this channel.
+        """
+
+        from .webhook import Webhook
+
+        data = await self._state.http.channel_webhooks(self.id)
+        return [Webhook.from_state(d, state=self._state) for d in data]
+
 
 class StageChannel(VocalGuildChannel, abc.Messageable):
     """Represents a Discord guild stage channel.
@@ -2172,6 +2221,8 @@ class StageChannel(VocalGuildChannel, abc.Messageable):
         *,
         topic: str,
         privacy_level: StagePrivacyLevel = MISSING,
+        send_start_notification: bool = False,
+        scheduled_event: Snowflake = MISSING,
         reason: Optional[str] = None,
     ) -> StageInstance:
         """|coro|
@@ -2189,6 +2240,14 @@ class StageChannel(VocalGuildChannel, abc.Messageable):
             The stage instance's topic.
         privacy_level: :class:`StagePrivacyLevel`
             The stage instance's privacy level. Defaults to :attr:`StagePrivacyLevel.guild_only`.
+        send_start_notification: :class:`bool`
+            Whether to notify ``@everyone`` that the stage instance has started. Defaults to ``False``.
+
+            .. versionadded:: 3.0
+        scheduled_event: :class:`abc.Snowflake`
+            The scheduled event associated with this stage instance.
+
+            .. versionadded:: 3.0
         reason: :class:`str`
             The reason the stage instance was created. Shows up on the audit log.
 
@@ -2214,6 +2273,11 @@ class StageChannel(VocalGuildChannel, abc.Messageable):
                 raise InvalidArgument("privacy_level field must be of type PrivacyLevel")
 
             payload["privacy_level"] = privacy_level.value
+
+        if scheduled_event is not MISSING:
+            payload["guild_scheduled_event_id"] = scheduled_event.id
+
+        payload["send_start_notification"] = send_start_notification
 
         data = await self._state.http.create_stage_instance(**payload, reason=reason)
         return StageInstance(guild=self.guild, state=self._state, data=data)
@@ -2255,14 +2319,12 @@ class StageChannel(VocalGuildChannel, abc.Messageable):
         flags: ChannelFlags = ...,
         user_limit: int = ...,
         reason: Optional[str] = ...,
-    ) -> Optional[StageChannel]:
-        ...
+    ) -> Optional[StageChannel]: ...
 
     @overload
-    async def edit(self) -> Optional[StageChannel]:
-        ...
+    async def edit(self) -> Optional[StageChannel]: ...
 
-    async def edit(self, *, reason=None, **options):
+    async def edit(self, *, reason: Optional[str] = None, **options) -> Optional[StageChannel]:
         """|coro|
 
         Edits the channel.
@@ -2329,6 +2391,31 @@ class StageChannel(VocalGuildChannel, abc.Messageable):
             # the payload will always be the proper channel payload
             return self.__class__(state=self._state, guild=self.guild, data=payload)  # type: ignore
         return None
+
+    async def webhooks(self) -> List[Webhook]:
+        """|coro|
+
+        Gets the list of webhooks from this channel.
+
+        Requires :attr:`~.Permissions.manage_webhooks` permissions.
+
+        .. versionadded:: 3.0
+
+        Raises
+        ------
+        Forbidden
+            You don't have permissions to get the webhooks.
+
+        Returns
+        -------
+        List[:class:`Webhook`]
+            The webhooks for this channel.
+        """
+
+        from .webhook import Webhook
+
+        data = await self._state.http.channel_webhooks(self.id)
+        return [Webhook.from_state(d, state=self._state) for d in data]
 
 
 class CategoryChannel(abc.GuildChannel, Hashable):
@@ -2437,14 +2524,12 @@ class CategoryChannel(abc.GuildChannel, Hashable):
         overwrites: Mapping[Union[Role, Member], PermissionOverwrite] = ...,
         flags: ChannelFlags = ...,
         reason: Optional[str] = ...,
-    ) -> Optional[CategoryChannel]:
-        ...
+    ) -> Optional[CategoryChannel]: ...
 
     @overload
-    async def edit(self) -> Optional[CategoryChannel]:
-        ...
+    async def edit(self) -> Optional[CategoryChannel]: ...
 
-    async def edit(self, *, reason=None, **options):
+    async def edit(self, *, reason: Optional[str] = None, **options) -> Optional[CategoryChannel]:
         """|coro|
 
         Edits the channel.

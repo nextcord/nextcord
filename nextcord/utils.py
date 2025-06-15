@@ -12,13 +12,13 @@ import functools
 import inspect
 import json
 import re
-import sys
 import unicodedata
 import warnings
 from base64 import b64encode
 from bisect import bisect_left
 from inspect import isawaitable as _isawaitable, signature as _signature
 from operator import attrgetter
+from types import UnionType
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -39,9 +39,11 @@ from typing import (
     Type,
     TypeVar,
     Union,
+    get_args,
     overload,
 )
 
+from .enums import IntegrationType
 from .errors import InvalidArgument
 from .file import File
 
@@ -64,18 +66,6 @@ else:
 
 
 HAS_ORJSON = _orjson_defined
-
-
-PY_310 = sys.version_info >= (3, 10)
-
-
-if PY_310:
-    from types import UnionType  # type: ignore
-
-    # UnionType is the annotation origin when doing Python 3.10 unions. Example: "str | None"
-else:
-    UnionType = None
-
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -167,12 +157,10 @@ class CachedSlotProperty(Generic[T, T_co]):
         self.__doc__ = function.__doc__
 
     @overload
-    def __get__(self, instance: None, owner: Type[T]) -> CachedSlotProperty[T, T_co]:
-        ...
+    def __get__(self, instance: None, owner: Type[T]) -> CachedSlotProperty[T, T_co]: ...
 
     @overload
-    def __get__(self, instance: T, owner: Type[T]) -> T_co:
-        ...
+    def __get__(self, instance: T, owner: Type[T]) -> T_co: ...
 
     def __get__(self, instance: Optional[T], owner: Type[T]) -> Any:
         if instance is None:
@@ -238,18 +226,15 @@ class SequenceProxy(Sequence[T_co], Generic[T_co]):
 
 
 @overload
-def parse_time(timestamp: None) -> None:
-    ...
+def parse_time(timestamp: None) -> None: ...
 
 
 @overload
-def parse_time(timestamp: str) -> datetime.datetime:
-    ...
+def parse_time(timestamp: str) -> datetime.datetime: ...
 
 
 @overload
-def parse_time(timestamp: Optional[str]) -> Optional[datetime.datetime]:
-    ...
+def parse_time(timestamp: Optional[str]) -> Optional[datetime.datetime]: ...
 
 
 def parse_time(timestamp: Optional[str]) -> Optional[datetime.datetime]:
@@ -296,6 +281,7 @@ def oauth_url(
     redirect_uri: str = MISSING,
     scopes: Iterable[str] = MISSING,
     disable_guild_select: bool = False,
+    integration_type: IntegrationType = MISSING,
 ) -> str:
     """A helper function that returns the OAuth2 URL for inviting the bot
     into guilds.
@@ -319,6 +305,10 @@ def oauth_url(
         Whether to disallow the user from changing the guild dropdown.
 
         .. versionadded:: 2.0
+    integration_type: :class:`~nextcord.IntegrationType`
+        The integration type (otherwise known as installation context) that the invite is for.
+
+        .. versionadded:: 3.0
 
     Returns
     -------
@@ -337,6 +327,8 @@ def oauth_url(
         url += "&response_type=code&" + urlencode({"redirect_uri": redirect_uri})
     if disable_guild_select:
         url += "&disable_guild_select=true"
+    if integration_type is not MISSING:
+        url += f"&integration_type={integration_type.value}"
     return url
 
 
@@ -545,9 +537,7 @@ async def maybe_coroutine(
     value = f(*args, **kwargs)
     if _isawaitable(value):
         return await value
-    return value  # type: ignore
-    # type ignored as `_isawaitable` provides `TypeGuard[Awaitable[Any]]`
-    # yet we need a more specific type guard
+    return value
 
 
 async def async_all(
@@ -576,7 +566,7 @@ async def sane_wait_for(
 def get_slots(cls: Type[Any]) -> Iterator[str]:
     for mro in reversed(cls.__mro__):
         try:
-            yield from mro.__slots__  # type: ignore # handled below
+            yield from mro.__slots__
         except AttributeError:
             continue
 
@@ -648,8 +638,7 @@ class SnowflakeList(array.array):  # pyright: ignore[reportMissingTypeArgument]
 
     if TYPE_CHECKING:
 
-        def __init__(self, data: Iterable[int], *, is_sorted: bool = False) -> None:
-            ...
+        def __init__(self, data: Iterable[int], *, is_sorted: bool = False) -> None: ...
 
     def __new__(cls, data: Iterable[int], *, is_sorted: bool = False) -> Self:
         return array.array.__new__(cls, "Q", data if is_sorted else sorted(data))  # type: ignore
@@ -948,13 +937,11 @@ async def _achunk(iterator: AsyncIterator[T], max_size: int) -> AsyncIterator[Li
 
 
 @overload
-def as_chunks(iterator: Iterator[T], max_size: int) -> Iterator[List[T]]:
-    ...
+def as_chunks(iterator: Iterator[T], max_size: int) -> Iterator[List[T]]: ...
 
 
 @overload
-def as_chunks(iterator: AsyncIterator[T], max_size: int) -> AsyncIterator[List[T]]:
-    ...
+def as_chunks(iterator: AsyncIterator[T], max_size: int) -> AsyncIterator[List[T]]: ...
 
 
 def as_chunks(iterator: _Iter[T], max_size: int) -> _Iter[List[T]]:
@@ -988,11 +975,11 @@ def as_chunks(iterator: _Iter[T], max_size: int) -> _Iter[List[T]]:
 
 
 def flatten_literal_params(parameters: Iterable[Any]) -> Tuple[Any, ...]:
-    params = []
+    params: list[Any] = []
     literal_cls = type(Literal[0])
     for p in parameters:
         if isinstance(p, literal_cls):
-            params.extend(p.__args__)
+            params.extend(get_args(p))
         else:
             params.append(p)
     return tuple(params)
@@ -1019,7 +1006,7 @@ def evaluate_annotation(
     if implicit_str and isinstance(tp, str):
         if tp in cache:
             return cache[tp]
-        evaluated = eval(tp, globals, locals)  # noqa: PGH001, S307
+        evaluated = eval(tp, globals, locals)  # noqa: S307
         # eval() here uses the type annotation from the user, eval is all under control.
         cache[tp] = evaluated
         return evaluate_annotation(evaluated, globals, locals, cache)
@@ -1029,8 +1016,8 @@ def evaluate_annotation(
         is_literal = False
         args = tp.__args__
         if not hasattr(tp, "__origin__"):
-            if PY_310 and tp.__class__ is UnionType:
-                converted = Union[args]  # type: ignore
+            if tp.__class__ is UnionType:
+                converted = Union[args]
                 return evaluate_annotation(converted, globals, locals, cache)
 
             return tp
@@ -1041,8 +1028,6 @@ def evaluate_annotation(
             except ValueError:
                 pass
         if tp.__origin__ is Literal:
-            if not PY_310:
-                args = flatten_literal_params(tp.__args__)
             implicit_str = False
             is_literal = True
 
