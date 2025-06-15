@@ -92,9 +92,9 @@ class AssetMixin:
             if seek_begin:
                 fp.seek(0)
             return written
-        else:
-            with open(fp, "wb") as f:
-                return f.write(data)
+
+        with open(fp, "wb") as f:  # noqa: ASYNC230
+            return f.write(data)
 
     async def to_file(
         self,
@@ -241,6 +241,17 @@ class Asset(AssetMixin):
             state,
             url=f"{cls.BASE}/guilds/{guild_id}/users/{member_id}/avatars/{avatar}.{format}?size=1024",
             key=avatar,
+            animated=animated,
+        )
+
+    @classmethod
+    def _from_guild_banner(cls, state, guild_id: int, member_id: int, banner: str) -> Asset:
+        animated = banner.startswith("a_")
+        format = "gif" if animated else "png"
+        return cls(
+            state,
+            url=f"{cls.BASE}/guilds/{guild_id}/users/{member_id}/banners/{banner}.{format}",
+            key=banner,
             animated=animated,
         )
 
@@ -451,9 +462,8 @@ class Asset(AssetMixin):
         if self._animated:
             if format not in VALID_ASSET_FORMATS:
                 raise InvalidArgument(f"format must be one of {VALID_ASSET_FORMATS}")
-        else:
-            if format not in VALID_STATIC_FORMATS:
-                raise InvalidArgument(f"format must be one of {VALID_STATIC_FORMATS}")
+        elif format not in VALID_STATIC_FORMATS:
+            raise InvalidArgument(f"format must be one of {VALID_STATIC_FORMATS}")
 
         url = yarl.URL(self._url)
         path, _ = os.path.splitext(url.path)

@@ -8,6 +8,7 @@ import time
 from typing import (
     TYPE_CHECKING,
     Any,
+    AsyncIterator,
     Callable,
     Dict,
     Iterable,
@@ -37,7 +38,7 @@ from .enums import (
 from .errors import ClientException, InvalidArgument
 from .file import File
 from .flags import ChannelFlags, MessageFlags
-from .iterators import ArchivedThreadIterator
+from .iterators import archived_thread_iterator
 from .mentions import AllowedMentions
 from .mixins import Hashable, PinsMixin
 from .object import Object
@@ -291,14 +292,12 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
         overwrites: Mapping[Union[Role, Member, Snowflake], PermissionOverwrite] = ...,
         flags: ChannelFlags = ...,
         default_thread_slowmode_delay: int = ...,
-    ) -> Optional[TextChannel]:
-        ...
+    ) -> Optional[TextChannel]: ...
 
     @overload
-    async def edit(self) -> Optional[TextChannel]:
-        ...
+    async def edit(self) -> Optional[TextChannel]: ...
 
-    async def edit(self, *, reason=None, **options):
+    async def edit(self, *, reason: Optional[str] = None, **options) -> Optional[TextChannel]:
         """|coro|
 
         Edits the channel.
@@ -373,6 +372,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
         if payload is not None:
             # the payload will always be the proper channel payload
             return self.__class__(state=self._state, guild=self.guild, data=payload)  # type: ignore
+        return None
 
     @utils.copy_doc(abc.GuildChannel.clone)
     async def clone(
@@ -501,7 +501,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
         """
 
         if check is MISSING:
-            check = lambda m: True
+            check = lambda _: True
 
         iterator = self.history(
             limit=limit, before=before, after=after, oldest_first=oldest_first, around=around
@@ -795,8 +795,10 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
         joined: bool = False,
         limit: Optional[int] = 50,
         before: Optional[Union[Snowflake, datetime.datetime]] = None,
-    ) -> ArchivedThreadIterator:
-        """Returns an :class:`~nextcord.AsyncIterator` that iterates over all archived threads in the guild.
+    ) -> AsyncIterator[Thread]:
+        """|asynciter|
+
+        Returns an async iterator that iterates over all archived threads in the guild.
 
         You must have :attr:`~Permissions.read_message_history` to use this. If iterating over private threads
         then :attr:`~Permissions.manage_threads` is also required.
@@ -836,7 +838,7 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
             The archived threads.
         """
 
-        return ArchivedThreadIterator(
+        return archived_thread_iterator(
             self.id, self.guild, limit=limit, joined=joined, private=private, before=before
         )
 
@@ -1080,14 +1082,12 @@ class ForumChannel(abc.GuildChannel, Hashable):
         default_thread_slowmode_delay: int = ...,
         available_tags: List[ForumTag] = ...,
         default_reaction: Optional[Union[Emoji, PartialEmoji, str]] = ...,
-    ) -> ForumChannel:
-        ...
+    ) -> ForumChannel: ...
 
     @overload
-    async def edit(self) -> ForumChannel:
-        ...
+    async def edit(self) -> ForumChannel: ...
 
-    async def edit(self, *, reason=None, **options) -> ForumChannel:
+    async def edit(self, *, reason: Optional[str] = None, **options) -> ForumChannel:
         """|coro|
 
         Edits the channel.
@@ -1169,8 +1169,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
         if payload is not None:
             # the payload will always be the proper channel payload
             return self.__class__(state=self._state, guild=self.guild, data=payload)  # type: ignore
-        else:
-            return self
+        return self
 
     def get_thread(self, thread_id: int, /) -> Optional[Thread]:
         """Returns a thread with the given ID.
@@ -1291,10 +1290,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
         else:
             raw_embeds = []
 
-        if stickers is not None:
-            raw_stickers = [sticker.id for sticker in stickers]
-        else:
-            raw_stickers = []
+        raw_stickers = [sticker.id for sticker in stickers] if stickers is not None else []
 
         if allowed_mentions is not None:
             if state.allowed_mentions is not None:
@@ -1389,8 +1385,10 @@ class ForumChannel(abc.GuildChannel, Hashable):
         joined: bool = False,
         limit: Optional[int] = 50,
         before: Optional[Union[Snowflake, datetime.datetime]] = None,
-    ) -> ArchivedThreadIterator:
-        """Returns an :class:`~nextcord.AsyncIterator` that iterates over all archived threads in the guild.
+    ) -> AsyncIterator[Thread]:
+        """|asynciter|
+
+        Returns an async iterator that iterates over all archived threads in the guild.
 
         You must have :attr:`~Permissions.read_message_history` to use this.
         If iterating over private threads then :attr:`~Permissions.manage_threads` is also required.
@@ -1425,7 +1423,7 @@ class ForumChannel(abc.GuildChannel, Hashable):
         :class:`Thread`
             The archived threads.
         """
-        return ArchivedThreadIterator(
+        return archived_thread_iterator(
             self.id, self.guild, limit=limit, joined=joined, private=private, before=before
         )
 
@@ -1477,6 +1475,31 @@ class ForumChannel(abc.GuildChannel, Hashable):
         )
         return Webhook.from_state(data, state=self._state)
 
+    async def webhooks(self) -> List[Webhook]:
+        """|coro|
+
+        Gets the list of webhooks from this channel.
+
+        Requires :attr:`~.Permissions.manage_webhooks` permissions.
+
+        .. versionadded:: 3.0
+
+        Raises
+        ------
+        Forbidden
+            You don't have permissions to get the webhooks.
+
+        Returns
+        -------
+        List[:class:`Webhook`]
+            The webhooks for this channel.
+        """
+
+        from .webhook import Webhook
+
+        data = await self._state.http.channel_webhooks(self.id)
+        return [Webhook.from_state(d, state=self._state) for d in data]
+
 
 class VocalGuildChannel(abc.Connectable, abc.GuildChannel, Hashable):
     __slots__ = (
@@ -1526,6 +1549,7 @@ class VocalGuildChannel(abc.Connectable, abc.GuildChannel, Hashable):
         self.bitrate: int = data.get("bitrate")
         self.user_limit: int = data.get("user_limit")
         self.flags: ChannelFlags = ChannelFlags._from_value(data.get("flags", 0))
+        self.nsfw: bool = data.get("nsfw", False)
         self._fill_overwrites(data)
 
     @property
@@ -1559,13 +1583,11 @@ class VocalGuildChannel(abc.Connectable, abc.GuildChannel, Hashable):
         Mapping[:class:`int`, :class:`VoiceState`]
             The mapping of member ID to a voice state.
         """
-        # fmt: off
         return {
             key: value
             for key, value in self.guild._voice_states.items()
             if value.channel and value.channel.id == self.id
         }
-        # fmt: on
 
     @utils.copy_doc(abc.GuildChannel.permissions_for)
     def permissions_for(self, obj: Union[Member, Role], /) -> Permissions:
@@ -1578,6 +1600,10 @@ class VocalGuildChannel(abc.Connectable, abc.GuildChannel, Hashable):
             denied.update(manage_channels=True, manage_roles=True)
             base.value &= ~denied.value
         return base
+
+    def is_nsfw(self) -> bool:
+        """:class:`bool`: Checks if the channel is NSFW."""
+        return self.nsfw
 
 
 class VoiceChannel(VocalGuildChannel, abc.Messageable):
@@ -1668,7 +1694,6 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
     def _update(self, guild: Guild, data: VoiceChannelPayload) -> None:
         VocalGuildChannel._update(self, guild, data)
         self.last_message_id: Optional[int] = utils.get_as_snowflake(data, "last_message_id")
-        self.nsfw: bool = data.get("nsfw", False)
 
     async def _get_channel(self):
         return self
@@ -1677,10 +1702,6 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
     def type(self) -> ChannelType:
         """:class:`ChannelType`: The channel's Discord type."""
         return ChannelType.voice
-
-    def is_nsfw(self) -> bool:
-        """:class:`bool`: Checks if the channel is NSFW."""
-        return self.nsfw
 
     @property
     def last_message(self) -> Optional[Message]:
@@ -1728,14 +1749,12 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
         video_quality_mode: VideoQualityMode = ...,
         flags: ChannelFlags = ...,
         reason: Optional[str] = ...,
-    ) -> Optional[VoiceChannel]:
-        ...
+    ) -> Optional[VoiceChannel]: ...
 
     @overload
-    async def edit(self) -> Optional[VoiceChannel]:
-        ...
+    async def edit(self) -> Optional[VoiceChannel]: ...
 
-    async def edit(self, *, reason=None, **options):
+    async def edit(self, *, reason: Optional[str] = None, **options) -> Optional[VoiceChannel]:
         """|coro|
 
         Edits the channel.
@@ -1757,6 +1776,8 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
             The new channel's bitrate.
         user_limit: :class:`int`
             The new channel's user limit.
+
+            This must be a number between ``0`` and ``99``. ``0`` indicates no limit.
         position: :class:`int`
             The new channel's position.
         sync_permissions: :class:`bool`
@@ -1800,6 +1821,7 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
         if payload is not None:
             # the payload will always be the proper channel payload
             return self.__class__(state=self._state, guild=self.guild, data=payload)  # type: ignore
+        return None
 
     async def delete_messages(self, messages: Iterable[Snowflake]) -> None:
         """|coro|
@@ -1922,7 +1944,7 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
         """
 
         if check is MISSING:
-            check = lambda m: True
+            check = lambda _: True
 
         iterator = self.history(
             limit=limit, before=before, after=after, oldest_first=oldest_first, around=around
@@ -2016,8 +2038,33 @@ class VoiceChannel(VocalGuildChannel, abc.Messageable):
         )
         return Webhook.from_state(data, state=self._state)
 
+    async def webhooks(self) -> List[Webhook]:
+        """|coro|
 
-class StageChannel(VocalGuildChannel):
+        Gets the list of webhooks from this channel.
+
+        Requires :attr:`~.Permissions.manage_webhooks` permissions.
+
+        .. versionadded:: 3.0
+
+        Raises
+        ------
+        Forbidden
+            You don't have permissions to get the webhooks.
+
+        Returns
+        -------
+        List[:class:`Webhook`]
+            The webhooks for this channel.
+        """
+
+        from .webhook import Webhook
+
+        data = await self._state.http.channel_webhooks(self.id)
+        return [Webhook.from_state(d, state=self._state) for d in data]
+
+
+class StageChannel(VocalGuildChannel, abc.Messageable):
     """Represents a Discord guild stage channel.
 
     .. versionadded:: 1.7
@@ -2070,9 +2117,18 @@ class StageChannel(VocalGuildChannel):
         Extra features of the channel.
 
         ..versionadded:: 2.1
+    nsfw: :class:`bool`
+        If the channel is marked as "not safe for work".
+
+        .. versionadded:: 2.6
+
+        .. note::
+
+            To check if the channel or the guild of that channel are marked as NSFW,
+            consider :meth:`is_nsfw` instead.
     """
 
-    __slots__ = ("topic",)
+    __slots__ = ("topic", "nsfw")
 
     def __repr__(self) -> str:
         attrs = [
@@ -2085,13 +2141,17 @@ class StageChannel(VocalGuildChannel):
             ("video_quality_mode", self.video_quality_mode),
             ("user_limit", self.user_limit),
             ("category_id", self.category_id),
+            ("nsfw", self.nsfw),
         ]
         joined = " ".join("%s=%r" % t for t in attrs)
         return f"<{self.__class__.__name__} {joined}>"
 
     def _update(self, guild: Guild, data: StageChannelPayload) -> None:
         super()._update(guild, data)
-        self.topic = data.get("topic")
+        self.topic: Optional[str] = data.get("topic")
+
+    async def _get_channel(self):
+        return self
 
     @property
     def requesting_to_speak(self) -> List[Member]:
@@ -2161,6 +2221,8 @@ class StageChannel(VocalGuildChannel):
         *,
         topic: str,
         privacy_level: StagePrivacyLevel = MISSING,
+        send_start_notification: bool = False,
+        scheduled_event: Snowflake = MISSING,
         reason: Optional[str] = None,
     ) -> StageInstance:
         """|coro|
@@ -2178,6 +2240,14 @@ class StageChannel(VocalGuildChannel):
             The stage instance's topic.
         privacy_level: :class:`StagePrivacyLevel`
             The stage instance's privacy level. Defaults to :attr:`StagePrivacyLevel.guild_only`.
+        send_start_notification: :class:`bool`
+            Whether to notify ``@everyone`` that the stage instance has started. Defaults to ``False``.
+
+            .. versionadded:: 3.0
+        scheduled_event: :class:`abc.Snowflake`
+            The scheduled event associated with this stage instance.
+
+            .. versionadded:: 3.0
         reason: :class:`str`
             The reason the stage instance was created. Shows up on the audit log.
 
@@ -2203,6 +2273,11 @@ class StageChannel(VocalGuildChannel):
                 raise InvalidArgument("privacy_level field must be of type PrivacyLevel")
 
             payload["privacy_level"] = privacy_level.value
+
+        if scheduled_event is not MISSING:
+            payload["guild_scheduled_event_id"] = scheduled_event.id
+
+        payload["send_start_notification"] = send_start_notification
 
         data = await self._state.http.create_stage_instance(**payload, reason=reason)
         return StageInstance(guild=self.guild, state=self._state, data=data)
@@ -2242,15 +2317,14 @@ class StageChannel(VocalGuildChannel):
         rtc_region: Optional[VoiceRegion] = ...,
         video_quality_mode: VideoQualityMode = ...,
         flags: ChannelFlags = ...,
+        user_limit: int = ...,
         reason: Optional[str] = ...,
-    ) -> Optional[StageChannel]:
-        ...
+    ) -> Optional[StageChannel]: ...
 
     @overload
-    async def edit(self) -> Optional[StageChannel]:
-        ...
+    async def edit(self) -> Optional[StageChannel]: ...
 
-    async def edit(self, *, reason=None, **options):
+    async def edit(self, *, reason: Optional[str] = None, **options) -> Optional[StageChannel]:
         """|coro|
 
         Edits the channel.
@@ -2288,6 +2362,13 @@ class StageChannel(VocalGuildChannel):
             The camera video quality for the stage channel's participants.
 
             .. versionadded:: 2.0
+        user_limit: :class:`int`
+            The maximum number of users allowed in the stage channel.
+
+            This must be between ``0`` and ``10,000``. A value of ``0`` indicates
+            no limit.
+
+            .. versionadded:: 2.6
 
         Raises
         ------
@@ -2309,6 +2390,32 @@ class StageChannel(VocalGuildChannel):
         if payload is not None:
             # the payload will always be the proper channel payload
             return self.__class__(state=self._state, guild=self.guild, data=payload)  # type: ignore
+        return None
+
+    async def webhooks(self) -> List[Webhook]:
+        """|coro|
+
+        Gets the list of webhooks from this channel.
+
+        Requires :attr:`~.Permissions.manage_webhooks` permissions.
+
+        .. versionadded:: 3.0
+
+        Raises
+        ------
+        Forbidden
+            You don't have permissions to get the webhooks.
+
+        Returns
+        -------
+        List[:class:`Webhook`]
+            The webhooks for this channel.
+        """
+
+        from .webhook import Webhook
+
+        data = await self._state.http.channel_webhooks(self.id)
+        return [Webhook.from_state(d, state=self._state) for d in data]
 
 
 class CategoryChannel(abc.GuildChannel, Hashable):
@@ -2417,14 +2524,12 @@ class CategoryChannel(abc.GuildChannel, Hashable):
         overwrites: Mapping[Union[Role, Member], PermissionOverwrite] = ...,
         flags: ChannelFlags = ...,
         reason: Optional[str] = ...,
-    ) -> Optional[CategoryChannel]:
-        ...
+    ) -> Optional[CategoryChannel]: ...
 
     @overload
-    async def edit(self) -> Optional[CategoryChannel]:
-        ...
+    async def edit(self) -> Optional[CategoryChannel]: ...
 
-    async def edit(self, *, reason=None, **options):
+    async def edit(self, *, reason: Optional[str] = None, **options) -> Optional[CategoryChannel]:
         """|coro|
 
         Edits the channel.
@@ -2472,6 +2577,7 @@ class CategoryChannel(abc.GuildChannel, Hashable):
         if payload is not None:
             # the payload will always be the proper channel payload
             return self.__class__(state=self._state, guild=self.guild, data=payload)  # type: ignore
+        return None
 
     @utils.copy_doc(abc.GuildChannel.move)
     async def move(self, **kwargs) -> None:
@@ -2784,7 +2890,7 @@ class GroupChannel(abc.Messageable, abc.PrivateChannel, Hashable, PinsMixin):
         if len(self.recipients) == 0:
             return "Unnamed"
 
-        return ", ".join(map(lambda x: x.name, self.recipients))
+        return ", ".join((x.name for x in self.recipients))
 
     def __repr__(self) -> str:
         return f"<GroupChannel id={self.id} name={self.name!r}>"
@@ -2925,28 +3031,26 @@ def _guild_channel_factory(channel_type: int):
     value = try_enum(ChannelType, channel_type)
     if value is ChannelType.text:
         return TextChannel, value
-    elif value is ChannelType.voice:
+    if value is ChannelType.voice:
         return VoiceChannel, value
-    elif value is ChannelType.category:
+    if value is ChannelType.category:
         return CategoryChannel, value
-    elif value is ChannelType.news:
+    if value is ChannelType.news:
         return TextChannel, value
-    elif value is ChannelType.stage_voice:
+    if value is ChannelType.stage_voice:
         return StageChannel, value
-    elif value is ChannelType.forum:
+    if value is ChannelType.forum:
         return ForumChannel, value
-    else:
-        return None, value
+    return None, value
 
 
 def _channel_factory(channel_type: int):
     cls, value = _guild_channel_factory(channel_type)
     if value is ChannelType.private:
         return DMChannel, value
-    elif value is ChannelType.group:
+    if value is ChannelType.group:
         return GroupChannel, value
-    else:
-        return cls, value
+    return cls, value
 
 
 def _threaded_channel_factory(channel_type: int):

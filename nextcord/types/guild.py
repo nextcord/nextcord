@@ -23,6 +23,11 @@ class Ban(TypedDict):
     user: User
 
 
+class BulkBan(TypedDict):
+    banned_users: List[Snowflake]
+    failed_users: List[Snowflake]
+
+
 class UnavailableGuild(TypedDict):
     id: Snowflake
     unavailable: NotRequired[bool]
@@ -59,6 +64,8 @@ GuildFeature = Literal[
     "VERIFIED",
     "VIP_REGIONS",
     "WELCOME_SCREEN_ENABLED",
+    "ROLE_SUBSCRIPTIONS_AVAILABLE_FOR_PURCHASE",
+    "ROLE_SUBSCRIPTIONS_ENABLED",
 ]
 
 
@@ -78,8 +85,7 @@ class _GuildPreviewUnique(TypedDict):
     approximate_presence_count: int
 
 
-class GuildPreview(_BaseGuildPreview, _GuildPreviewUnique):
-    ...
+class GuildPreview(_BaseGuildPreview, _GuildPreviewUnique): ...
 
 
 class Guild(_BaseGuildPreview):
@@ -120,6 +126,7 @@ class Guild(_BaseGuildPreview):
     max_members: NotRequired[int]
     premium_subscription_count: NotRequired[int]
     max_video_channel_users: NotRequired[int]
+    max_stage_video_channel_users: NotRequired[int]
     stickers: NotRequired[List[GuildSticker]]
     premium_progress_bar_enabled: Optional[bool]
     safety_alerts_channel_id: Optional[Snowflake]
@@ -129,8 +136,7 @@ class InviteGuild(Guild, total=False):
     welcome_screen: WelcomeScreen
 
 
-class GuildWithCounts(Guild, _GuildPreviewUnique):
-    ...
+class GuildWithCounts(Guild, _GuildPreviewUnique): ...
 
 
 class GuildPrune(TypedDict):

@@ -15,6 +15,7 @@ class PartialMember(TypedDict):
     joined_at: str
     deaf: str
     mute: str
+    flags: int
 
 
 class Member(PartialMember, total=False):
@@ -25,6 +26,7 @@ class Member(PartialMember, total=False):
     pending: bool
     permissions: str
     communication_disabled_until: str
+    banner: str
 
 
 class _OptionalMemberWithUser(PartialMember, total=False):
@@ -33,6 +35,7 @@ class _OptionalMemberWithUser(PartialMember, total=False):
     premium_since: str
     pending: bool
     permissions: str
+    banner: str
 
 
 class MemberWithUser(_OptionalMemberWithUser):

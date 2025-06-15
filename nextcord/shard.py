@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 from typing import TYPE_CHECKING, Callable, Dict, List, Optional, Tuple, Type
 
@@ -370,7 +371,8 @@ class AutoShardedClient(Client):
                 raise ClientException(
                     "When passing manual shard_ids, you must provide a shard_count."
                 )
-            elif not isinstance(self.shard_ids, (list, tuple)):
+
+            if not isinstance(self.shard_ids, (list, tuple)):
                 raise ClientException("shard_ids parameter must be a list or a tuple.")
 
         # instead of a single websocket, we have multiple
@@ -470,6 +472,7 @@ class AutoShardedClient(Client):
         # keep reading the shard while others connect
         self.__shards[shard_id] = ret = Shard(ws, self, self.__queue.put_nowait)
         ret.launch()
+        return None
 
     async def launch_shards(self) -> None:
         if self.shard_count is None:
@@ -502,7 +505,7 @@ class AutoShardedClient(Client):
                     if item.error.code == 4014:  # type: ignore # "false always"
                         raise PrivilegedIntentsRequired(item.shard.id) from None
                 return
-            elif item.type in (EventType.identify, EventType.resume):
+            if item.type in (EventType.identify, EventType.resume):
                 await item.shard.reidentify(item.error)
             elif item.type == EventType.reconnect:
                 await item.shard.reconnect()
@@ -523,10 +526,8 @@ class AutoShardedClient(Client):
         self._closed = True
 
         for vc in self.voice_clients:
-            try:
+            with contextlib.suppress(Exception):
                 await vc.disconnect(force=True)
-            except Exception:
-                pass
 
         to_close = [
             asyncio.ensure_future(shard.close(), loop=self.loop) for shard in self.__shards.values()
@@ -597,7 +598,7 @@ class AutoShardedClient(Client):
         activities = () if activity is None else (activity,)
         for guild in guilds:
             me = guild.me
-            if me is None:  # type: ignore
+            if me is None:
                 continue
 
             # Member.activities is typehinted as Tuple[ActivityType, ...], we may be setting it as Tuple[BaseActivity, ...]

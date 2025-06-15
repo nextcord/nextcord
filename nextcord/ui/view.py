@@ -10,7 +10,18 @@ import time
 import traceback
 from functools import partial
 from itertools import groupby
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, Dict, Iterator, List, Optional, Tuple
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    ClassVar,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Set,
+    Tuple,
+)
 
 from typing_extensions import Self
 
@@ -177,6 +188,7 @@ class View:
         self.__cancel_callback: Optional[Callable[[View], None]] = None
         self.__timeout_expiry: Optional[float] = None
         self.__timeout_task: Optional[asyncio.Task[None]] = None
+        self.__background_tasks: Set[asyncio.Task[None]] = set()
         self.__stopped: asyncio.Future[bool] = loop.create_future()
 
     def __repr__(self) -> str:
@@ -186,7 +198,7 @@ class View:
         while True:
             # Guard just in case someone changes the value of the timeout at runtime
             if self.timeout is None:
-                return
+                return None
 
             if self.__timeout_expiry is None:
                 return self._dispatch_timeout()
@@ -341,7 +353,6 @@ class View:
 
         A callback that is called when a view's timeout elapses without being explicitly stopped.
         """
-        pass
 
     async def on_error(self, error: Exception, item: Item, interaction: Interaction) -> None:
         """|coro|
@@ -360,7 +371,7 @@ class View:
         interaction: :class:`~nextcord.Interaction`
             The interaction that led to the failure.
         """
-        print(f"Ignoring exception in view {self} for item {item}:", file=sys.stderr)
+        print(f"Ignoring exception in view {self} for item {item}:", file=sys.stderr)  # noqa: T201
         traceback.print_exception(error.__class__, error, error.__traceback__, file=sys.stderr)
 
     async def _scheduled_task(self, item: Item, interaction: Interaction):
@@ -370,7 +381,7 @@ class View:
 
             allow = await self.interaction_check(interaction)
             if not allow:
-                return
+                return None
 
             await item.callback(interaction)
             if (
@@ -396,25 +407,25 @@ class View:
         if self.__stopped.done():
             return
 
-        asyncio.create_task(self.on_timeout(), name=f"discord-ui-view-timeout-{self.id}")
+        task = asyncio.create_task(self.on_timeout(), name=f"discord-ui-view-timeout-{self.id}")
+        self.__background_tasks.add(task)
+        task.add_done_callback(self.__background_tasks.discard)
         self.__stopped.set_result(True)
 
     def _dispatch_item(self, item: Item, interaction: Interaction) -> None:
         if self.__stopped.done():
             return
 
-        asyncio.create_task(
+        task = asyncio.create_task(
             self._scheduled_task(item, interaction), name=f"discord-ui-view-dispatch-{self.id}"
         )
+        self.__background_tasks.add(task)
+        task.add_done_callback(self.__background_tasks.discard)
 
     def refresh(self, components: List[Component]) -> None:
-        # fmt: off
         old_state: Dict[str, Item[Any]] = {
-            item.custom_id: item  # type: ignore
-            for item in self.children
-            if item.is_dispatchable()
+            item.custom_id: item for item in self.children if item.is_dispatchable()  # type: ignore
         }
-        # fmt: on
 
         for component in _walk_all_components(components):
             custom_id = getattr(component, "custom_id", None)
@@ -482,15 +493,17 @@ class View:
 
 class ViewStore:
     def __init__(self, state: ConnectionState) -> None:
-        # (component_type, message_id, custom_id): (View, Item)
         self._views: Dict[Tuple[int, Optional[int], str], Tuple[View, Item]] = {}
-        # message_id: View
+        """(component_type, message_id, custom_id): (View, Item)"""
         self._synced_message_views: Dict[int, View] = {}
+        """message_id: View"""
         self._state: ConnectionState = state
 
     def all_views(self) -> List[View]:
-        views = [v for (v, _) in self._views.values()]
-        return views
+        # Create a unique list of views, as _views stores the same view multiple times,
+        # one for each dispatchable item.
+        views = {view.id: view for view, _ in self._views.values()}
+        return list(views.values())
 
     def views(self, persistent: bool = True) -> List[View]:
         views = self.all_views()

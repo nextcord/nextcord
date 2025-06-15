@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 import signal
 import sys
 import traceback
-import warnings
 from typing import (
     TYPE_CHECKING,
     Any,
+    AsyncIterator,
     Callable,
     Coroutine,
     Dict,
@@ -33,11 +34,22 @@ import aiohttp
 from . import utils
 from .activity import ActivityTypes, BaseActivity, create_activity
 from .appinfo import AppInfo
-from .application_command import message_command, slash_command, user_command
+from .application_command import (
+    BaseApplicationCommand,
+    message_command,
+    slash_command,
+    user_command,
+)
 from .backoff import ExponentialBackoff
 from .channel import PartialMessageable, _threaded_channel_factory
 from .emoji import Emoji
-from .enums import ApplicationCommandType, ChannelType, InteractionType, Status, VoiceRegion
+from .enums import (
+    ApplicationCommandType,
+    ChannelType,
+    InteractionType,
+    Status,
+    VoiceRegion,
+)
 from .errors import *
 from .flags import ApplicationFlags, Intents
 from .gateway import *
@@ -46,7 +58,7 @@ from .guild_preview import GuildPreview
 from .http import HTTPClient
 from .interactions import Interaction
 from .invite import Invite
-from .iterators import GuildIterator
+from .iterators import guild_iterator
 from .mentions import AllowedMentions
 from .object import Object
 from .stage_instance import StageInstance
@@ -67,22 +79,23 @@ if TYPE_CHECKING:
     from nextcord.types.checks import ApplicationCheck, ApplicationHook
 
     from .abc import GuildChannel, PrivateChannel, Snowflake, SnowflakeTime
-    from .application_command import BaseApplicationCommand, ClientCog
+    from .application_command import ClientCog, SlashApplicationSubcommand
     from .asset import Asset
     from .channel import DMChannel
-    from .enums import Locale
+    from .enums import IntegrationType, InteractionContextType, Locale
     from .file import File
     from .flags import MemberCacheFlags
     from .member import Member
     from .message import Attachment, Message
     from .permissions import Permissions
     from .scheduled_events import ScheduledEvent
+    from .types.checks import CoroFunc
     from .types.interactions import ApplicationCommand as ApplicationCommandPayload
     from .voice_client import VoiceProtocol
 
 __all__ = ("Client",)
 
-Coro = TypeVar("Coro", bound=Callable[..., Coroutine[Any, Any, Any]])
+Coro = TypeVar("Coro", bound="CoroFunc")
 InterT = TypeVar("InterT", bound="Interaction")
 
 
@@ -116,6 +129,18 @@ def _cancel_tasks(loop: asyncio.AbstractEventLoop) -> None:
 
 
 def _cleanup_loop(loop: asyncio.AbstractEventLoop) -> None:
+    """
+    This will cancel all tasks in the given loop, including any async tasks awaiting execution or potentially
+    mid-execution.
+
+    This does not restrict itself to nextcord-module tasks. If the loop provided is being used for non-Nextcord tasks,
+    this WILL cancel them as well.
+
+    Parameters
+    ----------
+    loop: :class:`asyncio.AbstractEventLoop`
+        Asyncio event loop to cancel all tasks and shutdown async generators of.
+    """
     try:
         _cancel_tasks(loop)
         loop.run_until_complete(loop.shutdown_asyncgens())
@@ -141,7 +166,7 @@ class Client:
     loop: Optional[:class:`asyncio.AbstractEventLoop`]
         The :class:`asyncio.AbstractEventLoop` to use for asynchronous operations.
         Defaults to ``None``, in which case the default event loop is used via
-        :func:`asyncio.get_event_loop()`.
+        :func:`asyncio.get_running_loop()` or :func:`asyncio.new_event_loop()`.
     connector: Optional[:class:`aiohttp.BaseConnector`]
         The connector to use for connection pooling.
     proxy: Optional[:class:`str`]
@@ -283,8 +308,13 @@ class Client:
     ) -> None:
         # self.ws is set in the connect method
         self.ws: DiscordWebSocket = None  # type: ignore
-        self.loop: asyncio.AbstractEventLoop = asyncio.get_event_loop() if loop is None else loop
+        try:
+            self.loop: asyncio.AbstractEventLoop = loop or asyncio.get_running_loop()
+        except RuntimeError:
+            self.loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self.loop)
         self._listeners: Dict[str, List[Tuple[asyncio.Future, Callable[..., bool]]]] = {}
+        self.extra_events: Dict[str, List[CoroFunc]] = {}
 
         self.shard_id: Optional[int] = shard_id
         self.shard_count: Optional[int] = shard_count
@@ -293,8 +323,7 @@ class Client:
             connector,
             proxy=proxy,
             proxy_auth=proxy_auth,
-            unsync_clock=assume_unsync_clock,
-            loop=self.loop,
+            assume_unsync_clock=assume_unsync_clock,
             dispatch=self.dispatch,
         )
 
@@ -322,6 +351,8 @@ class Client:
         self._ready: asyncio.Event = asyncio.Event()
         self._connection._get_websocket = self._get_websocket
         self._connection._get_client = lambda: self
+        self._token: Optional[str] = None
+
         self._lazy_load_commands: bool = lazy_load_commands
         self._client_cogs: Set[ClientCog] = set()
         self._rollout_associate_known: bool = rollout_associate_known
@@ -330,7 +361,6 @@ class Client:
         self._rollout_update_known: bool = rollout_update_known
         self._rollout_all_guilds: bool = rollout_all_guilds
         self._application_commands_to_add: Set[BaseApplicationCommand] = set()
-
         self._default_guild_ids = default_guild_ids or []
 
         # Global application command checks
@@ -498,10 +528,8 @@ class Client:
         except asyncio.CancelledError:
             pass
         except Exception:
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self.on_error(event_name, *args, **kwargs)
-            except asyncio.CancelledError:
-                pass
 
     def _schedule_event(
         self,
@@ -554,6 +582,9 @@ class Client:
         else:
             self._schedule_event(coro, method, *args, **kwargs)
 
+        for coro in self.extra_events.get(method, []):
+            self._schedule_event(coro, method, *args, **kwargs)
+
     async def on_error(self, event_method: str, *args: Any, **kwargs: Any) -> None:
         """|coro|
 
@@ -563,7 +594,7 @@ class Client:
         overridden to have a different implementation.
         Check :func:`~nextcord.on_error` for more details.
         """
-        print(f"Ignoring exception in {event_method}", file=sys.stderr)
+        print(f"Ignoring exception in {event_method}", file=sys.stderr)  # noqa: T201
         traceback.print_exc()
 
     async def on_application_command_error(
@@ -578,15 +609,19 @@ class Client:
 
         This only fires if you do not specify any listeners for command error.
         """
-        if interaction.application_command and interaction.application_command.has_error_handler():
+        if interaction.application_command is None:
+            return  # Not supposed to ever happen
+
+        if interaction.application_command.has_error_handler():
             return
 
-        # TODO implement cog error handling
-        # cog = context.cog
-        # if cog and cog.has_error_handler():
-        #     return
+        cog = interaction.application_command.parent_cog
+        if cog and cog.has_application_command_error_handler():
+            return
 
-        print(f"Ignoring exception in command {interaction.application_command}:", file=sys.stderr)
+        print(  # noqa: T201
+            f"Ignoring exception in command {interaction.application_command}:", file=sys.stderr
+        )
         traceback.print_exception(
             type(exception), exception, exception.__traceback__, file=sys.stderr
         )
@@ -654,7 +689,9 @@ class Client:
                 f"The token provided was of type {type(token)} but was expected to be str"
             )
 
-        data = await self.http.static_login(token.strip())
+        self._token = token.strip()
+        data = await self.http.static_login(f"Bot {self._token}")
+
         self._connection.user = ClientUser(state=self._connection, data=data)
 
     async def connect(self, *, reconnect: bool = True) -> None:
@@ -783,11 +820,9 @@ class Client:
         self.dispatch("close")
 
         for voice in self.voice_clients:
-            try:
+            # if an error happens during disconnects, disregard it.
+            with contextlib.suppress(Exception):
                 await voice.disconnect(force=True)
-            except Exception:
-                # if an error happens during disconnects, disregard it.
-                pass
 
         if self.ws is not None and self.ws.open:  # pyright: ignore
             await self.ws.close(code=1000)
@@ -795,7 +830,7 @@ class Client:
         await self.http.close()
         self._ready.clear()
 
-    def clear(self) -> None:
+    async def clear(self) -> None:
         """Clears the internal state of the bot.
 
         After this, the bot can be considered "re-opened", i.e. :meth:`is_closed`
@@ -805,7 +840,7 @@ class Client:
         self._closed = False
         self._ready.clear()
         self._connection.clear()
-        self.http.recreate()
+        await self.http.recreate()
 
     async def start(self, token: str, *, reconnect: bool = True) -> None:
         """|coro|
@@ -820,7 +855,7 @@ class Client:
         await self.login(token)
         await self.connect(reconnect=reconnect)
 
-    def run(self, *args: Any, **kwargs: Any) -> None:
+    def run(self, token: str, *, reconnect: bool = True) -> None:
         """A blocking call that abstracts away the event loop
         initialisation from you.
 
@@ -844,41 +879,31 @@ class Client:
             is blocking. That means that registration of events or anything being
             called after this function call will not execute until it returns.
         """
-        loop = self.loop
+        loop = self.loop or asyncio.new_event_loop()
+
+        # This allows Nextcord to gracefully close when Terminate/Signal 7 is received.
+        with contextlib.suppress(NotImplementedError):
+
+            def graceful_close() -> None:
+                loop.create_task(self.close())
+
+            loop.add_signal_handler(signal.SIGTERM, graceful_close)
+            _log.debug("Registered SIGTERM signal handler.")
 
         try:
-            loop.add_signal_handler(signal.SIGINT, lambda: loop.stop())
-            loop.add_signal_handler(signal.SIGTERM, lambda: loop.stop())
-        except NotImplementedError:
-            pass
-
-        async def runner() -> None:
-            try:
-                await self.start(*args, **kwargs)
-            finally:
-                if not self.is_closed():
-                    await self.close()
-
-        def stop_loop_on_completion(f) -> None:
-            loop.stop()
-
-        future = asyncio.ensure_future(runner(), loop=loop)
-        future.add_done_callback(stop_loop_on_completion)
-        try:
-            loop.run_forever()
+            loop.run_until_complete(self.start(token, reconnect=reconnect))
         except KeyboardInterrupt:
-            _log.info("Received signal to terminate bot and event loop.")
+            _log.info("Received keyboard interrupt, closing.")
         finally:
-            future.remove_done_callback(stop_loop_on_completion)
-            _log.info("Cleaning up tasks.")
-            _cleanup_loop(loop)
+            if not self.is_closed():
+                loop.run_until_complete(self.close())
 
-        if not future.cancelled():
-            try:
-                return future.result()
-            except KeyboardInterrupt:
-                # I am unsure why this gets raised here but suppress it anyway
-                return None
+            # This allows tasks that are pending cancellation to be cancelled and cleaned up. If a better
+            #  method of "wait until all marked-as-cancelled tasks are cancelled" is found, replace this.
+            loop.run_until_complete(asyncio.sleep(0.1))
+            # This will cancel all tasks, including non-Nextcord ones, in the loop and close it. If you don't want
+            # that to occur, run .start() and .close() manually.
+            _cleanup_loop(loop)
 
     # properties
 
@@ -910,7 +935,7 @@ class Client:
 
         .. versionadded: 2.0
         """
-        if self._connection._status in set(state.value for state in Status):
+        if self._connection._status in {state.value for state in Status}:
             return Status(self._connection._status)
         return Status.online
 
@@ -1015,6 +1040,7 @@ class Client:
 
         if isinstance(channel, StageChannel):
             return channel.instance
+        return None
 
     def get_guild(self, id: int, /) -> Optional[Guild]:
         """Returns a guild with the given ID.
@@ -1236,7 +1262,7 @@ class Client:
         future = self.loop.create_future()
         if check is None:
 
-            def _check(*args) -> bool:
+            def _check(*_args) -> bool:
                 return True
 
             check = _check
@@ -1251,7 +1277,7 @@ class Client:
         listeners.append((future, check))
         return asyncio.wait_for(future, timeout)
 
-    # event registration
+    # event/listener registration
 
     def event(self, coro: Coro) -> Coro:
         """A decorator that registers an event to listen to.
@@ -1281,6 +1307,98 @@ class Client:
         setattr(self, coro.__name__, coro)
         _log.debug("%s has successfully been registered as an event", coro.__name__)
         return coro
+
+    def add_listener(self, func: CoroFunc, name: str = MISSING) -> None:
+        """The non decorator alternative to :meth:`.listen`.
+
+        .. versionadded:: 3.0
+
+        Parameters
+        ----------
+        func: :ref:`coroutine <coroutine>`
+            The function to call.
+        name: :class:`str`
+            The name of the event to listen for. Defaults to ``func.__name__``.
+
+        Example
+        -------
+
+        .. code-block:: python3
+
+            async def on_ready(): pass
+            async def my_message(message): pass
+
+            client.add_listener(on_ready)
+            client.add_listener(my_message, 'on_message')
+
+        """
+        name = func.__name__ if name is MISSING else name
+
+        if not asyncio.iscoroutinefunction(func):
+            raise TypeError("Listeners must be coroutines")
+
+        if name in self.extra_events:
+            self.extra_events[name].append(func)
+        else:
+            self.extra_events[name] = [func]
+
+    def remove_listener(self, func: CoroFunc, name: str = MISSING) -> None:
+        """Removes a listener from the pool of listeners.
+
+        .. versionadded:: 3.0
+
+        Parameters
+        ----------
+        func
+            The function that was used as a listener to remove.
+        name: :class:`str`
+            The name of the event we want to remove. Defaults to
+            ``func.__name__``.
+        """
+
+        name = func.__name__ if name is MISSING else name
+
+        if name in self.extra_events:
+            with contextlib.suppress(ValueError):
+                self.extra_events[name].remove(func)
+
+    def listen(self, name: str = MISSING) -> Callable[[Coro], Coro]:
+        """A decorator that registers another function as an external
+        event listener. Basically this allows you to listen to multiple
+        events from different places e.g. such as :func:`.on_ready`
+
+        The functions being listened to must be a :ref:`coroutine <coroutine>`.
+
+        .. versionadded:: 3.0
+
+        Example
+        -------
+
+        .. code-block:: python3
+
+            @client.listen()
+            async def on_message(message):
+                print('one')
+
+            # in some other file...
+
+            @client.listen('on_message')
+            async def my_message(message):
+                print('two')
+
+        Would print one and two in an unspecified order.
+
+        Raises
+        ------
+        TypeError
+            The function being listened to is not a coroutine.
+        """
+
+        def decorator(func: Coro) -> Coro:
+            self.add_listener(func, name)
+            return func
+
+        return decorator
 
     async def change_presence(
         self,
@@ -1330,7 +1448,7 @@ class Client:
 
         for guild in self._connection.guilds:
             me = guild.me
-            if me is None:  # pyright: ignore[reportUnnecessaryComparison]
+            if me is None:
                 continue
 
             if activity is not None:
@@ -1349,8 +1467,10 @@ class Client:
         with_counts: bool = False,
         before: Optional[SnowflakeTime] = None,
         after: Optional[SnowflakeTime] = None,
-    ) -> GuildIterator:
-        """Retrieves an :class:`.AsyncIterator` that enables receiving your guilds.
+    ) -> AsyncIterator[Guild]:
+        """|asynciter|
+
+        Returns an async iterator that enables receiving your guilds.
 
         .. note::
 
@@ -1368,11 +1488,6 @@ class Client:
 
             async for guild in client.fetch_guilds(limit=150):
                 print(guild.name)
-
-        Flattening into a list ::
-
-            guilds = await client.fetch_guilds(limit=150).flatten()
-            # guilds is now a list of Guild...
 
         All parameters are optional.
 
@@ -1410,7 +1525,9 @@ class Client:
         :class:`.Guild`
             The guild with the guild data parsed.
         """
-        return GuildIterator(self, limit=limit, before=before, after=after, with_counts=with_counts)
+        return guild_iterator(
+            self, limit=limit, before=before, after=after, with_counts=with_counts
+        )
 
     async def fetch_template(self, code: Union[Template, str]) -> Template:
         """|coro|
@@ -2035,19 +2152,6 @@ class Client:
         """
         return self._connection.all_views()
 
-    @property
-    def persistent_views(self) -> List[View]:
-        """List[:class:`.View`]: A sequence of persistent views added to the client.
-
-        .. versionadded:: 2.0
-        """
-        warnings.warn(
-            ".persistent_views is deprecated, use .views instead.",
-            stacklevel=2,
-            category=FutureWarning,
-        )
-        return self.views()
-
     def views(self, *, persistent: bool = True) -> List[View]:
         """Returns all persistent or non-persistent views.
 
@@ -2099,19 +2203,32 @@ class Client:
                 _log.debug(
                     "nextcord.Client: Interaction command not found, attempting to lazy load."
                 )
-                # _log.debug(f"nextcord.Client: %s", interaction.data)
-                response_signature = (
+                debug_response_signature = (
                     interaction.data["name"],
                     int(interaction.data["type"]),
                     interaction.guild_id,
                 )
-                _log.debug("nextcord.Client: %s", response_signature)
+                _log.debug("nextcord.Client: %s", debug_response_signature)
                 do_deploy = False
-                if app_cmd := self._connection.get_application_command_from_signature(
-                    interaction.data["name"],
-                    int(interaction.data["type"]),
-                    int(guild_id) if (guild_id := interaction.data.get("guild_id")) else None,
-                ):
+
+                guild_id = interaction.data.get("guild_id")
+                response_signature: Dict[str, Any] = {
+                    "type": int(interaction.data["type"]),
+                    "qualified_name": interaction.data["name"],
+                    "guild_id": None if not guild_id else int(guild_id),
+                }
+                app_cmd = self._connection.get_application_command_from_signature(
+                    **response_signature
+                )
+                if app_cmd:
+                    if not isinstance(app_cmd, BaseApplicationCommand):
+                        raise ValueError(
+                            (
+                                f".get_application_command_from_signature with kwargs: {response_signature} "
+                                f"returned {type(app_cmd)} but BaseApplicationCommand was expected."
+                            )
+                        )
+
                     _log.debug(
                         "nextcord.Client: Basic signature matches, checking against raw payload."
                     )
@@ -2174,32 +2291,48 @@ class Client:
         return self._connection.get_application_command(command_id)
 
     def get_application_command_from_signature(
-        self, name: str, cmd_type: Union[int, ApplicationCommandType], guild_id: Optional[int]
-    ) -> Optional[BaseApplicationCommand]:
+        self,
+        qualified_name: str,
+        *,
+        type: Union[int, ApplicationCommandType] = ApplicationCommandType.chat_input,
+        guild: Optional[Union[int, Snowflake]] = None,
+        search_localizations: bool = False,
+    ) -> Optional[Union[BaseApplicationCommand, SlashApplicationSubcommand]]:
         """Gets a locally stored application command object that matches the given signature.
+
+        .. versionadded:: 2.0
+
+        .. versionchanged:: 3.0
+            - Subcommands/Subcommand groups can now be retrieved with this method.
+            - ``name`` parameter was renamed to ``qualified_name`` and now accepts subcommands/subcommand groups separated by a space.
+            - ``cmd_type`` parameter was renamed to ``type``, defaults to :attr:`.ApplicationCommandType.chat_input` and is now a keyword-only parameter.
+            - ``guild_id`` parameter was renamed to ``guild`` with type Union[:class:`int`, :class:`~nextcord.abc.Snowflake`], defaults to ``None`` and is now a keyword-only parameter.
 
         Parameters
         ----------
-        name: :class:`str`
-            Name of the application command. Capital sensitive.
-        cmd_type: Union[:class:`int`, :class:`ApplicationCommandType`]
-            Type of application command.
-        guild_id: Optional[:class:`int`]
+        qualified_name: :class:`str`
+            Full name of the application command. Case sensitive.
+            Subcommands must be separated by a space, E.g, ``parent group subcommand``.
+        type: Union[:class:`int`, :class:`ApplicationCommandType`]
+            Type of application command. Defaults to :attr:`.ApplicationCommandType.chat_input`.
+        guild: Optional[Union[:class:`int`, :class:`~nextcord.abc.Snowflake`]]
             Guild ID of the signature. If set to ``None``, it will attempt to get the global signature.
+            Defaults to ``None``.
+        search_localizations: :class:`bool`
+            Whether to also search through the command's :attr:`~BaseApplicationCommand.name_localizations`. Defaults to ``False``.
+
+            .. versionadded:: 3.0
 
         Returns
         -------
-        command: Optional[:class:`BaseApplicationCommand`]
-            Application Command with the given signature. If no command with that signature is
-            found, returns ``None`` instead.
+        command: Optional[:class:`BaseApplicationCommand`, :class:`SlashApplicationSubcommand`]
+            Application Command with the given signature. If no command with that signature is found, ``None`` is returned instead.
         """
-        if isinstance(cmd_type, ApplicationCommandType):
-            actual_type = cmd_type.value
-        else:
-            actual_type = cmd_type
-
         return self._connection.get_application_command_from_signature(
-            name=name, cmd_type=actual_type, guild_id=guild_id
+            type=type.value if isinstance(type, ApplicationCommandType) else type,
+            qualified_name=qualified_name,
+            guild_id=None if not guild else int(guild.id if not isinstance(guild, int) else guild),
+            search_localizations=search_localizations,
         )
 
     def get_all_application_commands(self) -> Set[BaseApplicationCommand]:
@@ -2325,6 +2458,11 @@ class Client:
         Syncs the locally added application commands with the Guild corresponding to the given ID, or syncs
         global commands if the guild_id is ``None``.
 
+        .. versionchanged:: 3.0
+            This replaces the now removed ``delete_unknown_application_commands``,
+            ``associate_application_commands``, ``update_application_commands``, and ``rollout_application_commands``
+            methods.
+
         Parameters
         ----------
         data: Optional[List[:class:`dict`]]
@@ -2371,6 +2509,9 @@ class Client:
 
         Running this for global or the same guild multiple times at once may cause unexpected or unstable behavior.
 
+        .. versionchanged:: 3.0
+            This replaces the now removed ``deploy_application_commands`` method.
+
         Parameters
         ----------
         data: Optional[List[:class:`dict`]]
@@ -2396,64 +2537,6 @@ class Client:
             delete_unknown=delete_unknown,
             update_known=update_known,
         )
-
-    async def deploy_application_commands(
-        self,
-        data: Optional[List[ApplicationCommandPayload]] = None,
-        *,
-        guild_id: Optional[int] = None,
-        associate_known: bool = True,
-        delete_unknown: bool = True,
-        update_known: bool = True,
-    ) -> None:
-        warnings.warn(
-            ".deploy_application_commands is deprecated, use .discover_application_commands instead.",
-            stacklevel=2,
-            category=FutureWarning,
-        )
-        await self.discover_application_commands(
-            data=data,
-            guild_id=guild_id,
-            associate_known=associate_known,
-            delete_unknown=delete_unknown,
-            update_known=update_known,
-        )
-
-    async def delete_unknown_application_commands(
-        self, data: Optional[List[ApplicationCommandPayload]] = None
-    ) -> None:
-        """Deletes unknown global commands."""
-        warnings.warn(
-            ".delete_unknown_application_commands is deprecated, use .sync_application_commands and set "
-            "kwargs in it instead.",
-            stacklevel=2,
-            category=FutureWarning,
-        )
-        await self._connection.delete_unknown_application_commands(data=data, guild_id=None)
-
-    async def associate_application_commands(
-        self, data: Optional[List[ApplicationCommandPayload]] = None
-    ) -> None:
-        """Associates global commands registered with Discord with locally added commands."""
-        warnings.warn(
-            ".associate_application_commands is deprecated, use .sync_application_commands and set "
-            "kwargs in it instead.",
-            stacklevel=2,
-            category=FutureWarning,
-        )
-        await self._connection.associate_application_commands(data=data, guild_id=None)
-
-    async def update_application_commands(
-        self, data: Optional[List[ApplicationCommandPayload]] = None
-    ) -> None:
-        """Updates global commands that have slightly changed with Discord."""
-        warnings.warn(
-            ".update_application_commands is deprecated, use .sync_application_commands and set "
-            "kwargs in it instead.",
-            stacklevel=2,
-            category=FutureWarning,
-        )
-        await self._connection.update_application_commands(data=data, guild_id=None)
 
     async def register_new_application_commands(
         self, data: Optional[List[ApplicationCommandPayload]] = None, guild_id: Optional[int] = None
@@ -2546,16 +2629,9 @@ class Client:
         This does not register commands with Discord. If you want that, use
         :meth:`~Client.sync_all_application_commands` instead.
 
+        .. versionchanged:: 3.0
+            This replaces the now removed ``add_startup_application_commands`` method.
         """
-        self._add_decorated_application_commands()
-        self.add_all_cog_commands()
-
-    def add_startup_application_commands(self) -> None:
-        warnings.warn(
-            ".add_startup_application_commands is deprecated, use .add_all_application_commands instead.",
-            stacklevel=2,
-            category=FutureWarning,
-        )
         self._add_decorated_application_commands()
         self.add_all_cog_commands()
 
@@ -2585,30 +2661,6 @@ class Client:
                 f"enabled? {e}"
             )
 
-    async def rollout_application_commands(self) -> None:
-        """|coro|
-        Deploys global application commands and registers new ones if enabled.
-        """
-        warnings.warn(
-            ".rollout_application_commands is deprecated, use .sync_application_commands and set "
-            "kwargs in it instead.",
-            stacklevel=2,
-            category=FutureWarning,
-        )
-
-        if self.application_id is None:
-            raise TypeError("Could not get the current application's id")
-
-        global_payload = await self.http.get_global_commands(self.application_id)
-        await self.deploy_application_commands(
-            data=global_payload,
-            associate_known=self._rollout_associate_known,
-            delete_unknown=self._rollout_delete_unknown,
-            update_known=self._rollout_update_known,
-        )
-        if self._rollout_register_new:
-            await self.register_new_application_commands(data=global_payload)
-
     def _add_decorated_application_commands(self) -> None:
         for command in self._application_commands_to_add:
             command.from_callback(command.callback)
@@ -2623,7 +2675,6 @@ class Client:
                     self.add_application_command(cmd, use_rollout=True, pre_remove=False)
 
     def add_cog(self, cog: ClientCog) -> None:
-        # cog.process_app_cmds()
         for app_cmd in cog.application_commands:
             self.add_application_command(app_cmd, use_rollout=True)
 
@@ -2641,9 +2692,10 @@ class Client:
         *,
         name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         guild_ids: Optional[Iterable[int]] = MISSING,
-        dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         nsfw: bool = False,
+        integration_types: Optional[Iterable[Union[IntegrationType, int]]] = None,
+        contexts: Optional[Iterable[Union[InteractionContextType, int]]] = None,
         force_global: bool = False,
     ):
         """Creates a User context command from the decorated function.
@@ -2659,9 +2711,6 @@ class Client:
             IDs of :class:`Guild`'s to add this command to. If not passed and :attr:`Client.default_guild_ids` is
             set, then those default guild ids will be used instead. If both of those are unset, then the command will
             be a global command.
-        dm_permission: :class:`bool`
-            If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
-            usable in DMs. Only for global commands, but will not error on guild.
         default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
             Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
@@ -2670,6 +2719,14 @@ class Client:
             Whether the command can only be used in age-restricted channels. Defaults to ``False``.
 
             .. versionadded:: 2.4
+        integration_types: Optional[Iterable[Union[:class:`IntegrationType`, :class:`int`]]]
+            Where the command is available, only for globally-scoped commands. Defaults to ``guild_install``.
+
+            .. versionadded:: 3.0
+        contexts: Optional[Iterable[Union[:class:`InteractionContextType`, :class:`int`]]]
+            Where the command can be used, only for globally-scoped commands. By default, all interaction context types included for new commands.
+
+            .. versionadded:: 3.0
         force_global: :class:`bool`
             If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still
             register to guilds. Has no effect if ``guild_ids`` are never set or added to.
@@ -2680,9 +2737,10 @@ class Client:
                 name=name,
                 name_localizations=name_localizations,
                 guild_ids=guild_ids,
-                dm_permission=dm_permission,
                 default_member_permissions=default_member_permissions,
                 nsfw=nsfw,
+                integration_types=integration_types,
+                contexts=contexts,
                 force_global=force_global,
             )(func)
             self._application_commands_to_add.add(result)
@@ -2696,9 +2754,10 @@ class Client:
         *,
         name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         guild_ids: Optional[Iterable[int]] = MISSING,
-        dm_permission: Optional[bool] = None,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
         nsfw: bool = False,
+        integration_types: Optional[Iterable[Union[IntegrationType, int]]] = None,
+        contexts: Optional[Iterable[Union[InteractionContextType, int]]] = None,
         force_global: bool = False,
     ):
         """Creates a Message context command from the decorated function.
@@ -2714,9 +2773,6 @@ class Client:
             IDs of :class:`Guild`'s to add this command to. If not passed and :attr:`Client.default_guild_ids` is
             set, then those default guild ids will be used instead. If both of those are unset, then the command will
             be a global command.
-        dm_permission: :class:`bool`
-            If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
-            usable in DMs. Only for global commands, but will not error on guild.
         default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
             Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
@@ -2725,6 +2781,14 @@ class Client:
             Whether the command can only be used in age-restricted channels. Defaults to ``False``.
 
             .. versionadded:: 2.4
+        integration_types: Optional[Iterable[Union[:class:`IntegrationType`, :class:`int`]]]
+            Where the command is available, only for globally-scoped commands. Defaults to ``guild_install``.
+
+            .. versionadded:: 3.0
+        contexts: Optional[Iterable[Union[:class:`InteractionContextType`, :class:`int`]]]
+            Where the command can be used, only for globally-scoped commands. By default, all interaction context types included for new commands.
+
+            .. versionadded:: 3.0
         force_global: :class:`bool`
             If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still
             register to guilds. Has no effect if ``guild_ids`` are never set or added to.
@@ -2735,8 +2799,10 @@ class Client:
                 name=name,
                 name_localizations=name_localizations,
                 guild_ids=guild_ids,
-                dm_permission=dm_permission,
                 default_member_permissions=default_member_permissions,
+                nsfw=nsfw,
+                integration_types=integration_types,
+                contexts=contexts,
                 force_global=force_global,
             )(func)
             self._application_commands_to_add.add(result)
@@ -2752,9 +2818,10 @@ class Client:
         name_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         description_localizations: Optional[Dict[Union[Locale, str], str]] = None,
         guild_ids: Optional[Iterable[int]] = MISSING,
-        dm_permission: Optional[bool] = None,
         nsfw: bool = False,
         default_member_permissions: Optional[Union[Permissions, int]] = None,
+        integration_types: Optional[Iterable[Union[IntegrationType, int]]] = None,
+        contexts: Optional[Iterable[Union[InteractionContextType, int]]] = None,
         force_global: bool = False,
     ):
         """Creates a Slash application command from the decorated function.
@@ -2776,9 +2843,6 @@ class Client:
             IDs of :class:`Guild`'s to add this command to. If not passed and :attr:`Client.default_guild_ids` is
             set, then those default guild ids will be used instead. If both of those are unset, then the command will
             be a global command.
-        dm_permission: :class:`bool`
-            If the command should be usable in DMs or not. Setting to ``False`` will disable the command from being
-            usable in DMs. Only for global commands, but will not error on guild.
         default_member_permissions: Optional[Union[:class:`Permissions`, :class:`int`]]
             Permission(s) required to use the command. Inputting ``8`` or ``Permissions(administrator=True)`` for
             example will only allow Administrators to use the command. If set to 0, nobody will be able to use it by
@@ -2787,6 +2851,14 @@ class Client:
             Whether the command can only be used in age-restricted channels. Defaults to ``False``.
 
             .. versionadded:: 2.4
+        integration_types: Optional[Iterable[Union[:class:`IntegrationType`, :class:`int`]]]
+            Where the command is available, only for globally-scoped commands. Defaults to ``guild_install``.
+
+            .. versionadded:: 3.0
+        contexts: Optional[Iterable[Union[:class:`InteractionContextType`, :class:`int`]]]
+            Where the command can be used, only for globally-scoped commands. By default, all interaction context types included for new commands.
+
+            .. versionadded:: 3.0
         force_global: :class:`bool`
             If True, will force this command to register as a global command, even if ``guild_ids`` is set. Will still
             register to guilds. Has no effect if ``guild_ids`` are never set or added to.
@@ -2799,9 +2871,10 @@ class Client:
                 description=description,
                 description_localizations=description_localizations,
                 guild_ids=guild_ids,
-                dm_permission=dm_permission,
                 default_member_permissions=default_member_permissions,
                 nsfw=nsfw,
+                integration_types=integration_types,
+                contexts=contexts,
                 force_global=force_global,
             )(func)
             self._application_commands_to_add.add(result)
@@ -2841,16 +2914,13 @@ class Client:
         return utils.unique(it)
 
     @overload
-    def get_interaction(self, data) -> Interaction:
-        ...
+    def get_interaction(self, data) -> Interaction: ...
 
     @overload
-    def get_interaction(self, data, *, cls: Type[Interaction]) -> Interaction:
-        ...
+    def get_interaction(self, data, *, cls: Type[Interaction]) -> Interaction: ...
 
     @overload
-    def get_interaction(self, data, *, cls: Type[InterT]) -> InterT:
-        ...
+    def get_interaction(self, data, *, cls: Type[InterT]) -> InterT: ...
 
     def get_interaction(
         self, data, *, cls: Type[InterT] = Interaction
@@ -2903,10 +2973,8 @@ class Client:
             The function to remove from the global application checks.
         """
 
-        try:
+        with contextlib.suppress(ValueError):
             self._application_command_checks.remove(func)
-        except ValueError:
-            pass
 
     def application_command_check(self, func: ApplicationCheck) -> ApplicationCheck:
         """A decorator that adds a global applications command check to the client.
@@ -2999,3 +3067,92 @@ class Client:
 
         self._application_command_after_invoke = coro
         return coro
+
+    async def create_application_emoji(
+        self,
+        *,
+        name: str,
+        image: bytes | Asset | Attachment | File,
+    ) -> Emoji:
+        """|coro|
+
+        Creates an emoji for the current application.
+
+        Parameters
+        ----------
+        name: :class:`str`
+            The name of the emoji.
+        image: Union[:class:`bytes`, :class:`~nextcord.Asset`, :class:`~nextcord.Attachment`, :class:`~nextcord.File`]
+            The image data to create the emoji with.
+
+        Returns
+        -------
+        :class:`~nextcord.Emoji`
+            The created emoji.
+
+        Raises
+        ------
+        HTTPException
+            An error occurred creating the emoji.
+        TypeError
+            The client's application ID was not set.
+        """
+        if self.application_id is None:
+            raise TypeError("Could not get the current application's id")
+
+        img_base64 = await utils.obj_to_base64_data(image)
+        data = await self.http.create_application_emoji(
+            self.application_id, name=name, image=img_base64
+        )
+        return Emoji(state=self._connection, data=data, application_id=self.application_id)
+
+    async def fetch_application_emojis(self) -> list[Emoji]:
+        """|coro|
+
+        Fetches the emojis that the current application has.
+
+        Raises
+        ------
+        TypeError
+            The client's application ID was not set.
+
+        Returns
+        -------
+        List[:class:`~nextcord.Emoji`]
+            The emojis that the application has.
+        """
+        if self.application_id is None:
+            raise TypeError("Could not get the current application's id")
+        data = await self.http.list_application_emojis(self.application_id)
+        return [
+            Emoji(state=self._connection, data=emoji, application_id=self.application_id)
+            for emoji in data.get("items", [])
+        ]
+
+    async def fetch_application_emoji(self, emoji_id: int) -> Emoji:
+        """|coro|
+
+        Fetches an emoji that the current application has.
+
+        Parameters
+        ----------
+        emoji_id: :class:`int`
+            The ID of the emoji to fetch.
+
+        Raises
+        ------
+        TypeError
+            The client's application ID was not set.
+        NotFound
+            The emoji requested was not found.
+
+        Returns
+        -------
+        :class:`~nextcord.Emoji`
+            The emoji that the application has.
+        """
+        if self.application_id is None:
+            raise TypeError("Could not get the current application's id")
+
+        data = await self.http.get_application_emoji(self.application_id, emoji_id)
+        return Emoji(state=self._connection, data=data, application_id=self.application_id)
