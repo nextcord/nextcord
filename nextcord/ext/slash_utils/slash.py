@@ -32,6 +32,30 @@ def choices(
 ) -> Callable[
     [Callable], Union[SlashApplicationCommand, SlashApplicationSubcommand, CallbackWrapper]
 ]:
+    """
+    Decorator that allows you to add choices to options of a slash command.
+
+    Parameters
+    ----------
+    **kwargs: Union[Dict[str, Union[str, int, float]], Iterable[Union[str, int, float]]]
+        Keyword arguments where the key is the option name and the value is a list of choices or a mapping of choice names to values.
+
+    Example
+    -------
+
+    .. code-block:: python
+
+        from nextcord.ext import slash_utils
+
+        @slash_utils.choices(
+            option1=["choice1", "choice2"],
+            option2={"choice3": 3, "choice4": 4}
+        )
+        async def my_command(interaction: Interaction, option1: str, option2: int):
+            pass
+
+    """
+
     class ChoicesWrapper(CallbackWrapper):
         def modify(self, app_cmd: SlashApplicationCommand):
             option_names = {option.functional_name: option for option in app_cmd.options.values()}
