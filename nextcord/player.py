@@ -89,7 +89,6 @@ class AudioSource:
         Useful for clearing buffer data or processes after
         it is done playing audio.
         """
-        pass
 
     def __del__(self) -> None:
         self.cleanup()
@@ -121,6 +120,12 @@ class FFmpegAudio(AudioSource):
     :class:`FFmpegOpusAudio` work should subclass this.
 
     .. versionadded:: 1.3
+
+    Warnings
+    --------
+    As this wraps a subprocess call, ensure that
+    arguments such as ``executable`` are not
+    set from direct user input.
     """
 
     def __init__(
@@ -233,6 +238,11 @@ class FFmpegPCMAudio(FFmpegAudio):
         passed to the stdin of ffmpeg.
     executable: :class:`str`
         The executable name (and path) to use. Defaults to ``ffmpeg``.
+
+        .. warning::
+
+            As this wraps a subprocess call, ensure that
+            this argument is not set from direct user input.
     pipe: :class:`bool`
         If ``True``, denotes that ``source`` parameter will be passed
         to the stdin of ffmpeg. Defaults to ``False``.
@@ -334,6 +344,11 @@ class FFmpegOpusAudio(FFmpegAudio):
 
     executable: :class:`str`
         The executable name (and path) to use. Defaults to ``ffmpeg``.
+
+        .. warning::
+
+            As this wraps a subprocess call, ensure that
+            this argument is not set from direct user input.
     pipe: :class:`bool`
         If ``True``, denotes that ``source`` parameter will be passed
         to the stdin of ffmpeg. Defaults to ``False``.
@@ -537,7 +552,7 @@ class FFmpegOpusAudio(FFmpegAudio):
         except Exception:
             if not fallback:
                 _log.exception("Probe '%s' using '%s' failed", method, executable)
-                return  # type: ignore
+                return None, None
 
             _log.exception("Probe '%s' using '%s' failed, trying fallback", method, executable)
             try:
@@ -551,7 +566,7 @@ class FFmpegOpusAudio(FFmpegAudio):
         else:
             _log.info("Probe found codec=%s, bitrate=%s", codec, bitrate)
         finally:
-            return codec, bitrate
+            return codec, bitrate  # noqa: B012  # all exception are caught already
 
     @staticmethod
     def _probe_codec_native(
@@ -744,7 +759,7 @@ class AudioPlayer(threading.Thread):
         elif error:
             msg = f"Exception in voice thread {self.name}"
             _log.exception(msg, exc_info=error)
-            print(msg, file=sys.stderr)
+            print(msg, file=sys.stderr)  # noqa: T201
             traceback.print_exception(type(error), error, error.__traceback__)
 
     def stop(self) -> None:

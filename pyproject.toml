@@ -1,20 +1,121 @@
+[tool.poetry]
+name = "nextcord"
+# Placeholder, modified by dynamic-versioning.
+version = "0.0.0"
+homepage = "https://github.com/nextcord/nextcord"
+documentation = "https://docs.nextcord.dev/"
+description = "A Python wrapper for the Discord API forked from discord.py"
+authors = ["Nextcord Developers <code@nextcord.dev>"]
+license = "MIT"
+readme = "README.rst"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Framework :: AsyncIO",
+    "Framework :: aiohttp",
+    "Topic :: Internet",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Utilities",
+    "Typing :: Typed",
+] # License and Version are added automatically by Poetry
+packages = [
+    { include = "nextcord" },
+    { include = "nextcord/types" },
+    { include = "nextcord/ui" },
+    { include = "nextcord/ui/select" },
+    { include = "nextcord/webhook" },
+    { include = "nextcord/ext/application_checks" },
+    { include = "nextcord/ext/commands" },
+    { include = "nextcord/ext/slash_utils" },
+    { include = "nextcord/ext/tasks" },
+]
+[tool.poetry.dependencies]
+python = "^3.12"
+aiohttp = "^3.8.0"
+typing_extensions = "^4.2.0"
+audioop-lts = { version = "^0.2.1", python = "^3.13" }
+
+PyNaCl = { version = ">=1.3.0,<1.5", optional = true }
+orjson = { version = ">=3.5.4", optional = true }
+# There is currently no way to express passthrough extras in Poetry.
+# https://github.com/python-poetry/poetry/issues/834
+# https://github.com/aio-libs/aiohttp/blob/d0f7b75c04c2257eaa86ac80f30ec3f7088088ea/setup.cfg#L61-L66
+# speedups =
+#  # required c-ares (aiodns' backend) will not build on windows
+#  aiodns >= 1.1; sys_platform=="linux" or sys_platform=="darwin"
+#  Brotli; platform_python_implementation == 'CPython'
+#  brotlicffi; platform_python_implementation != 'CPython'
+aiodns = { version = ">1.1", optional = true, markers = "sys_platform == 'linux' or sys_platform == 'darwin'" }
+Brotli = { version = "*", optional = true, markers = "platform_python_implementation == 'CPython'" }
+# If brotlicffi is unsupported by an older aiohttp version, it will simply be ignored.
+brotlicffi = { version = "*", optional = true, markers = "platform_python_implementation != 'CPython'" }
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = "3.5.0"
+taskipy = "1.10.3"
+slotscheck = "0.19.1"
+python-dotenv = "0.20.0"
+pyright = "1.1.391"
+sphinx_autobuild = "2021.3.14"
+
+[tool.poetry.group.docs.dependencies]
+sphinx = "6.2.0"
+sphinxcontrib-trio = "1.1.2"
+sphinxcontrib-websupport = "^1.2.4"
+
+[tool.poetry.urls]
+"Documentation" = "https://docs.nextcord.dev/"
+"Issue tracker" = "https://github.com/nextcord/nextcord/issues"
+
+[tool.poetry.extras]
+voice = ["PyNaCl"]
+speed = ["orjson", "aiodns", "Brotli", "brotlicffi"]
+
+[tool.poetry-dynamic-versioning]
+enable = true
+vcs = "git"
+# If v2.6.0 tag -> 2.6.0
+# If v2.6.0 tag and not at tag -> 2.6.0+g{hash}
+# If v3.0.0a tag -> v3.0.0a0
+# If v3.0.0a tag and not at tag -> 3.0.0a{distance}+g{hash}
+format-jinja = """
+{%- if distance == 0 -%}
+    {{ serialize_pep440(base, stage, revision) }}
+{%- elif stage is none -%}
+    {{ serialize_pep440(base, stage, revision, metadata=["g"+commit]) }}
+{%- else -%}
+    {{ serialize_pep440(base, stage, distance, metadata=["g"+commit]) }}
+{%- endif -%}
+"""
+style = "pep440"
+strict = true
+
+[tool.poetry-dynamic-versioning.substitution]
+patterns = [
+    { value = "(^__version__\\s*(?::.*?)?=\\s*['\"])[^'\"]*(['\"])" },
+    { value = "(^version_info\\s*(?::.*?)?=\\s*\\S*?\\()[^)]*(\\))", mode = "version_info" },
+]
+
+[build-system]
+requires = [
+    "poetry-core>=1.0.0",
+    "poetry-dynamic-versioning @ https://github.com/ooliver1/poetry-dynamic-versioning/archive/f6952e5.zip",
+]
+build-backend = "poetry_dynamic_versioning.backend"
+
+
 # credit to https://github.com/disnakeDev/disnake/blob/master/pyproject.toml for config
 [tool.black]
 line-length = 100
-target-version = ["py38", "py39", "py310", "py311"]
-
-
-[tool.isort]
-profile = "black"
-py_version = 38
-line_length = 100
-combine_as_imports = true
-filter_files = true
+target-version = ["py312", "py313"]
 
 
 [tool.taskipy.tasks]
 black = { cmd = "task lint black", help = "Run black" }
-docs = { cmd = "cd docs && sphinx-autobuild . _build/html --ignore _build --watch ../nextcord --port 8069", help = "Build the documentation on an autoreloading server."}
+docs = { cmd = "cd docs && sphinx-autobuild . _build/html --ignore _build --watch ../nextcord --port 8069", help = "Build the documentation on an autoreloading server." }
 isort = { cmd = "task lint isort", help = "Run isort" }
 lint = { cmd = "pre-commit run --all-files", help = "Check all files for linting errors" }
 precommit = { cmd = "pre-commit install --install-hooks", help = "Install the precommit hook" }
@@ -36,12 +137,9 @@ exclude-modules = '''
 
 [tool.pyright]
 typeCheckingMode = "basic"
-include = [  # TODO: add examples back once app cmd is fixed
-    "nextcord",
-    "docs",
-    "*.py",
-]
-pythonVersion = "3.8"
+include = ["nextcord", "docs", "*.py"]
+ignore = ["examples"]
+pythonVersion = "3.12"
 
 # https://github.com/microsoft/pyright/blob/main/docs/configuration.md
 reportInvalidStringEscapeSequence = false
@@ -59,3 +157,79 @@ reportUnsupportedDunderAll = true
 reportUnusedVariable = true
 reportUnnecessaryComparison = true
 reportUnnecessaryTypeIgnoreComment = true
+
+[tool.ruff]
+line-length = 100
+select = ["ALL"]
+# TODO comments are for rules that should be enabled in the future (separate PRs)
+ignore = [
+    "A",       # TODO:
+    "ANN",     # TODO:
+    "ANN101",  # `self` does not need a type annotation
+    "ANN102",  # `cls` does not need a type annotation
+    "ARG002",  # TODO:
+    "ARG003",  # TODO:
+    "ASYNC109",# TODO:
+    "B008",    # SlashOption() as default, it is okay (Annotated is technically better but verbose)
+    "BLE",     # TODO:
+    "C90",     # TODO:
+    "COM",     # black sorts out trailing commas
+    "D",       # TODO:
+    "E",       # TODO:
+    "E501",    # black sorts out line length
+    "F403",    # wildcard imports shouldn't be blasted
+    "F405",    # pyright can detect undefined names anyway
+    "FA",      # TODO:
+    "EM",      # TODO:
+    "FBT",     # TODO:
+    "FIX",     # this can be removed on demand, todo comments are okay to be left in
+    "N",       # TODO:
+    "PD",      # all .values is mistaken for pandas
+    "PERF203", # TODO:
+    "PGH003",  # pyright: ignore[rule] is too verbose (reportGeneralTypeIssues) unfortunately and makes a mess
+    "PLR2004", # TODO:
+    "PLW2901", # overriding loop var with a change (like anno = anno.type) is very common in this
+    "PTH",     # TODO:
+    "PYI",     # TODO:
+    "S101",    # asserts are usually used for typing assertions - typing.cast would be better but it's fine
+    "S110",    # TODO:
+    "S112",    # TODO:
+    "S311",    # "cryptographic purposes", this is a Discord bot library
+    "S603",    # as this is a library, we do not need to check for untrusted input here
+    "S607",    # or partial executable paths
+    "SLF",     # pyright can detect private access, but internals rely on it too much right now
+    "TD002",   # authors in TODO comments would be nice, but they don't exactly work retroactively (discord.py comments)
+    "TD003",   # same with issue links, nice but not retroactive
+    "TCH",     # TODO:
+    "TID",     # TODO:
+    "TRY",     # TODO:
+    "UP",      # TODO:
+]
+exclude = [".github/*"]
+target-version = "py312"
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = [
+    "F401", # unused imports in __init__.py, "from . import abc, ..."
+]
+"scripts/autotyping.py" = ["INP"]
+"examples/*" = [
+    "ARG001", # unused args in examples, not including _ prefixes to prevent confusion
+    "INP",    # examples is an implicit namespace as it is just a directory
+    "S104",   # all interfaces binding as an example
+    "SIM105", # not using contextlib.supress in examples, as comments denote "error handling here"
+    "T20",    # print in examples is okay
+    "RET502", # return ... is used in commands, which is fine as an example
+    "RET503", # same as above
+]
+"__main__.py" = ["T20"]
+"docs/*" = ["ERA001", "INP"]
+
+[tool.ruff.pylint]
+max-args = 40        # message args (send, execute_webhook) make this way too long usually
+max-branches = 50    # these are quite big, but better than no linting for now
+max-statements = 110
+max-returns = 40
+
+[tool.ruff.isort]
+combine-as-imports = true

@@ -11,25 +11,35 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.12", "3.13"]
       fail-fast: false
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          fetch-tags: true
+
+      - name: Load cached Poetry installation
+        uses: actions/cache@v3
+        with:
+          path: ~/.local/pypoetry
+          key: poetry-0
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
 
       - name: Set up python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-          cache: pip
-          cache-dependency-path: |
-            requirements.txt
-            requirements-dev.txt
-            setup.py
+          cache: poetry
+          cache-dependency-path: pyproject.toml
 
-      # all extras are installed to test
       - name: Install dependencies
-        run: python -m pip install -r requirements-dev.txt .[voice,docs,speed]
+        run: poetry install --all-groups -E voice -E speed
+
+      - name: Configure Poetry for pyright
+        run: echo "$(poetry env info --path)/bin" >> $GITHUB_PATH
 
       - name: Set up pyright
         run: echo "PYRIGHT_VERSION=$(python -c 'import pyright; print(pyright.__pyright_version__)')" >> $GITHUB_ENV
@@ -40,8 +50,8 @@ jobs:
           version: ${{ env.PYRIGHT_VERSION }}
           python-version: ${{ matrix.python-version }}
           python-platform: Linux
-          # only add comments for 3.8
-          no-comments: ${{ matrix.python-version != '3.8' }}
+          # only add comments for 3.12
+          no-comments: ${{ matrix.python-version != '3.12' }}
           warnings: true
 
       - name: Run pyright (Windows)
@@ -60,21 +70,32 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-tags: true
 
-    - name: Set up python 3.8
-      uses: actions/setup-python@v4
-      with:
-        python-version: 3.8
-        cache: pip
-        cache-dependency-path: |
-          requirements-dev.txt
-          requirements.txt
-          setup.py
+      - name: Load cached Poetry installation
+        uses: actions/cache@v3
+        with:
+          path: ~/.local
+          key: poetry-0
 
-    - name: Install dependencies
-      run: python -m pip install -r requirements.txt -r requirements-dev.txt
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
 
-    - name: Run slotscheck
-      run: task slotscheck
+      - name: Set up python 3.12
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.12
+          cache: poetry
+          cache-dependency-path: pyproject.toml
+
+      - name: Install dependencies
+        run: poetry install --all-groups -E voice -E speed
+
+      - name: Configure Poetry for slotscheck
+        run: echo "$(poetry env info --path)/bin" >> $GITHUB_PATH
+
+      - name: Run slotscheck
+        run: task slotscheck

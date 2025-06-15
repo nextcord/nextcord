@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, AsyncIterator, Dict, List, Optional, Tuple, Union
 
 from .abc import Snowflake
 from .asset import Asset
 from .enums import ScheduledEventPrivacyLevel
-from .iterators import ScheduledEventUserIterator
+from .iterators import scheduled_event_user_iterator
 from .mixins import Hashable
 from .utils import MISSING, obj_to_base64_data, parse_time
 
@@ -218,13 +218,13 @@ class ScheduledEvent(Hashable):
         else:
             self.creator: Optional[User] = None
         self.name: str = data["name"]
-        self.description: str = data.get("description", "")
+        self.description: str = data.get("description") or ""
         self.start_time: datetime = parse_time(data["scheduled_start_time"])
         self.end_time: Optional[datetime] = parse_time(data.get("scheduled_end_time"))
         self.privacy_level: ScheduledEventPrivacyLevel = ScheduledEventPrivacyLevel(
             data["privacy_level"]
         )
-        self.metadata: EntityMetadata = EntityMetadata(**data.get("metadata", {}))
+        self.metadata: EntityMetadata = EntityMetadata(**(data["entity_metadata"] or {}))
         self.user_count: int = data.get("user_count", 0)
         self.channel: Optional[GuildChannel] = self._state.get_channel(  # type: ignore # who knows
             int(data.get("channel_id") or 0)
@@ -425,8 +425,10 @@ class ScheduledEvent(Hashable):
         with_member: bool = False,
         before: Optional[Snowflake] = None,
         after: Optional[Snowflake] = None,
-    ) -> ScheduledEventUserIterator:
-        """Fetch the users that are interested, returns an asyc iterator.
+    ) -> AsyncIterator[ScheduledEventUser]:
+        """|asynciter|
+
+        Fetch the users that are interested, returns an async iterator.
 
         Parameters
         ----------
@@ -444,6 +446,6 @@ class ScheduledEvent(Hashable):
         :class:`ScheduledEventUser`
             A full event user object
         """
-        return ScheduledEventUserIterator(
-            self.guild, self, limit=limit, with_member=with_member, before=before, after=after
+        return scheduled_event_user_iterator(
+            self.guild, self, limit=limit, before=before, after=after
         )

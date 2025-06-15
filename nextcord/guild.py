@@ -9,11 +9,11 @@ from asyncio import Future
 from typing import (
     TYPE_CHECKING,
     Any,
+    AsyncIterator,
     Callable,
     ClassVar,
     Dict,
     List,
-    Literal,
     NamedTuple,
     Optional,
     Sequence,
@@ -26,7 +26,7 @@ from typing import (
 from . import abc, utils
 from .asset import Asset
 from .auto_moderation import AutoModerationRule, AutoModerationTriggerMetadata
-from .bans import BanEntry
+from .bans import BanEntry, BulkBan
 from .channel import (
     CategoryChannel,
     ForumChannel,
@@ -57,9 +57,10 @@ from .errors import ClientException, InvalidArgument, InvalidData
 from .flags import SystemChannelFlags
 from .integrations import Integration, _integration_factory
 from .invite import Invite
-from .iterators import AuditLogIterator, BanIterator, MemberIterator, ScheduledEventIterator
+from .iterators import audit_log_iterator, ban_iterator, member_iterator, scheduled_event_iterator
 from .member import Member, VoiceState
 from .mixins import Hashable
+from .object import Object
 from .partial_emoji import PartialEmoji
 from .permissions import PermissionOverwrite
 from .role import Role
@@ -80,9 +81,10 @@ if TYPE_CHECKING:
 
     from .abc import Snowflake, SnowflakeTime
     from .application_command import BaseApplicationCommand
+    from .audit_logs import AuditLogEntry
     from .auto_moderation import AutoModerationAction
     from .channel import ForumTag
-    from .enums import SortOrderType
+    from .enums import ForumLayoutType, SortOrderType
     from .file import File
     from .message import Attachment
     from .permissions import Permissions
@@ -217,12 +219,15 @@ class Guild(Hashable):
         - ``NEWS``: Guild can create news channels.
         - ``PARTNERED``: Guild is a partnered server.
         - ``PREVIEW_ENABLED``: Guild can be viewed before being accepted via Membership Screening.
+        - ``RAID_ALERTS_DISABLED``: Guild disabled alerts for join raids in the configured safety alerts channel.
         - ``ROLE_ICONS``: Guild is able to set role icons.
         - ``TICKETED_EVENTS_ENABLED``: Guild has enabled ticketed events.
         - ``VANITY_URL``: Guild can have a vanity invite URL (e.g. discord.gg/discord-api).
         - ``VERIFIED``: Guild is a verified server.
         - ``VIP_REGIONS``: Guild has VIP voice regions.
         - ``WELCOME_SCREEN_ENABLED``: Guild has enabled the welcome screen.
+        - ``ROLE_SUBSCRIPTIONS_ENABLED``: Guild has enabled role subscriptions.
+        - ``ROLE_SUBSCRIPTIONS_AVAILABLE_FOR_PURCHASE``: Guild has role subscriptions that can be purchased.
 
     premium_tier: :class:`int`
         The premium tier for this guild. Corresponds to "Boost Level" in the official UI.
@@ -250,6 +255,11 @@ class Guild(Hashable):
         with ``with_counts=True``.
 
         .. versionadded:: 2.0
+
+    max_stage_video_channel_users: Optional[:class:`int`]
+        The maximum amount of users in a stage channel when video is being broadcasted.
+
+        .. versionadded:: 2.6
     """
 
     __slots__ = (
@@ -296,14 +306,17 @@ class Guild(Hashable):
         "_scheduled_events",
         "approximate_member_count",
         "approximate_presence_count",
+        "_premium_progress_bar_enabled",
+        "_safety_alerts_channel_id",
+        "max_stage_video_channel_users",
     )
 
     _PREMIUM_GUILD_LIMITS: ClassVar[Dict[Optional[int], _GuildLimit]] = {
-        None: _GuildLimit(emoji=50, stickers=5, bitrate=96e3, filesize=8388608),
-        0: _GuildLimit(emoji=50, stickers=5, bitrate=96e3, filesize=8388608),
-        1: _GuildLimit(emoji=100, stickers=15, bitrate=128e3, filesize=8388608),
-        2: _GuildLimit(emoji=150, stickers=30, bitrate=256e3, filesize=52428800),
-        3: _GuildLimit(emoji=250, stickers=60, bitrate=384e3, filesize=104857600),
+        None: _GuildLimit(emoji=50, stickers=5, bitrate=96e3, filesize=25 * 1024 * 1024),
+        0: _GuildLimit(emoji=50, stickers=5, bitrate=96e3, filesize=25 * 1024 * 1024),
+        1: _GuildLimit(emoji=100, stickers=15, bitrate=128e3, filesize=25 * 1024 * 1024),
+        2: _GuildLimit(emoji=150, stickers=30, bitrate=256e3, filesize=50 * 1024 * 1024),
+        3: _GuildLimit(emoji=250, stickers=60, bitrate=384e3, filesize=100 * 1024 * 1024),
     }
 
     def __init__(self, *, data: GuildPayload, state: ConnectionState) -> None:
@@ -404,11 +417,8 @@ class Guild(Hashable):
             self._voice_states[user_id] = after
 
         member = self.get_member(user_id)
-        if member is None:
-            try:
-                member = Member(data=data["member"], state=self._state, guild=self)
-            except KeyError:
-                member = None
+        if member is None and (member_data := data.get("member")):
+            member = Member(data=member_data, guild=self, state=self._state)
 
         return member, before, after
 
@@ -466,10 +476,10 @@ class Guild(Hashable):
 
         self.mfa_level: MFALevel = guild.get("mfa_level")
         self.emojis: Tuple[Emoji, ...] = tuple(
-            map(lambda d: state.store_emoji(self, d), guild.get("emojis", []))
+            (state.store_emoji(self, d) for d in guild.get("emojis", []))
         )
         self.stickers: Tuple[GuildSticker, ...] = tuple(
-            map(lambda d: state.store_sticker(self, d), guild.get("stickers", []))
+            (state.store_sticker(self, d) for d in guild.get("stickers", []))
         )
         self.features: List[GuildFeature] = guild.get("features", [])
         self._splash: Optional[str] = guild.get("splash")
@@ -478,6 +488,9 @@ class Guild(Hashable):
         self.max_presences: Optional[int] = guild.get("max_presences")
         self.max_members: Optional[int] = guild.get("max_members")
         self.max_video_channel_users: Optional[int] = guild.get("max_video_channel_users")
+        self.max_stage_video_channel_users: Optional[int] = guild.get(
+            "max_stage_video_channel_users"
+        )
         self.premium_tier: int = guild.get("premium_tier", 0)
         self.premium_subscription_count: int = guild.get("premium_subscription_count") or 0
         self._system_channel_flags: int = guild.get("system_channel_flags", 0)
@@ -515,14 +528,20 @@ class Guild(Hashable):
         for event in guild.get("guild_scheduled_events") or []:
             self._store_scheduled_event(event)
 
+        self._premium_progress_bar_enabled: Optional[bool] = guild.get(
+            "premium_progress_bar_enabled"
+        )
+
+        self._safety_alerts_channel_id: Optional[int] = utils.get_as_snowflake(
+            guild, "safety_alerts_channel_id"
+        )
+
     # TODO: refactor/remove?
     def _sync(self, data: GuildPayload) -> None:
-        try:
-            self._large = data["large"]
-        except KeyError:
-            pass
+        if large := data.get("large") is not None:
+            self._large = large
 
-        empty_tuple = tuple()
+        empty_tuple = ()
         for presence in data.get("presences", []):
             user_id = int(presence["user"]["id"])
             member = self.get_member(user_id)
@@ -650,6 +669,14 @@ class Guild(Hashable):
         """
         return list(self._scheduled_events.values())
 
+    @property
+    def premium_progress_bar_enabled(self) -> Optional[bool]:
+        """Optional[:class:`bool`:] Whether the premium boost progress bar is enabled.
+
+        .. versionadded:: 2.6
+        """
+        return self._premium_progress_bar_enabled
+
     def by_category(self) -> List[ByCategoryItem]:
         """Returns every :class:`CategoryChannel` and their associated channels.
 
@@ -687,7 +714,7 @@ class Guild(Hashable):
 
     def _resolve_channel(self, id: Optional[int], /) -> Optional[Union[GuildChannel, Thread]]:
         if id is None:
-            return
+            return None
 
         return self._channels.get(id) or self._threads.get(id)
 
@@ -781,6 +808,19 @@ class Guild(Hashable):
         .. versionadded:: 1.4
         """
         channel_id = self._public_updates_channel_id
+        return channel_id and self._channels.get(channel_id)  # type: ignore
+
+    @property
+    def safety_alerts_channel(self) -> Optional[TextChannel]:
+        """Optional[:class:`TextChannel`]: Returns the guild's channel where admins and
+        moderators of the guild receive safety alerts from Discord. The guild must be a
+        Community guild.
+
+        If no channel is set then this returns ``None``.
+
+        .. versionadded:: 2.6
+        """
+        channel_id = self._safety_alerts_channel_id
         return channel_id and self._channels.get(channel_id)  # type: ignore
 
     @property
@@ -1057,7 +1097,7 @@ class Guild(Hashable):
                 return result
 
         def pred(m: Member) -> bool:
-            return m.nick == name or m.name == name
+            return name in {m.nick, m.name}
 
         return utils.find(pred, members)
 
@@ -1324,6 +1364,11 @@ class Guild(Hashable):
         position: int = MISSING,
         overwrites: Dict[Union[Role, Member], PermissionOverwrite] = MISSING,
         category: Optional[CategoryChannel] = None,
+        bitrate: Optional[int] = None,
+        user_limit: Optional[int] = None,
+        nsfw: Optional[bool] = None,
+        rtc_region: Optional[VoiceRegion] = MISSING,
+        video_quality_mode: Optional[VideoQualityMode] = None,
         reason: Optional[str] = None,
     ) -> StageChannel:
         """|coro|
@@ -1349,6 +1394,27 @@ class Guild(Hashable):
         position: :class:`int`
             The position in the channel list. This is a number that starts
             at 0. e.g. the top channel is position 0.
+        bitrate: Optional[:class:`int`]
+            The channel's preferred audio bitrate in bits per second.
+
+            .. versionadded:: 2.6
+        user_limit: :class:`int`
+            The channel's limit for number of members that can be in a voice channel.
+
+            .. versionadded:: 2.6
+        rtc_region: Optional[:class:`VoiceRegion`]
+            The region for the voice channel's voice communication.
+            A value of ``None`` indicates automatic voice region detection.
+
+            .. versionadded:: 2.6
+        nsfw: :class:`bool`
+            To mark the channel as NSFW or not.
+
+            .. versionadded:: 2.6
+        video_quality_mode: :class:`VideoQualityMode`
+            The camera video quality for the voice channel's participants.
+
+            .. versionadded:: 2.6
         reason: Optional[:class:`str`]
             The reason for creating this channel. Shows up on the audit log.
 
@@ -1372,6 +1438,21 @@ class Guild(Hashable):
         }
         if position is not MISSING:
             options["position"] = position
+
+        if bitrate is not None:
+            options["bitrate"] = bitrate
+
+        if user_limit is not None:
+            options["user_limit"] = user_limit
+
+        if rtc_region is not MISSING:
+            options["rtc_region"] = None if rtc_region is None else str(rtc_region)
+
+        if nsfw is not None:
+            options["nsfw"] = nsfw
+
+        if video_quality_mode is not None:
+            options["video_quality_mode"] = video_quality_mode.value
 
         data = await self._create_channel(
             name,
@@ -1446,12 +1527,17 @@ class Guild(Hashable):
         available_tags: List[ForumTag] = MISSING,
         reason: Optional[str] = None,
         default_sort_order: SortOrderType = MISSING,
+        default_forum_layout: Optional[ForumLayoutType] = None,
     ) -> ForumChannel:
         """|coro|
 
         This is similar to :meth:`create_text_channel` except makes a :class:`ForumChannel` instead.
 
         .. versionadded:: 2.1
+
+        .. versionchanged:: 2.5
+
+            Added the ``default_forum_layout`` parameter.
 
         Parameters
         ----------
@@ -1489,6 +1575,8 @@ class Guild(Hashable):
             The available tags for threads created in this channel.
 
             .. versionadded:: 2.4
+        default_forum_layout: Optional[:class:`ForumLayoutType`]
+            The default layout type used to display posts in this forum.
 
         Raises
         ------
@@ -1536,6 +1624,9 @@ class Guild(Hashable):
                         "emoji_name": default_reaction.name,
                     }
                 )
+
+        if default_forum_layout is not None:
+            options["default_forum_layout"] = default_forum_layout.value
 
         data = await self._create_channel(
             name,
@@ -1612,6 +1703,7 @@ class Guild(Hashable):
         rules_channel: Optional[TextChannel] = MISSING,
         public_updates_channel: Optional[TextChannel] = MISSING,
         invites_disabled: bool = MISSING,
+        premium_progress_bar_enabled: bool = MISSING,
     ) -> Guild:
         r"""|coro|
 
@@ -1635,6 +1727,9 @@ class Guild(Hashable):
 
         .. versionchanged:: 2.4
             The ``invites_disabled`` parameter has been added.
+
+        .. versionchanged:: 2.6
+            The ``premium_progress_bar_enabled`` parameter has been added.
 
         Parameters
         ----------
@@ -1697,8 +1792,8 @@ class Guild(Hashable):
         invites_disabled: :class:`bool`
             Whether the invites should be paused for the guild.
             This will prevent new users from joining said guild.
-
-            .. versionadded:: 2.4
+        premium_progress_bar_enabled: :class:`bool`
+            Whether the premium guild boost progress bar is enabled.
         reason: Optional[:class:`str`]
             The reason for editing this guild. Shows up on the audit log.
 
@@ -1810,6 +1905,9 @@ class Guild(Hashable):
 
             fields["system_channel_flags"] = system_channel_flags.value
 
+        if premium_progress_bar_enabled is not MISSING:
+            fields["premium_progress_bar_enabled"] = premium_progress_bar_enabled
+
         if community is not MISSING:
             features = []
             if community:
@@ -1827,9 +1925,8 @@ class Guild(Hashable):
 
             if invites_disabled:
                 features.append("INVITES_DISABLED")
-            else:
-                if "INVITES_DISABLED" in features:
-                    features.remove("INVITES_DISABLED")
+            elif "INVITES_DISABLED" in features:
+                features.remove("INVITES_DISABLED")
 
             fields["features"] = features
 
@@ -1866,8 +1963,7 @@ class Guild(Hashable):
             if factory is None:
                 raise InvalidData("Unknown channel type {type} for channel ID {id}.".format_map(d))
 
-            channel = factory(guild=self, state=self._state, data=d)
-            return channel
+            return factory(guild=self, state=self._state, data=d)
 
         return [convert(d) for d in data]
 
@@ -1903,8 +1999,10 @@ class Guild(Hashable):
     # TODO: Remove Optional typing here when async iterators are refactored
     def fetch_members(
         self, *, limit: Optional[int] = 1000, after: Optional[SnowflakeTime] = None
-    ) -> MemberIterator:
-        """Retrieves an :class:`.AsyncIterator` that enables receiving the guild's members. In order to use this,
+    ) -> AsyncIterator[Member]:
+        """|asynciter|
+
+        Returns an async iterator that enables receiving the guild's members. In order to use this,
         :meth:`Intents.members` must be enabled.
 
         .. note::
@@ -1944,17 +2042,12 @@ class Guild(Hashable):
 
             async for member in guild.fetch_members(limit=150):
                 print(member.name)
-
-        Flattening into a list ::
-
-            members = await guild.fetch_members(limit=150).flatten()
-            # members is now a list of Member...
         """
 
         if not self._state._intents.members:
             raise ClientException("Intents.members must be enabled to use this.")
 
-        return MemberIterator(self, limit=limit, after=after)
+        return member_iterator(self, limit=limit, after=after)
 
     async def fetch_member(self, member_id: int, /) -> Member:
         """|coro|
@@ -2069,8 +2162,10 @@ class Guild(Hashable):
         limit: Optional[int] = 1000,
         before: Optional[Snowflake] = None,
         after: Optional[Snowflake] = None,
-    ) -> BanIterator:
-        """Returns an :class:`~nextcord.AsyncIterator` that enables receiving the destination's bans.
+    ) -> AsyncIterator[BanEntry]:
+        """|asynciter|
+
+        Returns an async iterator that enables receiving the destination's bans.
 
         You must have the :attr:`~Permissions.ban_members` permission to get this information.
 
@@ -2086,11 +2181,6 @@ class Guild(Hashable):
             async for ban in guild.bans(limit=200):
                 if not ban.user.bot:
                     counter += 1
-
-        Flattening into a list: ::
-
-            bans = await guild.bans(limit=123).flatten()
-            # bans is now a list of BanEntry...
 
         All parameters are optional.
 
@@ -2119,7 +2209,7 @@ class Guild(Hashable):
             The ban with the ban data parsed.
         """
 
-        return BanIterator(self, limit=limit, before=before, after=after)
+        return ban_iterator(self, limit=limit, before=before, after=after)
 
     async def prune_members(
         self,
@@ -2136,8 +2226,8 @@ class Guild(Hashable):
         The inactive members are denoted if they have not logged on in
         ``days`` number of days and they have no roles.
 
-        You must have the :attr:`~Permissions.kick_members` permission
-        to use this.
+        You must have the :attr:`~Permissions.manage_guild` and
+        :attr:`~Permissions.kick_members` permissions to use this.
 
         To check how many members you would prune without actually pruning,
         see the :meth:`estimate_pruned_members` function.
@@ -2183,10 +2273,7 @@ class Guild(Hashable):
                 f"Expected int for ``days``, received {days.__class__.__name__} instead."
             )
 
-        if roles:
-            role_ids = [str(role.id) for role in roles]
-        else:
-            role_ids = []
+        role_ids = [str(role.id) for role in roles] if roles else []
 
         data = await self._state.http.prune_members(
             self.id, days, compute_prune_count=compute_prune_count, roles=role_ids, reason=reason
@@ -2279,10 +2366,7 @@ class Guild(Hashable):
                 f"Expected int for ``days``, received {days.__class__.__name__} instead."
             )
 
-        if roles:
-            role_ids = [str(role.id) for role in roles]
-        else:
-            role_ids = []
+        role_ids = [str(role.id) for role in roles] if roles else []
 
         data = await self._state.http.estimate_pruned_members(self.id, days, role_ids)
         return data["pruned"]
@@ -2402,10 +2486,6 @@ class Guild(Hashable):
 
         def convert(d):
             factory, _ = _integration_factory(d["type"])
-            if factory is None:
-                raise InvalidData(
-                    "Unknown integration type {type!r} for integration ID {id}".format_map(d)
-                )
             return factory(guild=self, data=d)
 
         return [convert(d) for d in data]
@@ -2653,10 +2733,7 @@ class Guild(Hashable):
         img_base64 = await utils.obj_to_base64_data(image)
 
         role_ids: SnowflakeList
-        if roles:
-            role_ids = [role.id for role in roles]
-        else:
-            role_ids = []
+        role_ids = [role.id for role in roles] if roles else []
 
         data = await self._state.http.create_custom_emoji(
             self.id, name, img_base64, roles=role_ids, reason=reason
@@ -2722,6 +2799,33 @@ class Guild(Hashable):
 
         return roles
 
+    async def fetch_role(self, role_id: int, /) -> Role:
+        """|coro|
+
+        Retrieve a :class:`Role` from this guild by its ID.
+
+        .. versionadded:: 3.0
+
+        Parameters
+        ----------
+        role_id: int
+            The ID of the role to fetch.
+
+        Raises
+        ------
+        HTTPException
+            Retrieving the role failed.
+        NotFound
+            The role was not found.
+
+        Returns
+        -------
+        :class:`Role`
+            The role in the guild.
+        """
+        data = await self._state.http.get_role(self.id, role_id)
+        return Role(guild=self, state=self._state, data=data)
+
     @overload
     async def create_role(
         self,
@@ -2733,8 +2837,7 @@ class Guild(Hashable):
         hoist: bool = ...,
         mentionable: bool = ...,
         icon: Optional[Union[str, bytes, Asset, Attachment, File]] = ...,
-    ) -> Role:
-        ...
+    ) -> Role: ...
 
     @overload
     async def create_role(
@@ -2747,8 +2850,7 @@ class Guild(Hashable):
         hoist: bool = ...,
         mentionable: bool = ...,
         icon: Optional[Union[str, bytes, Asset, Attachment, File]] = ...,
-    ) -> Role:
-        ...
+    ) -> Role: ...
 
     async def create_role(
         self,
@@ -2839,9 +2941,7 @@ class Guild(Hashable):
                 fields["icon"] = await utils.obj_to_base64_data(icon)
 
         data = await self._state.http.create_role(self.id, reason=reason, **fields)
-        role = Role(guild=self, data=data, state=self._state)
-
-        return role
+        return Role(guild=self, data=data, state=self._state)
 
     async def edit_role_positions(
         self, positions: Dict[Snowflake, int], *, reason: Optional[str] = None
@@ -2939,7 +3039,6 @@ class Guild(Hashable):
         *,
         reason: Optional[str] = None,
         delete_message_seconds: Optional[int] = None,
-        delete_message_days: Optional[Literal[0, 1, 2, 3, 4, 5, 6, 7]] = None,
     ) -> None:
         """|coro|
 
@@ -2952,9 +3051,8 @@ class Guild(Hashable):
 
         For backwards compatibility reasons, by default one day worth of messages will be deleted.
 
-        .. warning::
-            delete_message_days is deprecated and will be removed in a future version.
-            Use delete_message_seconds instead.
+        .. versionchanged:: 3.0
+            ``delete_message_days`` has been removed in favor of ``delete_message_seconds``.
 
         Parameters
         ----------
@@ -2965,11 +3063,6 @@ class Guild(Hashable):
             in the guild. The minimum is 0 and the maximum is 604800 (7 days).
 
             .. versionadded:: 2.3
-        delete_message_days: Optional[:class:`int`]
-            The number of days worth of messages to delete from the user
-            in the guild. The minimum is 0 and the maximum is 7.
-
-            .. deprecated:: 2.3
         reason: Optional[:class:`str`]
             The reason the user got banned.
 
@@ -2980,22 +3073,72 @@ class Guild(Hashable):
         HTTPException
             Banning failed.
         """
-        if delete_message_days is not None and delete_message_seconds is not None:
-            raise InvalidArgument(
-                "Cannot pass both delete_message_days and delete_message_seconds."
-            )
-        elif delete_message_days is not None:
-            warnings.warn(
-                DeprecationWarning(
-                    "delete_message_days is deprecated, use delete_message_seconds instead."
-                )
-            )
-            delete_message_seconds = delete_message_days * 24 * 60 * 60
-        elif delete_message_seconds is None:
+        if delete_message_seconds is None:
             # Default to one day
             delete_message_seconds = 24 * 60 * 60
 
         await self._state.http.ban(user.id, self.id, delete_message_seconds, reason=reason)
+
+    async def bulk_ban(
+        self,
+        users: List[Snowflake],
+        *,
+        delete_message_seconds: Optional[int] = None,
+        reason: Optional[str] = None,
+    ) -> BulkBan:
+        """|coro|
+
+        Bans a list of users. This is similar to :meth:`Guild.ban` except it bulk bans multiple users.
+
+        You must have the :attr:`~Permissions.ban_members` and :attr:`~Permissions.manage_guild` permissions to
+        do this.
+
+        .. versionadded:: 3.0
+
+        Parameters
+        ----------
+        users: List[:class:`abc.Snowflake`]
+            The users to ban from a guild.
+        delete_message_seconds: Optional[:class:`int`]
+            The number of seconds worth of messages to delete from these users.
+            Can range from 0 to 604800 seconds (7 days).
+
+            Defaults to 0.
+        reason: Optional[:class:`str`]
+            The reason these users got banned.
+
+        Raises
+        ------
+        Forbidden
+            You do not have the proper permissions to bulk ban.
+        HTTPException
+            Bulk banning failed.
+
+            This may occur if all provided users failed to be banned due to the following reasons:
+
+            - The users are already banned
+            - You do not have the proper permissions to ban a user
+
+        Returns
+        -------
+        :class:`BulkBan`
+            The failed and banned users in the form of :class:`Object`.
+        """
+
+        if delete_message_seconds is None:
+            delete_message_seconds = 0
+
+        data = await self._state.http.bulk_ban(
+            user_ids=[u.id for u in users],
+            guild_id=self.id,
+            delete_message_seconds=delete_message_seconds,
+            reason=reason,
+        )
+
+        banned_users = [Object(id=u) for u in data["banned_users"]]
+        failed_users = [Object(id=u) for u in data["failed_users"]]
+
+        return BulkBan(banned_users, failed_users)
 
     async def unban(self, user: Snowflake, *, reason: Optional[str] = None) -> None:
         """|coro|
@@ -3074,8 +3217,10 @@ class Guild(Hashable):
         oldest_first: Optional[bool] = None,
         user: Optional[Snowflake] = None,
         action: Optional[AuditLogAction] = None,
-    ) -> AuditLogIterator:
-        """Returns an :class:`AsyncIterator` that enables receiving the guild's audit logs.
+    ) -> AsyncIterator[AuditLogEntry]:
+        """|asynciter|
+
+        Returns an async iterator that enables receiving the guild's audit logs.
 
         You must have the :attr:`~Permissions.view_audit_log` permission to use this.
 
@@ -3094,7 +3239,7 @@ class Guild(Hashable):
 
         Getting entries made by a specific user: ::
 
-            entries = await guild.audit_logs(limit=None, user=guild.me).flatten()
+            entries = [entry async for entry in guild.audit_logs(limit=None, user=guild.me)]
             await channel.send(f'I made {len(entries)} moderation actions.')
 
         Parameters
@@ -3129,15 +3274,9 @@ class Guild(Hashable):
         :class:`AuditLogEntry`
             The audit log entry.
         """
-        if user is not None:
-            user_id = user.id
-        else:
-            user_id = None
+        user_id = user.id if user is not None else None
 
-        if action:
-            action = action.value
-
-        return AuditLogIterator(
+        return audit_log_iterator(
             self,
             before=before,
             after=after,
@@ -3241,6 +3380,7 @@ class Guild(Hashable):
                 members = await members
 
             return members
+        return None
 
     async def query_members(
         self,
@@ -3344,9 +3484,11 @@ class Guild(Hashable):
         channel_id = channel.id if channel else None
         await ws.voice_state(self.id, channel_id, self_mute, self_deaf)
 
-    def fetch_scheduled_events(self, *, with_users: bool = False) -> ScheduledEventIterator:
-        """Retrieves an :class:`.AsyncIterator` that enables receiving scheduled
-        events on this guild
+    def fetch_scheduled_events(self, *, with_users: bool = False) -> AsyncIterator[ScheduledEvent]:
+        """|asynciter|
+
+        Returns an async iterator that enables receiving scheduled
+        events on this guild.
 
         .. note::
 
@@ -3379,13 +3521,8 @@ class Guild(Hashable):
 
             async for event in guild.fetch_scheduled_events():
                 print(event.name)
-
-        Flattening into a list ::
-
-            events = await guild.fetch_scheduled_events().flatten()
-            # events is now a list of ScheduledEvent...
         """
-        return ScheduledEventIterator(self, with_users=with_users)
+        return scheduled_event_iterator(self, with_users=with_users)
 
     def get_scheduled_event(self, event_id: int) -> Optional[ScheduledEvent]:
         """Get a scheduled event from cache by id.
@@ -3825,9 +3962,9 @@ class Guild(Hashable):
         List[Union[:class:`Member`, :class:`User`]]
             List of :class:`Member` or :class:`User` objects that were mentioned in the string.
         """
-        get_member_or_user: Callable[
-            [int], Optional[Union[Member, User]]
-        ] = lambda id: self.get_member(id) or self._state.get_user(id)
+        get_member_or_user: Callable[[int], Optional[Union[Member, User]]] = (
+            lambda id: self.get_member(id) or self._state.get_user(id)
+        )
         it = filter(None, map(get_member_or_user, utils.parse_raw_mentions(text)))
         return utils.unique(it)
 

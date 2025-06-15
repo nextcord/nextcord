@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: MIT
+# ruff: noqa: PLW0603
 
 from __future__ import annotations
 
@@ -106,7 +107,7 @@ signal_ctl: SignalCtl = {
 }
 
 
-def _err_lt(result: int, func: Callable, args: List) -> int:
+def _err_lt(result: int, func: Callable, _args: List) -> int:
     if result < OK:
         _log.info("error has happened in %s", func.__name__)
         raise OpusError(result)
@@ -128,7 +129,7 @@ def _err_ne(result: T, func: Callable, args: List) -> T:
 # The fourth is the error handler.
 exported_functions: List[Tuple[Any, ...]] = [
     # Generic
-    ("opus_get_version_string", None, ctypes.c_char_p, None),
+    ("opus_get_version_string", [], ctypes.c_char_p, None),
     ("opus_strerror", [ctypes.c_int], ctypes.c_char_p, None),
     # Encoder functions
     ("opus_encoder_get_size", [ctypes.c_int], ctypes.c_int, None),
@@ -150,7 +151,7 @@ exported_functions: List[Tuple[Any, ...]] = [
         ctypes.c_int32,
         _err_lt,
     ),
-    ("opus_encoder_ctl", None, ctypes.c_int32, _err_lt),
+    ("opus_encoder_ctl", [EncoderStructPtr, ctypes.c_int], ctypes.c_int32, _err_lt),
     ("opus_encoder_destroy", [EncoderStructPtr], None, None),
     # Decoder functions
     ("opus_decoder_get_size", [ctypes.c_int], ctypes.c_int, None),
@@ -181,7 +182,7 @@ exported_functions: List[Tuple[Any, ...]] = [
         ctypes.c_int,
         _err_lt,
     ),
-    ("opus_decoder_ctl", None, ctypes.c_int32, _err_lt),
+    ("opus_decoder_ctl", [DecoderStructPtr, ctypes.c_int], ctypes.c_int32, _err_lt),
     ("opus_decoder_destroy", [DecoderStructPtr], None, None),
     (
         "opus_decoder_get_nb_samples",
@@ -235,10 +236,7 @@ def _load_default() -> bool:
         else:
             opus = ctypes.util.find_library("opus")
 
-            if opus is None:
-                _lib = None
-            else:
-                _lib = libopus_loader(opus)
+            _lib = None if opus is None else libopus_loader(opus)
     except Exception:
         _lib = None
 
@@ -295,7 +293,6 @@ def is_loaded() -> bool:
     :class:`bool`
         Indicates if the opus library has been loaded.
     """
-    global _lib
     return _lib is not None
 
 
@@ -318,8 +315,6 @@ class OpusError(DiscordException):
 class OpusNotLoaded(DiscordException):
     """An exception that is thrown for when libopus is not loaded."""
 
-    pass
-
 
 class _OpusStruct:
     SAMPLING_RATE = 48000
@@ -333,7 +328,7 @@ class _OpusStruct:
     @staticmethod
     def get_opus_version() -> str:
         if not is_loaded() and not _load_default():
-            raise OpusNotLoaded()
+            raise OpusNotLoaded
 
         return _lib.opus_get_version_string().decode("utf-8")
 
@@ -465,12 +460,10 @@ class Decoder(_OpusStruct):
         return ret.value
 
     @overload
-    def decode(self, data: bytes, *, fec: bool) -> bytes:
-        ...
+    def decode(self, data: bytes, *, fec: bool) -> bytes: ...
 
     @overload
-    def decode(self, data: Literal[None], *, fec: Literal[False]) -> bytes:
-        ...
+    def decode(self, data: Literal[None], *, fec: Literal[False]) -> bytes: ...
 
     def decode(self, data: Optional[bytes], *, fec: bool = False) -> bytes:
         if data is None and fec:
