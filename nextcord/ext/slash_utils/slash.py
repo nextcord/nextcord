@@ -36,6 +36,25 @@ def rename(
 ) -> Callable[
     [Callable], Union[SlashApplicationCommand, SlashApplicationSubcommand, CallbackWrapper]
 ]:
+    """
+    Decorator that allows you to rename options in a slash command.
+
+    Parameters
+    ----------
+    **kwargs: str
+        Keyword arguments where the key is the original option name and the value is the new name.
+
+    Example
+    -------
+
+    .. code-block:: python
+
+        from nextcord.ext import slash_utils
+
+        @slash_utils.rename(_id='id') # users will see 'id' instead of '_id'
+        async def my_command(interaction: Interaction, _id: str):
+            pass
+    """
     class RenameWrapper(CallbackWrapper):
         def modify(self, app_cmd: SlashApplicationCommand) -> None:
             new_options: dict[str, SlashCommandOption] = {}
