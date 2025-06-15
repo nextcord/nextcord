@@ -40,7 +40,7 @@ class AvatarDecoration:
 
     You can get this object via :meth:`User.avatar_decoration`.
 
-    .. versionadded:: 2.7
+    .. versionadded:: 3.2
 
     Attributes
     ----------
@@ -52,7 +52,7 @@ class AvatarDecoration:
         The asset of the avatar decoration.
     """
 
-    __slots__ = ("user", "sku_id", "_asset", "_state")
+    __slots__ = ("user", "sku_id", "_asset",)
 
     def __init__(self, *, user: BaseUser, data: AvatarDecorationDataPayload) -> None:
         self._update(user, data)
@@ -227,11 +227,7 @@ class BaseUser(_UserTag):
 
         You can get the asset of the avatar decoration via :attr:`AvatarDecoration.asset`.
 
-        .. versionadded:: 2.7
-
-        .. note::
-
-            This information is only available via :meth:`Client.fetch_user`.
+        .. versionadded:: 3.2
         """
         if self._avatar_decoration is None:
             return None
