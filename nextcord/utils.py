@@ -1271,36 +1271,31 @@ ReturnWhenT = TypeVar("ReturnWhenT", bound=type)
 @overload
 def _snowflake_or_int(
     value: Literal[None],
-) -> None:
-    ...
+) -> None: ...
 
 
 @overload
 def _snowflake_or_int(
     value: int,
-) -> int:
-    ...
+) -> int: ...
 
 
 @overload
 def _snowflake_or_int(
     value: datetime.datetime,
-) -> datetime.datetime:
-    ...
+) -> datetime.datetime: ...
 
 
 @overload
 def _snowflake_or_int(
     value: Snowflake,
-) -> int:
-    ...
+) -> int: ...
 
 
 @overload
 def _snowflake_or_int(
     value: Optional[SnowflakeTime], return_when: Tuple[ReturnWhenT, ...]
-) -> Union[ReturnWhenT, int]:
-    ...
+) -> Union[ReturnWhenT, int]: ...
 
 
 def _snowflake_or_int(
