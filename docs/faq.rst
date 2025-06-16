@@ -314,17 +314,21 @@ How do I use a local image file for an embed image?
 Discord special-cases uploading an image attachment and using it within an embed so that it will not
 display separately, but instead in the embed's thumbnail, image, footer or author icon.
 
-To do so, upload the image normally with :meth:`abc.Messageable.send`,
-and set the embed's image URL to ``attachment://image.png``,
-where ``image.png`` is the filename of the image you will send.
+To do so, create a file object and pass it as a ``url`` arg.
 
+This is supported on the following methods:
+
+- :meth:`Embed.set_image`
+- :meth:`Embed.set_author`
+- :meth:`Embed.set_footer`
+- :meth:`Embed.set_thumbnail`
 
 Quick example: ::
 
     file = nextcord.File("path/to/my/image.png", filename="image.png")
     embed = nextcord.Embed()
-    embed.set_image(url="attachment://image.png")
-    await channel.send(file=file, embed=embed)
+    embed.set_image(file)
+    await channel.send(embed=embed)
 
 .. note ::
 
