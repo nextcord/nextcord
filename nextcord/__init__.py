@@ -51,6 +51,7 @@ from .object import *
 from .partial_emoji import *
 from .permissions import *
 from .player import *
+from .polls import *
 from .raw_models import *
 from .reaction import *
 from .role import *
