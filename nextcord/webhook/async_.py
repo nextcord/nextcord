@@ -52,6 +52,7 @@ if TYPE_CHECKING:
 
     from ..abc import Snowflake
     from ..channel import TextChannel
+    from ..componentsv2 import Component
     from ..embeds import Embed
     from ..file import File
     from ..guild import Guild
@@ -506,6 +507,7 @@ def handle_message_parameters(
     flags: Optional[MessageFlags] = None,
     suppress_embeds: Optional[bool] = None,
     thread_name: Optional[str] = None,
+    components: list[Component] | None = None,
 ) -> ExecuteWebhookParameters:
     if files is not MISSING and file is not MISSING:
         raise InvalidArgument("Cannot mix file and files keyword arguments.")
@@ -556,6 +558,10 @@ def handle_message_parameters(
         flags.suppress_embeds = suppress_embeds
     if ephemeral is not None:
         flags.ephemeral = ephemeral
+
+    if components is not None:
+        flags.is_components_v2 = True
+        payload["components"] = [comp.to_dict() for comp in components]
 
     if flags.value != 0:
         payload["flags"] = flags.value
@@ -1414,6 +1420,7 @@ class Webhook(BaseWebhook):
         flags: Optional[MessageFlags] = None,
         suppress_embeds: Optional[bool] = None,
         thread_name: Optional[str] = None,
+        components: list[Component] | None = None,
     ) -> Optional[WebhookMessage]:
         """|coro|
 
@@ -1562,6 +1569,7 @@ class Webhook(BaseWebhook):
             flags=flags,
             suppress_embeds=suppress_embeds,
             thread_name=thread_name,
+            components=components,
         )
         adapter = async_context.get()
 
