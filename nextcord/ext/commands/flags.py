@@ -308,7 +308,7 @@ class FlagsMeta(type):
 
         for flag_name, flag in get_flags(attrs, global_ns, local_ns).items():
             flags[flag_name] = flag
-            aliases.update({alias_name: flag_name for alias_name in flag.aliases})
+            aliases.update(dict.fromkeys(flag.aliases, flag_name))
 
         forbidden = set(delimiter).union(prefix)
         for flag_name in flags:
