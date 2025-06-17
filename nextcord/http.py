@@ -66,6 +66,7 @@ if TYPE_CHECKING:
         role,
         role_connections,
         scheduled_events,
+        soundboard,
         sticker,
         template,
         threads,
@@ -4462,6 +4463,95 @@ class HTTPClient:
             auth=auth,
             retry_request=retry_request,
         )
+
+    # Soundboard
+
+    def create_soundboard_sound(
+        self,
+        guild_id: Snowflake,
+        *,
+        reason: Optional[str] = None,
+        name: str,
+        sound: str,
+        volume: Optional[float] = MISSING,
+        emoji_id: Optional[Snowflake] = MISSING,
+        emoji_name: Optional[str] = MISSING,
+    ) -> Response[soundboard.SoundboardSound]:
+        payload: Dict[str, Any] = {
+            "name": name,
+            "sound": sound,
+        }
+
+        if volume is not MISSING:
+            payload["volume"] = volume
+
+        if emoji_id is not MISSING:
+            payload["emoji_id"] = emoji_id
+
+        if emoji_name is not MISSING:
+            payload["emoji_name"] = emoji_name
+
+        return self.request(
+            Route("POST", "/guilds/{guild_id}/soundboard-sounds", guild_id=guild_id),
+            json=payload,
+            reason=reason,
+        )
+
+    def modify_soundboard_sound(
+        self,
+        guild_id: Snowflake,
+        sound_id: Snowflake,
+        *,
+        reason: Optional[str] = None,
+        name: Optional[str] = MISSING,
+        volume: Optional[float] = MISSING,
+        emoji_id: Optional[Snowflake] = MISSING,
+        emoji_name: Optional[str] = MISSING,
+    ) -> Response[soundboard.SoundboardSound]:
+        payload: Dict[str, Any] = {}
+
+        if name is not MISSING:
+            payload["name"] = name
+
+        if volume is not MISSING:
+            payload["volume"] = volume
+
+        if emoji_id is not MISSING:
+            payload["emoji_id"] = emoji_id
+
+        if emoji_name is not MISSING:
+            payload["emoji_name"] = emoji_name
+
+        return self.request(
+            Route(
+                "PATCH",
+                "/guilds/{guild_id}/soundboard-sounds/{sound_id}",
+                guild_id=guild_id,
+                sound_id=sound_id,
+            ),
+            json=payload,
+            reason=reason,
+        )
+
+    def delete_soundboard_sound(
+        self,
+        guild_id: Snowflake,
+        sound_id: Snowflake,
+        *,
+        reason: Optional[str] = None,
+    ) -> Response[None]:
+        return self.request(
+            Route(
+                "DELETE",
+                "/guilds/{guild_id}/soundboard-sounds/{sound_id}",
+                guild_id=guild_id,
+                sound_id=sound_id,
+            ),
+            reason=reason,
+        )
+
+    def list_default_soundboard_sounds(self) -> Response[List[soundboard.SoundboardSound]]:
+        return self.request(Route("GET", "/soundboard-default-sounds"))
 
     # Misc
 
