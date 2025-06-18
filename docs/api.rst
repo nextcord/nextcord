@@ -1443,6 +1443,9 @@ of :class:`enum.Enum`.
 .. autoclass:: InteractionContextType
     :members:
 
+.. autoclass:: ApplicationCommandPermissionType
+    :members:
+
 Async Iterator
 --------------
 

@@ -1662,9 +1662,17 @@ class ApplicationCommandType(IntEnum):
 
 
 class ApplicationCommandPermissionType(IntEnum):
+    """Represents the type of permission on an application command.
+
+    .. versionadded:: 3.2
+    """
+
     role = 1
+    """This is a role override."""
     user = 2
+    """This is a user override."""
     channel = 3
+    """This is a channel override."""
 
 
 class ApplicationCommandOptionType(IntEnum):
