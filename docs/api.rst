@@ -1274,6 +1274,14 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     :param entry: The entry that was created.
     :type entry: :class:`AuditLogEntry`
 
+.. function:: on_application_command_permission_update(permissions)
+
+    Permissions were updated for an application command.
+
+    :param permissions: The updated override permissions.
+    :type permissions: :class:`GuildApplicationCommandPermissions`
+    .. versionadded:: 3.2
+
 .. _discord-api-utils:
 
 Utility Functions
