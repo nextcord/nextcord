@@ -41,6 +41,8 @@ class Attachment(TypedDict):
     description: NotRequired[str]
     content_type: NotRequired[str]
     spoiler: NotRequired[bool]
+    duration_secs: NotRequired[float]
+    waveform: NotRequired[str]
     flags: NotRequired[int]
 
 
@@ -60,7 +62,9 @@ class MessageApplication(TypedDict):
     cover_image: NotRequired[str]
 
 
-MessageType = Literal[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 18, 19, 20, 21]
+MessageType = Literal[
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 18, 19, 20, 21, 22, 23, 24, 25
+]
 MessageReferenceType = Literal[0, 1]
 
 
@@ -70,6 +74,13 @@ class MessageReference(TypedDict, total=False):
     channel_id: Snowflake
     guild_id: Snowflake
     fail_if_not_exists: bool
+
+
+class RoleSubscriptionData(TypedDict):
+    role_subscription_listing_id: Snowflake
+    tier_name: str
+    total_months_subscribed: int
+    is_renewal: bool
 
 
 class MessageSnapshotMessage(TypedDict):
@@ -122,6 +133,7 @@ class Message(TypedDict):
     interaction_metadata: NotRequired[MessageInteractionMetadata]
     interaction: NotRequired[MessageInteraction]
     components: NotRequired[List[Component]]
+    role_subscription_data: NotRequired[RoleSubscriptionData]
 
 
 AllowedMentionType = Literal["roles", "users", "everyone"]

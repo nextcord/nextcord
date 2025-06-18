@@ -19,6 +19,7 @@ from typing import (
     List,
     Literal,
     Optional,
+    Self,
     Set,
     Tuple,
     Type,
@@ -58,7 +59,7 @@ from .errors import (
 from .guild import Guild
 from .interactions import Interaction
 from .member import Member
-from .message import Attachment, Message
+from .message import Attachment
 from .object import Object
 from .permissions import Permissions
 from .role import Role
@@ -120,6 +121,7 @@ DEFAULT_SLASH_DESCRIPTION = "No description provided."
 
 T = TypeVar("T")
 FuncT = TypeVar("FuncT", bound=Callable[..., Any])
+CmdT = TypeVar("CmdT", bound="Union[BaseApplicationCommand, SlashApplicationCommand]")
 # As nextcord.types exist, we cannot import types
 if TYPE_CHECKING:
     EllipsisType = ellipsis  # noqa: F821
@@ -170,6 +172,14 @@ class CallbackWrapper:
         async def test(interaction):
             await interaction.send("The description of this command should be in all uppercase!")
     """
+
+    @overload
+    def __new__(
+        cls, callback: Union[Callable, CallbackWrapper], *args: Any, **kwargs: Any
+    ) -> Self: ...
+
+    @overload
+    def __new__(cls, callback: CmdT, *args: Any, **kwargs: Any) -> CmdT: ...
 
     def __new__(
         cls,
@@ -1742,7 +1752,7 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
             value = state.get_channel(int(value))
         elif self.type is ApplicationCommandOptionType.user:
             user_id = int(value)
-            user_dict = {user.id: user for user in get_users_from_interaction(state, interaction)}
+            user_dict = {user.id: user for user in interaction._resolve_users()}
             try:
                 value = user_dict[user_id]
             except KeyError:
@@ -1790,9 +1800,9 @@ class SlashCommandOption(BaseCommandOption, SlashOption, AutocompleteOptionMixin
 
             value = Attachment(data=resolved_attachment_data, state=state)
         elif self.type is ApplicationCommandOptionType.mentionable:
-            user_role_list: List[Union[User, Member, Role]] = get_users_from_interaction(
-                state, interaction
-            ) + get_roles_from_interaction(state, interaction)
+            user_role_list: List[Union[User, Member, Role]] = (
+                interaction._resolve_users() + interaction._resolve_roles()
+            )
             mentionables = {mentionable.id: mentionable for mentionable in user_role_list}
             value = mentionables[int(value)]
 
@@ -1968,6 +1978,14 @@ class BaseApplicationCommand(CallbackMixin, CallbackWrapperMixin):
         :exc:`.ApplicationError` should be used. Note that if the checks fail then
         :exc:`.ApplicationCheckFailure` exception is raised to the :func:`.on_application_command_error`
         event.
+    integration_types: Optional[Iterable[Union[:class:`IntegrationType`, :class:`int`]]]
+        Where the command is available, only for globally-scoped commands.
+
+        .. versionadded:: 3.0
+    contexts: Optional[Iterable[Union[:class:`InteractionContextType`, :class:`int`]]]
+        Where the command can be used, only for globally-scoped commands.
+
+        .. versionadded:: 3.0
     """
 
     def __init__(
@@ -3116,7 +3134,7 @@ class UserApplicationCommand(BaseApplicationCommand):
 
     async def call(self, state: ConnectionState, interaction: Interaction) -> None:
         await self.invoke_callback_with_hooks(
-            state, interaction, args=(get_users_from_interaction(state, interaction)[0],)
+            state, interaction, args=(interaction._resolve_users()[0],)
         )
 
     def from_callback(
@@ -3205,7 +3223,7 @@ class MessageApplicationCommand(BaseApplicationCommand):
 
     async def call(self, state: ConnectionState, interaction: Interaction) -> None:
         await self.invoke_callback_with_hooks(
-            state, interaction, args=(get_messages_from_interaction(state, interaction)[0],)
+            state, interaction, args=(interaction._resolve_messages()[0],)
         )
 
     def from_callback(
@@ -3488,131 +3506,6 @@ def deep_dictionary_check(dict1: dict, dict2: dict) -> bool:
             return False
 
     return True
-
-
-def get_users_from_interaction(
-    state: ConnectionState, interaction: Interaction
-) -> List[Union[User, Member]]:
-    """Tries to get a list of resolved :class:`User` objects from the interaction data.
-
-    If possible, it will get resolved :class:`Member` objects instead.
-
-    Parameters
-    ----------
-    state: :class:`ConnectionState`
-        State object to construct members with.
-    interaction: :class:`Interaction`
-        Interaction object to attempt to get users/members from.
-
-    Returns
-    -------
-    List[Union[:class:`User`, :class:`Member`]]
-        List of resolved users, or members if possible
-    """
-    data = interaction.data
-    ret: List[Union[User, Member]] = []
-
-    data = cast(ApplicationCommandInteractionData, data)
-
-    # Return a Member object if the required data is available, otherwise fall back to User.
-    if "resolved" in data and "members" in data["resolved"]:
-        member_payloads = data["resolved"]["members"]
-        # Because the payload is modified further down, a copy is made to avoid affecting methods or
-        #  users that read from interaction.data further down the line.
-        for member_id, member_payload in member_payloads.copy().items():
-            if interaction.guild is None:
-                raise TypeError("Cannot resolve members if Interaction.guild is None")
-
-            # If a member isn't in the cache, construct a new one.
-            if (
-                not (member := interaction.guild.get_member(int(member_id)))
-                and "users" in data["resolved"]
-            ):
-                user_payload = data["resolved"]["users"][member_id]
-                # This is required to construct the Member.
-                member_payload["user"] = user_payload
-                member = Member(data=member_payload, guild=interaction.guild, state=state)  # type: ignore
-                interaction.guild._add_member(member)
-
-            if member is not None:
-                ret.append(member)
-
-    elif "resolved" in data and "users" in data["resolved"]:
-        resolved_users_payload = data["resolved"]["users"]
-        ret = [state.store_user(user_payload) for user_payload in resolved_users_payload.values()]
-
-    return ret
-
-
-def get_messages_from_interaction(
-    state: ConnectionState, interaction: Interaction
-) -> List[Message]:
-    """Tries to get a list of resolved :class:`Message` objects from the interaction data.
-
-    Parameters
-    ----------
-    state: :class:`ConnectionState`
-        State object to construct messages with.
-    interaction: :class:`Interaction`
-        Interaction object to attempt to get resolved messages from.
-
-    Returns
-    -------
-    List[:class:`Message`]
-        A list of resolved messages.
-    """
-    data = interaction.data
-    ret = []
-
-    data = cast(ApplicationCommandInteractionData, data)
-
-    if "resolved" in data and "messages" in data["resolved"]:
-        message_payloads = data["resolved"]["messages"]
-        for msg_id, msg_payload in message_payloads.items():
-            if not (message := state._get_message(int(msg_id))):
-                message = Message(channel=interaction.channel, data=msg_payload, state=state)  # type: ignore  # interaction.channel can be VoiceChannel somehow
-
-            ret.append(message)
-
-    return ret
-
-
-def get_roles_from_interaction(state: ConnectionState, interaction: Interaction) -> List[Role]:
-    """Tries to get a list of resolved :class:`Role` objects from the interaction .data
-
-    Parameters
-    ----------
-    state: :class:`ConnectionState`
-        State object to construct roles with.
-    interaction: :class:`Interaction`
-        Interaction object to attempt to get resolved roles from.
-
-    Returns
-    -------
-    List[:class:`Role`]
-        A list of resolved roles.
-    """
-    data = interaction.data
-    ret = []
-
-    if data is None:
-        raise ValueError("Discord did not provide us with interaction data")
-
-    data = cast(ApplicationCommandInteractionData, data)
-
-    if "resolved" in data and "roles" in data["resolved"]:
-        role_payloads = data["resolved"]["roles"]
-        for role_id, role_payload in role_payloads.items():
-            # if True:  # Use this for testing payload -> Role
-            if interaction.guild is None:
-                raise TypeError("Interaction.guild is None when resolving a Role")
-
-            if not (role := interaction.guild.get_role(int(role_id))):
-                role = Role(guild=interaction.guild, state=state, data=role_payload)
-
-            ret.append(role)
-
-    return ret
 
 
 def unpack_annotated(given_annotation: Any, resolve_list: Optional[list[type]] = None) -> Any:

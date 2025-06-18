@@ -284,6 +284,11 @@ class MessageType(IntEnum):
 
     .. versionadded:: 2.1
     """
+    role_subscription_purchase = 25
+    """The system message denoting that a role subscription was purchased.
+
+    .. versionadded:: 3.2
+    """
     stage_start = 27
     """The system message denoting that a stage channel has started.
 
@@ -2128,6 +2133,6 @@ def try_enum(cls: Type[T], val: Any) -> T:
     """
 
     try:
-        return cls(val)
+        return cls(val)  # pyright: ignore[reportCallIssue]
     except ValueError:
         return UnknownEnumValue(name=f"unknown_{val}", value=val)  # type: ignore
