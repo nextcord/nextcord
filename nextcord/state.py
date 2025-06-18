@@ -1805,13 +1805,6 @@ class ConnectionState:
     def parse_application_command_permissions_update(
         self, data: GuildApplicationCommandPermissionsPayload
     ) -> None:
-        guild = self._get_guild(int(data["guild_id"]))
-        if guild is None:
-            _log.debug(
-                "APPLICATION_COMMAND_PERMISSIONS_UPDATE referencing an unknown guild ID: %s. Discarding.",
-                data["guild_id"],
-            )
-            return
         permissions = GuildApplicationCommandPermissions(data=data)
         self.dispatch("application_command_permissions_update", permissions)
 
