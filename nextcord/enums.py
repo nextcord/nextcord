@@ -37,6 +37,7 @@ __all__ = (
     "InteractionType",
     "InteractionResponseType",
     "ApplicationCommandType",
+    "ApplicationCommandPermissionType",
     "ApplicationCommandOptionType",
     "NSFWLevel",
     "ScheduledEventEntityType",
@@ -1194,6 +1195,15 @@ class AuditLogAction(IntEnum):
 
     .. versionadded:: 2.0
     """
+    application_command_permission_update = 121
+    """Permissions were updated for an application command.
+
+    When this is the action, the type of :attr:`~AuditLogEntry.target` is
+    the :class:`BaseApplicationCommand` or :class:`Object` with the ID of the command which
+    was updated.
+
+    .. versionadded:: 3.2
+    """
     auto_moderation_rule_create = 140
     """An auto moderation rule was created.
 
@@ -1351,6 +1361,7 @@ class AuditLogAction(IntEnum):
             AuditLogAction.thread_create:                               AuditLogActionCategory.create,
             AuditLogAction.thread_update:                               AuditLogActionCategory.update,
             AuditLogAction.thread_delete:                               AuditLogActionCategory.delete,
+            AuditLogAction.application_command_permission_update:       AuditLogActionCategory.update,
             AuditLogAction.auto_moderation_rule_create:                 AuditLogActionCategory.create,
             AuditLogAction.auto_moderation_rule_update:                 AuditLogActionCategory.update,
             AuditLogAction.auto_moderation_rule_delete:                 AuditLogActionCategory.delete,
@@ -1653,6 +1664,20 @@ class ApplicationCommandType(IntEnum):
     """The command is a user context menu command."""
     message = 3
     """The command is a message context menu command."""
+
+
+class ApplicationCommandPermissionType(IntEnum):
+    """Represents the type of permission on an application command.
+
+    .. versionadded:: 3.2
+    """
+
+    role = 1
+    """This is a role override."""
+    user = 2
+    """This is a user override."""
+    channel = 3
+    """This is a channel override."""
 
 
 class ApplicationCommandOptionType(IntEnum):
