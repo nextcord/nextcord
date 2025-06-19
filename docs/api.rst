@@ -1278,9 +1278,10 @@ to handle it, which defaults to print a traceback and ignoring the exception.
 
     Permissions were updated for an application command.
 
+    .. versionadded:: 3.2
+
     :param permissions: The updated override permissions.
     :type permissions: :class:`GuildApplicationCommandPermissions`
-    .. versionadded:: 3.2
 
 .. _discord-api-utils:
 
