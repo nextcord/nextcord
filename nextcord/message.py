@@ -25,6 +25,7 @@ from typing import (
 )
 
 from . import utils
+from .componentsv2 import resolve_component
 from .embeds import Embed
 from .emoji import Emoji
 from .enums import ChannelType, IntegrationType, MessageReferenceType, MessageType, try_enum
@@ -92,13 +93,6 @@ __all__ = (
     "MessageSnapshot",
     "MessageRoleSubscription",
 )
-
-
-def resolve_component(payload: dict):
-    # TODO: This is beyond hacky even if it's just for a test, wtf me.
-    from .componentsv2 import resolve_component as resolve_comp
-
-    return resolve_comp(payload)
 
 
 def convert_emoji_reaction(emoji):
