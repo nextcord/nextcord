@@ -17,6 +17,7 @@ from .enums import (
 )
 from .file import File as DiscordFile
 from .object import Object
+from .partial_emoji import PartialEmoji
 from .types import (
     components as comp_payloads,
     emoji as emoji_payloads,
@@ -32,7 +33,6 @@ if TYPE_CHECKING:
     from .client import Client
     from .interactions import Interaction
     from .member import Member
-    from .partial_emoji import PartialEmoji
     from .role import Role
     from .user import User
 
