@@ -9,8 +9,8 @@ from typing_extensions import NotRequired
 from .channel import ChannelType
 from .emoji import PartialEmoji
 
-ComponentType = Literal[1, 2, 3, 4]
-ButtonStyle = Literal[1, 2, 3, 4, 5]
+ComponentType = Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17]
+ButtonStyle = Literal[1, 2, 3, 4, 5, 6]
 TextInputStyle = Literal[1, 2]
 
 
@@ -32,7 +32,7 @@ class ButtonComponent(TypedDict):
 class SelectOption(TypedDict):
     label: str
     value: str
-    default: bool
+    default: NotRequired[bool]
     description: NotRequired[str]
     emoji: NotRequired[PartialEmoji]
 
@@ -68,6 +68,7 @@ class ChannelSelectMenu(SelectMenuBase):
 
 
 class TextInputComponent(TypedDict):
+    id: NotRequired[int]
     type: Literal[4]
     custom_id: str
     style: TextInputStyle
