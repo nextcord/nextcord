@@ -5,10 +5,7 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING, cast
 
-from .application_command import (
-    get_roles_from_interaction,
-    get_users_from_interaction,
-)  # TODO: Move this function outside of app cmds, it's dumb to keep it there IMO.
+from .channel import _threaded_channel_factory
 from .enums import (
     ButtonStyle,
     ChannelType,
@@ -19,6 +16,7 @@ from .enums import (
     try_enum,
 )
 from .file import File as DiscordFile
+from .object import Object
 from .types import (
     components as comp_payloads,
     emoji as emoji_payloads,
@@ -711,7 +709,7 @@ class UserSelect(_SelectComponent):  # Component type 5
         timeout: float | None = 180.0,
     ):
         def inter_arg_func(inter: Interaction[ClientT]):
-            resolved_peeps = get_users_from_interaction(inter._state, inter)
+            resolved_peeps = inter._resolve_users()
             resolved_dict = {peep.id: peep for peep in resolved_peeps}
             inter.data = cast(inter_payloads.ComponentInteractionData, inter.data)
             if "values" in inter.data:
@@ -777,7 +775,7 @@ class RoleSelect(_SelectComponent):  # Component type 6
         timeout: float | None = 180.0,
     ):
         def inter_arg_func(inter: Interaction[Client]):
-            resolved_roles = get_roles_from_interaction(inter._state, inter)
+            resolved_roles = inter._resolve_roles()
             resolved_dict = {role.id: role for role in resolved_roles}
             inter.data = cast(inter_payloads.ComponentInteractionData, inter.data)
             if "values" in inter.data:
@@ -845,11 +843,11 @@ class MentionableSelect(_SelectComponent):  # Component type 7
         timeout: float | None = 180.0,
     ):
         def inter_arg_func(inter: Interaction):
-            resolved_peeps = get_users_from_interaction(inter._state, inter)
+            resolved_peeps = inter._resolve_users()
             resolved_dict: dict[int, User | Member | Role] = {
                 peep.id: peep for peep in resolved_peeps
             }
-            resolved_roles = get_roles_from_interaction(inter._state, inter)
+            resolved_roles = inter._resolve_roles()
             resolved_dict.update({role.id: role for role in resolved_roles})
             inter.data = cast(inter_payloads.ComponentInteractionData, inter.data)
             if "values" in inter.data:
@@ -1395,13 +1393,26 @@ def get_channels_from_interaction(
     ret = []
     state = interaction._state
     data = cast(inter_payloads.ApplicationCommandInteractionData, interaction.data)
-
     if "resolved" in data and "channels" in data["resolved"]:
         channel_payloads = data["resolved"]["channels"]
-        for ch_id in channel_payloads:
-            # TODO: This is stupid, actually resolve these from the payload you dinkus.
+        for ch_id, ch_data in channel_payloads.items():
             if channel := state.get_channel(int(ch_id)):
                 ret.append(channel)
                 continue
+
+            # Attempt to actually resolve the channels
+            ch_class, ch_type = _threaded_channel_factory(ch_data["type"])
+            if ch_class is not None:
+                if ch_type in (ChannelType.group, ChannelType.private):
+                    # the factory will be a DMChannel or GroupChannel here
+                    channel = ch_class(me=interaction.client.user, data=ch_data, state=state)  # type: ignore
+                else:
+                    guild_id = int(ch_data["guild_id"])  # type: ignore
+                    guild = state._get_guild(guild_id) or Object(id=guild_id)
+                    channel = ch_class(guild=guild, state=state, data=ch_data)  # type: ignore
+
+                ret.append(channel)
+            else:
+                pass  # TODO: Raise error? Log.warn?
 
     return ret
