@@ -10,6 +10,13 @@ class AvatarDecorationData(TypedDict):
     asset: str
 
 
+class UserPrimaryGuild(TypedDict):
+    identity_guild_id: Optional[Snowflake]
+    identity_enabled: Optional[bool]
+    tag: Optional[str]
+    badge: Optional[str]
+
+
 class PartialUser(TypedDict):
     id: Snowflake
     username: str
