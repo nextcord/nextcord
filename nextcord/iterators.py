@@ -45,6 +45,7 @@ if TYPE_CHECKING:
 
 
 OLDEST_OBJECT = Object(id=0)
+OLDEST_TIME = datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
 
 
 async def reaction_iterator(
@@ -591,7 +592,7 @@ async def pin_iterator(
 
     cafter: Optional[str]
     if after is None:
-        cafter = None
+        cafter = None if cbefore is not None else OLDEST_TIME.isoformat()
     elif isinstance(after, datetime.datetime):
         cafter = after.isoformat()
     else:
@@ -614,7 +615,10 @@ async def pin_iterator(
             limit -= len(pins)
 
         if has_more:
-            cafter = pins[-1]["pinned_at"]
+            if cbefore is not None:
+                cbefore = pins[0]["pinned_at"]
+            if cafter is not None:
+                cafter = pins[-1]["pinned_at"]
 
-        for item in reversed(pins):
+        for item in pins:
             yield MessagePin(channel=channel, data=item, state=state)
