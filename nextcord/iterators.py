@@ -6,11 +6,9 @@ from __future__ import annotations
 import datetime
 from typing import TYPE_CHECKING, Awaitable, Callable, List, Optional, Union, cast
 
-from .abc import MessageableChannel
 from .audit_logs import AuditLogEntry
 from .auto_moderation import AutoModerationRule
 from .bans import BanEntry
-from .message import MessagePin
 from .object import Object
 from .utils import snowflake_time, time_snowflake
 
@@ -28,7 +26,7 @@ __all__ = (
 )
 
 if TYPE_CHECKING:
-    from .abc import Messageable, Snowflake, SnowflakeTime
+    from .abc import Messageable, MessageableChannel, Snowflake, SnowflakeTime
     from .client import Client
     from .enums import AuditLogAction
     from .guild import Guild
@@ -577,6 +575,8 @@ async def pin_iterator(
     before: Optional[Union[Snowflake, datetime.datetime]] = None,
     after: Optional[Union[Snowflake, datetime.datetime]] = None,
 ):
+    from .message import MessagePin
+
     state = channel._state
     has_more = True
 

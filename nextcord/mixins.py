@@ -4,8 +4,6 @@ from __future__ import annotations
 import warnings
 from typing import TYPE_CHECKING, AsyncIterator, List, Optional
 
-from .iterators import pin_iterator
-
 if TYPE_CHECKING:
     from .abc import MessageableChannel, SnowflakeTime
     from .message import Message, MessagePin
@@ -123,6 +121,8 @@ class PinsMixin:
         :class:`~nextcord.MessagePin`
             The messages that are currently pinned.
         """
+        from .iterators import pin_iterator
+
         channel = await self._get_channel()
         async for pin in pin_iterator(channel, limit=limit, before=before, after=after):
             yield pin
