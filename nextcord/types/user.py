@@ -39,3 +39,4 @@ class User(PartialUser, total=False):
     public_flags: int
     global_name: Optional[str]
     avatar_decoration_data: Optional[AvatarDecorationData]
+    primary_guild: Optional[UserPrimaryGuild]
