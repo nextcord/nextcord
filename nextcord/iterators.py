@@ -579,6 +579,7 @@ async def pin_iterator(
 
     state = channel._state
     has_more = True
+    retrieve = 0
 
     cbefore: Optional[str]
     if before is None:
@@ -597,20 +598,23 @@ async def pin_iterator(
         cafter = snowflake_time(after.id).isoformat()
 
     while has_more:
-        limit = max(limit, 50) if limit is not None else 50
+        retrieve = min(limit, 10) if limit is not None else 10
+        if retrieve <= 0:
+            has_more = False
+            break
+
         data = await state.http.get_channel_pins(
-            channel.id, before=cbefore, after=cafter, limit=limit
+            channel.id, before=cbefore, after=cafter, limit=retrieve
         )
 
         pins = data["items"]
         has_more = data["has_more"]
 
-        limit -= len(pins)
-        if limit <= 0:
-            has_more = False
+        if limit:
+            limit -= len(pins)
 
         if has_more:
-            cbefore = pins[-1]["pinned_at"]
+            cafter = pins[-1]["pinned_at"]
 
         for item in reversed(pins):
             yield MessagePin(channel=channel, data=item, state=state)
