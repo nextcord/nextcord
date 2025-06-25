@@ -34,6 +34,7 @@ __all__ = (
     "User",
     "ClientUser",
     "AvatarDecoration",
+    "PrimaryGuild",
 )
 
 
