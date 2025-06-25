@@ -18,8 +18,7 @@ from .enums import Status, try_enum
 from .flags import MemberFlags
 from .object import Object
 from .permissions import Permissions
-from .primary_guild import PrimaryGuild
-from .user import BaseUser, User, _UserTag
+from .user import BaseUser, PrimaryGuild, User, _UserTag
 from .utils import MISSING
 
 __all__ = (
