@@ -131,7 +131,7 @@ class PrimaryGuild:
         return cls(
             data={
                 "identity_guild_id": None,
-                "identity_enabled": None,
+                "identity_enabled": False,
                 "tag": None,
                 "badge": None,
             },
