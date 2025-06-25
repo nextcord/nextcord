@@ -94,6 +94,8 @@ class PinsMixin:
 
         Returns an async iterator of all messages that are currently pinned in the channel.
 
+        This requires :attr:`~nextcord.Permissions.read_message_history`, otherwise the result will be empty.
+
         .. versionadded:: 3.2
 
         .. note::
