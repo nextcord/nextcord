@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: MIT
 from __future__ import annotations
 
+import warnings
 from typing import TYPE_CHECKING, AsyncIterator, List, Optional
 
 from .iterators import pin_iterator
@@ -50,6 +51,13 @@ class PinsMixin:
 
         Retrieves all messages that are currently pinned in the channel.
 
+        .. deprecated:: 3.2
+
+            Use .fetch_pins instead.
+
+            This is due to a change in the Discord API where there can now be more than 50
+            pinned messages, and thus requires an async iterator to fetch all of them.
+
         .. note::
 
             Due to a limitation with the Discord API, the :class:`.Message`
@@ -67,6 +75,12 @@ class PinsMixin:
             The messages that are currently pinned.
         """
 
+        warnings.warn(
+            ".pins is deprecated, use .fetch_pins instead.",
+            stacklevel=2,
+            category=FutureWarning,
+        )
+
         channel = await self._get_channel()
         state = self._state
         data = await state.http.pins_from(channel.id)
@@ -81,6 +95,8 @@ class PinsMixin:
         """|asynciter|
 
         Returns an async iterator of all messages that are currently pinned in the channel.
+
+        .. versionadded:: 3.2
 
         .. note::
 
