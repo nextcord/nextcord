@@ -1,11 +1,13 @@
 # SPDX-License-Identifier: MIT
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, AsyncIterator, List, Optional
+
+from .iterators import pin_iterator
 
 if TYPE_CHECKING:
-    from .abc import MessageableChannel
-    from .message import Message
+    from .abc import MessageableChannel, SnowflakeTime
+    from .message import Message, MessagePin
     from .state import ConnectionState
 
 __all__ = (
@@ -69,3 +71,42 @@ class PinsMixin:
         state = self._state
         data = await state.http.pins_from(channel.id)
         return [state.create_message(channel=channel, data=m) for m in data]
+
+    async def fetch_pins(
+        self,
+        limit: int = 50,
+        before: Optional[SnowflakeTime] = None,
+        after: Optional[SnowflakeTime] = None,
+    ) -> AsyncIterator[MessagePin]:
+        """|asynciter|
+
+        Returns an async iterator of all messages that are currently pinned in the channel.
+
+        .. note::
+
+            Due to a limitation with the Discord API, the :class:`.MessagePin`
+            objects returned by this method do not contain complete
+            :attr:`.MessagePin.message.reactions` data.
+
+        Parameters
+        ----------
+        limit: :class:`int`
+            The maximum number of messages to retrieve. Defaults to 50.
+        before: Optional[Union[:class:`.abc.Snowflake`, :class:`datetime.datetime`]]
+            The pin before which to retrieve pinned messages.
+        after: Optional[Union[:class:`.abc.Snowflake`, :class:`datetime.datetime`]]
+            The pin after which to retrieve pinned messages.
+
+        Raises
+        ------
+        ~nextcord.HTTPException
+            Retrieving the pinned messages failed.
+
+        Yields
+        ------
+        :class:`~nextcord.MessagePin`
+            The messages that are currently pinned.
+        """
+        channel = await self._get_channel()
+        async for pin in pin_iterator(channel, limit=limit, before=before, after=after):
+            yield pin
