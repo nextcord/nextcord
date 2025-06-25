@@ -3,13 +3,16 @@
 __all__ = ("PrimaryGuild",)
 
 
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from nextcord import Asset
 
 from . import utils
 from .state import ConnectionState
 from .types.user import UserPrimaryGuild as UserPrimaryGuildPayload
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
 
 
 class PrimaryGuild:
@@ -45,6 +48,23 @@ class PrimaryGuild:
         self.identity_enabled: Optional[bool] = data.get("identity_enabled")
         self.tag: Optional[str] = data.get("tag")
         self._badge: Optional[str] = data.get("badge")
+
+    @classmethod
+    def _empty(cls, state: ConnectionState) -> Self:
+        """Creates an empty :class:`PrimaryGuild`.
+
+        This is a better alternative to returning ``None`` when the primary guild is not set,
+        as all of these fields are nullable anyway, allows for easier checking of the primary guild.
+        """
+        return cls(
+            data={
+                "identity_guild_id": None,
+                "identity_enabled": None,
+                "tag": None,
+                "badge": None,
+            },
+            state=state,
+        )
 
     @property
     def badge(self) -> Optional[Asset]:

@@ -334,13 +334,13 @@ class BaseUser(_UserTag):
         return self.global_name or self.name
 
     @property
-    def primary_guild(self) -> Optional[PrimaryGuild]:
-        """Optional[:class:`PrimaryGuild`]: Returns the user's primary guild, if applicable.
+    def primary_guild(self) -> PrimaryGuild:
+        """:class:`PrimaryGuild`: Returns the user's primary guild, if applicable.
 
         .. versionadded:: 3.2
         """
         if self._primary_guild is None:
-            return None
+            return PrimaryGuild._empty(self._state)
 
         return PrimaryGuild(data=self._primary_guild, state=self._state)
 
