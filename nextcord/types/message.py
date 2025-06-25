@@ -101,6 +101,11 @@ class MessageSnapshot(TypedDict):
     message: MessageSnapshotMessage
 
 
+class MessagePin(TypedDict):
+    message: Message
+    pinned_at: str
+
+
 class Message(TypedDict):
     id: Snowflake
     channel_id: Snowflake
