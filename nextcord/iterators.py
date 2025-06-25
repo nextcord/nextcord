@@ -599,7 +599,7 @@ async def pin_iterator(
         cafter = snowflake_time(after.id).isoformat()
 
     while has_more:
-        retrieve = min(limit, 10) if limit is not None else 10
+        retrieve = min(limit, 50) if limit is not None else 50
         if retrieve <= 0:
             has_more = False
             break
