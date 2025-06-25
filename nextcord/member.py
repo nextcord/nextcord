@@ -18,6 +18,7 @@ from .enums import Status, try_enum
 from .flags import MemberFlags
 from .object import Object
 from .permissions import Permissions
+from .primary_guild import PrimaryGuild
 from .user import BaseUser, User, _UserTag
 from .utils import MISSING
 
@@ -269,6 +270,7 @@ class Member(abc.Messageable, _UserTag):
         accent_color: Optional[Colour]
         accent_colour: Optional[Colour]
         avatar_decoration: Optional[AvatarDecoration]
+        primary_guild: PrimaryGuild
 
     def __init__(
         self, *, data: MemberWithUserPayload, guild: Guild, state: ConnectionState
