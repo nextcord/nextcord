@@ -6,9 +6,11 @@ from __future__ import annotations
 import datetime
 from typing import TYPE_CHECKING, Awaitable, Callable, List, Optional, Union, cast
 
+from .abc import MessageableChannel
 from .audit_logs import AuditLogEntry
 from .auto_moderation import AutoModerationRule
 from .bans import BanEntry
+from .message import MessagePin
 from .object import Object
 from .utils import snowflake_time, time_snowflake
 
@@ -22,6 +24,7 @@ __all__ = (
     "archived_thread_iterator",
     "scheduled_event_iterator",
     "scheduled_event_user_iterator",
+    "pin_iterator",
 )
 
 if TYPE_CHECKING:
@@ -566,3 +569,48 @@ async def scheduled_event_user_iterator(
 
         for item in reversed(data):
             yield event._update_user(item)
+
+
+async def pin_iterator(
+    channel: MessageableChannel,
+    limit: Optional[int] = None,
+    before: Optional[Union[Snowflake, datetime.datetime]] = None,
+    after: Optional[Union[Snowflake, datetime.datetime]] = None,
+):
+    state = channel._state
+    has_more = True
+
+    cbefore: Optional[str]
+    if before is None:
+        cbefore = None
+    elif isinstance(before, datetime.datetime):
+        cbefore = before.isoformat()
+    else:
+        cbefore = snowflake_time(before.id).isoformat()
+
+    cafter: Optional[str]
+    if after is None:
+        cafter = None
+    elif isinstance(after, datetime.datetime):
+        cafter = after.isoformat()
+    else:
+        cafter = snowflake_time(after.id).isoformat()
+
+    while has_more:
+        limit = max(limit, 50) if limit is not None else 50
+        data = await state.http.get_channel_pins(
+            channel.id, before=cbefore, after=cafter, limit=limit
+        )
+
+        pins = data["items"]
+        has_more = data["has_more"]
+
+        limit -= len(pins)
+        if limit <= 0:
+            has_more = False
+
+        if has_more:
+            cbefore = pins[-1]["pinned_at"]
+
+        for item in reversed(pins):
+            yield MessagePin(channel=channel, data=item, state=state)
