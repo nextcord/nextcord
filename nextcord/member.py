@@ -403,6 +403,7 @@ class Member(abc.Messageable, _UserTag):
             u.global_name,
             u._public_flags,
             u._banner,
+            u._avatar_decoration,
             u._primary_guild,
         )
         # These keys seem to always be available
@@ -413,6 +414,7 @@ class Member(abc.Messageable, _UserTag):
             user.get("global_name"),
             user.get("public_flags", 0),
             user.get("banner"),
+            user.get("avatar_decoration_data"),
             user.get("primary_guild"),
         )
         if original != modified:
@@ -424,6 +426,7 @@ class Member(abc.Messageable, _UserTag):
                 u.global_name,
                 u._public_flags,
                 u._banner,
+                u._avatar_decoration,
                 u._primary_guild,
             ) = modified
             # Signal to dispatch on_user_update
