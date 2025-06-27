@@ -269,7 +269,7 @@ class Role(Hashable):
         "id",
         "name",
         "_permissions",
-        "_colour",
+        "_colours",
         "position",
         "managed",
         "mentionable",
@@ -333,7 +333,7 @@ class Role(Hashable):
         self.name: str = data["name"]
         self._permissions: int = int(data.get("permissions", 0))
         self.position: int = data.get("position", 0)
-        self._colour: int = data.get("color", 0)
+        self._colours: RoleColorsPayload = data.get("colors", {"primary_color": 0})
         self.hoist: bool = data.get("hoist", False)
         self.managed: bool = data.get("managed", False)
         self.mentionable: bool = data.get("mentionable", False)
@@ -396,12 +396,28 @@ class Role(Hashable):
     @property
     def colour(self) -> Colour:
         """:class:`Colour`: Returns the role colour. An alias exists under ``color``."""
-        return Colour(self._colour)
+        return Colour(self._colours["primary_color"])
 
     @property
     def color(self) -> Colour:
         """:class:`Colour`: Returns the role color. An alias exists under ``colour``."""
         return self.colour
+
+    @property
+    def colours(self) -> RoleColours:
+        """:class:`RoleColours`: Returns the role colours. An alias exists under ``colors``.
+
+        .. versionadded:: 3.2
+        """
+        return RoleColours.from_dict(self._colours)
+
+    @property
+    def colors(self) -> RoleColours:
+        """:class:`RoleColours`: Returns the role colors. An alias exists under ``colours``.
+
+        .. versionadded:: 3.2
+        """
+        return self.colours
 
     @property
     def created_at(self) -> datetime.datetime:
@@ -469,6 +485,8 @@ class Role(Hashable):
         permissions: Permissions = MISSING,
         colour: Union[Colour, int] = MISSING,
         color: Union[Colour, int] = MISSING,
+        colours: RoleColours = MISSING,
+        colors: RoleColours = MISSING,
         hoist: bool = MISSING,
         mentionable: bool = MISSING,
         position: int = MISSING,
@@ -501,6 +519,10 @@ class Role(Hashable):
             The new permissions to change to.
         colour: Union[:class:`Colour`, :class:`int`]
             The new colour to change to. (aliased to color as well)
+        colours: :class:`RoleColours`
+            The new colours to change to. (aliased to colors as well)
+
+            .. versionadded:: 3.2
         hoist: :class:`bool`
             Indicates if the role should be shown separately in the member list.
         mentionable: :class:`bool`
@@ -520,8 +542,8 @@ class Role(Hashable):
         HTTPException
             Editing the role failed.
         InvalidArgument
-            An invalid position was given or the default
-            role was asked to be moved.
+            An invalid position was given, the default
+            role was asked to be moved, or multiple colour parameters were passed.
 
         Returns
         -------
@@ -532,14 +554,34 @@ class Role(Hashable):
             await self._move(position, reason=reason)
 
         payload: Dict[str, Any] = {}
+
+        # Ensure no conflict in singular colour parameters,
+        # then no conflict with plural,
+        # then no conflict between singular and plural.
+        if color is not MISSING and colours is not MISSING:
+            raise InvalidArgument("Cannot pass both `color` and `colours` parameters.")
+
         if color is not MISSING:
             colour = color
 
+        if colors is not MISSING and colours is not MISSING:
+            raise InvalidArgument("Cannot pass both `colors` and `colours` parameters.")
+
+        if colors is not MISSING:
+            colours = colors
+
+        if colour is not MISSING and colours is not MISSING:
+            raise InvalidArgument("Cannot pass both `colour` and `colours` parameters.")
+
         if colour is not MISSING:
             if isinstance(colour, int):
-                payload["color"] = colour
+                payload["colors"] = {"primary_color": colour}
             else:
-                payload["color"] = colour.value
+                payload["colors"] = {"primary_color": colour.value}
+        elif colours is not MISSING:
+            if not isinstance(colours, RoleColours):
+                raise InvalidArgument("`colours` parameter must be a RoleColours object.")
+            payload["colors"] = colours.to_dict()
 
         if name is not MISSING:
             payload["name"] = name
