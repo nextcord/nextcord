@@ -145,14 +145,14 @@ class RoleColours:
     """
 
     primary: Colour
-    """The primary colour of the role."""
+    """:class:`Colour`: The primary colour of the role."""
     secondary: Optional[Colour] = None
-    """The secondary colour of the role, if available.
+    """Optional[:class:`Colour`]: The secondary colour of the role, if available.
 
     This creates a gradient between the primary and secondary colours.
     """
     tertiary: Optional[Colour] = None
-    """The tertiary colour of the role, if available.
+    """Optional[:class:`Colour`]: The tertiary colour of the role, if available.
 
     This creates a holographic effect with the three colours.
     Currently, there is only one holographic style, which can be accessed with
@@ -182,7 +182,7 @@ class RoleColours:
 
     @classmethod
     def holographic(cls) -> Self:
-        """Returns a role colours object with a 'holographic style'.
+        """Returns a :class:`RoleColours` with a 'holographic style'.
 
         This is the only known holographic style, with preset colour values.
         """
