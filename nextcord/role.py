@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 from .asset import Asset
@@ -15,6 +16,8 @@ from .utils import MISSING, get_as_snowflake, obj_to_base64_data, snowflake_time
 __all__ = (
     "RoleTags",
     "Role",
+    "RoleColours",
+    "RoleColors",
 )
 
 if TYPE_CHECKING:
@@ -28,7 +31,11 @@ if TYPE_CHECKING:
     from .message import Attachment
     from .state import ConnectionState
     from .types.guild import RolePositionUpdate
-    from .types.role import Role as RolePayload, RoleTags as RoleTagPayload
+    from .types.role import (
+        Role as RolePayload,
+        RoleColors as RoleColorsPayload,
+        RoleTags as RoleTagPayload,
+    )
 
 
 class RoleTags:
@@ -123,6 +130,71 @@ class RoleTags:
             f"available_for_purchase={self.is_available_for_purchase()}>"
             f"guild_connections={self.has_guild_connections()}>"
         )
+
+
+@dataclass(slots=True)
+class RoleColours:
+    """Represents the colours of a role.
+
+    There is an alias for this called ``RoleColors``.
+
+    :attr:`secondary` and :attr:`tertiary` can only be set if the guild has the
+    ``ENHANCED_ROLE_COLORS`` feature enabled.
+
+    .. versionadded:: 3.2
+    """
+
+    primary: Colour
+    """The primary colour of the role."""
+    secondary: Optional[Colour] = None
+    """The secondary colour of the role, if available.
+
+    This creates a gradient between the primary and secondary colours.
+    """
+    tertiary: Optional[Colour] = None
+    """The tertiary colour of the role, if available.
+
+    This creates a holographic effect with the three colours.
+    Currently, there is only one holographic style, which can be accessed with
+    :meth:`holographic`.
+    """
+
+    @classmethod
+    def from_dict(cls, data: RoleColorsPayload) -> Self:
+        return cls(
+            primary=Colour(data["primary_color"]),
+            secondary=(
+                Colour(secondary)
+                if (secondary := data.get("secondary_color")) is not None
+                else None
+            ),
+            tertiary=(
+                Colour(tertiary) if (tertiary := data.get("tertiary_color")) is not None else None
+            ),
+        )
+
+    def to_dict(self) -> RoleColorsPayload:
+        return {
+            "primary_color": self.primary.value,
+            "secondary_color": self.secondary.value if self.secondary else None,
+            "tertiary_color": self.tertiary.value if self.tertiary else None,
+        }
+
+    @classmethod
+    def holographic(cls) -> Self:
+        """Returns a role colours object with a 'holographic style'.
+
+        This is the only known holographic style, with preset colour values.
+        """
+
+        return cls(
+            primary=Colour(11127295),
+            secondary=Colour(16759788),
+            tertiary=Colour(16761760),
+        )
+
+
+RoleColors = RoleColours
 
 
 class Role(Hashable):
