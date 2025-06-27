@@ -63,7 +63,7 @@ from .mixins import Hashable
 from .object import Object
 from .partial_emoji import PartialEmoji
 from .permissions import PermissionOverwrite
-from .role import Role
+from .role import Role, RoleColours
 from .scheduled_events import EntityMetadata, ScheduledEvent
 from .stage_instance import StageInstance
 from .sticker import GuildSticker
@@ -101,6 +101,7 @@ if TYPE_CHECKING:
     )
     from .types.integration import IntegrationType
     from .types.interactions import ApplicationCommand as ApplicationCommandPayload
+    from .types.role import RoleColors as RoleColorsPayload
     from .types.scheduled_events import ScheduledEvent as ScheduledEventPayload
     from .types.snowflake import SnowflakeList
     from .types.sticker import CreateGuildSticker
@@ -210,6 +211,7 @@ class Guild(Hashable):
         - ``COMMUNITY``: Guild is a community server.
         - ``DEVELOPER_SUPPORT_SERVER``: Guild has been set as a support server on the App Directory.
         - ``DISCOVERABLE``: Guild shows up in Server Discovery.
+        - ``ENHANCED_ROLE_COLORS``: Guild has enhanced role colors enabled (gradients, holographic).
         - ``FEATURABLE``: Guild is able to be featured in Server Discovery.
         - ``INVITES_DISABLED``: Guild has paused invites, preventing new users from joining.
         - ``INVITE_SPLASH``: Guild's invite page can have a special splash.
@@ -2852,6 +2854,32 @@ class Guild(Hashable):
         icon: Optional[Union[str, bytes, Asset, Attachment, File]] = ...,
     ) -> Role: ...
 
+    @overload
+    async def create_role(
+        self,
+        *,
+        reason: Optional[str] = ...,
+        name: str = ...,
+        permissions: Permissions = ...,
+        colors: RoleColours = ...,
+        hoist: bool = ...,
+        mentionable: bool = ...,
+        icon: Optional[Union[str, bytes, Asset, Attachment, File]] = ...,
+    ) -> Role: ...
+
+    @overload
+    async def create_role(
+        self,
+        *,
+        reason: Optional[str] = ...,
+        name: str = ...,
+        permissions: Permissions = ...,
+        colours: RoleColours = ...,
+        hoist: bool = ...,
+        mentionable: bool = ...,
+        icon: Optional[Union[str, bytes, Asset, Attachment, File]] = ...,
+    ) -> Role: ...
+
     async def create_role(
         self,
         *,
@@ -2859,6 +2887,8 @@ class Guild(Hashable):
         permissions: Permissions = MISSING,
         color: Union[Colour, int] = MISSING,
         colour: Union[Colour, int] = MISSING,
+        colors: RoleColours = MISSING,
+        colours: RoleColours = MISSING,
         hoist: bool = MISSING,
         mentionable: bool = MISSING,
         icon: Optional[Union[str, bytes, Asset, Attachment, File]] = MISSING,
@@ -2919,11 +2949,33 @@ class Guild(Hashable):
         else:
             fields["permissions"] = "0"
 
-        actual_colour = colour or color or Colour.default()
-        if isinstance(actual_colour, int):
-            fields["color"] = actual_colour
-        else:
-            fields["color"] = actual_colour.value
+        if color is not MISSING and colour is not MISSING:
+            raise InvalidArgument("You cannot pass both `color` and `colour` parameters.")
+
+        if color is not MISSING:
+            colour = color
+
+        if colors is not MISSING and colours is not MISSING:
+            raise InvalidArgument("You cannot pass both `colors` and `colours` parameters.")
+
+        if colors is not MISSING:
+            if not isinstance(colors, RoleColours):
+                raise InvalidArgument("`colors` parameter must be a RoleColours object.")
+            colours = colors
+
+        colours_data: RoleColorsPayload = {
+            "primary_color": 0,
+            "secondary_color": None,
+            "tertiary_color": None,
+        }
+        if isinstance(colour, int):
+            colours_data["primary_color"] = colour
+        elif isinstance(colour, Colour):
+            colours_data["primary_color"] = colour.value
+        elif colours is not MISSING:
+            if not isinstance(colours, RoleColours):
+                raise InvalidArgument("`colours` parameter must be a RoleColours object.")
+            colours_data = colours.to_dict()
 
         if hoist is not MISSING:
             fields["hoist"] = hoist

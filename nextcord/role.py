@@ -511,6 +511,9 @@ class Role(Hashable):
         .. versionchanged:: 2.1
             The ``icon`` parameter now accepts :class:`Attachment`, and :class:`Asset`.
 
+        .. versionchanged:: 3.2
+            Added the ``colours`` and ``colors`` parameters.
+
         Parameters
         ----------
         name: :class:`str`
@@ -521,8 +524,6 @@ class Role(Hashable):
             The new colour to change to. (aliased to color as well)
         colours: :class:`RoleColours`
             The new colours to change to. (aliased to colors as well)
-
-            .. versionadded:: 3.2
         hoist: :class:`bool`
             Indicates if the role should be shown separately in the member list.
         mentionable: :class:`bool`
