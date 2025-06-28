@@ -85,10 +85,7 @@ class PinsMixin:
         return [state.create_message(channel=channel, data=m) for m in data]
 
     async def fetch_pins(
-        self,
-        limit: int = 50,
-        before: Optional[SnowflakeTime] = None,
-        after: Optional[SnowflakeTime] = None,
+        self, limit: int = 50, before: Optional[SnowflakeTime] = None
     ) -> AsyncIterator[MessagePin]:
         """|asynciter|
 
@@ -126,5 +123,5 @@ class PinsMixin:
         from .iterators import pin_iterator
 
         channel = await self._get_channel()
-        async for pin in pin_iterator(channel, limit=limit, before=before, after=after):
+        async for pin in pin_iterator(channel, limit=limit, before=before):
             yield pin

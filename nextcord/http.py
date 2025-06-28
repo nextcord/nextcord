@@ -1821,7 +1821,6 @@ class HTTPClient:
         channel_id: Snowflake,
         *,
         before: Optional[str] = None,
-        after: Optional[str] = None,
         limit: int = 50,
         auth: Optional[str] = MISSING,
         retry_request: bool = True,
@@ -1833,8 +1832,6 @@ class HTTPClient:
 
         if before is not None:
             params["before"] = before
-        if after is not None:
-            params["after"] = after
 
         return self.request(
             r,

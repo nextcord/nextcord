@@ -574,7 +574,6 @@ async def pin_iterator(
     channel: MessageableChannel,
     limit: Optional[int] = None,
     before: Optional[Union[Snowflake, datetime.datetime]] = None,
-    after: Optional[Union[Snowflake, datetime.datetime]] = None,
 ):
     from .message import MessagePin
 
@@ -582,21 +581,11 @@ async def pin_iterator(
     has_more = True
     retrieve = 0
 
-    cbefore: Optional[str]
-    if before is None:
-        cbefore = None
-    elif isinstance(before, datetime.datetime):
+    cbefore: Optional[str] = None
+    if isinstance(before, datetime.datetime):
         cbefore = before.isoformat()
-    else:
+    elif before is not None:
         cbefore = snowflake_time(before.id).isoformat()
-
-    cafter: Optional[str]
-    if after is None:
-        cafter = None if cbefore is not None else OLDEST_TIME.isoformat()
-    elif isinstance(after, datetime.datetime):
-        cafter = after.isoformat()
-    else:
-        cafter = snowflake_time(after.id).isoformat()
 
     while has_more:
         retrieve = min(limit, 50) if limit is not None else 50
@@ -604,9 +593,7 @@ async def pin_iterator(
             has_more = False
             break
 
-        data = await state.http.get_channel_pins(
-            channel.id, before=cbefore, after=cafter, limit=retrieve
-        )
+        data = await state.http.get_channel_pins(channel.id, before=cbefore, limit=retrieve)
 
         pins = data["items"]
         has_more = data["has_more"]
@@ -615,10 +602,7 @@ async def pin_iterator(
             limit -= len(pins)
 
         if has_more:
-            if cbefore is not None:
-                cbefore = pins[0]["pinned_at"]
-            if cafter is not None:
-                cafter = pins[-1]["pinned_at"]
+            cbefore = pins[-1]["pinned_at"]
 
         for item in pins:
             yield MessagePin(channel=channel, data=item, state=state)
