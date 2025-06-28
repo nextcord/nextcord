@@ -93,6 +93,7 @@ __all__ = (
     "MessageInteractionMetadata",
     "MessageSnapshot",
     "MessageRoleSubscription",
+    "MessagePin",
 )
 
 
