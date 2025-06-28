@@ -2977,6 +2977,8 @@ class Guild(Hashable):
                 raise InvalidArgument("`colours` parameter must be a RoleColours object.")
             colours_data = colours.to_dict()
 
+        fields["colors"] = colours_data
+
         if hoist is not MISSING:
             fields["hoist"] = hoist
 
