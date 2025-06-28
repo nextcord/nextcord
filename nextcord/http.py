@@ -1770,7 +1770,7 @@ class HTTPClient:
     ) -> Response[None]:
         r = Route(
             "PUT",
-            "/channels/{channel_id}/pins/{message_id}",
+            "/channels/{channel_id}/messages/pins/{message_id}",
             channel_id=channel_id,
             message_id=message_id,
         )
@@ -1792,7 +1792,7 @@ class HTTPClient:
     ) -> Response[None]:
         r = Route(
             "DELETE",
-            "/channels/{channel_id}/pins/{message_id}",
+            "/channels/{channel_id}/messages/pins/{message_id}",
             channel_id=channel_id,
             message_id=message_id,
         )
@@ -1810,7 +1810,35 @@ class HTTPClient:
         auth: Optional[str] = MISSING,
         retry_request: bool = True,
     ) -> Response[List[message.Message]]:
-        return self.request(Route("GET", "/channels/{channel_id}/pins", channel_id=channel_id))
+        return self.request(
+            Route("GET", "/channels/{channel_id}/pins", channel_id=channel_id),
+            auth=auth,
+            retry_request=retry_request,
+        )
+
+    def get_channel_pins(
+        self,
+        channel_id: Snowflake,
+        *,
+        before: Optional[str] = None,
+        limit: int = 50,
+        auth: Optional[str] = MISSING,
+        retry_request: bool = True,
+    ) -> Response[message.PinIterator]:
+        r = Route("GET", "/channels/{channel_id}/messages/pins", channel_id=channel_id)
+        params: Dict[str, Any] = {
+            "limit": limit,
+        }
+
+        if before is not None:
+            params["before"] = before
+
+        return self.request(
+            r,
+            params=params,
+            auth=auth,
+            retry_request=retry_request,
+        )
 
     # Member management
 
