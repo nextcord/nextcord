@@ -59,16 +59,16 @@ class StageInstance(Hashable):
     """
 
     __slots__ = (
-        "_state",
-        "id",
-        "guild",
-        "channel_id",
-        "topic",
-        "privacy_level",
-        "discoverable_disabled",
-        "scheduled_event_id",
         "_cs_channel",
         "_cs_scheduled_event",
+        "_state",
+        "channel_id",
+        "discoverable_disabled",
+        "guild",
+        "id",
+        "privacy_level",
+        "scheduled_event_id",
+        "topic",
     )
 
     def __init__(self, *, state: ConnectionState, guild: Guild, data: StageInstancePayload) -> None:
