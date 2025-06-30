@@ -27,15 +27,15 @@ if TYPE_CHECKING:
 
 
 __all__ = (
-    "RawMessageDeleteEvent",
     "RawBulkMessageDeleteEvent",
+    "RawIntegrationDeleteEvent",
+    "RawMemberRemoveEvent",
+    "RawMessageDeleteEvent",
     "RawMessageUpdateEvent",
     "RawReactionActionEvent",
-    "RawReactionClearEvent",
     "RawReactionClearEmojiEvent",
-    "RawIntegrationDeleteEvent",
+    "RawReactionClearEvent",
     "RawTypingEvent",
-    "RawMemberRemoveEvent",
 )
 
 
@@ -62,7 +62,7 @@ class RawMessageDeleteEvent(_RawReprMixin):
         The cached message, if found in the internal message cache.
     """
 
-    __slots__ = ("message_id", "channel_id", "guild_id", "cached_message")
+    __slots__ = ("cached_message", "channel_id", "guild_id", "message_id")
 
     def __init__(self, data: MessageDeleteEvent) -> None:
         self.message_id: int = int(data["id"])
@@ -86,7 +86,7 @@ class RawBulkMessageDeleteEvent(_RawReprMixin):
         The cached messages, if found in the internal message cache.
     """
 
-    __slots__ = ("message_ids", "channel_id", "guild_id", "cached_messages")
+    __slots__ = ("cached_messages", "channel_id", "guild_id", "message_ids")
 
     def __init__(self, data: BulkMessageDeleteEvent) -> None:
         self.message_ids: Set[int] = {int(x) for x in data.get("ids", [])}
@@ -118,7 +118,7 @@ class RawMessageUpdateEvent(_RawReprMixin):
         it is modified by the data in :attr:`RawMessageUpdateEvent.data`.
     """
 
-    __slots__ = ("message_id", "channel_id", "guild_id", "data", "cached_message")
+    __slots__ = ("cached_message", "channel_id", "data", "guild_id", "message_id")
 
     def __init__(self, data: MessageUpdateEvent) -> None:
         self.message_id: int = int(data["id"])
@@ -157,7 +157,7 @@ class RawReactionActionEvent(_RawReprMixin):
         .. versionadded:: 1.3
     """
 
-    __slots__ = ("message_id", "user_id", "channel_id", "guild_id", "emoji", "event_type", "member")
+    __slots__ = ("channel_id", "emoji", "event_type", "guild_id", "member", "message_id", "user_id")
 
     def __init__(self, data: ReactionActionEvent, emoji: PartialEmoji, event_type: str) -> None:
         self.message_id: int = int(data["message_id"])
@@ -182,7 +182,7 @@ class RawReactionClearEvent(_RawReprMixin):
         The guild ID where the reactions got cleared.
     """
 
-    __slots__ = ("message_id", "channel_id", "guild_id")
+    __slots__ = ("channel_id", "guild_id", "message_id")
 
     def __init__(self, data: ReactionClearEvent) -> None:
         self.message_id: int = int(data["message_id"])
@@ -207,7 +207,7 @@ class RawReactionClearEmojiEvent(_RawReprMixin):
         The custom or unicode emoji being removed.
     """
 
-    __slots__ = ("message_id", "channel_id", "guild_id", "emoji")
+    __slots__ = ("channel_id", "emoji", "guild_id", "message_id")
 
     def __init__(self, data: ReactionClearEmojiEvent, emoji: PartialEmoji) -> None:
         self.emoji: PartialEmoji = emoji
@@ -231,7 +231,7 @@ class RawIntegrationDeleteEvent(_RawReprMixin):
         The guild ID where the integration got deleted.
     """
 
-    __slots__ = ("integration_id", "application_id", "guild_id")
+    __slots__ = ("application_id", "guild_id", "integration_id")
 
     def __init__(self, data: IntegrationDeleteEvent) -> None:
         self.integration_id: int = int(data["id"])
@@ -259,7 +259,7 @@ class RawTypingEvent(_RawReprMixin):
         The member who started typing. Only available if the member started typing in a guild.
     """
 
-    __slots__ = ("channel_id", "user_id", "when", "guild_id", "member")
+    __slots__ = ("channel_id", "guild_id", "member", "user_id", "when")
 
     def __init__(self, data: TypingEvent) -> None:
         self.channel_id: int = int(data["channel_id"])
@@ -290,7 +290,7 @@ class RawMemberRemoveEvent(_RawReprMixin):
         .. versionadded:: 2.6
     """
 
-    __slots__ = ("guild_id", "user", "guild")
+    __slots__ = ("guild", "guild_id", "user")
 
     def __init__(self, *, data: MemberRemoveEvent, state: ConnectionState) -> None:
         self.guild_id: int = int(data["guild_id"])

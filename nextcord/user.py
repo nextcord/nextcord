@@ -30,9 +30,9 @@ if TYPE_CHECKING:
 
 
 __all__ = (
-    "User",
-    "ClientUser",
     "AvatarDecoration",
+    "ClientUser",
+    "User",
 )
 
 
@@ -54,9 +54,9 @@ class AvatarDecoration:
     """
 
     __slots__ = (
-        "user",
-        "sku_id",
         "_asset",
+        "sku_id",
+        "user",
     )
 
     def __init__(self, *, user: BaseUser, data: AvatarDecorationDataPayload) -> None:
@@ -92,18 +92,18 @@ class _UserTag:
 
 class BaseUser(_UserTag):
     __slots__ = (
-        "name",
-        "id",
-        "discriminator",
-        "_avatar",
-        "_banner",
         "_accent_colour",
-        "bot",
-        "system",
+        "_avatar",
+        "_avatar_decoration",
+        "_banner",
         "_public_flags",
         "_state",
+        "bot",
+        "discriminator",
         "global_name",
-        "_avatar_decoration",
+        "id",
+        "name",
+        "system",
     )
 
     if TYPE_CHECKING:
@@ -398,7 +398,7 @@ class ClientUser(BaseUser):
         Specifies if the user has MFA turned on and working.
     """
 
-    __slots__ = ("locale", "_flags", "verified", "mfa_enabled", "__weakref__")
+    __slots__ = ("__weakref__", "_flags", "locale", "mfa_enabled", "verified")
 
     if TYPE_CHECKING:
         verified: bool
