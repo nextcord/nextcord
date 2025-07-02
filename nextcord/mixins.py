@@ -106,9 +106,7 @@ class PinsMixin:
         limit: :class:`int`
             The maximum number of messages to retrieve. Defaults to 50.
         before: Optional[Union[:class:`.abc.Snowflake`, :class:`datetime.datetime`]]
-            The pin before which to retrieve pinned messages.
-        after: Optional[Union[:class:`.abc.Snowflake`, :class:`datetime.datetime`]]
-            The pin after which to retrieve pinned messages.
+            Retrieve pinned messages before this timestamp.
 
         Raises
         ------

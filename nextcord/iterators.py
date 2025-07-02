@@ -45,7 +45,6 @@ if TYPE_CHECKING:
 
 
 OLDEST_OBJECT = Object(id=0)
-OLDEST_TIME = datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
 
 
 async def reaction_iterator(
