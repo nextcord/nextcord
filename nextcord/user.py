@@ -99,7 +99,8 @@ class PrimaryGuild:
     identity_enabled: Optional[:class:`bool`]
         Whether displaying the primary guild is enabled.
 
-        This is ``None`` if the user has not accepted a change to the tag details.
+        This is ``None`` if the user has not accepted a change to the tag details, or
+        the guild no longer supports primary guild tags.
     tag: Optional[:class:`str`]
         The tag of the primary guild.
     badge: Optional[:class:`str`]
