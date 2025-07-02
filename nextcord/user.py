@@ -9,7 +9,7 @@ from .asset import Asset
 from .colour import Colour
 from .enums import DefaultAvatar
 from .flags import PublicUserFlags
-from .utils import MISSING, obj_to_base64_data, snowflake_time
+from .utils import MISSING, get_as_snowflake, obj_to_base64_data, snowflake_time
 
 if TYPE_CHECKING:
     from datetime import datetime
@@ -26,6 +26,7 @@ if TYPE_CHECKING:
         AvatarDecorationData as AvatarDecorationDataPayload,
         PartialUser as PartialUserPayload,
         User as UserPayload,
+        UserPrimaryGuild as UserPrimaryGuildPayload,
     )
 
 
@@ -33,6 +34,7 @@ __all__ = (
     "User",
     "ClientUser",
     "AvatarDecoration",
+    "PrimaryGuild",
 )
 
 
@@ -85,6 +87,75 @@ class AvatarDecoration:
         return Asset._from_avatar_decoration(self.user._state, self._asset)
 
 
+class PrimaryGuild:
+    """Represents a primary guild for a user.
+
+    .. versionadded:: 3.2
+
+    Attributes
+    ----------
+    identity_guild_id: Optional[:class:`int`]
+        The ID of the primary guild.
+    identity_enabled: Optional[:class:`bool`]
+        Whether displaying the primary guild is enabled.
+
+        This is ``None`` if the user has not accepted a change to the tag details, or
+        the guild no longer supports primary guild tags.
+    tag: Optional[:class:`str`]
+        The tag of the primary guild.
+    badge: Optional[:class:`str`]
+        The badge of the primary guild.
+    """
+
+    __slots__ = (
+        "_state",
+        "identity_guild_id",
+        "identity_enabled",
+        "tag",
+        "_badge",
+    )
+
+    def __init__(self, *, data: UserPrimaryGuildPayload, state: ConnectionState) -> None:
+        self._state: ConnectionState = state
+        self.identity_guild_id: Optional[int] = get_as_snowflake(data, "identity_guild_id")
+        self.identity_enabled: Optional[bool] = data.get("identity_enabled")
+        self.tag: Optional[str] = data.get("tag")
+        self._badge: Optional[str] = data.get("badge")
+
+    @classmethod
+    def _empty(cls, state: ConnectionState) -> Self:
+        """Creates an empty :class:`PrimaryGuild`.
+
+        This is a better alternative to returning ``None`` when the primary guild is not set,
+        as all of these fields are nullable anyway, allows for easier checking of the primary guild.
+        """
+        return cls(
+            data={
+                "identity_guild_id": None,
+                "identity_enabled": False,
+                "tag": None,
+                "badge": None,
+            },
+            state=state,
+        )
+
+    @property
+    def badge(self) -> Optional[Asset]:
+        """Optional[:class:`Asset`]: Returns an :class:`Asset` for the badge of the primary guild."""
+        if self._badge is not None and self.identity_guild_id is not None:
+            return Asset._from_primary_guild_badge(
+                self._state, guild_id=self.identity_guild_id, badge_hash=self._badge
+            )
+        return None
+
+    def __repr__(self) -> str:
+        return (
+            f"<PrimaryGuild identity_guild_id={self.identity_guild_id!r} "
+            f"identity_enabled={self.identity_enabled!r} tag={self.tag!r} "
+            f"badge={self.badge!r}>"
+        )
+
+
 class _UserTag:
     __slots__ = ()
     id: int
@@ -104,6 +175,7 @@ class BaseUser(_UserTag):
         "_state",
         "global_name",
         "_avatar_decoration",
+        "_primary_guild",
     )
 
     if TYPE_CHECKING:
@@ -119,6 +191,7 @@ class BaseUser(_UserTag):
         _accent_colour: Optional[str]
         _public_flags: int
         _avatar_decoration: Optional[AvatarDecorationDataPayload]
+        _primary_guild: Optional[UserPrimaryGuildPayload]
 
     def __init__(
         self, *, state: ConnectionState, data: Union[PartialUserPayload, UserPayload]
@@ -157,6 +230,7 @@ class BaseUser(_UserTag):
         self.bot = data.get("bot", False)
         self.system = data.get("system", False)
         self.global_name = data.get("global_name", None)
+        self._primary_guild = data.get("primary_guild", None)
 
     @classmethod
     def _copy(cls, user: Self) -> Self:
@@ -172,6 +246,9 @@ class BaseUser(_UserTag):
         self.bot = user.bot
         self._state = user._state
         self._public_flags = user._public_flags
+        self.system = user.system
+        self.global_name = user.global_name
+        self._primary_guild = user._primary_guild
 
         return self
 
@@ -324,6 +401,17 @@ class BaseUser(_UserTag):
         2. Unique username
         """
         return self.global_name or self.name
+
+    @property
+    def primary_guild(self) -> PrimaryGuild:
+        """:class:`PrimaryGuild`: Returns the user's primary guild.
+
+        .. versionadded:: 3.2
+        """
+        if self._primary_guild is None:
+            return PrimaryGuild._empty(self._state)
+
+        return PrimaryGuild(data=self._primary_guild, state=self._state)
 
     def mentioned_in(self, message: Message) -> bool:
         """Checks if the user is mentioned in the specified message.
