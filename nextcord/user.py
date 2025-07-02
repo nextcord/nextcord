@@ -403,7 +403,7 @@ class BaseUser(_UserTag):
 
     @property
     def primary_guild(self) -> PrimaryGuild:
-        """:class:`PrimaryGuild`: Returns the user's primary guild, if applicable.
+        """:class:`PrimaryGuild`: Returns the user's primary guild.
 
         .. versionadded:: 3.2
         """
