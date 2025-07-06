@@ -295,7 +295,7 @@ class VoiceClient(VoiceProtocol):
             )
             return
 
-        self.endpoint, _, _ = endpoint.rpartition(":")
+        self.endpoint = endpoint
         if self.endpoint.startswith("wss://"):
             # Just in case, strip it off since we're going to add it later
             self.endpoint = self.endpoint[6:]
@@ -335,7 +335,10 @@ class VoiceClient(VoiceProtocol):
         self._voice_state_complete.clear()
 
     async def connect_websocket(self) -> DiscordVoiceWebSocket:
-        ws = await DiscordVoiceWebSocket.from_client(self)
+        seq_ack = -1
+        if self.ws is not MISSING:
+            seq_ack = self.ws.seq_ack
+        ws = await DiscordVoiceWebSocket.from_client(self, seq_ack=seq_ack)
         self._connected.clear()
         while ws.secret_key is None:
             await ws.poll_event()
@@ -432,13 +435,15 @@ class VoiceClient(VoiceProtocol):
                 if isinstance(exc, ConnectionClosed):
                     # The following close codes are undocumented so I will document them here.
                     # 1000 - normal closure (obviously)
-                    # 4014 - voice channel has been deleted.
-                    # 4015 - voice server has crashed
-                    if exc.code in (1000, 4015):
+                    # 4014 - we were externally disconnected (voice channel deleted, we were moved, etc)
+                    # 4015 - voice server has crashed, we should resume
+                    # 4021 - rate limited, we should not reconnect
+                    # 4022 - call terminated, similar to 4014
+                    if exc.code == 1000:
                         _log.info("Disconnecting from voice normally, close code %d.", exc.code)
                         await self.disconnect()
                         break
-                    if exc.code == 4014:
+                    if exc.code in (4014, 4022):
                         _log.info("Disconnected from voice by force... potentially reconnecting.")
                         successful = await self.potential_reconnect()
                         if not successful:
@@ -448,6 +453,25 @@ class VoiceClient(VoiceProtocol):
                             await self.disconnect()
                             break
                         continue
+                    if exc.code == 4021:
+                        _log.warning("Rate limited while trying to connect to voice")
+                        await self.disconnect()
+                        break
+                    if exc.code == 4015:
+                        _log.info("Disconnected from voice, attempting a resume...")
+                        try:
+                            await self.connect(
+                                reconnect=reconnect,
+                                timeout=self.timeout,
+                            )
+                        except asyncio.TimeoutError:
+                            _log.info("Could not resume the voice connection... Disconnecting...")
+                            await self.disconnect()
+                            break
+                        else:
+                            _log.info("Successfully resumed voice connection")
+                            continue
+                    _log.debug(f"Not handling close code {exc.code} ({exc.reason or "no reason"})")
 
                 if not reconnect:
                     await self.disconnect()

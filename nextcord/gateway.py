@@ -190,6 +190,9 @@ class KeepAliveHandler(threading.Thread):
 
 
 class VoiceKeepAliveHandler(KeepAliveHandler):
+    if TYPE_CHECKING:
+        ws: DiscordVoiceWebSocket
+
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.recent_ack_latencies = deque(maxlen=20)
@@ -197,8 +200,11 @@ class VoiceKeepAliveHandler(KeepAliveHandler):
         self.block_msg = "Shard ID %s voice heartbeat blocked for more than %s seconds"
         self.behind_msg = "High socket latency, shard ID %s heartbeat is %.1fs behind"
 
-    def get_payload(self) -> Dict[str, int]:
-        return {"op": self.ws.HEARTBEAT, "d": int(time.time() * 1000)}
+    def get_payload(self) -> Dict[str, int | Dict[str, int]]:
+        return {
+            "op": self.ws.HEARTBEAT,
+            "d": {"t": int(time.time() * 1000), "seq_ack": self.ws.seq_ack},
+        }
 
     def ack(self) -> None:
         ack_time = time.perf_counter()
@@ -794,6 +800,8 @@ class DiscordVoiceWebSocket:
         self._keep_alive: Optional[VoiceKeepAliveHandler] = None
         self._close_code: Optional[int] = None
         self.secret_key: Optional[List[int]] = None
+        # defaulting to -1
+        self.seq_ack: int = -1
         self._hook: Optional[Callable[..., Awaitable[None]]] = (
             hook or getattr(self, "_hook", None) or self._default_hook
         )
@@ -814,6 +822,7 @@ class DiscordVoiceWebSocket:
                 "token": state.token,
                 "server_id": str(state.server_id),
                 "session_id": state.session_id,
+                "seq_ack": self.seq_ack,
             },
         }
         await self.send_as_json(payload)
@@ -838,13 +847,15 @@ class DiscordVoiceWebSocket:
         *,
         resume: bool = False,
         hook: Optional[Callable[..., Awaitable[None]]] = None,
+        seq_ack: int = -1,
     ):
         """Creates a voice websocket for the :class:`VoiceClient`."""
-        gateway = "wss://" + client.endpoint + "/?v=4"
+        gateway = "wss://" + client.endpoint + "/?v=8"
         http = client._state.http
         socket = await http.ws_connect(gateway, compress=15)
         ws = cls(socket, loop=client.loop, hook=hook)
         ws.gateway = gateway
+        ws.seq_ack = seq_ack
         ws._connection = client
         ws._max_heartbeat_timeout = 60.0
         ws.thread_id = threading.get_ident()
@@ -885,6 +896,7 @@ class DiscordVoiceWebSocket:
         _log.debug("Voice websocket frame received: %s", msg)
         op: int = msg["op"]
         data: Dict[str, Any] = msg["d"]
+        self.seq_ack = msg.get("seq", self.seq_ack)  # this key could not be given
 
         if op == self.READY:
             await self.initial_connection(data)
