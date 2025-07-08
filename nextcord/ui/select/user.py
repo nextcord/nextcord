@@ -6,7 +6,6 @@ import asyncio
 from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, TypeVar
 
 from ...components import UserSelectMenu
-from ...enums import ComponentType
 from ...interactions import ClientT
 from ...member import Member
 from ...user import User
@@ -84,7 +83,7 @@ class UserSelect(SelectBase, Generic[V_co]):
     def __init__(
         self,
         *,
-        custom_id: str = MISSING,
+        custom_id: str | None = None,
         placeholder: Optional[str] = None,
         min_values: int = 1,
         max_values: int = 1,
@@ -100,13 +99,13 @@ class UserSelect(SelectBase, Generic[V_co]):
             disabled=disabled,
         )
         self._selected_values: UserSelectValues = UserSelectValues()
-        self._underlying = UserSelectMenu._raw_construct(
-            custom_id=self.custom_id,
-            type=ComponentType.user_select,
-            placeholder=self.placeholder,
-            min_values=self.min_values,
-            max_values=self.max_values,
-            disabled=self.disabled,
+        self._underlying = UserSelectMenu(
+            custom_id=custom_id,
+            placeholder=placeholder if placeholder is not None else MISSING,
+            # default_values=
+            min_values=min_values,
+            max_values=max_values,
+            disabled=disabled,
         )
 
     @property

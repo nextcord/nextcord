@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Callable, Optional, Tuple, TypeVar, Union
 from ..components import Button as ButtonComponent
 from ..enums import ButtonStyle, ComponentType
 from ..partial_emoji import PartialEmoji, _EmojiTag
+from ..utils import MISSING
 from .item import Item, ItemCallbackType
 
 __all__ = (
@@ -96,14 +97,14 @@ class Button(Item[V_co]):
                     f"Expected emoji to be str, Emoji, or PartialEmoji not {emoji.__class__}"
                 )
 
-        self._underlying = ButtonComponent._raw_construct(
-            type=ComponentType.button,
-            custom_id=custom_id,
-            url=url,
-            disabled=disabled,
-            label=label,
+        self._underlying = ButtonComponent(
             style=style,
-            emoji=emoji,
+            label=label if label is not None else MISSING,
+            emoji=emoji if emoji is not None else MISSING,
+            custom_id=custom_id if custom_id is not None else MISSING,
+            # sku_id=
+            url=url if url is not None else MISSING,
+            disabled=disabled,
         )
         self.row = row
 

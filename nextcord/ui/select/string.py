@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, Type
 
 from ...components import SelectOption, StringSelectMenu
 from ...emoji import Emoji
-from ...enums import ComponentType
 from ...interactions import ClientT
 from ...partial_emoji import PartialEmoji
 from ...utils import MISSING
@@ -93,14 +92,13 @@ class StringSelect(SelectBase, Generic[V_co]):
         )
         self._selected_values: List[str] = []
         options = [] if options is MISSING else options
-        self._underlying = StringSelectMenu._raw_construct(
+        self._underlying = StringSelectMenu(
             custom_id=self.custom_id,
-            type=ComponentType.select,
-            placeholder=self.placeholder,
-            min_values=self.min_values,
-            max_values=self.max_values,
-            disabled=self.disabled,
             options=options,
+            placeholder=placeholder if placeholder is not None else MISSING,
+            min_values=min_values,
+            max_values=max_values,
+            disabled=disabled,
         )
 
     @property
@@ -157,8 +155,8 @@ class StringSelect(SelectBase, Generic[V_co]):
         option = SelectOption(
             label=label,
             value=value,
-            description=description,
-            emoji=emoji,
+            description=description if description is not None else MISSING,
+            emoji=emoji if emoji is not None else MISSING,
             default=default,
         )
 

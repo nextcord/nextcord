@@ -43,6 +43,11 @@ if TYPE_CHECKING:
 #  whatever else relies on v1/normal components
 
 
+raise NotImplementedError(
+    "You shouldn't be importing this anymore! import normal components instead."
+)
+
+
 class Component:
     """Base class for components.
 

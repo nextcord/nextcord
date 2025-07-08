@@ -52,7 +52,7 @@ if TYPE_CHECKING:
 
     from ..abc import Snowflake
     from ..channel import TextChannel
-    from ..componentsv2 import Component
+    from ..components import Component
     from ..embeds import Embed
     from ..file import File
     from ..guild import Guild

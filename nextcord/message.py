@@ -25,7 +25,7 @@ from typing import (
 )
 
 from . import utils
-from .componentsv2 import resolve_component
+from .components import resolve_component
 from .embeds import Embed
 from .emoji import Emoji
 from .enums import ChannelType, IntegrationType, MessageReferenceType, MessageType, try_enum
@@ -54,7 +54,7 @@ if TYPE_CHECKING:
         Snowflake,
     )
     from .channel import TextChannel
-    from .componentsv2 import Component
+    from .components import Component
     from .mentions import AllowedMentions
     from .role import Role
     from .state import ConnectionState

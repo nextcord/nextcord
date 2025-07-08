@@ -55,7 +55,7 @@ __all__ = (
 if TYPE_CHECKING:
     from aiohttp import ClientSession
 
-    from . import componentsv2 as compv2
+    from . import components
     from .abc import MessageableChannel
     from .application_command import BaseApplicationCommand, SlashApplicationSubcommand
     from .channel import CategoryChannel, ForumChannel, StageChannel, TextChannel, VoiceChannel
@@ -506,7 +506,7 @@ class Interaction(Hashable, Generic[ClientT]):
         attachments: List[Attachment] = MISSING,
         view: Optional[View] = MISSING,
         allowed_mentions: Optional[AllowedMentions] = None,
-        components: list[compv2.Component] | None = None,
+        components: list[components.Component] | None = None,
     ) -> InteractionMessage:
         """|coro|
 
@@ -650,7 +650,7 @@ class Interaction(Hashable, Generic[ClientT]):
         flags: Optional[MessageFlags] = None,
         ephemeral: Optional[bool] = None,
         suppress_embeds: Optional[bool] = None,
-        components: list[compv2.Component] | None = None,
+        components: list[components.Component] | None = None,
     ) -> Union[PartialInteractionMessage, WebhookMessage]:
         """|coro|
 
@@ -913,7 +913,7 @@ class InteractionResponse:
         flags: Optional[MessageFlags] = None,
         ephemeral: Optional[bool] = None,
         suppress_embeds: Optional[bool] = None,
-        components: list[compv2.Component] | None = None,
+        components: list[components.Component] | None = None,
     ) -> PartialInteractionMessage:
         """|coro|
 
@@ -1117,7 +1117,7 @@ class InteractionResponse:
         attachments: List[Attachment] = MISSING,
         view: Optional[View] = MISSING,
         delete_after: Optional[float] = None,
-        components: list[compv2.Component] | None = None,
+        components: list[components.Component] | None = None,
     ) -> Optional[Message]:
         """|coro|
 
@@ -1254,7 +1254,7 @@ class _InteractionMessageMixin:
         view: Optional[View] = MISSING,
         allowed_mentions: Optional[AllowedMentions] = None,
         delete_after: Optional[float] = None,
-        components: list[compv2.Component] | None = None,
+        components: list[components.Component] | None = None,
     ) -> InteractionMessage:
         """|coro|
 
