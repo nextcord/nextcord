@@ -2090,7 +2090,8 @@ class InteractionContextType(IntEnum):
 class PollLayoutType(IntEnum):
     """The layout type of the poll.
 
-    ..versionadded:: 3.0"""
+    .. versionadded:: 3.0
+    """
 
     default = 1
     """The default poll layout type."""
