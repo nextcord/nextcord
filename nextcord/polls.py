@@ -222,7 +222,7 @@ class PollAnswerCount:
 
 
 class PollResults:
-    """The result of the poll.
+    """Represents the result of a poll.
 
     This contains the numbers of vote for each answer.
 
