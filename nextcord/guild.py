@@ -321,7 +321,7 @@ class Guild(Hashable):
 
     incidents: :class:`Incidents`
         Currently applied security actions to guild.
-        .. versionadded:: 3.1
+        .. versionadded:: 3.2
     """
 
     __slots__ = (
@@ -1804,7 +1804,7 @@ class Guild(Hashable):
         .. versionchanged:: 2.6
             The ``premium_progress_bar_enabled`` parameter has been added.
 
-        .. versionchanged:: 3.1
+        .. versionchanged:: 3.2
             The ``invites_disabled_until`` parameter has been added.
             The ``dms_disabled_until`` parameter has been added.
 
