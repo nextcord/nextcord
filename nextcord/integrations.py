@@ -11,11 +11,11 @@ from .user import User
 from .utils import MISSING, get_as_snowflake, parse_time
 
 __all__ = (
+    "BotIntegration",
+    "Integration",
     "IntegrationAccount",
     "IntegrationApplication",
-    "Integration",
     "StreamIntegration",
-    "BotIntegration",
 )
 
 if TYPE_CHECKING:
@@ -78,14 +78,14 @@ class Integration:
     """
 
     __slots__ = (
+        "_state",
+        "account",
+        "enabled",
         "guild",
         "id",
-        "_state",
-        "type",
         "name",
-        "account",
+        "type",
         "user",
-        "enabled",
     )
 
     def __init__(self, *, data: IntegrationPayload, guild: Guild) -> None:
@@ -165,14 +165,14 @@ class StreamIntegration(Integration):
     """
 
     __slots__ = (
-        "revoked",
+        "_role_id",
+        "enable_emoticons",
         "expire_behaviour",
         "expire_grace_period",
-        "synced_at",
-        "_role_id",
-        "syncing",
-        "enable_emoticons",
+        "revoked",
         "subscriber_count",
+        "synced_at",
+        "syncing",
     )
 
     def _from_data(self, data: StreamIntegrationPayload) -> None:
@@ -286,10 +286,10 @@ class IntegrationApplication:
     """
 
     __slots__ = (
+        "description",
+        "icon",
         "id",
         "name",
-        "icon",
-        "description",
         "summary",
         "user",
     )

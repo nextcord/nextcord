@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     )
     from ...types.interactions import ComponentInteractionData
 
-__all__ = ("MentionableSelect", "mentionable_select", "MentionableSelectValues")
+__all__ = ("MentionableSelect", "MentionableSelectValues", "mentionable_select")
 
 V_co = TypeVar("V_co", bound="View", covariant=True)
 
