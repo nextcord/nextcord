@@ -49,15 +49,15 @@ from .threads import Thread
 from .utils import MISSING
 
 __all__ = (
-    "TextChannel",
-    "VoiceChannel",
-    "StageChannel",
-    "DMChannel",
     "CategoryChannel",
-    "GroupChannel",
-    "PartialMessageable",
+    "DMChannel",
     "ForumChannel",
     "ForumTag",
+    "GroupChannel",
+    "PartialMessageable",
+    "StageChannel",
+    "TextChannel",
+    "VoiceChannel",
 )
 
 if TYPE_CHECKING:
@@ -159,21 +159,21 @@ class TextChannel(abc.Messageable, abc.GuildChannel, Hashable, PinsMixin):
     """
 
     __slots__ = (
-        "name",
-        "id",
-        "guild",
-        "topic",
+        "_overwrites",
         "_state",
-        "nsfw",
+        "_type",
         "category_id",
+        "default_auto_archive_duration",
+        "default_thread_slowmode_delay",
+        "flags",
+        "guild",
+        "id",
+        "last_message_id",
+        "name",
+        "nsfw",
         "position",
         "slowmode_delay",
-        "_overwrites",
-        "_type",
-        "last_message_id",
-        "default_auto_archive_duration",
-        "flags",
-        "default_thread_slowmode_delay",
+        "topic",
     )
 
     def __init__(self, *, state: ConnectionState, guild: Guild, data: TextChannelPayload) -> None:
@@ -911,25 +911,25 @@ class ForumChannel(abc.GuildChannel, Hashable):
     """
 
     __slots__ = (
-        "id",
-        "guild",
-        "name",
-        "category_id",
-        "position",
-        "topic",
-        "nsfw",
-        "flags",
-        "slowmode_delay",
-        "default_auto_archive_duration",
-        "last_message_id",
-        "default_sort_order",
-        "default_forum_layout",
+        "_available_tags",
+        "_overwrites",
         "_state",
         "_type",
-        "_overwrites",
-        "default_thread_slowmode_delay",
-        "_available_tags",
+        "category_id",
+        "default_auto_archive_duration",
+        "default_forum_layout",
         "default_reaction",
+        "default_sort_order",
+        "default_thread_slowmode_delay",
+        "flags",
+        "guild",
+        "id",
+        "last_message_id",
+        "name",
+        "nsfw",
+        "position",
+        "slowmode_delay",
+        "topic",
     )
 
     def __init__(self, *, state: ConnectionState, guild: Guild, data: ForumChannelPayload) -> None:
@@ -1503,18 +1503,18 @@ class ForumChannel(abc.GuildChannel, Hashable):
 
 class VocalGuildChannel(abc.Connectable, abc.GuildChannel, Hashable):
     __slots__ = (
-        "name",
-        "id",
-        "guild",
-        "bitrate",
-        "user_limit",
-        "_state",
-        "position",
         "_overwrites",
+        "_state",
+        "bitrate",
         "category_id",
-        "rtc_region",
-        "video_quality_mode",
         "flags",
+        "guild",
+        "id",
+        "name",
+        "position",
+        "rtc_region",
+        "user_limit",
+        "video_quality_mode",
     )
 
     def __init__(
@@ -2128,7 +2128,7 @@ class StageChannel(VocalGuildChannel, abc.Messageable):
             consider :meth:`is_nsfw` instead.
     """
 
-    __slots__ = ("topic", "nsfw")
+    __slots__ = ("nsfw", "topic")
 
     def __repr__(self) -> str:
         attrs = [
@@ -2465,15 +2465,15 @@ class CategoryChannel(abc.GuildChannel, Hashable):
     """
 
     __slots__ = (
-        "name",
-        "id",
-        "guild",
-        "nsfw",
-        "_state",
-        "position",
         "_overwrites",
+        "_state",
         "category_id",
         "flags",
+        "guild",
+        "id",
+        "name",
+        "nsfw",
+        "position",
     )
 
     def __init__(
@@ -2724,7 +2724,7 @@ class DMChannel(abc.Messageable, abc.PrivateChannel, Hashable, PinsMixin):
         The direct message channel ID.
     """
 
-    __slots__ = ("id", "recipient", "me", "_state")
+    __slots__ = ("_state", "id", "me", "recipient")
 
     def __init__(self, *, me: ClientUser, state: ConnectionState, data: DMChannelPayload) -> None:
         self._state: ConnectionState = state
@@ -2856,7 +2856,7 @@ class GroupChannel(abc.Messageable, abc.PrivateChannel, Hashable, PinsMixin):
         The group channel's name if provided.
     """
 
-    __slots__ = ("id", "recipients", "owner_id", "owner", "_icon", "name", "me", "_state")
+    __slots__ = ("_icon", "_state", "id", "me", "name", "owner", "owner_id", "recipients")
 
     def __init__(
         self, *, me: ClientUser, state: ConnectionState, data: GroupChannelPayload
@@ -3103,7 +3103,7 @@ class ForumTag:
         The emoji that represents this tag.
     """
 
-    __slots__ = ("id", "name", "moderated", "emoji")
+    __slots__ = ("emoji", "id", "moderated", "name")
 
     def __init__(
         self,

@@ -33,11 +33,11 @@ if TYPE_CHECKING:
     )
 
 __all__ = (
-    "AutoModerationTriggerMetadata",
-    "AutoModerationActionMetadata",
     "AutoModerationAction",
-    "AutoModerationRule",
     "AutoModerationActionExecution",
+    "AutoModerationActionMetadata",
+    "AutoModerationRule",
+    "AutoModerationTriggerMetadata",
 )
 
 
@@ -108,12 +108,12 @@ class AutoModerationTriggerMetadata:
     """
 
     __slots__ = (
-        "keyword_filter",
-        "regex_patterns",
-        "presets",
         "allow_list",
-        "mention_total_limit",
+        "keyword_filter",
         "mention_raid_protection_enabled",
+        "mention_total_limit",
+        "presets",
+        "regex_patterns",
     )
 
     def __init__(
@@ -220,7 +220,7 @@ class AutoModerationActionMetadata:
             This message cannot exceed 150 characters.
     """
 
-    __slots__ = ("channel_id", "duration_seconds", "custom_message")
+    __slots__ = ("channel_id", "custom_message", "duration_seconds")
 
     def __init__(
         self,
@@ -280,7 +280,7 @@ class AutoModerationAction:
         The additional metadata needed during execution for this specific action type.
     """
 
-    __slots__ = ("type", "metadata")
+    __slots__ = ("metadata", "type")
 
     def __init__(
         self,
@@ -368,21 +368,21 @@ class AutoModerationRule(Hashable):
 
     __slots__ = (
         "_state",
-        "id",
-        "guild_id",
-        "guild",
-        "name",
-        "creator_id",
-        "creator",
-        "event_type",
-        "trigger_type",
-        "trigger_metadata",
         "actions",
+        "creator",
+        "creator_id",
         "enabled",
-        "exempt_role_ids",
+        "event_type",
         "exempt_channel_ids",
-        "exempt_roles",
         "exempt_channels",
+        "exempt_role_ids",
+        "exempt_roles",
+        "guild",
+        "guild_id",
+        "id",
+        "name",
+        "trigger_metadata",
+        "trigger_type",
     )
 
     def __init__(self, *, data: AutoModerationRulePayload, state: ConnectionState) -> None:
