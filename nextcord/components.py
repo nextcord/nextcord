@@ -1161,6 +1161,21 @@ class StringSelect(InteractiveComponent):  # Component type 3
         self.max_values = max_values
         self.disabled = disabled
 
+    def add_option(
+        self,
+        label: str,
+        value: str = MISSING,
+        *,
+        description: str = MISSING,
+        emoji: PartialEmoji | Emoji | str = MISSING,
+        default: bool = MISSING,
+    ) -> None:
+        self.options.append(
+            SelectOption(
+                label=label, value=value, description=description, emoji=emoji, default=default
+            )
+        )
+
     async def wait_for_interaction(
         self,
         bot: Client,
