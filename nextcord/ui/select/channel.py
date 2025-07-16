@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, Type
 
 from ...abc import GuildChannel
 from ...components import ChannelSelectMenu
-from ...enums import ComponentType
 from ...interactions import ClientT
 from ...utils import MISSING
 from ..item import ItemCallbackType
@@ -83,7 +82,7 @@ class ChannelSelect(SelectBase, Generic[V_co]):
     def __init__(
         self,
         *,
-        custom_id: str = MISSING,
+        custom_id: str | None = None,
         placeholder: Optional[str] = None,
         min_values: int = 1,
         max_values: int = 1,
@@ -101,14 +100,14 @@ class ChannelSelect(SelectBase, Generic[V_co]):
         )
         self._selected_values: ChannelSelectValues = ChannelSelectValues()
         self.channel_types: List[ChannelType] = channel_types
-        self._underlying = ChannelSelectMenu._raw_construct(
-            custom_id=self.custom_id,
-            type=ComponentType.channel_select,
-            placeholder=self.placeholder,
-            min_values=self.min_values,
-            max_values=self.max_values,
-            disabled=self.disabled,
+        self._underlying = ChannelSelectMenu(
+            custom_id=custom_id,
             channel_types=channel_types,
+            placeholder=placeholder if placeholder is not None else MISSING,
+            # default_values=
+            min_values=min_values,
+            max_values=max_values,
+            disabled=disabled,
         )
 
     @property

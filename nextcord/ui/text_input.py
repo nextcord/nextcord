@@ -87,16 +87,15 @@ class TextInput(Item[V_co]):
     ) -> None:
         self._provided_custom_id = custom_id is not MISSING
         custom_id = os.urandom(16).hex() if custom_id is MISSING else custom_id
-        self._underlying = TextInputComponent._raw_construct(
-            type=ComponentType.text_input,
-            custom_id=custom_id,
-            label=label,
+        self._underlying = TextInputComponent(
             style=style,
-            min_length=min_length,
-            max_length=max_length,
-            required=required,
-            value=default_value,
-            placeholder=placeholder,
+            label=label,
+            custom_id=custom_id,
+            min_length=min_length if min_length is not None else MISSING,
+            max_length=max_length if min_length is not None else MISSING,
+            required=required if required is not None else MISSING,
+            value=default_value if default_value is not None else MISSING,
+            placeholder=placeholder if placeholder is not None else MISSING,
         )
         self.row = row
         self._inputed_value: Optional[str] = None
