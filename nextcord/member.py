@@ -22,8 +22,8 @@ from .user import BaseUser, User, _UserTag
 from .utils import MISSING
 
 __all__ = (
-    "VoiceState",
     "Member",
+    "VoiceState",
 )
 
 if TYPE_CHECKING:
@@ -93,16 +93,16 @@ class VoiceState:
     """
 
     __slots__ = (
-        "session_id",
+        "afk",
+        "channel",
         "deaf",
         "mute",
+        "requested_to_speak_at",
+        "self_deaf",
         "self_mute",
         "self_stream",
         "self_video",
-        "self_deaf",
-        "afk",
-        "channel",
-        "requested_to_speak_at",
+        "session_id",
         "suppress",
     )
 
@@ -235,20 +235,20 @@ class Member(abc.Messageable, _UserTag):
     """
 
     __slots__ = (
+        "_avatar",
+        "_banner",
+        "_client_status",
+        "_flags",
         "_roles",
-        "joined_at",
-        "premium_since",
+        "_state",
+        "_timeout",
+        "_user",
         "activities",
         "guild",
-        "pending",
+        "joined_at",
         "nick",
-        "_client_status",
-        "_user",
-        "_state",
-        "_avatar",
-        "_timeout",
-        "_flags",
-        "_banner",
+        "pending",
+        "premium_since",
     )
 
     if TYPE_CHECKING:
