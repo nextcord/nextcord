@@ -1450,9 +1450,9 @@ class Client:
             me = getattr(guild, "me", None)
             if me is None:
                 continue
-            
+
             if activity is not None:
-                me.activities = (activity,)  
+                me.activities = (activity,)
             else:
                 me.activities = ()
 
@@ -1527,7 +1527,7 @@ class Client:
         """
         return guild_iterator(
             self, limit=limit, before=before, after=after, with_counts=with_counts
-            )
+        )
 
     async def fetch_template(self, code: Union[Template, str]) -> Template:
         """|coro|
