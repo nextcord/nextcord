@@ -4,6 +4,7 @@
 *.egg-info
 venv/
 .venv/
+myenv
 docs/_build
 docs/crowdin.py
 *.buildinfo
@@ -27,3 +28,5 @@ build/
 
 # locks don't belong in libraries
 poetry.lock
+
+.extension/
