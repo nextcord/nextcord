@@ -1447,12 +1447,12 @@ class Client:
         await self.ws.change_presence(activity=activity, status=status_str)
 
         for guild in self._connection.guilds:
-            me = guild.me
-            if me is None: # type: ignore
+            me = getattr(guild, "me", None)
+            if me is None:
                 continue
-
+            
             if activity is not None:
-                me.activities = (activity,)  # type: ignore
+                me.activities = (activity,)  
             else:
                 me.activities = ()
 
