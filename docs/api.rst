@@ -3157,6 +3157,56 @@ ChannelSelect
 .. autoclass:: nextcord.ui.ChannelSelectValues
     :members:
 
+
+UI Components
+-------------
+
+This is a test, please ignore for now.
+
+Base Components
+~~~~~~~~~~~~~~~
+Base component classes. Not intended to be instantiated by users, but can be used for :func:`isinstance` checks.
+
+.. attributetable:: Component
+.. autoclass:: Component
+    :members:
+
+.. attributetable:: InteractiveComponent
+.. autoclass:: InteractiveComponent
+    :show-inheritance:
+    :inherited-members:
+
+.. attributetable:: HolderComponent
+.. autoclass:: HolderComponent
+    :show-inheritance:
+    :inherited-members:
+
+
+Action Row
+~~~~~~~~~~
+
+.. attributetable:: ActionRow
+.. autoclass:: ActionRow
+    :show-inheritance:
+    :inherited-members:
+
+Button
+~~~~~~
+
+.. attributetable:: Button
+.. autoclass:: Button
+    :show-inheritance:
+    :inherited-members:
+
+String Select
+~~~~~~~~~~~~~
+
+.. attributetable:: StringSelect
+.. autoclass:: StringSelect
+    :show-inheritance:
+    :inherited-members:
+
+
 Application Commands
 --------------------
 

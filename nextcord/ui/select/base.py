@@ -123,10 +123,9 @@ class SelectBase(Item[V_co]):
         self._selected_values: List[str] = []
         self._provided_custom_id = custom_id is not MISSING
         custom_id = os.urandom(16).hex() if custom_id is MISSING else custom_id
-        self._underlying = SelectMenu._raw_construct(
+        self._underlying = SelectMenu(
             custom_id=custom_id,
-            type=ComponentType.select,
-            placeholder=placeholder,
+            placeholder=placeholder if placeholder is not None else MISSING,
             min_values=min_values,
             max_values=max_values,
             disabled=disabled,
