@@ -43,8 +43,8 @@ if TYPE_CHECKING:
         ChannelSelectMenu as ChannelSelectMenuPayload,
         Component as ComponentPayload,
         MentionableSelectMenu as MentionableSelectMenuPayload,
-        OLDSelectMenu as SelectMenuPayload,
         RoleSelectMenu as RoleSelectMenuPayload,
+        SelectMenu as SelectMenuPayload,
         SelectMenuBase as SelectMenuBasePayload,
         SelectOption as SelectOptionPayload,
         TextInputComponent as TextInputComponentPayload,
@@ -69,6 +69,8 @@ __all__ = (
     "Component",
     "Container",
     "File",
+    "HolderComponent",
+    "InteractiveComponent",
     "MediaGallery",
     "MediaGalleryItem",
     "MentionableSelect",
@@ -706,13 +708,24 @@ def _OLDcomponent_factory(data: ComponentPayload) -> OLDComponent:
 
 
 class Component:
-    """Base class for components.
+    """Represents a basic component object.
 
-    This class is intended to be abstract, but will be used if no other component class is available.
+    Base class for all components.
+    Intended to be abstract and not instantiated by users, but will be used internally if no other component
+    class is available.
+
+    .. versionadded:: 2.0
+
+    .. versionchanged:: 3.2
+
+        - :class:`.Component` is now user init-able.
+        - Added :attr:`~.Component.id` attribute.
     """
 
     type: ComponentType
+    """The type of component."""
     id: int  # Can be MISSING
+    """ID of the component. Can be ``MISSING``."""
 
     def __init__(self, *, component_type: int | ComponentType, component_id: int = MISSING) -> None:
         if isinstance(component_type, ComponentType):
@@ -726,6 +739,7 @@ class Component:
         return f"<{self.__class__.__name__} type={self.type} id={self.id} at {hex(id(self))}>"
 
     def to_dict(self) -> dict:
+        """Converts the object into a dictionary object to send to Discord."""
         ret = {"type": self.type.value}
         if self.id is not MISSING:
             ret["id"] = self.id
@@ -734,16 +748,26 @@ class Component:
 
     @classmethod
     def from_dict(cls, payload: dict):
+        """Takes a dictionary payload and creates the component from it.
+
+        Parameters
+        ----------
+        payload: dict
+            Dictionary payload for a component from Discord.
+        """
         return cls(component_type=payload["type"], component_id=payload["id"])
 
 
 class InteractiveComponent(Component):
-    """Base class for components that have a custom_id and should have callback-related helper funcs.
+    """Base class for components with the ``custom_id`` attribute and should have callback-related helper methods.
 
-    This class is intended to be abstract and not instantiated.
+    This class is intended to be abstract and not instantiated by users.
+
+    .. versionadded:: 3.2
     """
 
     custom_id: str  # Can be MISSING, specifically for link and premium buttons. If those 2 button types no longer
+    """Custom ID of the component, received in :class:`.Interaction` data. Can be ``MISSING``"""
     #  subclass InteractiveComponent, this should no longer be set to missing.
 
     def __init__(
@@ -791,6 +815,30 @@ class InteractiveComponent(Component):
         callback: Callable[[Interaction], Coroutine[None, None, Any]],
         timeout: float | None = 180.0,
     ):
+        """|coro|
+
+        Helper method, waits for an interaction with the matching :attr:`.custom_id` to be received by the
+        given bot/:class:`.Client`.
+
+        Parameters
+        ----------
+        bot
+            Bot/Client object to listen for received interactions.
+        callback
+            Awaitable callback to execute when the custom ID is found.
+        timeout
+            Time in seconds to wait before timing out and raising :exc:`asyncio.TimeoutError`.
+
+        Raises
+        ------
+        asyncio.TimeoutError
+            If a timeout is provided and it was reached.
+
+        Returns
+        -------
+        Any
+            Returns the return value of the given callback.
+        """
         return await self._wait_for_interaction(
             bot, callback, timeout, _inter_arg_func=lambda i: (i,)
         )
@@ -821,13 +869,20 @@ class _SelectComponent(InteractiveComponent):
     String select should not subclass this, as it is (currently) different enough.
 
     This class is intended to be abstract and not instantiated.
+
+    .. versionadded:: 3.2
     """
 
     placeholder: str  # Can be MISSING
+    """Placeholder text if nothing is selected. Can be ``MISSING``."""
     default_values: list[SelectDefaultValue]  # Can be MISSING
+    """List of pre-populated values. Can be ``MISSING``."""
     min_values: int  # Can be MISSING
+    """Minimum amount of chosen values. Can be ``MISSING``."""
     max_values: int  # Can be MISSING
+    """Maximum amount of chosen values. Can be ``MISSING``."""
     disabled: bool  # Can be MISSING
+    """If the menu is disabled. Can be ``MISSING``."""
 
     def __init__(
         self,
@@ -853,6 +908,7 @@ class _SelectComponent(InteractiveComponent):
         value_id: int,
         value_type: SelectDefaultValueType | str | Literal["user", "role", "channel"],
     ) -> None:
+        """Adds a default value of the given ID and type."""
         if self.default_values is MISSING:
             self.default_values = []
 
@@ -899,12 +955,15 @@ class _SelectComponent(InteractiveComponent):
 
 
 class HolderComponent(Component):
-    """Base class for components with the "components" attribute that are designed to hold other components.
+    """Base class for components with the ``components`` attribute that are designed to hold other components.
 
-    This class is intended to be abstract and not instantiated.
+    This class is intended to be abstract and not instantiated by users.
+
+    .. versionadded:: 3.2
     """
 
     components: list[Component]
+    """List of child components."""
 
     def __init__(
         self,
@@ -926,7 +985,15 @@ class HolderComponent(Component):
 
 
 class ActionRow(HolderComponent):  # Component type 1
-    components: list[Component]
+    """Represents an Action Row component object.
+
+    This is a component that holds up to 5 children components in a row.
+
+    .. versionadded:: 2.0
+
+    .. versionchanged:: 3.2
+        :class:`.ActionRow` is now user init-able.
+    """
 
     def __init__(self, components: list[Component], *, component_id: int = MISSING) -> None:
         super().__init__(
@@ -935,6 +1002,7 @@ class ActionRow(HolderComponent):  # Component type 1
 
     @property
     def children(self) -> list[Component]:
+        """The children components that this holds, if any. Alias for :attr:`.components`."""
         return self.components
 
     @classmethod
@@ -947,12 +1015,31 @@ class ActionRow(HolderComponent):  # Component type 1
 
 # TODO: Think about moving Premium and Link buttons to a "NoninteractiveButton" thing?
 class Button(InteractiveComponent):  # Component type 2
+    """Represents a Button component object.
+
+    .. note::
+        Due to the conflicting options present in ``__init__``, it is recommended to use the various
+        classmethods such as :meth:`.as_primary`, :meth:`.as_secondary`, etc.
+
+    .. versionadded:: 2.0
+
+    .. versionchanged:: 3.2
+        :class:`.Button` is now user init-able.
+
+    """
+
     style: ButtonStyle
+    """The style of the button."""
     label: str  # Can be MISSING
+    """The label of the button. Can be ``MISSING``."""
     emoji: PartialEmoji  # Can be MISSING
+    """The emoji of the button. Can be ``MISSING``."""
     sku_id: int  # Can be MISSING
+    """ID of a purchasable SKU, only for premium-style buttons. Can be ``MISSING``."""
     url: str  # Can be MISSING
+    """The URL this button sends you to, only for link-style buttons. Can be ``MISSING``."""
     disabled: bool  # Can be MISSING
+    """Whether the button is disabled or not. Can be ``MISSING``."""
 
     def __init__(
         self,
@@ -1037,6 +1124,28 @@ class Button(InteractiveComponent):  # Component type 2
         disabled: bool = MISSING,
         component_id: int = MISSING,
     ):
+        """Creates a primary-styled button.
+
+        Unspecified parameters will use Discord defaults.
+
+        Parameters
+        ----------
+        custom_id
+            Optionally supplied custom ID for the button.
+        label
+            Text to display on the button. Required unless ``emoji`` is specified.
+        emoji
+            Emoji to display on the button. Required unless ``label`` is specified.
+        disabled
+            Whether the button should be disabled or not.
+        component_id
+            ID of the component.
+
+        Returns
+        -------
+        :class:`.Button`
+            Button with the primary style.
+        """
         return cls(
             style=ButtonStyle.primary,
             custom_id=custom_id,
@@ -1056,6 +1165,28 @@ class Button(InteractiveComponent):  # Component type 2
         disabled: bool = MISSING,
         component_id: int = MISSING,
     ):
+        """Creates a secondary-styled button.
+
+        Unspecified parameters will use Discord defaults.
+
+        Parameters
+        ----------
+        custom_id
+            Optionally supplied custom ID for the button.
+        label
+            Text to display on the button. Required unless ``emoji`` is specified.
+        emoji
+            Emoji to display on the button. Required unless ``label`` is specified.
+        disabled
+            Whether the button should be disabled or not.
+        component_id
+            ID of the component.
+
+        Returns
+        -------
+        :class:`.Button`
+            Button with the secondary style.
+        """
         return cls(
             style=ButtonStyle.secondary,
             custom_id=custom_id,
@@ -1075,6 +1206,28 @@ class Button(InteractiveComponent):  # Component type 2
         disabled: bool = MISSING,
         component_id: int = MISSING,
     ):
+        """Creates a success-styled button.
+
+        Unspecified parameters will use Discord defaults.
+
+        Parameters
+        ----------
+        custom_id
+            Optionally supplied custom ID for the button.
+        label
+            Text to display on the button. Required unless ``emoji`` is specified.
+        emoji
+            Emoji to display on the button. Required unless ``label`` is specified.
+        disabled
+            Whether the button should be disabled or not.
+        component_id
+            ID of the component.
+
+        Returns
+        -------
+        :class:`.Button`
+            Button with the success style.
+        """
         return cls(
             style=ButtonStyle.success,
             custom_id=custom_id,
@@ -1094,6 +1247,28 @@ class Button(InteractiveComponent):  # Component type 2
         disabled: bool = MISSING,
         component_id: int = MISSING,
     ):
+        """Creates a danger-styled button.
+
+        Unspecified parameters will use Discord defaults.
+
+        Parameters
+        ----------
+        custom_id
+            Optionally supplied custom ID for the button.
+        label
+            Text to display on the button. Required unless ``emoji`` is specified.
+        emoji
+            Emoji to display on the button. Required unless ``label`` is specified.
+        disabled
+            Whether the button should be disabled or not.
+        component_id
+            ID of the component.
+
+        Returns
+        -------
+        :class:`.Button`
+            Button with the danger style.
+        """
         return cls(
             style=ButtonStyle.danger,
             custom_id=custom_id,
@@ -1113,6 +1288,28 @@ class Button(InteractiveComponent):  # Component type 2
         disabled: bool = MISSING,
         component_id: int = MISSING,
     ):
+        """Creates a link-styled button.
+
+        Unspecified non-required parameters will use Discord defaults.
+
+        Parameters
+        ----------
+        url
+            The URL the button should send you to.
+        label
+            Text to display on the button. Required unless ``emoji`` is specified.
+        emoji
+            Emoji to display on the button. Required unless ``label`` is specified.
+        disabled
+            Whether the button should be disabled or not.
+        component_id
+            ID of the component.
+
+        Returns
+        -------
+        :class:`.Button`
+            Button with the link style.
+        """
         return cls(
             style=ButtonStyle.link,
             url=url,
@@ -1126,6 +1323,24 @@ class Button(InteractiveComponent):  # Component type 2
     def as_premium(
         cls, sku_id: int, *, disabled: bool = MISSING, component_id: int = MISSING
     ):  # Style 6
+        """Creates a premium-styled button.
+
+        Unspecified non-required parameters will use Discord defaults.
+
+        Parameters
+        ----------
+        sku_id
+            ID of a purchasable SKU.
+        disabled
+            Whether the button should be disabled or not.
+        component_id
+            ID of the component.
+
+        Returns
+        -------
+        :class:`.Button`
+            Button with the premium style.
+        """
         return cls(
             style=ButtonStyle.premium,
             sku_id=sku_id,
@@ -1135,11 +1350,33 @@ class Button(InteractiveComponent):  # Component type 2
 
 
 class StringSelect(InteractiveComponent):  # Component type 3
+    """Represents a String Select component object.
+
+    A select menu is functionally the same as a dropdown, however
+    on mobile it renders a bit differently.
+
+    There are 2 aliases for this class. ``StringSelectMenu`` for compatibility purposes and ``SelectMenu``.
+
+    .. versionadded:: 2.0
+
+    .. versionchanged:: 3.2
+
+        - :class:`.StringSelect` is not user init-able.
+        - Renamed from ``StringSelectMenu`` to ``StringSelect`` to match Discord's name, and an alias for
+          the old name added.
+
+    """
+
     options: list[SelectOption]
+    """A list of options that can be selected in this menu."""
     placeholder: str  # Can be MISSING
+    """The placeholder text that is shown if nothing is selected, if any. Can be ``MISSING``"""
     min_values: int  # Can be MISSING
+    """The minimum number of items that must be chosen for this select menu. Can be ``MISSING``"""
     max_values: int  # Can be MISSING
+    """The maximum number of items that must be chosen for this select menu. Can be ``MISSING``"""
     disabled: bool  # Can be MISSING
+    """Whether the select is disabled or not. Can be ``MISSING``"""
 
     def __init__(
         self,
