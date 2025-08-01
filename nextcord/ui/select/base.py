@@ -112,7 +112,7 @@ class SelectBase(Item[V_co]):
     def __init__(
         self,
         *,
-        custom_id: str = MISSING,
+        custom_id: str | None = None,
         placeholder: Optional[str] = None,
         min_values: int = 1,
         max_values: int = 1,
@@ -121,8 +121,8 @@ class SelectBase(Item[V_co]):
     ) -> None:
         super().__init__()
         self._selected_values: List[str] = []
-        self._provided_custom_id = custom_id is not MISSING
-        custom_id = os.urandom(16).hex() if custom_id is MISSING else custom_id
+        self._provided_custom_id = custom_id is not None
+        custom_id = os.urandom(16).hex() if custom_id is None else custom_id
         self._underlying = SelectMenu(
             custom_id=custom_id,
             placeholder=placeholder if placeholder is not None else MISSING,
@@ -147,14 +147,14 @@ class SelectBase(Item[V_co]):
     @property
     def placeholder(self) -> Optional[str]:
         """Optional[:class:`str`]: The placeholder text that is shown if nothing is selected, if any."""
-        return self._underlying.placeholder
+        return self._underlying.placeholder if self._underlying.placeholder is not MISSING else None
 
     @placeholder.setter
     def placeholder(self, value: Optional[str]):
         if value is not None and not isinstance(value, str):
             raise TypeError("placeholder must be None or str")
 
-        self._underlying.placeholder = value
+        self._underlying.placeholder = value if value is not None else MISSING
 
     @property
     def min_values(self) -> int:

@@ -25,7 +25,7 @@ from .types import (
 from .utils import MISSING, get_slots
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Sequence
     from typing import Any, Coroutine, Literal
 
     from typing_extensions import Self
@@ -1919,7 +1919,7 @@ class ChannelSelect(_SelectComponent):  # Component type 8
         self,
         custom_id: str | None = None,
         *,
-        channel_types: list[ChannelType | int] = MISSING,
+        channel_types: Sequence[ChannelType | int] = MISSING,
         placeholder: str = MISSING,
         default_values: list[SelectDefaultValue] = MISSING,
         min_values: int = MISSING,

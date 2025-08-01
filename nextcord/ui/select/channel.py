@@ -88,7 +88,7 @@ class ChannelSelect(SelectBase, Generic[V_co]):
         max_values: int = 1,
         disabled: bool = False,
         row: Optional[int] = None,
-        channel_types: List[ChannelType] = MISSING,
+        channel_types: list[ChannelType] = MISSING,
     ) -> None:
         super().__init__(
             custom_id=custom_id,
@@ -99,7 +99,7 @@ class ChannelSelect(SelectBase, Generic[V_co]):
             row=row,
         )
         self._selected_values: ChannelSelectValues = ChannelSelectValues()
-        self.channel_types: List[ChannelType] = channel_types
+        self.channel_types: list[ChannelType] = channel_types
         self._underlying = ChannelSelectMenu(
             custom_id=custom_id,
             channel_types=channel_types,

@@ -123,25 +123,25 @@ class Button(Item[V_co]):
 
         If this button is for a URL, it does not have a custom ID.
         """
-        return self._underlying.custom_id
+        return self._underlying.custom_id if self._underlying.custom_id is not MISSING else None
 
     @custom_id.setter
     def custom_id(self, value: Optional[str]) -> None:
         if value is not None and not isinstance(value, str):
             raise TypeError("custom_id must be None or str")
 
-        self._underlying.custom_id = value
+        self._underlying.custom_id = value  # type: ignore
 
     @property
     def url(self) -> Optional[str]:
         """Optional[:class:`str`]: The URL this button sends you to."""
-        return self._underlying.url
+        return self._underlying.url if self._underlying.url is not MISSING else None
 
     @url.setter
     def url(self, value: Optional[str]) -> None:
         if value is not None and not isinstance(value, str):
             raise TypeError("url must be None or str")
-        self._underlying.url = value
+        self._underlying.url = value if value is not None else MISSING
 
     @property
     def disabled(self) -> bool:
@@ -159,12 +159,12 @@ class Button(Item[V_co]):
 
     @label.setter
     def label(self, value: Optional[str]) -> None:
-        self._underlying.label = str(value) if value is not None else value
+        self._underlying.label = str(value) if value is not None else value  # type: ignore
 
     @property
     def emoji(self) -> Optional[PartialEmoji]:
         """Optional[:class:`.PartialEmoji`]: The emoji of the button, if available."""
-        return self._underlying.emoji
+        return self._underlying.emoji if self._underlying.emoji is not MISSING else None
 
     @emoji.setter
     def emoji(self, value: Optional[Union[str, Emoji, PartialEmoji]]) -> None:  # type: ignore
@@ -178,7 +178,7 @@ class Button(Item[V_co]):
                     f"Expected str, Emoji, or PartialEmoji, received {value.__class__} instead"
                 )
         else:
-            self._underlying.emoji = None
+            self._underlying.emoji = MISSING
 
     @classmethod
     def from_component(cls, button: ButtonComponent) -> Self:
