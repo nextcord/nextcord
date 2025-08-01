@@ -3207,6 +3207,15 @@ String Select
     :inherited-members:
 
 
+Text Input
+~~~~~~~~~~
+
+.. attributetable:: TextInput
+.. autoclass:: TextInput
+    :show-inheritance:
+    :inherited-members:
+
+
 Application Commands
 --------------------
 

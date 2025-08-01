@@ -8,18 +8,24 @@ from typing_extensions import NotRequired
 
 from .channel import ChannelType
 from .emoji import PartialEmoji
+from .snowflake import Snowflake
 
 ComponentType = Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17]
 ButtonStyle = Literal[1, 2, 3, 4, 5, 6]
 TextInputStyle = Literal[1, 2]
 
 
-class ActionRow(TypedDict):
+class BaseComponent(TypedDict):
+    type: ComponentType
+    id: int
+
+
+class ActionRow(BaseComponent):
     type: Literal[1]
     components: List[Component]
 
 
-class ButtonComponent(TypedDict):
+class ButtonComponent(BaseComponent):
     type: Literal[2]
     style: ButtonStyle
     custom_id: NotRequired[str]
@@ -27,6 +33,7 @@ class ButtonComponent(TypedDict):
     disabled: NotRequired[bool]
     emoji: NotRequired[PartialEmoji]
     label: NotRequired[str]
+    sku_id: NotRequired[Snowflake]
 
 
 class SelectOption(TypedDict):
@@ -37,9 +44,15 @@ class SelectOption(TypedDict):
     emoji: NotRequired[PartialEmoji]
 
 
-class SelectMenuBase(TypedDict):
+class SelectDefaultValue(TypedDict):
+    id: Snowflake
+    type: Literal["user", "role", "channel"]
+
+
+class SelectMenuBase(BaseComponent):
     custom_id: str
     placeholder: NotRequired[str]
+    default_values: NotRequired[list[SelectDefaultValue]]
     min_values: NotRequired[int]
     max_values: NotRequired[int]
     disabled: NotRequired[bool]
@@ -67,8 +80,7 @@ class ChannelSelectMenu(SelectMenuBase):
     channel_types: NotRequired[List[ChannelType]]
 
 
-class TextInputComponent(TypedDict):
-    id: NotRequired[int]
+class TextInputComponent(BaseComponent):
     type: Literal[4]
     custom_id: str
     style: TextInputStyle
@@ -80,4 +92,79 @@ class TextInputComponent(TypedDict):
     placeholder: NotRequired[str]
 
 
-Component = Union[ActionRow, ButtonComponent, SelectMenu, TextInputComponent]
+class Section(BaseComponent):
+    type: Literal[9]
+    components: list[TextDisplay]
+    accessory: Component
+
+
+class TextDisplay(BaseComponent):
+    type: Literal[10]
+    content: str
+
+
+class UnfurledMedia(TypedDict):
+    url: str
+    proxy_url: NotRequired[str]
+    height: NotRequired[int | None]
+    width: NotRequired[int | None]
+    content_type: NotRequired[str]
+    attachment_id: NotRequired[Snowflake]
+
+
+class Thumbnail(BaseComponent):
+    type: Literal[11]
+    media: UnfurledMedia
+    description: NotRequired[str]
+    spoiler: NotRequired[bool]
+
+
+class MediaGalleryItem(TypedDict):
+    media: UnfurledMedia
+    description: NotRequired[str]
+    spoiler: NotRequired[bool]
+
+
+class MediaGallery(BaseComponent):
+    type: Literal[12]
+    items: list[MediaGalleryItem]
+
+
+class File(BaseComponent):
+    type: Literal[13]
+    file: UnfurledMedia
+    spoiler: NotRequired[bool]
+    name: str  # Sent back as part of the API, ignored when sending.
+    size: int  # Sent back as part of the API, ignored when sending.
+
+
+class Separator(BaseComponent):
+    type: Literal[14]
+    divider: NotRequired[bool]
+    spacing: NotRequired[Literal[1, 2]]
+
+
+class Container(BaseComponent):
+    type: Literal[17]
+    components: list[Component]
+    accent_color: NotRequired[int | None]
+    spoiler: NotRequired[bool]
+
+
+Component = Union[
+    ActionRow,
+    ButtonComponent,
+    SelectMenu,
+    UserSelectMenu,
+    RoleSelectMenu,
+    MentionableSelectMenu,
+    ChannelSelectMenu,
+    TextInputComponent,
+    Section,
+    TextDisplay,
+    Thumbnail,
+    MediaGallery,
+    File,
+    Separator,
+    Container,
+]

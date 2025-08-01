@@ -96,6 +96,14 @@ __all__ = (
 C = TypeVar("C", bound="Component")
 
 
+class _InteractiveComponentPayload(comp_payloads.BaseComponent):
+    custom_id: str
+
+
+class _HolderComponentPayload(comp_payloads.BaseComponent):
+    components: list[comp_payloads.Component | comp_payloads.BaseComponent]
+
+
 class OLDComponent:
     """Represents a Discord Bot UI Kit Component.
 
@@ -738,23 +746,15 @@ class Component:
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} type={self.type} id={self.id} at {hex(id(self))}>"
 
-    def to_dict(self) -> dict:
-        """Converts the object into a dictionary object to send to Discord."""
-        ret = {"type": self.type.value}
+    def to_dict(self) -> comp_payloads.BaseComponent:
+        ret = cast(comp_payloads.BaseComponent, {"type": self.type.value})
         if self.id is not MISSING:
             ret["id"] = self.id
 
         return ret
 
     @classmethod
-    def from_dict(cls, payload: dict):
-        """Takes a dictionary payload and creates the component from it.
-
-        Parameters
-        ----------
-        payload: dict
-            Dictionary payload for a component from Discord.
-        """
+    def from_dict(cls, payload: comp_payloads.BaseComponent):
         return cls(component_type=payload["type"], component_id=payload["id"])
 
 
@@ -843,8 +843,8 @@ class InteractiveComponent(Component):
             bot, callback, timeout, _inter_arg_func=lambda i: (i,)
         )
 
-    def to_dict(self) -> dict:
-        ret = super().to_dict()
+    def to_dict(self) -> _InteractiveComponentPayload:
+        ret = cast(_InteractiveComponentPayload, super().to_dict())
         if self.custom_id is not MISSING:
             ret["custom_id"] = self.custom_id
 
@@ -914,8 +914,9 @@ class _SelectComponent(InteractiveComponent):
 
         self.default_values.append(SelectDefaultValue(value_id, value_type))
 
-    def to_dict(self) -> dict:
-        ret = super().to_dict()
+    def to_dict(self) -> comp_payloads.SelectMenuBase:
+        ret = comp_payloads.SelectMenuBase(**super().to_dict())
+
         if self.placeholder is not MISSING:
             ret["placeholder"] = self.placeholder
 
@@ -934,7 +935,7 @@ class _SelectComponent(InteractiveComponent):
         return ret
 
     @classmethod
-    def from_dict(cls, payload: dict):
+    def from_dict(cls, payload: comp_payloads.SelectMenuBase):
         if "default_values" in payload:
             default_values = [
                 SelectDefaultValue.from_dict(val_data) for val_data in payload["default_values"]
@@ -975,10 +976,10 @@ class HolderComponent(Component):
         super().__init__(component_type=component_type, component_id=component_id)
         self.components = components
 
-    def to_dict(self) -> dict:
-        ret = super().to_dict()
-        ret["components"] = [comp.to_dict() for comp in self.components]
-        return ret
+    def to_dict(self) -> _HolderComponentPayload:
+        return _HolderComponentPayload(
+            **super().to_dict(), components=[comp.to_dict() for comp in self.components]
+        )
 
     def get_interactives(self) -> set[InteractiveComponent]:
         return get_interactive_components(self.components)
@@ -1006,11 +1007,14 @@ class ActionRow(HolderComponent):  # Component type 1
         return self.components
 
     @classmethod
-    def from_dict(cls, payload: dict):
+    def from_dict(cls, payload: comp_payloads.ActionRow):
         return cls(
             components=[resolve_component(comp_data) for comp_data in payload["components"]],
             component_id=payload["id"],
         )
+
+    def to_dict(self) -> comp_payloads.ActionRow:
+        return cast(comp_payloads.ActionRow, super().to_dict())
 
 
 # TODO: Think about moving Premium and Link buttons to a "NoninteractiveButton" thing?
@@ -1065,14 +1069,14 @@ class Button(InteractiveComponent):  # Component type 2
         self.url = url
         self.disabled = disabled
 
-    def to_dict(self) -> dict:
-        ret = super().to_dict()
+    def to_dict(self) -> comp_payloads.ButtonComponent:
+        ret = cast(comp_payloads.ButtonComponent, super().to_dict())
         ret["style"] = self.style.value
         if self.label is not MISSING:
             ret["label"] = self.label
 
         if self.emoji is not MISSING:
-            ret["emoji"] = self.emoji.to_dict()
+            ret["emoji"] = cast(emoji_payloads.PartialEmoji, self.emoji.to_dict())
 
         if self.sku_id is not MISSING:
             ret["sku_id"] = self.sku_id
@@ -1086,7 +1090,7 @@ class Button(InteractiveComponent):  # Component type 2
         return ret
 
     @classmethod
-    def from_dict(cls, payload: dict):
+    def from_dict(cls, payload: comp_payloads.ButtonComponent):
         emoji = PartialEmoji.from_dict(payload["emoji"]) if "emoji" in payload else MISSING
 
         return cls(
@@ -1361,7 +1365,7 @@ class StringSelect(InteractiveComponent):  # Component type 3
 
     .. versionchanged:: 3.2
 
-        - :class:`.StringSelect` is not user init-able.
+        - :class:`.StringSelect` is now user init-able.
         - Renamed from ``StringSelectMenu`` to ``StringSelect`` to match Discord's name, and an alias for
           the old name added.
 
@@ -1407,6 +1411,24 @@ class StringSelect(InteractiveComponent):  # Component type 3
         emoji: PartialEmoji | Emoji | str = MISSING,
         default: bool = MISSING,
     ) -> None:
+        """Helper method to add an option to the :attr:`.options` list.
+
+        Parameters
+        ----------
+        label
+            User-facing name of the option.
+        value
+            Dev-defined/Bot-facing value of the option. Defaults to the value of ``label`` if unspecified.
+        description
+            Description for the option.
+        emoji
+            Emoji to display with the option.
+        default
+            If this option will be selected by default.
+        Returns
+        -------
+        None
+        """
         self.options.append(
             SelectOption(
                 label=label, value=value, description=description, emoji=emoji, default=default
@@ -1430,8 +1452,8 @@ class StringSelect(InteractiveComponent):  # Component type 3
             bot, callback, timeout, _inter_arg_func=inter_arg_func
         )
 
-    def to_dict(self) -> dict:
-        ret = super().to_dict()
+    def to_dict(self) -> comp_payloads.SelectMenu:
+        ret = cast(comp_payloads.SelectMenu, super().to_dict())
         ret["options"] = [option.to_dict() for option in self.options]
 
         if self.placeholder is not MISSING:
@@ -1449,7 +1471,7 @@ class StringSelect(InteractiveComponent):  # Component type 3
         return ret
 
     @classmethod
-    def from_dict(cls, payload: comp_payloads.SelectMenu | dict):
+    def from_dict(cls, payload: comp_payloads.SelectMenu):
         return cls(
             custom_id=payload["custom_id"],
             options=[SelectOption.from_dict(opt_data) for opt_data in payload["options"]],
@@ -1466,16 +1488,32 @@ SelectMenu = StringSelect
 
 
 class TextInput(InteractiveComponent):  # Component type 4
-    # TODO: These can only be used in modals? uhhhhhhhhhhhhhhhhhhhhhhhh...
+    """Represents a Text Input component object.
+
+    Allows for users to enter free-form text responses, and supports both single-line and multi-line inputs. Can only
+    be used within modals.
+
+    .. versionadded:: 2.0
+
+    .. versionchanged:: 3.2
+        :class:`.TextInput` is now user init-able.
+
+    """
 
     style: TextInputStyle
+    """Style of the text input."""
     label: str
+    """Label of the text input."""
     min_length: int  # Can be MISSING
+    """The minimal length of the user's input. Can be ``MISSING``."""
     max_length: int  # Can be MISSING
+    """The maximal length of the user's input. Can be ``MISSING``."""
     required: bool  # Can be MISSING
+    """If ``True``, the user cannot send the form without filling this field. Can be ``MISSING``."""
     value: str  # Can be MISSING
-    """Pre-filled value."""
+    """Pre-filled value for the component. Can be ``MISSING``."""
     placeholder: str  # Can be MISSING
+    """The text shown to the user when the text input is empty. Can be ``MISSING``."""
 
     def __init__(
         self,
@@ -1505,8 +1543,8 @@ class TextInput(InteractiveComponent):  # Component type 4
         self.value = value
         self.placeholder = placeholder
 
-    def to_dict(self) -> dict:
-        ret = super().to_dict()
+    def to_dict(self) -> comp_payloads.TextInputComponent:
+        ret = cast(comp_payloads.TextInputComponent, super().to_dict())
         ret["style"] = self.style.value
         ret["label"] = self.label
 
@@ -1528,7 +1566,7 @@ class TextInput(InteractiveComponent):  # Component type 4
         return ret
 
     @classmethod
-    def from_dict(cls, payload: comp_payloads.TextInputComponent | dict):
+    def from_dict(cls, payload: comp_payloads.TextInputComponent):
         return cls(
             payload["style"],
             payload["label"],
@@ -1554,6 +1592,34 @@ class TextInput(InteractiveComponent):  # Component type 4
         placeholder: str = MISSING,
         component_id: int = MISSING,
     ):
+        """Creates a short-styled, single-line text input.
+
+        Unspecified non-required parameters will use Discord defaults.
+
+        Parameters
+        ----------
+        label
+            Label of the text input.
+        custom_id
+            Optionally supplied custom ID for the text input.
+        min_length
+            The minimal length of the user's input.
+        max_length
+            The maximal length of the user's input.
+        required
+            If ``True``, the user cannot send the form without filling this field.
+        value
+            Pre-filled value for the component.
+        placeholder
+            The text shown to the user when the text input is empty.
+        component_id
+            ID of the component.
+
+        Returns
+        -------
+        :class:`.TextInput`
+            Text input with the short style.
+        """
         return cls(
             TextInputStyle.short,
             label,
@@ -1579,6 +1645,34 @@ class TextInput(InteractiveComponent):  # Component type 4
         placeholder: str = MISSING,
         component_id: int = MISSING,
     ):
+        """Creates a paragraph-styled, multi-line text input.
+
+        Unspecified non-required parameters will use Discord defaults.
+
+        Parameters
+        ----------
+        label
+            Label of the text input.
+        custom_id
+            Optionally supplied custom ID for the text input.
+        min_length
+            The minimal length of the user's input.
+        max_length
+            The maximal length of the user's input.
+        required
+            If ``True``, the user cannot send the form without filling this field.
+        value
+            Pre-filled value for the component.
+        placeholder
+            The text shown to the user when the text input is empty.
+        component_id
+            ID of the component.
+
+        Returns
+        -------
+        :class:`.TextInput`
+            Text input with the paragraph style.
+        """
         return cls(
             TextInputStyle.paragraph,
             label,
@@ -1643,7 +1737,7 @@ class UserSelect(_SelectComponent):  # Component type 5
         )
 
     @classmethod
-    def from_dict(cls, payload: dict):
+    def from_dict(cls, payload: comp_payloads.UserSelectMenu):
         if "default_values" in payload:
             default_values = [
                 SelectDefaultValue.from_dict(val_data) for val_data in payload["default_values"]
@@ -1660,6 +1754,9 @@ class UserSelect(_SelectComponent):  # Component type 5
             disabled=payload.get("disabled", MISSING),
             component_id=payload["id"],
         )
+
+    def to_dict(self) -> comp_payloads.UserSelectMenu:
+        return cast(comp_payloads.UserSelectMenu, super().to_dict())
 
 
 UserSelectMenu = UserSelect
@@ -1712,7 +1809,7 @@ class RoleSelect(_SelectComponent):  # Component type 6
         )
 
     @classmethod
-    def from_dict(cls, payload: dict):
+    def from_dict(cls, payload: comp_payloads.RoleSelectMenu):
         if "default_values" in payload:
             default_values = [
                 SelectDefaultValue.from_dict(val_data) for val_data in payload["default_values"]
@@ -1729,6 +1826,9 @@ class RoleSelect(_SelectComponent):  # Component type 6
             disabled=payload.get("disabled", MISSING),
             component_id=payload["id"],
         )
+
+    def to_dict(self) -> comp_payloads.RoleSelectMenu:
+        return cast(comp_payloads.RoleSelectMenu, super().to_dict())
 
 
 RoleSelectMenu = RoleSelect
@@ -1787,7 +1887,7 @@ class MentionableSelect(_SelectComponent):  # Component type 7
         )
 
     @classmethod
-    def from_dict(cls, payload: dict):
+    def from_dict(cls, payload: comp_payloads.MentionableSelectMenu):
         if "default_values" in payload:
             default_values = [
                 SelectDefaultValue.from_dict(val_data) for val_data in payload["default_values"]
@@ -1804,6 +1904,9 @@ class MentionableSelect(_SelectComponent):  # Component type 7
             disabled=payload.get("disabled", MISSING),
             component_id=payload["id"],
         )
+
+    def to_dict(self) -> comp_payloads.MentionableSelectMenu:
+        return cast(comp_payloads.MentionableSelectMenu, super().to_dict())
 
 
 MentionableSelectMenu = MentionableSelect
@@ -1862,15 +1965,15 @@ class ChannelSelect(_SelectComponent):  # Component type 8
             bot, callback, timeout, _inter_arg_func=inter_arg_func
         )
 
-    def to_dict(self) -> dict:
-        ret = super().to_dict()
+    def to_dict(self) -> comp_payloads.ChannelSelectMenu:
+        ret = cast(comp_payloads.ChannelSelectMenu, super().to_dict())
         if self.channel_types is not MISSING:
             ret["channel_types"] = [channel_type.value for channel_type in self.channel_types]
 
         return ret
 
     @classmethod
-    def from_dict(cls, payload: dict):
+    def from_dict(cls, payload: comp_payloads.ChannelSelectMenu):
         if "default_values" in payload:
             default_values = [
                 SelectDefaultValue.from_dict(val_data) for val_data in payload["default_values"]
@@ -1915,14 +2018,14 @@ class Section(HolderComponent):  # Component type 9
 
         return ret
 
-    def to_dict(self) -> dict:
-        ret = super().to_dict()
-        ret["accessory"] = self.accessory.to_dict()
+    def to_dict(self) -> comp_payloads.Section:
+        ret = cast(comp_payloads.Section, super().to_dict())
+        ret["accessory"] = cast(comp_payloads.Component, self.accessory.to_dict())
 
         return ret
 
     @classmethod
-    def from_dict(cls, payload: dict):
+    def from_dict(cls, payload: comp_payloads.Section):
         return cls(
             accessory=resolve_component(payload["accessory"]),
             components=[resolve_component(comp_data) for comp_data in payload["components"]],
@@ -1937,13 +2040,13 @@ class TextDisplay(Component):  # Component type 10
         super().__init__(component_type=ComponentType.text_display, component_id=component_id)
         self.content = content
 
-    def to_dict(self) -> dict:
-        ret = super().to_dict()
+    def to_dict(self) -> comp_payloads.TextDisplay:
+        ret = cast(comp_payloads.TextDisplay, super().to_dict())
         ret["content"] = self.content
         return ret
 
     @classmethod
-    def from_dict(cls, payload: dict):
+    def from_dict(cls, payload: comp_payloads.TextDisplay):
         return cls(content=payload["content"], component_id=payload["id"])
 
 
@@ -1965,8 +2068,8 @@ class Thumbnail(Component):  # Component type 11
         self.description = description
         self.spoiler = spoiler
 
-    def to_dict(self) -> dict:
-        ret = super().to_dict()
+    def to_dict(self) -> comp_payloads.Thumbnail:
+        ret = cast(comp_payloads.Thumbnail, super().to_dict())
         ret["media"] = self.media.to_dict()
         if self.description is not MISSING:
             ret["description"] = self.description
@@ -1977,7 +2080,7 @@ class Thumbnail(Component):  # Component type 11
         return ret
 
     @classmethod
-    def from_dict(cls, payload: dict):
+    def from_dict(cls, payload: comp_payloads.Thumbnail):
         return cls(
             media=UnfurledMedia.from_dict(payload["media"]),
             description=payload.get("description", MISSING),
@@ -2010,13 +2113,13 @@ class MediaGallery(Component):  # Component type 12
         super().__init__(component_type=ComponentType.media_gallery, component_id=component_id)
         self.items = items
 
-    def to_dict(self) -> dict:
-        ret = super().to_dict()
+    def to_dict(self) -> comp_payloads.MediaGallery:
+        ret = cast(comp_payloads.MediaGallery, super().to_dict())
         ret["items"] = [media_item.to_dict() for media_item in self.items]
         return ret
 
     @classmethod
-    def from_dict(cls, payload: dict):
+    def from_dict(cls, payload: comp_payloads.MediaGallery):
         return cls(
             items=[MediaGalleryItem.from_dict(media_data) for media_data in payload["items"]],
             component_id=payload["id"],
@@ -2034,8 +2137,8 @@ class File(Component):
         self.file = file
         self.spoiler = spoiler
 
-    def to_dict(self) -> dict:
-        ret = super().to_dict()
+    def to_dict(self) -> comp_payloads.File:
+        ret = cast(comp_payloads.File, super().to_dict())
         ret["file"] = self.file.to_dict()
         if self.spoiler is not MISSING:
             ret["spoiler"] = self.spoiler
@@ -2043,7 +2146,7 @@ class File(Component):
         return ret
 
     @classmethod
-    def from_dict(cls, payload: dict):
+    def from_dict(cls, payload: comp_payloads.File):
         return cls(
             file=UnfurledMedia.from_dict(payload["file"]),
             spoiler=payload.get("spoiler", MISSING),
@@ -2076,8 +2179,8 @@ class Separator(Component):  # Component type 14
         self.divider = divider
         self.spacing = spacing
 
-    def to_dict(self) -> dict:
-        ret = super().to_dict()
+    def to_dict(self) -> comp_payloads.Separator:
+        ret = cast(comp_payloads.Separator, super().to_dict())
         if self.divider is not MISSING:
             ret["divider"] = self.divider
 
@@ -2087,10 +2190,10 @@ class Separator(Component):  # Component type 14
         return ret
 
     @classmethod
-    def from_dict(cls, payload: dict):
+    def from_dict(cls, payload: comp_payloads.Separator):
         return cls(
-            divider=payload["divider"],
-            spacing=payload["spacing"],
+            divider=payload.get("divider", MISSING),
+            spacing=payload.get("spacing", MISSING),
             component_id=payload["id"],
         )
 
@@ -2113,8 +2216,8 @@ class Container(HolderComponent):  # Component type 17
         self.accent_color = accent_color
         self.spoiler = spoiler
 
-    def to_dict(self) -> dict:
-        ret = super().to_dict()
+    def to_dict(self) -> comp_payloads.Container:
+        ret = cast(comp_payloads.Container, super().to_dict())
         if self.accent_color is not MISSING:
             ret["accent_color"] = self.accent_color
 
@@ -2124,11 +2227,11 @@ class Container(HolderComponent):  # Component type 17
         return ret
 
     @classmethod
-    def from_dict(cls, payload: dict):
+    def from_dict(cls, payload: comp_payloads.Container):
         return cls(
             components=[resolve_component(comp_data) for comp_data in payload["components"]],
-            accent_color=payload["accent_color"],
-            spoiler=payload["spoiler"],
+            accent_color=payload.get("accent_color", MISSING),
+            spoiler=payload.get("spoiler", MISSING),
             component_id=payload["id"],
         )
 
@@ -2137,6 +2240,20 @@ class SelectOption:
     """Represents an option for the selects that use it.
 
     Currently only used by StringSelect.
+
+
+    Parameters
+    ----------
+    label
+        User-facing name of the option.
+    value
+        Dev-defined/Bot-facing value of the option. Defaults to the value of ``label`` if unspecified.
+    description
+        Description for the option.
+    emoji
+        Emoji to display with the option.
+    default
+        If this option will be selected by default.
     """
 
     label: str
@@ -2169,8 +2286,8 @@ class SelectOption:
 
         self.default = default
 
-    def to_dict(self) -> dict:
-        ret: dict = {"label": self.label, "value": self.value}
+    def to_dict(self) -> comp_payloads.SelectOption:
+        ret: comp_payloads.SelectOption = {"label": self.label, "value": self.value}
         if self.description is not MISSING:
             ret["description"] = self.description
 
@@ -2184,7 +2301,7 @@ class SelectOption:
         return ret
 
     @classmethod
-    def from_dict(cls, payload: comp_payloads.SelectOption | dict):
+    def from_dict(cls, payload: comp_payloads.SelectOption):
         emoji = PartialEmoji.from_dict(payload["emoji"]) if "emoji" in payload else MISSING
         return cls(
             payload["label"],
@@ -2211,12 +2328,12 @@ class SelectDefaultValue:
         else:
             self.type = try_enum(SelectDefaultValueType, value_type)
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> comp_payloads.SelectDefaultValue:
         return {"id": self.id, "type": self.type.value}
 
     @classmethod
-    def from_dict(cls, payload: dict):
-        return cls(value_id=payload["id"], value_type=payload["type"])
+    def from_dict(cls, payload: comp_payloads.SelectDefaultValue):
+        return cls(value_id=int(payload["id"]), value_type=payload["type"])
 
 
 class UnfurledMedia:
@@ -2241,12 +2358,12 @@ class UnfurledMedia:
         self.width = width
         self.content_type = content_type
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> comp_payloads.UnfurledMedia:
         # Currently, the 4 other attributes are all ignored by the API, but provided in responses.
         return {"url": self.url}
 
     @classmethod
-    def from_dict(cls, payload: dict):
+    def from_dict(cls, payload: comp_payloads.UnfurledMedia):
         return cls(
             url=payload["url"],
             proxy_url=payload.get("proxy_url", MISSING),
@@ -2268,8 +2385,8 @@ class MediaGalleryItem:
         self.description = description
         self.spoiler = spoiler
 
-    def to_dict(self) -> dict:
-        ret: dict[str, Any] = {"media": self.media.to_dict()}
+    def to_dict(self) -> comp_payloads.MediaGalleryItem:
+        ret: comp_payloads.MediaGalleryItem = {"media": self.media.to_dict()}
         if self.description is not MISSING:
             ret["description"] = self.description
 
@@ -2279,7 +2396,7 @@ class MediaGalleryItem:
         return ret
 
     @classmethod
-    def from_dict(cls, payload: dict):
+    def from_dict(cls, payload: comp_payloads.MediaGalleryItem):
         return cls(
             media=UnfurledMedia.from_dict(payload["media"]),
             description=payload.get("description", MISSING),
@@ -2292,7 +2409,7 @@ class MediaGalleryItem:
         return cls(media=UnfurledMedia(url), description=description, spoiler=spoiler)
 
 
-def resolve_component(payload: dict) -> Component:
+def resolve_component(payload: comp_payloads.Component) -> Component:
     match payload["type"]:
         case 1:
             return ActionRow.from_dict(payload)
