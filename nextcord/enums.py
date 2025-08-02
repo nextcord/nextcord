@@ -54,6 +54,7 @@ __all__ = (
     "InteractionContextType",
     "MessageReferenceType",
     "SelectDefaultValueType",
+    "SeparatorSpacingSize",
 )
 
 
@@ -2111,6 +2112,11 @@ class SelectDefaultValueType(StrEnum):
     channel = "channel"
     role = "role"
     user = "user"
+
+
+class SeparatorSpacingSize(IntEnum):
+    small = 1
+    large = 2
 
 
 T = TypeVar("T")
