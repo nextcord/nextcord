@@ -21,9 +21,7 @@ __path__ = __import__("pkgutil").extend_path(__path__, __name__)
 import logging
 from typing import Literal, NamedTuple
 
-import components
-
-from . import abc, opus, ui, utils
+from . import abc, components, opus, ui, utils
 from .activity import *
 from .appinfo import *
 from .application_command import *
