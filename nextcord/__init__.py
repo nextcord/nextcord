@@ -21,6 +21,8 @@ __path__ = __import__("pkgutil").extend_path(__path__, __name__)
 import logging
 from typing import Literal, NamedTuple
 
+import components
+
 from . import abc, opus, ui, utils
 from .activity import *
 from .appinfo import *
@@ -32,7 +34,7 @@ from .bans import *
 from .channel import *
 from .client import *
 from .colour import *
-from .components import *
+from .components import ActionRow, Button, Component, SelectMenu, SelectOption, TextDisplay
 from .embeds import *
 from .emoji import *
 from .enums import *
