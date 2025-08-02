@@ -2834,14 +2834,6 @@ PartialMessage
 .. autoclass:: PartialMessage
     :members:
 
-SelectOption
-~~~~~~~~~~~~
-
-.. attributetable:: SelectOption
-
-.. autoclass:: SelectOption
-    :members:
-
 Intents
 ~~~~~~~
 
@@ -3160,6 +3152,7 @@ ChannelSelect
 
 UI Components
 -------------
+.. currentmodule:: nextcord.components
 
 This is a test, please ignore for now.
 
@@ -3206,7 +3199,6 @@ String Select
     :show-inheritance:
     :inherited-members:
 
-
 Text Input
 ~~~~~~~~~~
 
@@ -3215,6 +3207,116 @@ Text Input
     :show-inheritance:
     :inherited-members:
 
+User Select
+~~~~~~~~~~~
+
+.. attributetable:: UserSelect
+.. autoclass:: UserSelect
+    :show-inheritance:
+    :inherited-members:
+
+Role Select
+~~~~~~~~~~~
+
+.. attributetable:: RoleSelect
+.. autoclass:: RoleSelect
+    :show-inheritance:
+    :inherited-members:
+
+Mentionable Select
+~~~~~~~~~~~~~~~~~~
+
+.. attributetable:: MentionableSelect
+.. autoclass:: MentionableSelect
+    :show-inheritance:
+    :inherited-members:
+
+Channel Select
+~~~~~~~~~~~~~~
+
+.. attributetable:: ChannelSelect
+.. autoclass:: ChannelSelect
+    :show-inheritance:
+    :inherited-members:
+
+Section
+~~~~~~~
+
+.. attributetable:: Section
+.. autoclass:: Section
+    :show-inheritance:
+    :inherited-members:
+
+Text Display
+~~~~~~~~~~~~
+
+.. attributetable:: TextDisplay
+.. autoclass:: TextDisplay
+    :show-inheritance:
+    :inherited-members:
+
+Thumbnail
+~~~~~~~~~
+
+.. attributetable:: Thumbnail
+.. autoclass:: Thumbnail
+    :show-inheritance:
+    :inherited-members:
+
+Media Gallery
+~~~~~~~~~~~~~
+
+.. attributetable:: MediaGallery
+.. autoclass:: MediaGallery
+    :show-inheritance:
+    :inherited-members:
+
+File
+~~~~
+
+.. attributetable:: File
+.. autoclass:: File
+    :show-inheritance:
+    :inherited-members:
+
+Separator
+~~~~~~~~~
+
+.. attributetable:: Separator
+.. autoclass:: Separator
+    :show-inheritance:
+    :inherited-members:
+
+Container
+~~~~~~~~~
+
+.. attributetable:: Container
+.. autoclass:: Container
+    :show-inheritance:
+    :inherited-members:
+
+Component Data Objects
+~~~~~~~~~~~~~~~~~~~~~~
+While these are not components, they are required to create/populate certain components.
+Components for components, if you will.
+
+.. attributetable:: SelectOption
+.. autoclass:: SelectOption
+    :members:
+
+.. attributetable:: SelectDefaultValue
+.. autoclass:: SelectDefaultValue
+    :members:
+
+.. attributetable:: UnfurledMedia
+.. autoclass:: UnfurledMedia
+    :members:
+
+.. attributetable:: MediaGalleryItem
+.. autoclass:: MediaGalleryItem
+    :members:
+
+.. currentmodule:: nextcord
 
 Application Commands
 --------------------
