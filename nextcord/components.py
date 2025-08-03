@@ -48,7 +48,7 @@ __all__ = (
     "ChannelSelectMenu",
     "Component",
     "Container",
-    "File",
+    "FileDisplay",
     "HolderComponent",
     "InteractiveComponent",
     "MediaGallery",
@@ -1639,7 +1639,7 @@ class MediaGallery(Component):  # Component type 12
         )
 
 
-class File(Component):
+class FileDisplay(Component):  # Component type 13
     """Represents a File component object.
 
     Allows referencing/displaying a file that was uploaded as an attachment to the message.
@@ -2086,7 +2086,7 @@ def resolve_component(payload: comp_payloads.Component) -> Component:
         case 12:
             return MediaGallery.from_dict(payload)
         case 13:
-            return File.from_dict(payload)
+            return FileDisplay.from_dict(payload)
         case 14:
             return Separator.from_dict(payload)
         case 17:
