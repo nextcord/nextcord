@@ -3150,11 +3150,12 @@ ChannelSelect
     :members:
 
 
-UI Components
--------------
-.. currentmodule:: nextcord.components
-
-This is a test, please ignore for now.
+Low Level UI Components
+-----------------------
+These are relatively simple representations of Discord's Component objects, able to be directly instantiated and
+sent with messages. While there are helper functions to aid with usage, they are intended to be rather bare and thus
+there are almost no safe guards nor data validation checks when creating or sending them. Higher level/friendlier UI
+Component objects can be found in the :ref:`discord_ui_kit` section.
 
 Base Components
 ~~~~~~~~~~~~~~~
@@ -3271,11 +3272,11 @@ Media Gallery
     :show-inheritance:
     :inherited-members:
 
-File
-~~~~
+File Display
+~~~~~~~~~~~~
 
-.. attributetable:: File
-.. autoclass:: File
+.. attributetable:: FileDisplay
+.. autoclass:: FileDisplay
     :show-inheritance:
     :inherited-members:
 
@@ -3316,7 +3317,6 @@ Components for components, if you will.
 .. autoclass:: MediaGalleryItem
     :members:
 
-.. currentmodule:: nextcord
 
 Application Commands
 --------------------
