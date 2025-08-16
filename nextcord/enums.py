@@ -53,6 +53,8 @@ __all__ = (
     "IntegrationType",
     "InteractionContextType",
     "MessageReferenceType",
+    "OnboardingPromptType",
+    "OnboardingMode",
 )
 
 
@@ -2096,6 +2098,30 @@ class MessageReferenceType(IntEnum):
     """The reference is used as a reply."""
     forward = 1
     """The reference is used to point to a message."""
+
+
+class OnboardingPromptType(IntEnum):
+    """Represents the type of :class:`OnboardingPrompt`.
+
+    .. versionadded:: 3.0
+    """
+
+    multiple_choice = 0
+    """Displays the options as multiple choice."""
+    dropdown = 1
+    """Displays the options in a dropdown menu."""
+
+
+class OnboardingMode(IntEnum):
+    """The criteria needed in order for onboarding to be enabled.
+
+    .. versionadded:: 3.0
+    """
+
+    default = 0
+    """Only "Default Channels" are needed."""
+    advanced = 1
+    """"Default Channels" & "Questions" are needed."""
 
 
 T = TypeVar("T")

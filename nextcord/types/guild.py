@@ -39,6 +39,8 @@ MFALevel = Literal[0, 1]
 VerificationLevel = Literal[0, 1, 2, 3, 4]
 NSFWLevel = Literal[0, 1, 2, 3]
 PremiumTier = Literal[0, 1, 2, 3]
+PromptOptionType = Literal[0, 1]
+OnboardingMode = Literal[0, 1]
 GuildFeature = Literal[
     "AUTO_MODERATION",
     "ANIMATED_BANNER",
@@ -153,3 +155,48 @@ class ChannelPositionUpdate(TypedDict):
 class RolePositionUpdate(TypedDict):
     id: Snowflake
     position: NotRequired[Optional[Snowflake]]
+
+
+class _BasePromptOption(TypedDict):
+    id: Snowflake
+    channel_ids: List[Snowflake]
+    role_ids: List[Snowflake]
+    title: str
+    description: Optional[str]
+
+
+class OnboardingPromptOption(_BasePromptOption):
+    emoji: NotRequired[Emoji]
+
+
+# this is for prompt options created/modified by the user, since Discord has different requirements
+# for what should be included.
+class ModifiedOnboardingPromptOption(_BasePromptOption):
+    emoji_id: NotRequired[Snowflake]
+    emoji_name: NotRequired[str]
+    emoji_animated: NotRequired[bool]
+
+
+class _BasePrompt(TypedDict):
+    id: Snowflake
+    type: PromptOptionType
+    title: str
+    single_select: bool
+    required: bool
+    in_onboarding: bool
+
+
+class OnboardingPrompt(_BasePrompt):
+    options: List[OnboardingPromptOption]
+
+
+class ModifiedOnboardingPrompt(_BasePrompt):
+    options: List[ModifiedOnboardingPromptOption]
+
+
+class Onboarding(TypedDict):
+    guild_id: Snowflake
+    prompts: List[OnboardingPrompt]
+    default_channel_ids: List[Snowflake]
+    enabled: bool
+    mode: OnboardingMode
