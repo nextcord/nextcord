@@ -12,6 +12,17 @@ Changelog
 This page keeps a detailed human-friendly rendering of what's new and changed
 in specific versions.
 
+.. _vp3p1p1:
+
+v3.1.1
+------
+This version is a bugfix release to resolve an issue with not being able to connect to some new voice regions.
+
+Bug Fixes
+~~~~~~~~~
+
+- Fix an issue where the bot could not connect to some new voice regions (:issue:`1262`, :issue:`1264`).
+
 .. _vp3p1p0:
 
 v3.1.0
