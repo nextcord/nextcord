@@ -40,17 +40,17 @@ class GuildPreview:
     """
 
     __slots__ = (
-        "_state",
-        "id",
-        "name",
+        "_discovery_splash",
         "_icon",
         "_splash",
-        "_discovery_splash",
-        "emojis",
-        "features",
+        "_state",
         "approximate_member_count",
         "approximate_presence_count",
         "description",
+        "emojis",
+        "features",
+        "id",
+        "name",
         "stickers",
     )
 

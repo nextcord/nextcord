@@ -99,16 +99,16 @@ class Template:
     """
 
     __slots__ = (
-        "code",
-        "uses",
-        "name",
-        "description",
-        "creator",
-        "created_at",
-        "updated_at",
-        "source_guild",
-        "is_dirty",
         "_state",
+        "code",
+        "created_at",
+        "creator",
+        "description",
+        "is_dirty",
+        "name",
+        "source_guild",
+        "updated_at",
+        "uses",
     )
 
     def __init__(self, *, state: ConnectionState, data: TemplatePayload) -> None:

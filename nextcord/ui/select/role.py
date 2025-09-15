@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from ...types.components import RoleSelectMenu as RoleSelectMenuPayload
     from ...types.interactions import ComponentInteractionData
 
-__all__ = ("RoleSelect", "role_select", "RoleSelectValues")
+__all__ = ("RoleSelect", "RoleSelectValues", "role_select")
 
 V_co = TypeVar("V_co", bound="View", covariant=True)
 

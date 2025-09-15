@@ -68,7 +68,7 @@ class PartialEmoji(_EmojiTag, AssetMixin):
         The ID of the custom emoji, if applicable.
     """
 
-    __slots__ = ("animated", "name", "id", "_state")
+    __slots__ = ("_state", "animated", "id", "name")
 
     _CUSTOM_EMOJI_RE = re.compile(
         r"<?(?P<animated>a)?:?(?P<name>[A-Za-z0-9\_]+):(?P<id>[0-9]{13,20})>?"

@@ -20,8 +20,8 @@ if TYPE_CHECKING:
 
 __all__ = (
     "Select",
-    "select",
     "StringSelect",
+    "select",
     "string_select",
 )
 
@@ -245,7 +245,7 @@ def string_select(
     """
 
     def decorator(
-        func: ItemCallbackType[Select[V_co], ClientT]
+        func: ItemCallbackType[Select[V_co], ClientT],
     ) -> ItemCallbackType[Select[V_co], ClientT]:
         if not asyncio.iscoroutinefunction(func):
             raise TypeError("Select function must be a coroutine function")

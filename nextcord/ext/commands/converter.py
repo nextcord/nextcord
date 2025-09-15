@@ -37,31 +37,31 @@ if TYPE_CHECKING:
 
 
 __all__ = (
-    "Converter",
-    "ObjectConverter",
-    "MemberConverter",
-    "UserConverter",
-    "MessageConverter",
-    "PartialMessageConverter",
-    "TextChannelConverter",
-    "InviteConverter",
-    "GuildConverter",
-    "RoleConverter",
-    "GameConverter",
-    "ColourConverter",
-    "ColorConverter",
-    "VoiceChannelConverter",
-    "StageChannelConverter",
-    "EmojiConverter",
-    "PartialEmojiConverter",
     "CategoryChannelConverter",
-    "IDConverter",
-    "ThreadConverter",
-    "GuildChannelConverter",
-    "GuildStickerConverter",
-    "ScheduledEventConverter",
-    "clean_content",
+    "ColorConverter",
+    "ColourConverter",
+    "Converter",
+    "EmojiConverter",
+    "GameConverter",
     "Greedy",
+    "GuildChannelConverter",
+    "GuildConverter",
+    "GuildStickerConverter",
+    "IDConverter",
+    "InviteConverter",
+    "MemberConverter",
+    "MessageConverter",
+    "ObjectConverter",
+    "PartialEmojiConverter",
+    "PartialMessageConverter",
+    "RoleConverter",
+    "ScheduledEventConverter",
+    "StageChannelConverter",
+    "TextChannelConverter",
+    "ThreadConverter",
+    "UserConverter",
+    "VoiceChannelConverter",
+    "clean_content",
     "run_converters",
 )
 
@@ -1091,7 +1091,7 @@ def get_converter(param: inspect.Parameter) -> Any:
 
 
 def is_generic_type(tp: Any) -> bool:
-    return isinstance(tp, type) and issubclass(tp, Generic) or isinstance(tp, GenericAlias)
+    return (isinstance(tp, type) and issubclass(tp, Generic)) or isinstance(tp, GenericAlias)
 
 
 CONVERTER_MAPPING: Dict[Type[Any], Any] = {

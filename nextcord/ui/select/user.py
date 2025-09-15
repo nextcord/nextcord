@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from ...types.components import UserSelectMenu as UserSelectMenuPayload
     from ...types.interactions import ComponentInteractionData
 
-__all__ = ("UserSelect", "user_select", "UserSelectValues")
+__all__ = ("UserSelect", "UserSelectValues", "user_select")
 
 V_co = TypeVar("V_co", bound="View", covariant=True)
 

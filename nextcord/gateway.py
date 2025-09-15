@@ -36,11 +36,11 @@ if TYPE_CHECKING:
 _log = logging.getLogger(__name__)
 
 __all__ = (
+    "DiscordVoiceWebSocket",
     "DiscordWebSocket",
     "KeepAliveHandler",
-    "VoiceKeepAliveHandler",
-    "DiscordVoiceWebSocket",
     "ReconnectWebSocket",
+    "VoiceKeepAliveHandler",
 )
 
 

@@ -12,12 +12,12 @@ from .partial_emoji import PartialEmoji
 from .utils import get_as_snowflake
 
 __all__ = (
-    "BaseActivity",
     "Activity",
-    "Streaming",
+    "BaseActivity",
+    "CustomActivity",
     "Game",
     "Spotify",
-    "CustomActivity",
+    "Streaming",
 )
 
 """If curious, this is the current schema for an activity.
@@ -181,20 +181,20 @@ class Activity(BaseActivity):
     """
 
     __slots__ = (
-        "state",
-        "details",
-        "timestamps",
-        "assets",
-        "party",
-        "flags",
-        "sync_id",
-        "session_id",
-        "type",
-        "name",
-        "url",
         "application_id",
-        "emoji",
+        "assets",
         "buttons",
+        "details",
+        "emoji",
+        "flags",
+        "name",
+        "party",
+        "session_id",
+        "state",
+        "sync_id",
+        "timestamps",
+        "type",
+        "url",
     )
 
     def __init__(self, **kwargs) -> None:
@@ -336,7 +336,7 @@ class Game(BaseActivity):
         The game's name.
     """
 
-    __slots__ = ("name", "_end", "_start")
+    __slots__ = ("_end", "_start", "name")
 
     def __init__(self, name: str, **extra) -> None:
         super().__init__(**extra)
@@ -448,7 +448,7 @@ class Streaming(BaseActivity):
         A dictionary comprising of similar keys than those in :attr:`Activity.assets`.
     """
 
-    __slots__ = ("platform", "name", "game", "url", "details", "assets")
+    __slots__ = ("assets", "details", "game", "name", "platform", "url")
 
     def __init__(self, *, name: Optional[str], url: str, **extra: Any) -> None:
         super().__init__(**extra)
@@ -530,14 +530,14 @@ class Spotify:
     """
 
     __slots__ = (
-        "_state",
-        "_details",
-        "_timestamps",
         "_assets",
-        "_party",
-        "_sync_id",
-        "_session_id",
         "_created_at",
+        "_details",
+        "_party",
+        "_session_id",
+        "_state",
+        "_sync_id",
+        "_timestamps",
     )
 
     def __init__(self, **data) -> None:
@@ -729,7 +729,7 @@ class CustomActivity(BaseActivity):
             This falls back to :attr:`~.CustomActivity.name` if not provided.
     """
 
-    __slots__ = ("name", "emoji", "state", "_state")
+    __slots__ = ("_state", "emoji", "name", "state")
 
     def __init__(
         self,
