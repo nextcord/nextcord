@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: MIT
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List
+import warnings
+from typing import TYPE_CHECKING, AsyncIterator, List, Optional
 
 if TYPE_CHECKING:
-    from .abc import MessageableChannel
-    from .message import Message
+    from .abc import MessageableChannel, SnowflakeTime
+    from .message import Message, MessagePin
     from .state import ConnectionState
 
 __all__ = (
@@ -48,6 +49,13 @@ class PinsMixin:
 
         Retrieves all messages that are currently pinned in the channel.
 
+        .. deprecated:: 3.2
+
+            Use .fetch_pins instead.
+
+            This is due to a change in the Discord API where there can now be more than 50
+            pinned messages, and thus requires an async iterator to fetch all of them.
+
         .. note::
 
             Due to a limitation with the Discord API, the :class:`.Message`
@@ -65,7 +73,53 @@ class PinsMixin:
             The messages that are currently pinned.
         """
 
+        warnings.warn(
+            ".pins is deprecated, use .fetch_pins instead.",
+            stacklevel=2,
+            category=FutureWarning,
+        )
+
         channel = await self._get_channel()
         state = self._state
         data = await state.http.pins_from(channel.id)
         return [state.create_message(channel=channel, data=m) for m in data]
+
+    async def fetch_pins(
+        self, limit: int = 50, before: Optional[SnowflakeTime] = None
+    ) -> AsyncIterator[MessagePin]:
+        """|asynciter|
+
+        Returns an async iterator of all messages that are currently pinned in the channel.
+
+        This requires :attr:`~nextcord.Permissions.read_message_history`, otherwise the result will be empty.
+
+        .. versionadded:: 3.2
+
+        .. note::
+
+            Due to a limitation with the Discord API, the :class:`.MessagePin`
+            objects returned by this method do not contain complete
+            :attr:`.MessagePin.message.reactions` data.
+
+        Parameters
+        ----------
+        limit: :class:`int`
+            The maximum number of messages to retrieve. Defaults to 50.
+        before: Optional[Union[:class:`.abc.Snowflake`, :class:`datetime.datetime`]]
+            Retrieve pinned messages before this timestamp.
+
+        Raises
+        ------
+        ~nextcord.HTTPException
+            Retrieving the pinned messages failed.
+
+        Yields
+        ------
+        :class:`~nextcord.MessagePin`
+            The messages that are currently pinned.
+        """
+        from .iterators import pin_iterator
+
+        channel = await self._get_channel()
+        async for pin in pin_iterator(channel, limit=limit, before=before):
+            yield pin
