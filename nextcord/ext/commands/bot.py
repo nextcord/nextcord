@@ -38,7 +38,7 @@ from .cog import Cog
 from .context import Context
 from .core import GroupMixin
 from .help import DefaultHelpCommand, HelpCommand
-from .view import StringView
+from .view import Quotation, Separator, StringView
 
 if TYPE_CHECKING:
     import importlib.machinery
@@ -159,6 +159,8 @@ class BotBase(GroupMixin):
         owner_ids: Optional[Iterable[int]],
         strip_after_prefix: bool,
         case_insensitive: bool,
+        command_separator: Optional[Separator],
+        command_quotation: Optional[Quotation],
     ) -> None:
         super().__init__(
             case_insensitive=case_insensitive,
@@ -176,6 +178,8 @@ class BotBase(GroupMixin):
         self.owner_id = owner_id
         self.owner_ids = owner_ids or set()
         self.strip_after_prefix = strip_after_prefix
+        self.command_separator: Optional[Separator] = command_separator
+        self.command_quotation: Optional[Quotation] = command_quotation
 
         if self.owner_id and self.owner_ids:
             raise TypeError("Both owner_id and owner_ids are set.")
@@ -1436,6 +1440,14 @@ class Bot(BotBase, nextcord.Client):
         the ``command_prefix`` is set to ``!``. Defaults to ``False``.
 
         .. versionadded:: 1.7
+    command_separator: Optional[:class:`Separator`]
+        The default separator to be used by commands. Defaults to ``None``.
+
+        .. versionadded:: 2.x
+    command_quotation: Optional[:class:`Quotation`]
+        The default quotations to be used by commands. Defaults to ``None``.
+
+        .. versionadded:: 2.x
     """
 
     def __init__(
@@ -1479,6 +1491,8 @@ class Bot(BotBase, nextcord.Client):
         owner_ids: Optional[Iterable[int]] = None,
         strip_after_prefix: bool = False,
         case_insensitive: bool = False,
+        command_separator: Optional[Separator] = None,
+        command_quotation: Optional[Quotation] = None,
     ) -> None:
         nextcord.Client.__init__(
             self,
@@ -1518,6 +1532,8 @@ class Bot(BotBase, nextcord.Client):
             owner_ids=owner_ids,
             strip_after_prefix=strip_after_prefix,
             case_insensitive=case_insensitive,
+            command_separator=command_separator,
+            command_quotation=command_quotation,
         )
 
 
@@ -1568,6 +1584,8 @@ class AutoShardedBot(BotBase, nextcord.AutoShardedClient):
         owner_ids: Optional[Iterable[int]] = None,
         strip_after_prefix: bool = False,
         case_insensitive: bool = False,
+        command_separator: Optional[Separator] = None,
+        command_quotation: Optional[Quotation] = None,
     ) -> None:
         nextcord.AutoShardedClient.__init__(
             self,
@@ -1608,4 +1626,6 @@ class AutoShardedBot(BotBase, nextcord.AutoShardedClient):
             owner_ids=owner_ids,
             strip_after_prefix=strip_after_prefix,
             case_insensitive=case_insensitive,
+            command_separator=command_separator,
+            command_quotation=command_quotation,
         )
