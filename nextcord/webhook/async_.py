@@ -523,14 +523,17 @@ def handle_message_parameters(
     if attachments is not MISSING:
         payload["attachments"] = [a.to_dict() for a in attachments]
 
-    if embeds is not MISSING:
-        payload["embeds"] = [e.to_dict() for e in embeds]
-
     if embed is not MISSING:
         if embed is None:
             payload["embeds"] = []
         else:
-            payload["embeds"] = [embed.to_dict()]
+            embeds = [embed]
+
+    if embeds is not MISSING:
+        files = files or []
+        for em in embeds:
+            files.extend(set(em._local_files.values()))
+        payload["embeds"] = [e.to_dict() for e in embeds]
 
     if content is not MISSING:
         if content is not None:
@@ -572,7 +575,10 @@ def handle_message_parameters(
 
     multipart = []
     if file is not MISSING:
-        files = [file]
+        if files:
+            files.append(file)
+        else:
+            files = [file]
 
     if files:
         multipart.append({"name": "payload_json"})
