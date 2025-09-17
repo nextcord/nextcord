@@ -2769,6 +2769,14 @@ AutoModerationActionExecution
 .. autoclass:: AutoModerationActionExecution()
     :members:
 
+PrimaryGuild
+~~~~~~~~~~~~
+
+.. attributetable:: PrimaryGuild
+
+.. autoclass:: PrimaryGuild()
+    :members:
+
 .. _discord_api_data:
 
 Data Classes
