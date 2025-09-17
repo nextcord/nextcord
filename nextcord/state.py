@@ -34,6 +34,7 @@ from .auto_moderation import AutoModerationActionExecution, AutoModerationRule
 from .channel import *
 from .channel import _channel_factory
 from .emoji import Emoji
+from .entitlement import Entitlement
 from .enums import ApplicationCommandType, ChannelType, Status, try_enum
 from .errors import Forbidden
 from .flags import ApplicationFlags, Intents, MemberCacheFlags
@@ -1796,6 +1797,15 @@ class ConnectionState:
             self._stickers.pop(emoji.id, None)
         guild.stickers = tuple([self.store_sticker(guild, d) for d in data["stickers"]])
         self.dispatch("guild_stickers_update", guild, before_stickers, guild.stickers)
+
+    def parse_entitlement_create(self, data) -> None:
+        self.dispatch("entitlement_create", Entitlement(data))
+
+    def parse_entitlement_update(self, data) -> None:
+        self.dispatch("entitlement_update", Entitlement(data))
+
+    def parse_entitlement_delete(self, data) -> None:
+        self.dispatch("entitlement_delete", Entitlement(data))
 
     def _get_create_guild(self, data):
         if data.get("unavailable") is False:

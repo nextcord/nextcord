@@ -9,6 +9,7 @@ from typing_extensions import NotRequired
 from .channel import ChannelType
 from .components import Component, ComponentType
 from .embed import Embed
+from .entitlement import Entitlement
 from .member import Member, MemberWithUser
 from .role import Role
 from .snowflake import Snowflake
@@ -217,6 +218,7 @@ class Interaction(TypedDict):
     app_permissions: NotRequired[str]
     authorizing_integration_owners: NotRequired[AuthorizingIntegrationOwners]
     context: NotRequired[InteractionContextType]
+    entitlements: List[Entitlement]
 
 
 class InteractionApplicationCommandCallbackData(TypedDict, total=False):
@@ -228,7 +230,7 @@ class InteractionApplicationCommandCallbackData(TypedDict, total=False):
     components: List[Component]
 
 
-InteractionResponseType = Literal[1, 4, 5, 6, 7]
+InteractionResponseType = Literal[1, 4, 5, 6, 7, 8, 9, 10]
 
 
 class InteractionResponse(TypedDict):

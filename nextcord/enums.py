@@ -53,6 +53,9 @@ __all__ = (
     "IntegrationType",
     "InteractionContextType",
     "MessageReferenceType",
+    "SKUType",
+    "EntitlementType",
+    "EntitlementOwnerType",
 )
 
 
@@ -1586,6 +1589,40 @@ class InviteTarget(IntEnum):
     """A stream invite that targets an embedded application."""
 
 
+class SKUType(IntEnum):
+    """Represents the type of a :class:`SKU`.
+
+    .. versionadded:: 3.2
+    """
+
+    subscription = 5
+    """A subscription."""
+    subscription_group = 6
+    """A subscription group."""
+
+
+class EntitlementType(IntEnum):
+    """Represents the type of an :class:`Entitlement`.
+
+    .. versionadded:: 3.2
+    """
+
+    application_subscription = 8
+    """An application subscription."""
+
+
+class EntitlementOwnerType(IntEnum):
+    """Represents the type of an :class:`Entitlement` owner.
+
+    .. versionadded:: 3.2
+    """
+
+    guild_subscription = 1
+    """A guild subscription."""
+    user_subscription = 2
+    """A user subscription."""
+
+
 class InteractionType(IntEnum):
     """Specifies the type of :class:`Interaction`.
 
@@ -1639,6 +1676,7 @@ class InteractionResponseType(IntEnum):
     """
     application_command_autocomplete_result = 8
     modal = 9
+    premium_required = 10
 
 
 class ApplicationCommandType(IntEnum):

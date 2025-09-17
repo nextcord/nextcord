@@ -14,7 +14,8 @@ from . import abc, utils
 from .activity import ActivityTypes, create_activity
 from .asset import Asset
 from .colour import Colour
-from .enums import Status, try_enum
+from .entitlement import Entitlement
+from .enums import EntitlementOwnerType, Status, try_enum
 from .flags import MemberFlags
 from .object import Object
 from .permissions import Permissions
@@ -1073,3 +1074,79 @@ class Member(abc.Messageable, _UserTag):
             The role or ``None`` if not found in the member's roles.
         """
         return self.guild.get_role(role_id) if self._roles.has(role_id) else None
+
+    async def create_test_entitlement(self, sku_id: int):
+        """|coro|
+
+        Creates a test entitlement for this member.
+
+        .. versionadded:: 3.2
+
+        Parameters
+        ----------
+        sku_id: :class:`int`
+            The ID of the SKU to create a test entitlement for.
+        """
+        if not self._state.application_id:
+            raise TypeError("Couldn't get the clients application_id.")
+        await self._state.http.create_test_entitlement(
+            application_id=self._state.application_id,
+            sku_id=sku_id,
+            owner_id=self.id,
+            owner_type=EntitlementOwnerType.user_subscription.value,
+        )
+
+    async def entitlements(
+        self,
+        before: Optional[abc.SnowflakeTime] = None,
+        after: Optional[abc.SnowflakeTime] = None,
+        limit: Optional[int] = None,
+        exclude_ended: bool = False,
+    ) -> List[Entitlement]:
+        """|coro|
+
+        Fetches the entitlements for this member.
+
+        .. versionadded:: 3.2
+
+        Parameters
+        ----------
+        before: Optional[Union[:class:`abc.Snowflake`, :class:`datetime.datetime`]]
+            Retrieve entitlements before this date or entitlement.
+            If a datetime is provided, it is recommended to use a UTC aware datetime.
+            If the datetime is naive, it is assumed to be local time.
+            Defaults to ``None``.
+        after: Optional[Union[:class:`abc.Snowflake`, :class:`datetime.datetime`]]
+            Retrieve entitlements after this date or entitlement.
+            If a datetime is provided, it is recommended to use a UTC aware datetime.
+            If the datetime is naive, it is assumed to be local time.
+            Defaults to ``None``.
+        limit: Optional[:class:`int`]
+            The number of entitlements to retrieve. If ``None`` retrieve all entitlements.
+            Defaults to ``None``.
+        exclude_ended: :class:`bool`
+            Whether to exclude ended entitlements.
+            Defaults to ``False``.
+
+        Returns
+        -------
+        List[:class:`Entitlement`]
+            The entitlements for this user.
+        """
+        if not self._state.application_id:
+            raise TypeError("Couldn't get the clients application_id.")
+
+        if isinstance(before, datetime.datetime):
+            before = Object(id=utils.time_snowflake(before, high=False))
+        if isinstance(after, datetime.datetime):
+            after = Object(id=utils.time_snowflake(after, high=True))
+
+        data = await self._state.http.list_entitlements(
+            application_id=self._state.application_id,
+            user_id=self.id,
+            before=before.id if before else None,
+            after=after.id if after else None,
+            limit=limit,
+            exclude_ended=exclude_ended,
+        )
+        return [Entitlement(payload) for payload in data]
