@@ -4859,3 +4859,19 @@ class HTTPClient:
             auth=auth,
             retry_request=retry_request,
         )
+
+    def edit_incidents(
+        self,
+        guild_id: Snowflake,
+        data: guild.BaseIncidentsData,
+        *,
+        auth: Optional[str] = MISSING,
+        retry_request: bool = True,
+    ) -> Response[guild.IncidentsData]:
+        r = Route("PUT", "/guilds/{guild_id}/incident-actions", guild_id=guild_id)
+        return self.request(
+            r,
+            json=data,
+            auth=auth,
+            retry_request=retry_request,
+        )
