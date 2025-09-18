@@ -101,6 +101,11 @@ class MessageSnapshot(TypedDict):
     message: MessageSnapshotMessage
 
 
+class MessageCall(TypedDict):
+    participants: SnowflakeList
+    ended_timestamp: NotRequired[Optional[str]]
+
+
 class Message(TypedDict):
     id: Snowflake
     channel_id: Snowflake
@@ -134,6 +139,7 @@ class Message(TypedDict):
     interaction: NotRequired[MessageInteraction]
     components: NotRequired[List[Component]]
     role_subscription_data: NotRequired[RoleSubscriptionData]
+    call: NotRequired[MessageCall]
 
 
 AllowedMentionType = Literal["roles", "users", "everyone"]
