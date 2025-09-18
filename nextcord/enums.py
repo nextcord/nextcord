@@ -53,6 +53,7 @@ __all__ = (
     "IntegrationType",
     "InteractionContextType",
     "MessageReferenceType",
+    "ReactionType",
 )
 
 
@@ -2096,6 +2097,18 @@ class MessageReferenceType(IntEnum):
     """The reference is used as a reply."""
     forward = 1
     """The reference is used to point to a message."""
+
+
+class ReactionType(IntEnum):
+    """Represents the type of a message reaction.
+
+    .. versionadded:: 3.2
+    """
+
+    normal = 0
+    """The message reaction is a normal reaction."""
+    burst = 1
+    """The message reaction is a burst/super reaction."""
 
 
 T = TypeVar("T")
