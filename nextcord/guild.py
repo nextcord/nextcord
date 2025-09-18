@@ -65,6 +65,7 @@ from .partial_emoji import PartialEmoji
 from .permissions import PermissionOverwrite
 from .role import Role
 from .scheduled_events import EntityMetadata, ScheduledEvent
+from .soundboard import SoundboardSound
 from .stage_instance import StageInstance
 from .sticker import GuildSticker
 from .threads import Thread, ThreadMember
@@ -304,6 +305,7 @@ class Guild(Hashable):
         "_stage_instances",
         "_threads",
         "_scheduled_events",
+        "_soundboard_sounds",
         "approximate_member_count",
         "approximate_presence_count",
         "_premium_progress_bar_enabled",
@@ -326,6 +328,7 @@ class Guild(Hashable):
         self._voice_states: Dict[int, VoiceState] = {}
         self._threads: Dict[int, Thread] = {}
         self._application_commands: Dict[int, BaseApplicationCommand] = {}
+        self._soundboard_sounds: Dict[int, SoundboardSound] = {}
         self._state: ConnectionState = state
         self._from_data(data)
 
@@ -381,6 +384,12 @@ class Guild(Hashable):
         event = ScheduledEvent(guild=self, state=self._state, data=payload)
         self._scheduled_events[event.id] = event
         return event
+
+    def _add_soundboard_sound(self, payload: SoundboardSound) -> None:
+        self._soundboard_sounds[payload.id] = payload
+
+    def _remove_soundboard_sound(self, sound_id: int) -> None:
+        self._soundboard_sounds.pop(sound_id, None)
 
     def __str__(self) -> str:
         return self.name or ""
@@ -668,6 +677,13 @@ class Guild(Hashable):
         .. versionadded:: 2.0
         """
         return list(self._scheduled_events.values())
+
+    @property
+    def soundboard_sounds(self) -> List[SoundboardSound]:
+        """List[:class:`SoundboardSound`]: A list of soundboard sounds in this guild. This is only available
+        if the sounds have been fetched using :meth:`fetch_soundboard_sounds`.
+        """
+        return list(self._soundboard_sounds.values())
 
     @property
     def premium_progress_bar_enabled(self) -> Optional[bool]:
@@ -2764,6 +2780,16 @@ class Guild(Hashable):
         """
 
         await self._state.http.delete_custom_emoji(self.id, emoji.id, reason=reason)
+
+    async def fetch_soundboard_sounds(self) -> List[SoundboardSound]:
+        """|coro|
+        Retrieves all soundboard sounds that the guild has.
+
+        .. versionadded:: 2.x
+        """
+        await self._state._get_websocket(self.id).request_soundboard_sounds([self.id])
+
+        return await self._state._get_client().wait_for("soundboard_sounds")
 
     async def fetch_roles(self, *, cache: bool = False) -> List[Role]:
         """|coro|

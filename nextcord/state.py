@@ -48,12 +48,14 @@ from .partial_emoji import PartialEmoji
 from .raw_models import *
 from .role import Role
 from .scheduled_events import ScheduledEvent, ScheduledEventUser
+from .soundboard import PartialSoundboardSound, SoundboardSound
 from .stage_instance import StageInstance
 from .sticker import GuildSticker
 from .threads import Thread, ThreadMember
 from .ui.modal import Modal, ModalStore
 from .ui.view import View, ViewStore
 from .user import ClientUser, User
+from .voice_channel_effect import VoiceChannelEffect
 
 if TYPE_CHECKING:
     from asyncio import Future
@@ -71,8 +73,10 @@ if TYPE_CHECKING:
     from .types.interactions import ApplicationCommand as ApplicationCommandPayload
     from .types.message import Message as MessagePayload
     from .types.scheduled_events import ScheduledEvent as ScheduledEventPayload
+    from .types.soundboard import SoundboardSound as SoundboardSoundPayload
     from .types.sticker import GuildSticker as GuildStickerPayload
     from .types.user import PartialUser as PartialUserPayload, User as UserPayload
+    from .types.voice import VoiceChannelEffectSend as VoiceChannelEffectSendPayload
     from .voice_client import VoiceProtocol
 
     T = TypeVar("T")
@@ -270,6 +274,7 @@ class ConnectionState:
         self._emojis: Dict[int, Emoji] = {}
         self._stickers: Dict[int, GuildSticker] = {}
         self._guilds: Dict[int, Guild] = {}
+        self._soundboard_sounds: Dict[int, SoundboardSound] = {}
         # TODO: Why aren't the above and stuff below application_commands declared in __init__?
         self._application_commands = set()
         # Thought about making these two weakref.WeakValueDictionary's, but the bot could theoretically be holding on
@@ -386,6 +391,13 @@ class ConnectionState:
         self._stickers[sticker_id] = sticker = GuildSticker(state=self, data=data)
         return sticker
 
+    def store_soundboard_sound(
+        self, guild: Optional[Guild], data: SoundboardSoundPayload
+    ) -> SoundboardSound:
+        sound = SoundboardSound(data=data, guild=guild, state=self)
+        self._soundboard_sounds[sound.id] = sound
+        return sound
+
     def store_view(self, view: View, message_id: Optional[int] = None) -> None:
         self._view_store.add_view(view, message_id)
 
@@ -444,6 +456,10 @@ class ConnectionState:
     def get_sticker(self, sticker_id: Optional[int]) -> Optional[GuildSticker]:
         # the keys of self._stickers are ints
         return self._stickers.get(sticker_id)  # type: ignore
+
+    def get_soundboard_sound(self, sound_id: Optional[int]) -> Optional[SoundboardSound]:
+        # the keys of self._soundboard_sounds are ints
+        return self._soundboard_sounds.get(sound_id)  # type: ignore
 
     @property
     def private_channels(self) -> List[PrivateChannel]:
@@ -2211,6 +2227,16 @@ class ConnectionState:
         except KeyError:
             return emoji
 
+    def _upgrade_partial_soundboard_sound(
+        self, sound: PartialSoundboardSound
+    ) -> Union[SoundboardSound, PartialSoundboardSound]:
+        sound_id = sound.id
+
+        try:
+            return self._soundboard_sounds[sound_id]
+        except KeyError:
+            return sound
+
     def get_channel(self, id: Optional[int]) -> Optional[Union[Channel, Thread]]:
         if id is None:
             return None
@@ -2366,6 +2392,83 @@ class ConnectionState:
                 guild,
                 user,
             )
+
+    def parse_guild_soundboard_sound_create(self, data) -> None:
+        # guild_id is always present
+
+        if (guild := self._get_guild(int(data["guild_id"]))) == None:
+            _log.debug(
+                "GUILD_SOUNDBOARD_SOUND_CREATE referencing unknown guild ID: %s. Discarding.",
+                data["guild_id"],
+            )
+            return
+
+        sound = SoundboardSound(data=data, guild=guild, state=self)
+        guild._add_soundboard_sound(sound)
+        self.dispatch(
+            "guild_soundboard_sound_create", SoundboardSound(data=data, guild=guild, state=self)
+        )
+
+    def parse_guild_soundboard_sound_update(self, data) -> None:
+        if (guild := self._get_guild(int(data["guild_id"]))) == None:
+            _log.debug(
+                "GUILD_SOUNDBOARD_SOUND_UPDATE referencing unknown guild ID: %s. Discarding.",
+                data["guild_id"],
+            )
+            return
+
+        if sound := self._soundboard_sounds.get(data["sound_id"]):
+            old_sound = copy.copy(sound)
+            sound._update(data, guild)
+            self.dispatch("guild_soundboard_sound_update", old_sound, sound)
+        else:
+            _log.debug(
+                "GUILD_SOUNDBOARD_SOUND_UPDATE referencing unknown sound ID: %s. Discarding.",
+                data["sound_id"],
+            )
+            # TODO: Should we store the sound here? We definitely could
+
+    def parse_guild_soundboard_sound_delete(self, data) -> None:
+        # Data fields are guild_id and sound_id
+        if (guild := self._get_guild(int(data["guild_id"]))) == None:
+            _log.debug(
+                "GUILD_SOUNDBOARD_SOUND_DELETE referencing unknown guild ID: %s. Discarding.",
+                data["guild_id"],
+            )
+            return
+
+        if sound := self._soundboard_sounds.get(data["sound_id"]):
+            guild._remove_soundboard_sound(sound.id)
+            self.dispatch("guild_soundboard_sound_delete", sound)
+        else:
+            _log.debug(
+                "GUILD_SOUNDBOARD_SOUND_DELETE referencing unknown sound ID: %s. Discarding.",
+                data["sound_id"],
+            )
+
+    def parse_soundboard_sounds(self, data) -> None:
+        # data: {soundboard_sounds: SoundboardSoundPayload[], guild_id: Snowflake}
+
+        if (guild := self._get_guild(int(data["guild_id"]))) == None:
+            _log.debug(
+                "SOUNDBOARD_SOUNDS referencing unknown guild ID: %s. Discarding.", data["guild_id"]
+            )
+            return
+
+        guild._soundboard_sounds = {
+            sound["sound_id"]: SoundboardSound(data=sound, guild=guild, state=self)
+            for sound in data["soundboard_sounds"]
+        }
+
+        sounds = list(guild._soundboard_sounds.values())
+
+        for sound in sounds:
+            self._soundboard_sounds[sound.id] = sound
+
+        self.dispatch("soundboard_sounds", sounds)
+
+    def parse_voice_channel_effect_send(self, data: VoiceChannelEffectSendPayload) -> None:
+        self.dispatch("voice_channel_effect_send", VoiceChannelEffect(data=data, state=self))
 
 
 class AutoShardedConnectionState(ConnectionState):
