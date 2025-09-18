@@ -61,6 +61,7 @@ if TYPE_CHECKING:
     from .client import Client
     from .guild import Guild
     from .message import AllowedMentions
+    from .polls import PollCreateRequest
     from .state import ConnectionState
     from .threads import Thread
     from .types.interactions import Interaction as InteractionPayload, InteractionData
@@ -647,6 +648,7 @@ class Interaction(Hashable, Generic[ClientT]):
         flags: Optional[MessageFlags] = None,
         ephemeral: Optional[bool] = None,
         suppress_embeds: Optional[bool] = None,
+        poll: Optional[PollCreateRequest] = None,
     ) -> Union[PartialInteractionMessage, WebhookMessage]:
         """|coro|
 
@@ -694,6 +696,7 @@ class Interaction(Hashable, Generic[ClientT]):
                 allowed_mentions=allowed_mentions,
                 flags=flags,
                 suppress_embeds=suppress_embeds,
+                poll=poll,
             )
         return await self.followup.send(
             content=content,  # type: ignore
@@ -908,6 +911,7 @@ class InteractionResponse:
         flags: Optional[MessageFlags] = None,
         ephemeral: Optional[bool] = None,
         suppress_embeds: Optional[bool] = None,
+        poll: Optional[PollCreateRequest] = None,
     ) -> PartialInteractionMessage:
         """|coro|
 
@@ -957,6 +961,10 @@ class InteractionResponse:
             Whether to suppress embeds on this message.
 
             .. versionadded:: 2.4
+        poll: Optional[:class:`PollCreateRequest`]
+            The poll to send with this message.
+
+            ..versionadded:: 3.0
 
         Raises
         ------
@@ -998,6 +1006,8 @@ class InteractionResponse:
         if embeds:
             payload["embeds"] = [e.to_dict() for e in embeds]
 
+        if poll:
+            payload["poll"] = poll.to_dict()
         if file is not MISSING and files is not MISSING:
             raise InvalidArgument("Cannot mix file and files keyword arguments")
 

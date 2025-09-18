@@ -57,6 +57,7 @@ if TYPE_CHECKING:
     from ..guild import Guild
     from ..http import Response
     from ..mentions import AllowedMentions
+    from ..polls import PollCreateRequest
     from ..state import ConnectionState
     from ..types.message import Message as MessagePayload
     from ..types.snowflake import Snowflake as SnowflakeAlias
@@ -506,6 +507,7 @@ def handle_message_parameters(
     flags: Optional[MessageFlags] = None,
     suppress_embeds: Optional[bool] = None,
     thread_name: Optional[str] = None,
+    poll: Optional[PollCreateRequest] = None,
 ) -> ExecuteWebhookParameters:
     if files is not MISSING and file is not MISSING:
         raise InvalidArgument("Cannot mix file and files keyword arguments.")
@@ -549,6 +551,8 @@ def handle_message_parameters(
         payload["avatar_url"] = str(avatar_url)
     if username:
         payload["username"] = username
+    if poll:
+        payload["poll"] = poll.to_dict()
 
     if flags is None:
         flags = MessageFlags()
@@ -1369,6 +1373,7 @@ class Webhook(BaseWebhook):
         flags: Optional[MessageFlags] = None,
         suppress_embeds: Optional[bool] = None,
         thread_name: Optional[str] = None,
+        poll: Optional[PollCreateRequest] = None,
     ) -> WebhookMessage: ...
 
     @overload
@@ -1392,6 +1397,7 @@ class Webhook(BaseWebhook):
         flags: Optional[MessageFlags] = None,
         suppress_embeds: Optional[bool] = None,
         thread_name: Optional[str] = None,
+        poll: Optional[PollCreateRequest] = None,
     ) -> None: ...
 
     async def send(
@@ -1414,6 +1420,7 @@ class Webhook(BaseWebhook):
         flags: Optional[MessageFlags] = None,
         suppress_embeds: Optional[bool] = None,
         thread_name: Optional[str] = None,
+        poll: Optional[PollCreateRequest] = None,
     ) -> Optional[WebhookMessage]:
         """|coro|
 
@@ -1502,6 +1509,10 @@ class Webhook(BaseWebhook):
             Name of thread to create (requires the webhook channel to be a forum or media channel).
 
             .. versionadded:: 3.0
+        poll: Optional[:class:`PollCreateRequest`]
+            The poll to send with this message.
+
+            .. versionadded:: 3.0
 
         Raises
         ------
@@ -1562,6 +1573,7 @@ class Webhook(BaseWebhook):
             flags=flags,
             suppress_embeds=suppress_embeds,
             thread_name=thread_name,
+            poll=poll,
         )
         adapter = async_context.get()
 

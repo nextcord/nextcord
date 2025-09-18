@@ -37,6 +37,7 @@ from .member import Member
 from .mixins import Hashable
 from .object import Object
 from .partial_emoji import PartialEmoji
+from .polls import Poll
 from .reaction import Reaction
 from .sticker import StickerItem
 from .threads import Thread
@@ -1043,6 +1044,10 @@ class Message(Hashable):
         The role subscription data of a message, if applicable.
 
         .. versionadded:: 3.2
+    poll: Optional[:class:`Poll`]
+        The poll included in a message, if applicable.
+
+        .. versionadded:: 3.1
     """
 
     __slots__ = (
@@ -1081,6 +1086,7 @@ class Message(Hashable):
         "guild",
         "snapshots",
         "role_subscription",
+        "poll",
     )
 
     if TYPE_CHECKING:
@@ -1177,6 +1183,9 @@ class Message(Hashable):
             MessageInteraction(data=data["interaction"], guild=self.guild, state=self._state)
             if "interaction" in data
             else None
+        )
+        self.poll: Optional[Poll] = (
+            Poll(data=data["poll"], message=self, state=self._state) if "poll" in data else None
         )
         self.interaction_metadata: Optional[MessageInteractionMetadata] = (
             MessageInteractionMetadata(
