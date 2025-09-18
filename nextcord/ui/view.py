@@ -31,7 +31,7 @@ from ..components import (
     Component,
     SelectMenu as SelectComponent,
     TextInput as TextComponent,
-    _component_factory,
+    resolve_component,
 )
 from .item import Item, ItemCallbackType
 
@@ -222,12 +222,8 @@ class View:
             if not children:
                 continue
 
-            components.append(
-                {
-                    "type": 1,
-                    "components": children,
-                }
-            )
+            components.append({"type": 1, "components": children})  # type: ignore  # When sending data, we don't
+            #  need to specify the ID.
 
         return components
 
@@ -564,4 +560,4 @@ class ViewStore:
     def update_from_message(self, message_id: int, components: List[ComponentPayload]) -> None:
         # pre-req: is_message_tracked == true
         view = self._synced_message_views[message_id]
-        view.refresh([_component_factory(d) for d in components])
+        view.refresh([resolve_component(d) for d in components])

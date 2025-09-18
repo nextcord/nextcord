@@ -6,7 +6,6 @@ import asyncio
 from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, TypeVar
 
 from ...components import MentionableSelectMenu
-from ...enums import ComponentType
 from ...interactions import ClientT
 from ...member import Member
 from ...role import Role
@@ -93,7 +92,7 @@ class MentionableSelect(SelectBase, Generic[V_co]):
     def __init__(
         self,
         *,
-        custom_id: str = MISSING,
+        custom_id: str | None = None,
         placeholder: Optional[str] = None,
         min_values: int = 1,
         max_values: int = 1,
@@ -109,13 +108,13 @@ class MentionableSelect(SelectBase, Generic[V_co]):
             placeholder=placeholder,
         )
         self._selected_values: MentionableSelectValues = MentionableSelectValues()
-        self._underlying = MentionableSelectMenu._raw_construct(
-            custom_id=self.custom_id,
-            type=ComponentType.mentionable_select,
-            placeholder=self.placeholder,
-            min_values=self.min_values,
-            max_values=self.max_values,
-            disabled=self.disabled,
+        self._underlying = MentionableSelectMenu(
+            custom_id=custom_id,
+            placeholder=placeholder if placeholder is not None else MISSING,
+            # default_values=
+            min_values=min_values,
+            max_values=max_values,
+            disabled=disabled,
         )
 
     @property

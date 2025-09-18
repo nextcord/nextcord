@@ -53,6 +53,8 @@ __all__ = (
     "IntegrationType",
     "InteractionContextType",
     "MessageReferenceType",
+    "SelectDefaultValueType",
+    "SeparatorSpacingSize",
 )
 
 
@@ -1804,6 +1806,13 @@ class ComponentType(IntEnum):
 
     .. versionadded:: 2.3
     """
+    section = 9
+    text_display = 10
+    thumbnail = 11
+    media_gallery = 12
+    file = 13
+    separator = 14
+    container = 17
 
 
 class ButtonStyle(IntEnum):
@@ -1822,6 +1831,7 @@ class ButtonStyle(IntEnum):
     """Represents a red button for dangerous actions."""
     link = 5
     """Represents a link button."""
+    premium = 6
 
     # Aliases
     blurple = 1
@@ -2096,6 +2106,17 @@ class MessageReferenceType(IntEnum):
     """The reference is used as a reply."""
     forward = 1
     """The reference is used to point to a message."""
+
+
+class SelectDefaultValueType(StrEnum):
+    channel = "channel"
+    role = "role"
+    user = "user"
+
+
+class SeparatorSpacingSize(IntEnum):
+    small = 1
+    large = 2
 
 
 T = TypeVar("T")
