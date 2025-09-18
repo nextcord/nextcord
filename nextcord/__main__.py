@@ -189,6 +189,8 @@ def to_path(parser, name: str, *, replace_spaces: bool = False):
             "LPT7",
             "LPT8",
             "LPT9",
+            "CONIN$",
+            "CONOUT$",
         )
         if len(name) <= 4 and name.upper() in forbidden:
             parser.error("invalid directory name given, use a different one")
