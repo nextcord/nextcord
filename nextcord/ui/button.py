@@ -256,7 +256,7 @@ def button(
     """
 
     def decorator(
-        func: ItemCallbackType[Button[V_co], ClientT]
+        func: ItemCallbackType[Button[V_co], ClientT],
     ) -> ItemCallbackType[Button[V_co], ClientT]:
         if not asyncio.iscoroutinefunction(func):
             raise TypeError("Button function must be a coroutine function")

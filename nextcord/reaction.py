@@ -56,7 +56,7 @@ class Reaction:
         Message this reaction is for.
     """
 
-    __slots__ = ("message", "count", "emoji", "me")
+    __slots__ = ("count", "emoji", "me", "message")
 
     def __init__(
         self,

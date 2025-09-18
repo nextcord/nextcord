@@ -37,7 +37,7 @@ ET = TypeVar("ET", bound=Callable[[Any, BaseException], Coroutine[Any, Any, Any]
 
 
 class SleepHandle:
-    __slots__ = ("future", "loop", "handle")
+    __slots__ = ("future", "handle", "loop")
 
     def __init__(self, dt: datetime.datetime, *, loop: asyncio.AbstractEventLoop) -> None:
         self.loop = loop
@@ -258,7 +258,7 @@ class Loop(Generic[LF]):
         """
         if self._task is MISSING:
             return None
-        if self._task and self._task.done() or self._stop_next_iteration:
+        if (self._task and self._task.done()) or self._stop_next_iteration:
             return None
         return self._next_iteration
 

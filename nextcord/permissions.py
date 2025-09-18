@@ -10,8 +10,8 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
 __all__ = (
-    "Permissions",
     "PermissionOverwrite",
+    "Permissions",
 )
 
 

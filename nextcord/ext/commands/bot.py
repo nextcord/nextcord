@@ -54,11 +54,11 @@ if TYPE_CHECKING:
     from ._types import Check, CoroFunc
 
 __all__ = (
+    "AutoShardedBot",
+    "Bot",
+    "MissingMessageContentIntentWarning",
     "when_mentioned",
     "when_mentioned_or",
-    "Bot",
-    "AutoShardedBot",
-    "MissingMessageContentIntentWarning",
 )
 
 MISSING: Any = nextcord.utils.MISSING

@@ -14,9 +14,9 @@ from .object import Object
 from .utils import get_as_snowflake, parse_time, snowflake_time
 
 __all__ = (
+    "Invite",
     "PartialInviteChannel",
     "PartialInviteGuild",
-    "Invite",
 )
 
 if TYPE_CHECKING:
@@ -137,15 +137,15 @@ class PartialInviteGuild:
     """
 
     __slots__ = (
-        "_state",
-        "features",
-        "_icon",
         "_banner",
+        "_icon",
+        "_splash",
+        "_state",
+        "description",
+        "features",
         "id",
         "name",
-        "_splash",
         "verification_level",
-        "description",
     )
 
     def __init__(self, state: ConnectionState, data: InviteGuildPayload, id: int) -> None:
@@ -302,24 +302,24 @@ class Invite(Hashable):
     """
 
     __slots__ = (
-        "max_age",
-        "code",
-        "guild",
-        "revoked",
-        "created_at",
-        "uses",
-        "temporary",
-        "max_uses",
-        "inviter",
-        "channel",
-        "target_user",
-        "target_type",
         "_state",
         "approximate_member_count",
         "approximate_presence_count",
-        "target_application",
+        "channel",
+        "code",
+        "created_at",
         "expires_at",
+        "guild",
+        "inviter",
+        "max_age",
+        "max_uses",
+        "revoked",
+        "target_application",
+        "target_type",
+        "target_user",
+        "temporary",
         "type",
+        "uses",
     )
 
     BASE = "https://discord.gg"

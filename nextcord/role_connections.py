@@ -36,12 +36,12 @@ class RoleConnectionMetadata:
     """
 
     __slots__ = (
-        "type",
+        "description",
+        "description_localizations",
         "key",
         "name",
         "name_localizations",
-        "description",
-        "description_localizations",
+        "type",
     )
 
     def __init__(

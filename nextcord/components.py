@@ -29,9 +29,9 @@ if TYPE_CHECKING:
 
 
 __all__ = (
-    "Component",
     "ActionRow",
     "Button",
+    "Component",
     "SelectMenu",
     "SelectOption",
     "TextInput",
@@ -506,11 +506,11 @@ class SelectOption:
     """
 
     __slots__: Tuple[str, ...] = (
-        "label",
-        "value",
+        "default",
         "description",
         "emoji",
-        "default",
+        "label",
+        "value",
     )
 
     def __init__(
