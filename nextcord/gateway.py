@@ -143,7 +143,7 @@ class KeepAliveHandler(threading.Thread):
                     _log.exception("An error occurred while stopping the gateway. Ignoring.")
                 finally:
                     self.stop()
-                    return  # noqa: B012  # ignoring is intentional
+                return
 
             data = self.get_payload()
             _log.debug(self.msg, self.shard_id, data["d"])
