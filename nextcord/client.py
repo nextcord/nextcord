@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import inspect
 import logging
 import signal
 import sys
@@ -1301,7 +1302,7 @@ class Client:
             The coroutine passed is not actually a coroutine.
         """
 
-        if not asyncio.iscoroutinefunction(coro):
+        if not inspect.iscoroutinefunction(coro):
             raise TypeError("event registered must be a coroutine function")
 
         setattr(self, coro.__name__, coro)
@@ -1334,7 +1335,7 @@ class Client:
         """
         name = func.__name__ if name is MISSING else name
 
-        if not asyncio.iscoroutinefunction(func):
+        if not inspect.iscoroutinefunction(func):
             raise TypeError("Listeners must be coroutines")
 
         if name in self.extra_events:
@@ -3029,7 +3030,7 @@ class Client:
         TypeError
             The coroutine passed is not actually a coroutine.
         """
-        if not asyncio.iscoroutinefunction(coro):
+        if not inspect.iscoroutinefunction(coro):
             raise TypeError("The pre-invoke hook must be a coroutine.")
 
         self._application_command_before_invoke = coro
@@ -3062,7 +3063,7 @@ class Client:
         TypeError
             The coroutine passed is not actually a coroutine.
         """
-        if not asyncio.iscoroutinefunction(coro):
+        if not inspect.iscoroutinefunction(coro):
             raise TypeError("The post-invoke hook must be a coroutine.")
 
         self._application_command_after_invoke = coro

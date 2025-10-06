@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import contextlib
 import inspect
 from typing import TYPE_CHECKING, Any, Callable, ClassVar, Dict, Generator, List, Tuple, TypeVar
@@ -130,7 +129,7 @@ class CogMeta(type):
                     if elem.startswith(("cog_", "bot_")):
                         raise TypeError(no_bot_cog.format(base, elem))
                     commands[elem] = value
-                elif asyncio.iscoroutinefunction(value):
+                elif inspect.iscoroutinefunction(value):
                     if not hasattr(value, "__cog_listener__"):
                         continue
 
@@ -284,7 +283,7 @@ class Cog(ClientCog, metaclass=CogMeta):
             actual = func
             if isinstance(actual, staticmethod):
                 actual = actual.__func__
-            if not asyncio.iscoroutinefunction(actual):
+            if not inspect.iscoroutinefunction(actual):
                 raise TypeError("Listener function must be a coroutine function.")
             actual.__cog_listener__ = True
             to_assign = name or actual.__name__

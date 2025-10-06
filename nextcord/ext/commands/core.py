@@ -288,7 +288,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         ],
         **kwargs: Any,
     ) -> None:
-        if not asyncio.iscoroutinefunction(func):
+        if not inspect.iscoroutinefunction(func):
             raise TypeError("Callback must be a coroutine.")
 
         name = kwargs.get("name") or func.__name__
@@ -1031,7 +1031,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
             The coroutine passed is not actually a coroutine.
         """
 
-        if not asyncio.iscoroutinefunction(coro):
+        if not inspect.iscoroutinefunction(coro):
             raise TypeError("The error handler must be a coroutine.")
 
         self.on_error: Error = coro
@@ -1065,7 +1065,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         TypeError
             The coroutine passed is not actually a coroutine.
         """
-        if not asyncio.iscoroutinefunction(coro):
+        if not inspect.iscoroutinefunction(coro):
             raise TypeError("The pre-invoke hook must be a coroutine.")
 
         self._before_invoke = coro
@@ -1092,7 +1092,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         TypeError
             The coroutine passed is not actually a coroutine.
         """
-        if not asyncio.iscoroutinefunction(coro):
+        if not inspect.iscoroutinefunction(coro):
             raise TypeError("The post-invoke hook must be a coroutine.")
 
         self._after_invoke = coro
@@ -1860,7 +1860,7 @@ def check(predicate: Check) -> Callable[[T], T]:
 
         return func
 
-    if asyncio.iscoroutinefunction(predicate):
+    if inspect.iscoroutinefunction(predicate):
         decorator.predicate = predicate
     else:
 
