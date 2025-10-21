@@ -18,6 +18,7 @@ import aiohttp
 
 from . import utils
 from .activity import BaseActivity
+from .cache import BetterTTLCache
 from .enums import SpeakingState
 from .errors import ConnectionClosed, InvalidArgument
 
@@ -804,6 +805,8 @@ class DiscordVoiceWebSocket:
         self._hook: Optional[Callable[..., Awaitable[None]]] = (
             hook or getattr(self, "_hook", None) or self._default_hook
         )
+        # ssrc will be cached for 2 hours after the last time the user was updated
+        self.ssrc_cache = BetterTTLCache(ttl=2 * 60 * 60)
 
     async def _default_hook(self, *args: Any) -> None: ...
 
@@ -909,6 +912,15 @@ class DiscordVoiceWebSocket:
             interval = data["heartbeat_interval"] / 1000.0
             self._keep_alive = VoiceKeepAliveHandler(ws=self, interval=min(interval, 5.0))
             self._keep_alive.start()
+        elif op == self.SPEAKING:
+            ssrc = data.get("ssrc")
+            user_id = int(data.get("user_id", 0))
+            speaking = data.get("speaking")
+
+            if user := self.ssrc_cache.get_with_update(ssrc):
+                user["speaking"] = speaking
+            else:
+                self.ssrc_cache[ssrc] = {"user_id": user_id, "speaking": speaking}
 
         if self._hook is not None:
             await self._hook(self, msg)
