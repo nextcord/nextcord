@@ -3339,6 +3339,8 @@ Command Helpers
 .. autoclass:: Mentionable
     :members:
 
+.. autofunction:: nextcord.ext.slash_utils.choices
+
 Decorators
 ~~~~~~~~~~
 
