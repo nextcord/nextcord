@@ -62,6 +62,9 @@ __all__ = (
 )
 
 MISSING: Any = nextcord.utils.MISSING
+SnowflakeIntT = nextcord.utils.SnowflakeIntT
+_snowflake_or_int = nextcord.utils._snowflake_or_int
+
 
 T = TypeVar("T")
 CFT = TypeVar("CFT", bound="CoroFunc")
@@ -372,7 +375,7 @@ class BotBase(GroupMixin):
         # type-checker doesn't distinguish between functions and methods
         return await nextcord.utils.async_all(f(ctx) for f in data)  # type: ignore
 
-    async def is_owner(self, user: nextcord.User) -> bool:
+    async def is_owner(self, user: SnowflakeIntT) -> bool:
         """|coro|
         Checks if a :class:`~nextcord.User` or :class:`~nextcord.Member` is the owner of
         this bot.
@@ -386,7 +389,7 @@ class BotBase(GroupMixin):
 
         Parameters
         ----------
-        user: :class:`.abc.User`
+        user: Union[:class:`int`, :class:`Snowflake`]
             The user to check for.
 
         Returns
@@ -394,19 +397,19 @@ class BotBase(GroupMixin):
         :class:`bool`
             Whether the user is the owner.
         """
-
+        user_id: int = _snowflake_or_int(user)
         if self.owner_id:
-            return user.id == self.owner_id
+            return user_id == self.owner_id
         if self.owner_ids:
-            return user.id in self.owner_ids
+            return user_id in self.owner_ids
 
         app = await self.application_info()  # type: ignore
         if app.team:
             self.owner_ids = ids = {m.id for m in app.team.members}
-            return user.id in ids
+            return user_id in ids
 
         self.owner_id = owner_id = app.owner.id
-        return user.id == owner_id
+        return user_id == owner_id
 
     def before_invoke(self, coro: CFT) -> CFT:
         """A decorator that registers a coroutine as a pre-invoke hook.
