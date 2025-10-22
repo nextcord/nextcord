@@ -59,6 +59,7 @@ GuildFeature = Literal[
     "PREVIEW_ENABLED",
     "RAID_ALERTS_DISABLED",
     "ROLE_ICONS",
+    "SOUNDBOARD",
     "TICKETED_EVENTS_ENABLED",
     "VANITY_URL",
     "VERIFIED",
