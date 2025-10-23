@@ -2,11 +2,12 @@
 from __future__ import annotations
 
 import asyncio
-import errno
 import audioop
+import errno
 import io
 import json
 import logging
+import os
 import re
 import shlex
 import subprocess
@@ -14,7 +15,6 @@ import sys
 import threading
 import time
 import traceback
-import os
 from typing import IO, TYPE_CHECKING, Any, Callable, Generic, Optional, Tuple, TypeVar, Union
 
 from .enums import SpeakingState
@@ -85,10 +85,7 @@ def _looks_like_local_path(path: str) -> bool:
         return False
 
     # Single dash is commonly used for stdin/stdout in ffmpeg contexts
-    if path == "-":
-        return False
-
-    return True
+    return path != "-"
 
 
 class AudioSource:
@@ -196,11 +193,15 @@ class FFmpegAudio(AudioSource):
         # local file path, proactively raise FileNotFoundError when the file
         # does not exist. This provides a clearer and earlier error than
         # letting ffmpeg fail silently and produce no audio.
-        if not piping and isinstance(source, str):
-            if _looks_like_local_path(source) and not os.path.exists(source):
-                raise FileNotFoundError(
-                    errno.ENOENT, os.strerror(errno.ENOENT), source
-                )
+        if (
+            not piping
+            and isinstance(source, str)
+            and _looks_like_local_path(source)
+            and not os.path.exists(source)
+        ):
+            raise FileNotFoundError(
+                errno.ENOENT, os.strerror(errno.ENOENT), source
+            )
 
         args = [executable, *args]
         kwargs = {"stdout": subprocess.PIPE}
