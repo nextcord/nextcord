@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import errno
 import audioop
 import io
 import json
@@ -13,6 +14,7 @@ import sys
 import threading
 import time
 import traceback
+import os
 from typing import IO, TYPE_CHECKING, Any, Callable, Generic, Optional, Tuple, TypeVar, Union
 
 from .enums import SpeakingState
@@ -46,6 +48,47 @@ if sys.platform != "win32":
     CREATE_NO_WINDOW = 0
 else:
     CREATE_NO_WINDOW = 0x08000000
+
+
+def _looks_like_local_path(path: str) -> bool:
+    """Best-effort check whether a string is a local filesystem path.
+
+    This avoids mistakenly treating URLs or ffmpeg virtual inputs (e.g. pipe:,
+    fd:, concat:) as local files. Windows drive letters (e.g. C:\\) are
+    considered local.
+    """
+    # URLs or schemes containing :// are not local paths
+    if "://" in path:
+        return False
+
+    lowered = path.lower()
+    # Common ffmpeg non-file inputs or protocols
+    if lowered.startswith(
+        (
+            "rtmp:",
+            "rtsp:",
+            "udp:",
+            "srt:",
+            "rtp:",
+            "pipe:",
+            "fd:",
+            "concat:",
+            "http:",
+            "https:",
+            "mms:",
+            "mmsh:",
+            "mmst:",
+            "lavfi:",
+            "anullsrc",
+        )
+    ):
+        return False
+
+    # Single dash is commonly used for stdin/stdout in ffmpeg contexts
+    if path == "-":
+        return False
+
+    return True
 
 
 class AudioSource:
@@ -136,20 +179,35 @@ class FFmpegAudio(AudioSource):
         args: Any,
         **subprocess_kwargs: Any,
     ) -> None:
+        # Initialize attributes early to make cleanup safe if we raise before
+        # the subprocess is spawned.
+        self._process: subprocess.Popen | Any = MISSING
+        self._stdout: IO[bytes] | Any = MISSING
+        self._stdin: Optional[IO[bytes]] = None
+        self._pipe_thread: Optional[threading.Thread] = None
+
         piping = subprocess_kwargs.get("stdin") == subprocess.PIPE
         if piping and isinstance(source, str):
             raise TypeError(
                 "parameter conflict: 'source' parameter cannot be a string when piping to stdin"
             )
 
+        # If we're not piping and the source is a string that looks like a
+        # local file path, proactively raise FileNotFoundError when the file
+        # does not exist. This provides a clearer and earlier error than
+        # letting ffmpeg fail silently and produce no audio.
+        if not piping and isinstance(source, str):
+            if _looks_like_local_path(source) and not os.path.exists(source):
+                raise FileNotFoundError(
+                    errno.ENOENT, os.strerror(errno.ENOENT), source
+                )
+
         args = [executable, *args]
         kwargs = {"stdout": subprocess.PIPE}
         kwargs.update(subprocess_kwargs)
 
-        self._process: subprocess.Popen = self._spawn_process(args, **kwargs)
-        self._stdout: IO[bytes] = self._process.stdout  # type: ignore
-        self._stdin: Optional[IO[bytes]] = None
-        self._pipe_thread: Optional[threading.Thread] = None
+        self._process = self._spawn_process(args, **kwargs)
+        self._stdout = self._process.stdout
 
         if piping:
             n = f"popen-stdin-writer:{id(self):#x}"
@@ -258,6 +316,9 @@ class FFmpegPCMAudio(FFmpegAudio):
     ------
     ClientException
         The subprocess failed to be created.
+    FileNotFoundError
+        Raised when ``source`` looks like a local file path and the file does
+        not exist.
     """
 
     def __init__(
