@@ -171,6 +171,7 @@ async def history_iterator(
     elif reverse:
         after_stategy = True
         if before is not None:
+
             def _check(msg: MessagePayload):
                 b = cast("Object | Snowflake | None", before)
                 return b is not None and int(msg["id"]) < b.id
@@ -179,6 +180,7 @@ async def history_iterator(
     else:
         before_strategy = True
         if after != OLDEST_OBJECT:
+
             def _check(msg: MessagePayload):
                 a = cast("Object | Snowflake | None", after)
                 return a is not None and int(msg["id"]) > a.id
@@ -196,17 +198,11 @@ async def history_iterator(
 
     while get_retrieve():
         if around is not None and around_strategy:
-            data = await state.http.logs_from(
-                channel.id, retrieve, around=around.id
-            )
+            data = await state.http.logs_from(channel.id, retrieve, around=around.id)
         elif before is not None and before_strategy:
-            data = await state.http.logs_from(
-                channel.id, retrieve, before=before.id
-            )
+            data = await state.http.logs_from(channel.id, retrieve, before=before.id)
         else:
-            data = await state.http.logs_from(
-                channel.id, retrieve, after=after.id
-            )
+            data = await state.http.logs_from(channel.id, retrieve, after=after.id)
 
         if data:
             if limit is not None:
