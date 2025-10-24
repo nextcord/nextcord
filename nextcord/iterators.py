@@ -82,9 +82,9 @@ async def history_iterator(
     messageable: Messageable,
     limit: Optional[int],
     before: Optional[SnowflakeTime] = None,
-    after: Optional[SnowflakeTime] = None,
+    after: SnowflakeTime = OLDEST_OBJECT,
     around: Optional[SnowflakeTime] = None,
-    oldest_first: Optional[bool] = None,
+    oldest_first: bool = True,
 ):
     """Iterator for receiving a channel's message history.
 
@@ -97,6 +97,8 @@ async def history_iterator(
     ``after``, sorted with newest first. For filling over 100 messages, update the
     ``after`` parameter to the newest message received. If messages are not
     reversed, they will be out of order (99-0, 199-100, so on)
+    If neither are specified, it will default to ``after`` set to
+    ``OLDEST_OBJECT``.
 
     A note that if both ``before`` and ``after`` are specified, ``before`` is ignored by the
     messages endpoint.
@@ -130,11 +132,14 @@ async def history_iterator(
     if isinstance(around, datetime.datetime):
         around = Object(id=time_snowflake(around))
 
+    reverse = oldest_first
+    before_strategy = False
+    after_stategy = False
+    around_strategy = False
+
     state = messageable._state
     channel = await messageable._get_channel()
     retrieve = 0
-
-    reverse = after is not None if oldest_first is None else oldest_first
 
     checks: List[Callable[[MessagePayload], bool]] = []
     if around:
@@ -142,6 +147,8 @@ async def history_iterator(
             raise ValueError("history does not support around with limit=None")
         if limit > 100:
             raise ValueError("history max limit 100 when specifying around parameter")
+
+        around_strategy = True
 
         # in nested functions, pyright thinks that the before and after parameters are
         # their old definitions as a parameter, so we manually cast in the functions
@@ -154,11 +161,29 @@ async def history_iterator(
 
             checks.append(_check)
 
-        if after is not None:
+        if after != OLDEST_OBJECT:
 
             def _check(msg: MessagePayload):
                 a = cast("Object | Snowflake | None", after)
-                return a is not None and a.id < int(msg["id"])
+                return a is not None and int(msg["id"]) > a.id
+
+            checks.append(_check)
+    elif reverse:
+        after_stategy = True
+        if before is not None:
+
+            def _check(msg: MessagePayload):
+                b = cast("Object | Snowflake | None", before)
+                return b is not None and int(msg["id"]) < b.id
+
+            checks.append(_check)
+    else:
+        before_strategy = True
+        if after != OLDEST_OBJECT:
+
+            def _check(msg: MessagePayload):
+                a = cast("Object | Snowflake | None", after)
+                return a is not None and int(msg["id"]) > a.id
 
             checks.append(_check)
 
@@ -172,24 +197,23 @@ async def history_iterator(
         return retrieve > 0
 
     while get_retrieve():
-        data: List[MessagePayload] = await state.http.logs_from(
-            channel.id,
-            retrieve,
-            before.id if before is not None and around is None else None,
-            after.id if after is not None and around is None else None,
-            around.id if around is not None else None,
-        )
+        if around is not None and around_strategy:
+            data = await state.http.logs_from(channel.id, retrieve, around=around.id)
+        elif before is not None and before_strategy:
+            data = await state.http.logs_from(channel.id, retrieve, before=before.id)
+        else:
+            data = await state.http.logs_from(channel.id, retrieve, after=after.id)
 
         if data:
             if limit is not None:
                 limit -= retrieve
 
-            if before is not None:
-                before = Object(id=int(data[-1]["id"]))
-            if after is not None:
-                after = Object(id=int(data[0]["id"]))
-            if around is not None:
+            if around_strategy:
                 around = None
+            if before_strategy:
+                before = Object(id=int(data[-1]["id"]))
+            if after_stategy:
+                after = Object(id=int(data[0]["id"]))
 
         if len(data) < 100:
             limit = 0

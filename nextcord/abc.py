@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import copy
+import warnings
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -29,7 +30,7 @@ from .errors import ClientException, InvalidArgument
 from .file import File
 from .flags import ChannelFlags, MessageFlags
 from .invite import Invite
-from .iterators import history_iterator
+from .iterators import OLDEST_OBJECT, history_iterator
 from .mentions import AllowedMentions
 from .partial_emoji import PartialEmoji
 from .permissions import PermissionOverwrite, Permissions
@@ -1654,9 +1655,9 @@ class Messageable:
         *,
         limit: Optional[int] = 100,
         before: Optional[SnowflakeTime] = None,
-        after: Optional[SnowflakeTime] = None,
+        after: Optional[SnowflakeTime] = OLDEST_OBJECT,
         around: Optional[SnowflakeTime] = None,
-        oldest_first: Optional[bool] = None,
+        oldest_first: Optional[bool] = True,
     ) -> AsyncIterator[Message]:
         """|asynciter|
 
@@ -1712,6 +1713,21 @@ class Messageable:
         :class:`~nextcord.Message`
             The message with the message data parsed.
         """
+        if oldest_first is None:
+            warnings.warn(
+                "Passing None for oldest_first is deprecated. It now defaults to True.",
+                FutureWarning,
+                stacklevel=2,
+            )
+            oldest_first = True
+        if after is None:
+            warnings.warn(
+                "Passing None for after is deprecated. It now defaults to OLDEST_OBJECT.",
+                FutureWarning,
+                stacklevel=2,
+            )
+            after = OLDEST_OBJECT
+
         return history_iterator(
             self, limit=limit, before=before, after=after, around=around, oldest_first=oldest_first
         )
