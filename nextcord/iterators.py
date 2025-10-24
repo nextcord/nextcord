@@ -97,6 +97,8 @@ async def history_iterator(
     ``after``, sorted with newest first. For filling over 100 messages, update the
     ``after`` parameter to the newest message received. If messages are not
     reversed, they will be out of order (99-0, 199-100, so on)
+    If neither are specified, it will default to ``after`` set to
+    ``OLDEST_OBJECT``.
 
     A note that if both ``before`` and ``after`` are specified, ``before`` is ignored by the
     messages endpoint.
@@ -130,11 +132,12 @@ async def history_iterator(
     if isinstance(around, datetime.datetime):
         around = Object(id=time_snowflake(around))
 
+    reverse = after is not None if oldest_first is None else oldest_first
+    after = after or OLDEST_OBJECT
+
     state = messageable._state
     channel = await messageable._get_channel()
     retrieve = 0
-
-    reverse = after is not None if oldest_first is None else oldest_first
 
     checks: List[Callable[[MessagePayload], bool]] = []
     if around:
@@ -154,11 +157,11 @@ async def history_iterator(
 
             checks.append(_check)
 
-        if after is not None:
+        if after != OLDEST_OBJECT:
 
             def _check(msg: MessagePayload):
                 a = cast("Object | Snowflake | None", after)
-                return a is not None and a.id < int(msg["id"])
+                return a is not None and int(msg["id"]) > a.id
 
             checks.append(_check)
 
@@ -176,7 +179,7 @@ async def history_iterator(
             channel.id,
             retrieve,
             before.id if before is not None and around is None else None,
-            after.id if after is not None and around is None else None,
+            after.id if after != OLDEST_OBJECT and around is None else None,
             around.id if around is not None else None,
         )
 
@@ -186,7 +189,8 @@ async def history_iterator(
 
             if before is not None:
                 before = Object(id=int(data[-1]["id"]))
-            if after is not None:
+            # case where before & after is set, after is set, or after is not set (defaults to after being set to OLDEST_OBJECT)
+            if around is None:
                 after = Object(id=int(data[0]["id"]))
             if around is not None:
                 around = None
