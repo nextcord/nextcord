@@ -3,11 +3,9 @@ from __future__ import annotations
 
 import asyncio
 import audioop
-import errno
 import io
 import json
 import logging
-import os
 import re
 import shlex
 import subprocess
@@ -48,44 +46,6 @@ if sys.platform != "win32":
     CREATE_NO_WINDOW = 0
 else:
     CREATE_NO_WINDOW = 0x08000000
-
-
-def _looks_like_local_path(path: str) -> bool:
-    """Best-effort check whether a string is a local filesystem path.
-
-    This avoids mistakenly treating URLs or ffmpeg virtual inputs (e.g. pipe:,
-    fd:, concat:) as local files. Windows drive letters (e.g. C:\\) are
-    considered local.
-    """
-    # URLs or schemes containing :// are not local paths
-    if "://" in path:
-        return False
-
-    lowered = path.lower()
-    # Common ffmpeg non-file inputs or protocols
-    if lowered.startswith(
-        (
-            "rtmp:",
-            "rtsp:",
-            "udp:",
-            "srt:",
-            "rtp:",
-            "pipe:",
-            "fd:",
-            "concat:",
-            "http:",
-            "https:",
-            "mms:",
-            "mmsh:",
-            "mmst:",
-            "lavfi:",
-            "anullsrc",
-        )
-    ):
-        return False
-
-    # Single dash is commonly used for stdin/stdout in ffmpeg contexts
-    return path != "-"
 
 
 class AudioSource:
@@ -189,20 +149,6 @@ class FFmpegAudio(AudioSource):
                 "parameter conflict: 'source' parameter cannot be a string when piping to stdin"
             )
 
-        # If we're not piping and the source is a string that looks like a
-        # local file path, proactively raise FileNotFoundError when the file
-        # does not exist. This provides a clearer and earlier error than
-        # letting ffmpeg fail silently and produce no audio.
-        if (
-            not piping
-            and isinstance(source, str)
-            and _looks_like_local_path(source)
-            and not os.path.exists(source)
-        ):
-            raise FileNotFoundError(
-                errno.ENOENT, os.strerror(errno.ENOENT), source
-            )
-
         args = [executable, *args]
         kwargs = {"stdout": subprocess.PIPE}
         kwargs.update(subprocess_kwargs)
@@ -278,6 +224,20 @@ class FFmpegAudio(AudioSource):
         self._kill_process()
         self._process = self._stdout = self._stdin = MISSING
 
+    def _raise_if_process_failed(self) -> None:
+        """Raise a ClientException if the underlying ffmpeg process exited with an error.
+
+        This is called when the audio stream appears to have ended; if ffmpeg
+        terminated abnormally (non-zero return code), surface that to the caller.
+        """
+        proc = getattr(self, "_process", MISSING)
+        if proc is MISSING:
+            return
+        rc = proc.poll()
+        if rc is not None and rc != 0:
+            _log.error("ffmpeg process %s exited with code %s", proc.pid, rc)
+            raise ClientException(f"ffmpeg exited with code {rc}")
+
 
 class FFmpegPCMAudio(FFmpegAudio):
     """An audio source from FFmpeg (or AVConv).
@@ -316,10 +276,8 @@ class FFmpegPCMAudio(FFmpegAudio):
     Raises
     ------
     ClientException
-        The subprocess failed to be created.
-    FileNotFoundError
-        Raised when ``source`` looks like a local file path and the file does
-        not exist.
+        The subprocess failed to be created. Runtime ffmpeg failures are surfaced during
+        reads via this exception if the underlying process exits with a non-zero status.
     """
 
     def __init__(
@@ -355,6 +313,7 @@ class FFmpegPCMAudio(FFmpegAudio):
     def read(self) -> bytes:
         ret = self._stdout.read(OpusEncoder.FRAME_SIZE)
         if len(ret) != OpusEncoder.FRAME_SIZE:
+            self._raise_if_process_failed()
             return b""
         return ret
 
@@ -682,7 +641,11 @@ class FFmpegOpusAudio(FFmpegAudio):
         return codec, bitrate
 
     def read(self) -> bytes:
-        return next(self._packet_iter, b"")
+        pkt = next(self._packet_iter, None)
+        if pkt is None:
+            self._raise_if_process_failed()
+            return b""
+        return pkt
 
     def is_opus(self) -> bool:
         return True
@@ -852,6 +815,16 @@ class AudioPlayer(threading.Thread):
             self.pause(update_speaking=False)
             self.source = source
             self.resume(update_speaking=False)
+
+    @property
+    def error(self) -> Optional[Exception]:
+        """Optional[:class:`Exception`]: The exception that caused playback to stop, if any."""
+        return self._current_error
+
+    @property
+    def has_failed(self) -> bool:
+        """bool: Whether playback terminated due to an exception."""
+        return self._current_error is not None
 
     def _speak(self, speaking: bool) -> None:
         try:
