@@ -1274,6 +1274,15 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     :param entry: The entry that was created.
     :type entry: :class:`AuditLogEntry`
 
+.. function:: on_application_command_permission_update(permissions)
+
+    Permissions were updated for an application command.
+
+    .. versionadded:: 3.2
+
+    :param permissions: The updated override permissions.
+    :type permissions: :class:`GuildApplicationCommandPermissions`
+
 .. _discord-api-utils:
 
 Utility Functions
@@ -1441,6 +1450,9 @@ of :class:`enum.Enum`.
     :members:
 
 .. autoclass:: InteractionContextType
+    :members:
+
+.. autoclass:: ApplicationCommandPermissionType
     :members:
 
 .. autoclass:: ApplicationCommandType
@@ -3337,6 +3349,15 @@ Command Helpers
 .. attributetable:: Mentionable
 
 .. autoclass:: Mentionable
+    :members:
+
+Command Permissions
+~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: ApplicationCommandPermissions
+    :members:
+
+.. autoclass:: GuildApplicationCommandPermissions
     :members:
 
 Decorators
