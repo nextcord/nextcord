@@ -259,6 +259,8 @@ class VoiceClient(VoiceProtocol):
     def get_user_id_from_ssrc(self, ssrc: int) -> Optional[int]:
         """Get the Discord user_id for a given SSRC.
 
+        .. versionadded:: 3.2.0
+
         Parameters
         ----------
         ssrc: :class:`int`
