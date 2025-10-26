@@ -41,6 +41,7 @@ __all__ = (
     "UserNotFound",
     "ChannelNotFound",
     "ChannelTypeNotFound",
+    "ThreadNotFound",
     "ChannelNotReadable",
     "BadColourArgument",
     "BadColorArgument",
