@@ -754,7 +754,7 @@ class DiscordVoiceWebSocket:
     SESSION_DESCRIPTION
         Receive only. Gives you the secret key required for voice.
     SPEAKING
-        Send only. Notifies the client if you are currently speaking.
+        Bidirectional. Notifies when you or others are speaking.
     HEARTBEAT_ACK
         Receive only. Tells you your heartbeat has been acknowledged.
     RESUME
@@ -909,9 +909,76 @@ class DiscordVoiceWebSocket:
             interval = data["heartbeat_interval"] / 1000.0
             self._keep_alive = VoiceKeepAliveHandler(ws=self, interval=min(interval, 5.0))
             self._keep_alive.start()
+        elif op == self.SPEAKING:
+            await self.handle_speaking(data)
+        elif op == self.CLIENT_CONNECT:
+            await self.handle_client_connect(data)
+        elif op == self.CLIENT_DISCONNECT:
+            await self.handle_client_disconnect(data)
 
         if self._hook is not None:
             await self._hook(self, msg)
+
+    async def handle_speaking(self, data: Dict[str, Any]) -> None:
+        """Handle SPEAKING opcode (5) - user started/stopped speaking.
+
+        Parameters
+        ----------
+        data: Dict[:class:`str`, Any]
+            The payload data containing user_id, ssrc, and speaking state.
+        """
+        user_id = int(data.get("user_id", 0))
+        ssrc = data.get("ssrc")
+        speaking = data.get("speaking", 0)
+
+        if ssrc and user_id:
+            self._connection.ssrc_map[ssrc] = user_id
+            _log.debug(
+                "SPEAKING event: SSRC %s mapped to user_id %s (speaking=%s)",
+                ssrc,
+                user_id,
+                speaking,
+            )
+
+    async def handle_client_connect(self, data: Dict[str, Any]) -> None:
+        """Handle CLIENT_CONNECT opcode (12) - user joined voice channel.
+
+        Parameters
+        ----------
+        data: Dict[:class:`str`, Any]
+            The payload data containing user_id and audio_ssrc.
+        """
+        user_id = int(data.get("user_id", 0))
+        audio_ssrc = data.get("audio_ssrc")
+
+        if audio_ssrc and user_id:
+            self._connection.ssrc_map[audio_ssrc] = user_id
+            _log.info("CLIENT_CONNECT event: SSRC %s mapped to user_id %s", audio_ssrc, user_id)
+
+    async def handle_client_disconnect(self, data: Dict[str, Any]) -> None:
+        """Handle CLIENT_DISCONNECT opcode (13) - user left voice channel.
+
+        Parameters
+        ----------
+        data: Dict[:class:`str`, Any]
+            The payload data containing user_id.
+        """
+        user_id = int(data.get("user_id", 0))
+
+        # Remove the SSRC mapping for this user
+        ssrc_to_remove = None
+        for ssrc, uid in self._connection.ssrc_map.items():
+            if uid == user_id:
+                ssrc_to_remove = ssrc
+                break
+
+        if ssrc_to_remove is not None:
+            del self._connection.ssrc_map[ssrc_to_remove]
+            _log.info(
+                "CLIENT_DISCONNECT event: user_id %s (SSRC %s) removed",
+                user_id,
+                ssrc_to_remove,
+            )
 
     async def initial_connection(self, data: Dict[str, Any]) -> None:
         state = self._connection
