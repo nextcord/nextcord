@@ -369,6 +369,7 @@ class ChannelNotFound(BadArgument):
         self.argument: str = argument
         super().__init__(f'Channel "{argument}" not found.')
 
+
 class ChannelTypeNotFound(ChannelNotFound):
     """Exception raised when the bot cannot find a channel of the specified type.
 
@@ -388,6 +389,7 @@ class ChannelTypeNotFound(ChannelNotFound):
         self.expected: Type[GuildChannel] = expected
         self.actual: Type[GuildChannel] = actual
         super().__init__(f'Channel type "{expected.__name__}" not found.')
+
 
 class ThreadNotFound(BadArgument):
     """Exception raised when the bot can not find the thread.
