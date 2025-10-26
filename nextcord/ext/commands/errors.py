@@ -40,7 +40,7 @@ __all__ = (
     "GuildNotFound",
     "UserNotFound",
     "ChannelNotFound",
-    "ThreadNotFound",
+    "ChannelTypeNotFound",
     "ChannelNotReadable",
     "BadColourArgument",
     "BadColorArgument",
@@ -369,6 +369,25 @@ class ChannelNotFound(BadArgument):
         self.argument: str = argument
         super().__init__(f'Channel "{argument}" not found.')
 
+class ChannelTypeNotFound(ChannelNotFound):
+    """Exception raised when the bot cannot find a channel of the specified type.
+
+    This inherits from :exc:`ChannelNotFound`
+
+    .. versionadded:: 3.2
+
+    Attributes
+    ----------
+    expected: Type[:class:`.abc.GuildChannel`]
+        The expected channel type.
+    actual: Type[:class:`.abc.GuildChannel`]
+        The actual channel type.
+    """
+
+    def __init__(self, expected: Type[GuildChannel], actual: Type[GuildChannel]) -> None:
+        self.expected: Type[GuildChannel] = expected
+        self.actual: Type[GuildChannel] = actual
+        super().__init__(f'Channel type "{expected.__name__}" not found.')
 
 class ThreadNotFound(BadArgument):
     """Exception raised when the bot can not find the thread.
