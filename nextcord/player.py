@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import audioop
+import contextlib
 import io
 import json
 import logging
@@ -761,6 +762,9 @@ class AudioPlayer(threading.Thread):
             self._current_error = exc
             self.stop()
         finally:
+            # Ignore failures if the attribute does not exist.
+            with contextlib.suppress(Exception):
+                self.client._last_player_error = self._current_error
             self._call_after()
             self.source.cleanup()
 
