@@ -276,8 +276,7 @@ class FFmpegPCMAudio(FFmpegAudio):
     Raises
     ------
     ClientException
-        The subprocess failed to be created. Runtime ffmpeg failures are surfaced during
-        reads via this exception if the underlying process exits with a non-zero status.
+        The subprocess failed to be created.
     """
 
     def __init__(
