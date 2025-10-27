@@ -235,8 +235,8 @@ class VoiceClient(VoiceProtocol):
         self.encoder: Encoder = MISSING
         self._lite_nonce: int = 0
         self.ws: DiscordVoiceWebSocket = MISSING
-
-    self._last_player_error: Optional[Exception] = None
+        # Tracks the exception (if any) that caused the last playback to stop.
+        self._last_player_error: Optional[Exception] = None
 
     warn_nacl = not has_nacl
     supported_modes: Tuple[SupportedModes, ...] = (
