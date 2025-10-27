@@ -22,7 +22,7 @@ import logging
 import socket
 import struct
 import threading
-from typing import TYPE_CHECKING, Any, Callable, List, Optional, Tuple, Union, cast
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Union, cast
 
 from . import opus, utils
 from .backoff import ExponentialBackoff
@@ -198,6 +198,8 @@ class VoiceClient(VoiceProtocol):
         The voice channel connected to.
     loop: :class:`asyncio.AbstractEventLoop`
         The event loop that the voice client is running on.
+    ssrc_map: Dict[:class:`int`, :class:`int`]
+        A mapping of SSRC identifiers to Discord user IDs for voice participants.
     """
 
     endpoint_ip: str
@@ -235,6 +237,7 @@ class VoiceClient(VoiceProtocol):
         self.encoder: Encoder = MISSING
         self._lite_nonce: int = 0
         self.ws: DiscordVoiceWebSocket = MISSING
+        self.ssrc_map: Dict[int, int] = {}
 
     warn_nacl = not has_nacl
     supported_modes: Tuple[SupportedModes, ...] = (
@@ -252,6 +255,23 @@ class VoiceClient(VoiceProtocol):
     def user(self) -> ClientUser:
         """:class:`ClientUser`: The user connected to voice (i.e. ourselves)."""
         return self._state.user  # type: ignore # [should exist]
+
+    def get_user_id_from_ssrc(self, ssrc: int) -> Optional[int]:
+        """Get the Discord user_id for a given SSRC.
+
+        .. versionadded:: 3.2.0
+
+        Parameters
+        ----------
+        ssrc: :class:`int`
+            The RTP SSRC identifier from the voice packet.
+
+        Returns
+        -------
+        Optional[:class:`int`]
+            The Discord user_id, or None if the SSRC is not found.
+        """
+        return self.ssrc_map.get(ssrc)
 
     def checked_add(self, attr, value, limit: int) -> None:
         val = getattr(self, attr)
