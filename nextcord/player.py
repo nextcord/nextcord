@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import audioop
+import contextlib
 import io
 import json
 import logging
@@ -136,6 +137,13 @@ class FFmpegAudio(AudioSource):
         args: Any,
         **subprocess_kwargs: Any,
     ) -> None:
+        # Initialize attributes early to make cleanup safe if we raise before
+        # the subprocess is spawned.
+        self._process: subprocess.Popen | Any = MISSING
+        self._stdout: IO[bytes] | Any = MISSING
+        self._stdin: Optional[IO[bytes]] = None
+        self._pipe_thread: Optional[threading.Thread] = None
+
         piping = subprocess_kwargs.get("stdin") == subprocess.PIPE
         if piping and isinstance(source, str):
             raise TypeError(
@@ -146,10 +154,8 @@ class FFmpegAudio(AudioSource):
         kwargs = {"stdout": subprocess.PIPE}
         kwargs.update(subprocess_kwargs)
 
-        self._process: subprocess.Popen = self._spawn_process(args, **kwargs)
-        self._stdout: IO[bytes] = self._process.stdout  # type: ignore
-        self._stdin: Optional[IO[bytes]] = None
-        self._pipe_thread: Optional[threading.Thread] = None
+        self._process = self._spawn_process(args, **kwargs)
+        self._stdout = self._process.stdout
 
         if piping:
             n = f"popen-stdin-writer:{id(self):#x}"
@@ -218,6 +224,20 @@ class FFmpegAudio(AudioSource):
     def cleanup(self) -> None:
         self._kill_process()
         self._process = self._stdout = self._stdin = MISSING
+
+    def _raise_if_process_failed(self) -> None:
+        """Raise a ClientException if the underlying ffmpeg process exited with an error.
+
+        This is called when the audio stream appears to have ended; if ffmpeg
+        terminated abnormally (non-zero return code), surface that to the caller.
+        """
+        proc = getattr(self, "_process", MISSING)
+        if proc is MISSING:
+            return
+        rc = proc.poll()
+        if rc is not None and rc != 0:
+            _log.error("ffmpeg process %s exited with code %s", proc.pid, rc)
+            raise ClientException(f"ffmpeg exited with code {rc}")
 
 
 class FFmpegPCMAudio(FFmpegAudio):
@@ -293,6 +313,7 @@ class FFmpegPCMAudio(FFmpegAudio):
     def read(self) -> bytes:
         ret = self._stdout.read(OpusEncoder.FRAME_SIZE)
         if len(ret) != OpusEncoder.FRAME_SIZE:
+            self._raise_if_process_failed()
             return b""
         return ret
 
@@ -620,7 +641,11 @@ class FFmpegOpusAudio(FFmpegAudio):
         return codec, bitrate
 
     def read(self) -> bytes:
-        return next(self._packet_iter, b"")
+        pkt = next(self._packet_iter, None)
+        if pkt is None:
+            self._raise_if_process_failed()
+            return b""
+        return pkt
 
     def is_opus(self) -> bool:
         return True
@@ -737,6 +762,9 @@ class AudioPlayer(threading.Thread):
             self._current_error = exc
             self.stop()
         finally:
+            # Ignore failures if the attribute does not exist.
+            with contextlib.suppress(Exception):
+                self.client._last_player_error = self._current_error
             self._call_after()
             self.source.cleanup()
 
@@ -790,6 +818,16 @@ class AudioPlayer(threading.Thread):
             self.pause(update_speaking=False)
             self.source = source
             self.resume(update_speaking=False)
+
+    @property
+    def error(self) -> Optional[Exception]:
+        """Optional[:class:`Exception`]: The exception that caused playback to stop, if any."""
+        return self._current_error
+
+    @property
+    def has_failed(self) -> bool:
+        """bool: Whether playback terminated due to an exception."""
+        return self._current_error is not None
 
     def _speak(self, speaking: bool) -> None:
         try:
