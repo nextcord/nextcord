@@ -38,7 +38,7 @@ aiohttp = "^3.8.0"
 typing_extensions = "^4.2.0"
 audioop-lts = { version = "^0.2.1", python = "^3.13" }
 
-PyNaCl = { version = ">=1.3.0,<1.5", optional = true }
+PyNaCl = { version = ">=1.5.0,<1.6", optional = true }
 orjson = { version = ">=3.5.4", optional = true }
 # There is currently no way to express passthrough extras in Poetry.
 # https://github.com/python-poetry/poetry/issues/834
