@@ -10,7 +10,7 @@ from .channel import ChannelType
 from .emoji import PartialEmoji
 from .snowflake import Snowflake
 
-ComponentType = Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17]
+ComponentType = Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17, 18, 19]
 ButtonStyle = Literal[1, 2, 3, 4, 5, 6]
 TextInputStyle = Literal[1, 2]
 
@@ -151,6 +151,13 @@ class Container(BaseComponent):
     spoiler: NotRequired[bool]
 
 
+class Label(BaseComponent):
+    type: Literal[18]
+    label: str
+    component: Component
+    description: NotRequired[str]
+
+
 Component = Union[
     ActionRow,
     ButtonComponent,
@@ -167,4 +174,5 @@ Component = Union[
     File,
     Separator,
     Container,
+    Label,
 ]

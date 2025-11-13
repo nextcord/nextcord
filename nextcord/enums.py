@@ -1813,6 +1813,7 @@ class ComponentType(IntEnum):
     file = 13
     separator = 14
     container = 17
+    label = 18
 
 
 class ButtonStyle(IntEnum):

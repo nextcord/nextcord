@@ -22,7 +22,7 @@ from typing import (
 )
 
 from . import utils
-from .channel import ChannelType, PartialMessageable
+from .channel import ChannelType, PartialMessageable, _threaded_channel_factory
 from .embeds import Embed
 from .enums import (
     IntegrationType,
@@ -55,7 +55,7 @@ __all__ = (
 if TYPE_CHECKING:
     from aiohttp import ClientSession
 
-    from . import components
+    from . import abc, components
     from .abc import MessageableChannel
     from .application_command import BaseApplicationCommand, SlashApplicationSubcommand
     from .channel import CategoryChannel, ForumChannel, StageChannel, TextChannel, VoiceChannel
@@ -494,6 +494,29 @@ class Interaction(Hashable, Generic[ClientT]):
                 ret.append(role)
 
         return ret
+
+    def _resolve_channels(self) -> list[abc.GuildChannel | abc.PrivateChannel]:
+        ret = []
+        if "resolved" in self.data and "channels" in self.data["resolved"]:
+            channel_payloads = self.data["resolved"]["channels"]
+            for ch_id, ch_data in channel_payloads.items():
+                if channel := self._state.get_channel(int(ch_id)):
+                    ret.append(channel)
+
+                # Attempt to actually resolve the channel
+                ch_class, ch_type = _threaded_channel_factory(ch_data["type"])
+                if ch_class is not None:
+                    if ch_type in (ChannelType.group, ChannelType.private):
+                        # the factory will be a DMChannel or GroupChannel here
+                        channel = ch_class(me=self.client.user, data=ch_data, state=self._state)  # type: ignore
+                    else:
+                        guild_id = int(ch_data["guild_id"])  # type: ignore
+                        guild = self._state._get_guild(guild_id) or Object(id=guild_id)
+                        channel = ch_class(guild=guild, state=self._state, data=ch_data)  # type: ignore
+
+                    ret.append(channel)
+                else:
+                    pass  # TODO: Raise error? Log.warn?
 
     async def edit_original_message(
         self,
