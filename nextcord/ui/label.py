@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, Any, Generator, Literal, Optional, Tuple, TypeVar
+from typing import TYPE_CHECKING, Any, Dict, Generator, Literal, Optional, Tuple, TypeVar
 
 from ..components import LabelComponent
 from ..enums import ComponentType
@@ -116,4 +116,3 @@ class Label(Item[V]):
     @property
     def _total_count(self) -> int:
         return 2
-

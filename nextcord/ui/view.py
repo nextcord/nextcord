@@ -319,9 +319,7 @@ class View:
             The converted view. This returns a :class:`LayoutView` when the target
             message uses Components V2.
         """
-        if issubclass(cls, LayoutView):
-            view_cls = LayoutView
-        elif getattr(message.flags, "components_v2", False):
+        if issubclass(cls, LayoutView) or getattr(message.flags, "components_v2", False):
             view_cls = LayoutView
         else:
             view_cls = View
@@ -780,7 +778,9 @@ class LayoutView(View):
         """
         from .text_display import TextDisplay
 
-        return sum(len(item.content) for item in self.walk_children() if isinstance(item, TextDisplay))
+        return sum(
+            len(item.content) for item in self.walk_children() if isinstance(item, TextDisplay)
+        )
 
 
 class ViewStore:
@@ -814,7 +814,7 @@ class ViewStore:
         self.__verify_integrity()
 
         view._start_listening_from_store(self)
-        items = view.walk_children() if hasattr(view, 'walk_children') else view.children  # type: ignore
+        items = view.walk_children() if hasattr(view, "walk_children") else view.children  # type: ignore
         for item in items:
             if item.is_dispatchable():
                 self._views[(item.type.value, message_id, item.custom_id)] = (view, item)  # type: ignore
@@ -823,7 +823,7 @@ class ViewStore:
             self._synced_message_views[message_id] = view
 
     def remove_view(self, view: View, message_id: Optional[int] = None) -> None:
-        items = view.walk_children() if hasattr(view, 'walk_children') else view.children  # type: ignore
+        items = view.walk_children() if hasattr(view, "walk_children") else view.children  # type: ignore
         for item in items:
             if item.is_dispatchable():
                 self._views.pop((item.type.value, message_id, item.custom_id), None)  # type: ignore

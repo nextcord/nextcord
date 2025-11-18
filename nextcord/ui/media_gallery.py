@@ -2,17 +2,17 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, Any, List, Literal, Optional, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, TypeVar, Union
 
-from .item import Item
-from ..enums import ComponentType
-from ..utils import MISSING
-from ..file import File
 from ..components import (
-    MediaGalleryItem,
     MediaGalleryComponent,
+    MediaGalleryItem,
     UnfurledMediaItem,
 )
+from ..enums import ComponentType
+from ..file import File
+from ..utils import MISSING
+from .item import Item
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -250,4 +250,3 @@ class MediaGallery(Item[V]):
             *component.items,
             id=component.id,
         )
-

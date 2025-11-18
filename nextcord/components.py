@@ -28,7 +28,6 @@ if TYPE_CHECKING:
         ButtonComponent as ButtonComponentPayload,
         ChannelSelectMenu as ChannelSelectMenuPayload,
         Component as ComponentPayload,
-        ComponentBase as ComponentBasePayload,
         ContainerComponent as ContainerComponentPayload,
         FileComponent as FileComponentPayload,
         FileUploadComponent as FileUploadComponentPayload,
@@ -960,7 +959,9 @@ class MediaGalleryComponent(Component):
 
     __repr_info__: ClassVar[Tuple[str, ...]] = __slots__
 
-    def __init__(self, data: MediaGalleryComponentPayload, state: Optional[ConnectionState]) -> None:
+    def __init__(
+        self, data: MediaGalleryComponentPayload, state: Optional[ConnectionState]
+    ) -> None:
         self.items: List[MediaGalleryItem] = [
             MediaGalleryItem._from_data(item) for item in data.get("items", [])
         ]

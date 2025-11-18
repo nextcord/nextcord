@@ -1900,7 +1900,7 @@ class TextInputStyle(IntEnum):
 class SeparatorSpacing(IntEnum):
     """Represents the spacing of a separator component.
 
-        .. versionadded:: 3.12
+    .. versionadded:: 3.12
     """
 
     small = 1
@@ -1912,7 +1912,7 @@ class SeparatorSpacing(IntEnum):
 class MediaItemLoadingState(IntEnum):
     """Represents the loading state of a media item.
 
-        .. versionadded:: 3.12
+    .. versionadded:: 3.12
     """
 
     unknown = 0

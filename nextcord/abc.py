@@ -1489,8 +1489,8 @@ class Messageable:
                 raise InvalidArgument(f"view parameter must be View not {view.__class__!r}")
 
             components = cast(List[ComponentPayload], view.to_components())
-            
-            if hasattr(view, 'has_components_v2') and view.has_components_v2():
+
+            if hasattr(view, "has_components_v2") and view.has_components_v2():
                 flags.components_v2 = True
                 flag_value = flags.value
                 is_cv2 = True

@@ -13,26 +13,25 @@ from typing import (
     List,
     Literal,
     Optional,
-    Type,
     TypeVar,
     Union,
 )
 
-from .item import Item, ContainedItemCallbackType as ItemCallbackType, _ItemCallback
-from .button import Button, button as _button
-from .select import select as _select, Select
 from ..components import ActionRow as ActionRowComponent
 from ..enums import ButtonStyle, ComponentType
 from ..utils import MISSING, get as _utils_get
+from .button import button as _button
+from .item import ContainedItemCallbackType as ItemCallbackType, Item, _ItemCallback
+from .select import select as _select
 
 if TYPE_CHECKING:
     from typing_extensions import Self
 
-    from .view import LayoutView
-    from .select.base import SelectBase
-    from ..emoji import Emoji
     from ..components import SelectOption
+    from ..emoji import Emoji
     from .container import Container
+    from .select.base import SelectBase
+    from .view import LayoutView
 
     BaseSelectT = TypeVar("BaseSelectT", bound=SelectBase)
     SelectCallbackDecorator = Callable[[ItemCallbackType["S", BaseSelectT]], BaseSelectT]
@@ -341,4 +340,3 @@ class ActionRow(Item[V]):
             disabled=disabled,
             row=row,
         )
-

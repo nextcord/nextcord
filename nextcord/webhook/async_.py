@@ -527,8 +527,8 @@ def handle_message_parameters(
     if view is not MISSING:
         if view is not None:
             payload["components"] = view.to_components()
-            
-            if hasattr(view, 'has_components_v2') and view.has_components_v2():
+
+            if hasattr(view, "has_components_v2") and view.has_components_v2():
                 if flags is None:
                     flags = MessageFlags()
                 flags.components_v2 = True

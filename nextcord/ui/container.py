@@ -16,11 +16,11 @@ from typing import (
     Union,
 )
 
-from .item import Item, ContainedItemCallbackType as ItemCallbackType, _ItemCallback
-from .view import _component_to_item, LayoutView
+from ..colour import Color, Colour
 from ..enums import ComponentType
 from ..utils import get as _utils_get
-from ..colour import Colour, Color
+from .item import ContainedItemCallbackType as ItemCallbackType, Item, _ItemCallback
+from .view import LayoutView, _component_to_item
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -70,7 +70,9 @@ class Container(Item[V]):
         The ID of this component.
     """
 
-    __container_children_items__: ClassVar[Dict[str, Union[ItemCallbackType[Self, Any], Item[Any]]]] = {}
+    __container_children_items__: ClassVar[
+        Dict[str, Union[ItemCallbackType[Self, Any], Item[Any]]]
+    ] = {}
     __discord_ui_container__: ClassVar[bool] = True
     __item_repr_attributes__ = (
         "accent_colour",
@@ -131,7 +133,9 @@ class Container(Item[V]):
             for name, member in base.__dict__.items():
                 if isinstance(member, Item):
                     children[name] = member
-                if hasattr(member, "__discord_ui_model_type__") and getattr(member, "__discord_ui_parent__", None):
+                if hasattr(member, "__discord_ui_model_type__") and getattr(
+                    member, "__discord_ui_parent__", None
+                ):
                     children[name] = copy.copy(member)
 
         cls.__container_children_items__ = children
@@ -251,7 +255,9 @@ class Container(Item[V]):
         """:class:`int`: Returns the total length of all text content in this container."""
         from .text_display import TextDisplay
 
-        return sum(len(item.content) for item in self.walk_children() if isinstance(item, TextDisplay))
+        return sum(
+            len(item.content) for item in self.walk_children() if isinstance(item, TextDisplay)
+        )
 
     def add_item(self, item: Item[Any]) -> Self:
         """Adds an item to this container.
@@ -334,4 +340,3 @@ class Container(Item[V]):
             self._view._add_count(-len(tuple(self.walk_children())))
         self._children.clear()
         return self
-

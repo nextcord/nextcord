@@ -2,20 +2,19 @@
 
 from __future__ import annotations
 
+import os
 from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, TypeVar
 
-import os
-
-from ..utils import MISSING
 from ..components import FileUploadComponent
 from ..enums import ComponentType
+from ..utils import MISSING
 from .item import Item
 
 if TYPE_CHECKING:
     from typing_extensions import Self
 
-    from ..message import Attachment
     from ..interactions import Interaction
+    from ..message import Attachment
     from .view import View as BaseView
 
 __all__ = ("FileUpload",)
@@ -155,7 +154,9 @@ class FileUpload(Item[V]):
     def _handle_submit(
         self, interaction: Interaction, data: Dict[str, Any], resolved: Dict[Any, Any]
     ) -> None:
-        self._values = [v for k, v in resolved.items() if hasattr(k, "id") and k.id in data.get("values", [])]
+        self._values = [
+            v for k, v in resolved.items() if hasattr(k, "id") and k.id in data.get("values", [])
+        ]
 
     @classmethod
     def from_component(cls, component: FileUploadComponent) -> Self:
@@ -174,4 +175,3 @@ class FileUpload(Item[V]):
 
     def is_dispatchable(self) -> bool:
         return False
-

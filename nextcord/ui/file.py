@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, Any, Literal, Optional, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Dict, Literal, Optional, TypeVar, Union
 
-from .item import Item
 from ..components import FileComponent, UnfurledMediaItem
 from ..enums import ComponentType
-from ..utils import MISSING
 from ..file import File as SendableFile
+from ..utils import MISSING
+from .item import Item
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -146,4 +146,3 @@ class File(Item[V]):
             spoiler=component.spoiler,
             id=component.id,
         )
-

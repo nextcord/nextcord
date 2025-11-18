@@ -2,18 +2,29 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, Generator, List, Literal, Optional, TypeVar, Union, ClassVar
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Dict,
+    Generator,
+    List,
+    Literal,
+    Optional,
+    TypeVar,
+    Union,
+)
 
-from .item import Item
-from .text_display import TextDisplay
 from ..enums import ComponentType
 from ..utils import get as _utils_get
+from .item import Item
+from .text_display import TextDisplay
 
 if TYPE_CHECKING:
     from typing_extensions import Self
 
-    from .view import LayoutView
     from ..components import SectionComponent
+    from .view import LayoutView
 
 V = TypeVar("V", bound="LayoutView", covariant=True)
 
@@ -111,7 +122,10 @@ class Section(Item[V]):
         return True
 
     def _swap_item(self, base: Item, new: Item, custom_id: str) -> None:
-        if self.accessory.is_dispatchable() and getattr(self.accessory, "custom_id", None) == custom_id:
+        if (
+            self.accessory.is_dispatchable()
+            and getattr(self.accessory, "custom_id", None) == custom_id
+        ):
             self.accessory = new
 
     def walk_children(self) -> Generator[Item[V], None, None]:
@@ -260,4 +274,3 @@ class Section(Item[V]):
         if self.id is not None:
             data["id"] = self.id
         return data
-
