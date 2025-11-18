@@ -1394,6 +1394,12 @@ of :class:`enum.Enum`.
 .. autoclass:: TextInputStyle
     :members:
 
+.. autoclass:: SeparatorSpacing
+    :members:
+
+.. autoclass:: MediaItemLoadingState
+    :members:
+
 .. autoclass:: StagePrivacyLevel
     :members:
 
@@ -3155,6 +3161,116 @@ ChannelSelect
 .. autofunction:: nextcord.ui.channel_select
 
 .. autoclass:: nextcord.ui.ChannelSelectValues
+    :members:
+
+Components V2
+~~~~~~~~~~~~~
+
+LayoutView
+^^^^^^^^^^
+
+.. attributetable:: nextcord.ui.LayoutView
+
+.. autoclass:: nextcord.ui.LayoutView
+    :members:
+
+ActionRow
+^^^^^^^^^
+
+.. attributetable:: nextcord.ui.ActionRow
+
+.. autoclass:: nextcord.ui.ActionRow
+    :members:
+    :inherited-members:
+
+Container
+^^^^^^^^^
+
+.. attributetable:: nextcord.ui.Container
+
+.. autoclass:: nextcord.ui.Container
+    :members:
+    :inherited-members:
+
+Section
+^^^^^^^
+
+.. attributetable:: nextcord.ui.Section
+
+.. autoclass:: nextcord.ui.Section
+    :members:
+    :inherited-members:
+
+TextDisplay
+^^^^^^^^^^^
+
+.. attributetable:: nextcord.ui.TextDisplay
+
+.. autoclass:: nextcord.ui.TextDisplay
+    :members:
+    :inherited-members:
+
+Separator
+^^^^^^^^^
+
+.. attributetable:: nextcord.ui.Separator
+
+.. autoclass:: nextcord.ui.Separator
+    :members:
+    :inherited-members:
+
+Thumbnail
+^^^^^^^^^
+
+.. attributetable:: nextcord.ui.Thumbnail
+
+.. autoclass:: nextcord.ui.Thumbnail
+    :members:
+    :inherited-members:
+
+MediaGallery
+^^^^^^^^^^^^
+
+.. attributetable:: nextcord.ui.MediaGallery
+
+.. autoclass:: nextcord.ui.MediaGallery
+    :members:
+    :inherited-members:
+
+File
+^^^^
+
+.. attributetable:: nextcord.ui.File
+
+.. autoclass:: nextcord.ui.File
+    :members:
+    :inherited-members:
+
+FileUpload
+^^^^^^^^^^
+
+.. attributetable:: nextcord.ui.FileUpload
+
+.. autoclass:: nextcord.ui.FileUpload
+    :members:
+    :inherited-members:
+
+Label
+^^^^^
+
+.. attributetable:: nextcord.ui.Label
+
+.. autoclass:: nextcord.ui.Label
+    :members:
+    :inherited-members:
+
+Data Classes
+^^^^^^^^^^^^
+
+.. autoclass:: nextcord.UnfurledMediaItem
+    :members:
+
+.. autoclass:: nextcord.MediaGalleryItem
     :members:
 
 Application Commands

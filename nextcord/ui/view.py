@@ -597,7 +597,7 @@ class LayoutView(View):
     This differs from a :class:`View` in that it supports all component types
     and uses what Discord refers to as "v2 components".
 
-    .. versionadded:: 2.7
+    .. versionadded:: 3.12
 
     Parameters
     ----------
