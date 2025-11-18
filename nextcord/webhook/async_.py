@@ -523,26 +523,34 @@ def handle_message_parameters(
     if attachments is not MISSING:
         payload["attachments"] = [a.to_dict() for a in attachments]
 
-    if embeds is not MISSING:
-        payload["embeds"] = [e.to_dict() for e in embeds]
-
-    if embed is not MISSING:
-        if embed is None:
-            payload["embeds"] = []
-        else:
-            payload["embeds"] = [embed.to_dict()]
-
-    if content is not MISSING:
-        if content is not None:
-            payload["content"] = str(content)
-        else:
-            payload["content"] = None
-
+    is_cv2 = False
     if view is not MISSING:
         if view is not None:
             payload["components"] = view.to_components()
+            
+            if hasattr(view, 'has_components_v2') and view.has_components_v2():
+                if flags is None:
+                    flags = MessageFlags()
+                flags.components_v2 = True
+                is_cv2 = True
         else:
             payload["components"] = []
+
+    if not is_cv2:
+        if embeds is not MISSING:
+            payload["embeds"] = [e.to_dict() for e in embeds]
+
+        if embed is not MISSING:
+            if embed is None:
+                payload["embeds"] = []
+            else:
+                payload["embeds"] = [embed.to_dict()]
+
+        if content is not MISSING:
+            if content is not None:
+                payload["content"] = str(content)
+            else:
+                payload["content"] = None
 
     payload["tts"] = tts
     if avatar_url:

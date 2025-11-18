@@ -29,13 +29,21 @@ from ..components import (
     ActionRow as ActionRowComponent,
     Button as ButtonComponent,
     Component,
+    Container as ContainerComponent,
+    FileComponent,
+    LabelComponent,
+    MediaGalleryComponent,
+    SectionComponent,
     SelectMenu as SelectComponent,
+    SeparatorComponent,
+    TextDisplay as TextDisplayComponent,
     TextInput as TextComponent,
+    ThumbnailComponent,
     _component_factory,
 )
 from .item import Item, ItemCallbackType
 
-__all__ = ("View",)
+__all__ = ("View", "LayoutView")
 
 if TYPE_CHECKING:
     from ..interactions import ClientT, Interaction
@@ -50,24 +58,70 @@ def _walk_all_components(components: List[Component]) -> Iterator[Component]:
     for item in components:
         if isinstance(item, ActionRowComponent):
             yield from item.children
+        elif isinstance(item, ContainerComponent):
+            yield from _walk_all_components(item.children)
+        elif isinstance(item, SectionComponent):
+            yield from item.children
+            if item.accessory:
+                yield item.accessory
         else:
             yield item
 
 
-def _component_to_item(component: Component) -> Item:
-    if isinstance(component, ButtonComponent):
+def _component_to_item(component: Component, parent: Optional[Item] = None) -> Item:
+    if isinstance(component, ActionRowComponent):
+        from .action_row import ActionRow
+
+        item = ActionRow.from_component(component)
+    elif isinstance(component, ButtonComponent):
         from .button import Button
 
-        return Button.from_component(component)
-    if isinstance(component, SelectComponent):
+        item = Button.from_component(component)
+    elif isinstance(component, SelectComponent):
         from .select import Select
 
-        return Select.from_component(component)
-    if isinstance(component, TextComponent):
+        item = Select.from_component(component)
+    elif isinstance(component, SectionComponent):
+        from .section import Section
+
+        item = Section.from_component(component)
+    elif isinstance(component, TextDisplayComponent):
+        from .text_display import TextDisplay
+
+        item = TextDisplay.from_component(component)
+    elif isinstance(component, MediaGalleryComponent):
+        from .media_gallery import MediaGallery
+
+        item = MediaGallery.from_component(component)
+    elif isinstance(component, FileComponent):
+        from .file import File
+
+        item = File.from_component(component)
+    elif isinstance(component, SeparatorComponent):
+        from .separator import Separator
+
+        item = Separator.from_component(component)
+    elif isinstance(component, ThumbnailComponent):
+        from .thumbnail import Thumbnail
+
+        item = Thumbnail.from_component(component)
+    elif isinstance(component, ContainerComponent):
+        from .container import Container
+
+        item = Container.from_component(component)
+    elif isinstance(component, LabelComponent):
+        from .label import Label
+
+        item = Label.from_component(component)
+    elif isinstance(component, TextComponent):
         from .text_input import TextInput
 
-        return TextInput.from_component(component)
-    return Item.from_component(component)
+        item = TextInput.from_component(component)
+    else:
+        item = Item.from_component(component)
+
+    item._parent = parent
+    return item
 
 
 class _ViewWeights:
@@ -231,9 +285,21 @@ class View:
 
         return components
 
+    def has_components_v2(self) -> bool:
+        """Whether this view has Components V2.
+
+        .. versionadded:: 3.12
+
+        Returns
+        -------
+        :class:`bool`
+            ``False`` for regular views.
+        """
+        return False
+
     @classmethod
     def from_message(cls, message: Message, /, *, timeout: Optional[float] = 180.0) -> View:
-        """Converts a message's components into a :class:`View`.
+        """Converts a message's components into a :class:`View` or :class:`LayoutView`.
 
         The :attr:`.Message.components` of a message are read-only
         and separate types from those in the ``nextcord.ui`` namespace.
@@ -250,12 +316,41 @@ class View:
         Returns
         -------
         :class:`View`
-            The converted view. This always returns a :class:`View` and not
-            one of its subclasses.
+            The converted view. This returns a :class:`LayoutView` when the target
+            message uses Components V2.
         """
-        view = View(timeout=timeout)
-        for component in _walk_all_components(message.components):
-            view.add_item(_component_to_item(component))
+        if issubclass(cls, LayoutView):
+            view_cls = LayoutView
+        elif getattr(message.flags, "components_v2", False):
+            view_cls = LayoutView
+        else:
+            view_cls = View
+
+        view = view_cls(timeout=timeout)
+        row = 0
+        for component in message.components:
+            if not view._is_layout() and isinstance(component, ActionRowComponent):
+                for child in component.children:
+                    item = _component_to_item(child)
+                    item.row = row
+                    if item._is_v2():
+                        raise ValueError(
+                            f"{item.__class__.__name__} cannot be added to {view.__class__.__name__}"
+                        )
+                    view.add_item(item)
+                row += 1
+                continue
+
+            item = _component_to_item(component)
+            if not view._is_layout():
+                item.row = row
+                if item._is_v2():
+                    raise ValueError(
+                        f"{item.__class__.__name__} cannot be added to {view.__class__.__name__}"
+                    )
+            view.add_item(item)
+            row += 1
+
         return view
 
     @property
@@ -270,6 +365,9 @@ class View:
             None if no timeout is set.
         """
         return self.__timeout_expiry
+
+    def _is_layout(self) -> bool:
+        return False
 
     def add_item(self, item: Item[Self]) -> None:
         """Adds an item to the view.
@@ -491,6 +589,200 @@ class View:
         return await self.__stopped
 
 
+class LayoutView(View):
+    """Represents a layout view for components.
+
+    This object must be inherited to create a UI within Discord.
+
+    This differs from a :class:`View` in that it supports all component types
+    and uses what Discord refers to as "v2 components".
+
+    .. versionadded:: 2.7
+
+    Parameters
+    ----------
+    timeout: Optional[:class:`float`]
+        Timeout in seconds from last interaction with the UI before no longer accepting input.
+        If ``None`` then there is no timeout.
+    auto_defer: :class:`bool`
+        Whether or not to automatically defer the component interaction when the callback
+        completes without responding to the interaction. Set this to ``False`` if you want to
+        handle view interactions outside of the callback.
+    prevent_update: :class:`bool`
+        This option only affects persistent views.
+        Whether or not to store the view separately for each message.
+    """
+
+    def __init__(
+        self,
+        *,
+        timeout: Optional[float] = 180.0,
+        auto_defer: bool = True,
+        prevent_update: bool = True,
+    ) -> None:
+        super().__init__(timeout=timeout, auto_defer=auto_defer, prevent_update=prevent_update)
+        self._total_children: int = len(tuple(self.walk_children()))
+
+        if self._total_children > 40:
+            raise ValueError("maximum number of children exceeded (40)")
+
+    def __init_subclass__(cls) -> None:
+        super().__init_subclass__()
+
+        children: Dict[str, Any] = {}
+        callback_children: Dict[str, Any] = {}
+
+        for base in reversed(cls.__mro__):
+            for name, member in base.__dict__.items():
+                if isinstance(member, Item):
+                    if member._parent is not None:
+                        continue
+
+                    member._rendered_row = member._row
+                    children[name] = member
+                elif hasattr(member, "__discord_ui_model_type__") and getattr(
+                    member, "__discord_ui_parent__", None
+                ):
+                    callback_children[name] = member
+
+        children.update(callback_children)
+        cls.__view_children_items__ = children  # type: ignore
+
+    def _is_layout(self) -> bool:
+        return True
+
+    def has_components_v2(self) -> bool:
+        """Whether this view has Components V2.
+
+        .. versionadded:: 3.12
+
+        Returns
+        -------
+        :class:`bool`
+            ``True`` for layout views.
+        """
+        return True
+
+    def _add_count(self, value: int) -> None:
+        if self._total_children + value > 40:
+            raise ValueError("maximum number of children exceeded (40)")
+
+        self._total_children = max(0, self._total_children + value)
+
+    def to_components(self) -> List[Dict[str, Any]]:
+        components: List[Dict[str, Any]] = []
+        for i in self.children:
+            component_dict = i.to_component_dict()
+            components.append(component_dict)  # type: ignore
+
+        return components
+
+    def add_item(self, item: Item[Any]) -> Self:
+        """Adds an item to the view.
+        This method is an alias for :meth:`append_item`.
+        .. versionadded:: 3.12
+        Parameters
+        ----------
+        item: :class:`Item`
+            The item to add to the view.
+        Returns
+        -------
+        :class:`LayoutView`
+            The view to allow chaining.
+        """
+        self._add_count(item._total_count)
+        self.children.append(item)
+        item._update_view(self)
+        return self
+
+    def remove_item(self, item: Item[Any]) -> Self:
+        """Removes an item from the view.
+        .. versionadded:: 3.12
+        Parameters
+        ----------
+        item: :class:`Item`
+            The item to remove from the view.
+        Returns
+        -------
+        :class:`LayoutView`
+            The view to allow chaining.
+        """
+        try:
+            self.children.remove(item)
+        except ValueError:
+            pass
+        else:
+            self._add_count(-item._total_count)
+            item._update_view(None)
+
+        return self
+
+    def clear_items(self) -> Self:
+        """Removes all items from the view.
+        .. versionadded:: 3.12
+        Returns
+        -------
+        :class:`LayoutView`
+            The view to allow chaining.
+        """
+        self.children.clear()
+        self._total_children = 0
+        return self
+
+    def walk_children(self) -> Iterator[Item[Any]]:
+        """An iterator that recursively walks through all the children of this view
+        and its children, if applicable.
+
+        .. versionadded:: 3.12
+
+        Yields
+        ------
+        :class:`Item`
+            An item in the view.
+        """
+
+        for child in self.children:
+            yield child
+
+            if child._has_children():
+                yield from child.walk_children()  # type: ignore
+
+    def find_item(self, id: int, /) -> Optional[Item[Any]]:
+        """Gets an item with :attr:`Item.id` set as ``id``, or ``None`` if
+        not found.
+
+        .. warning::
+
+            This is **not the same** as ``custom_id``.
+
+        .. versionadded:: 3.12
+
+        Parameters
+        ----------
+        id: :class:`int`
+            The ID of the component.
+
+        Returns
+        -------
+        Optional[:class:`Item`]
+            The item found, or ``None``.
+        """
+        from ..utils import get as _utils_get
+
+        return _utils_get(self.walk_children(), id=id)
+
+    def content_length(self) -> int:
+        """:class:`int`: Returns the total length of all text content in the view's items.
+
+        A view is allowed to have a maximum of 4000 display characters across all its items.
+
+        .. versionadded:: 3.12
+        """
+        from .text_display import TextDisplay
+
+        return sum(len(item.content) for item in self.walk_children() if isinstance(item, TextDisplay))
+
+
 class ViewStore:
     def __init__(self, state: ConnectionState) -> None:
         self._views: Dict[Tuple[int, Optional[int], str], Tuple[View, Item]] = {}
@@ -522,7 +814,8 @@ class ViewStore:
         self.__verify_integrity()
 
         view._start_listening_from_store(self)
-        for item in view.children:
+        items = view.walk_children() if hasattr(view, 'walk_children') else view.children  # type: ignore
+        for item in items:
             if item.is_dispatchable():
                 self._views[(item.type.value, message_id, item.custom_id)] = (view, item)  # type: ignore
 
@@ -530,7 +823,8 @@ class ViewStore:
             self._synced_message_views[message_id] = view
 
     def remove_view(self, view: View, message_id: Optional[int] = None) -> None:
-        for item in view.children:
+        items = view.walk_children() if hasattr(view, 'walk_children') else view.children  # type: ignore
+        for item in items:
             if item.is_dispatchable():
                 self._views.pop((item.type.value, message_id, item.custom_id), None)  # type: ignore
 
@@ -564,4 +858,6 @@ class ViewStore:
     def update_from_message(self, message_id: int, components: List[ComponentPayload]) -> None:
         # pre-req: is_message_tracked == true
         view = self._synced_message_views[message_id]
-        view.refresh([_component_factory(d) for d in components])
+        component_list = [_component_factory(d) for d in components]
+        filtered_components = [c for c in component_list if c is not None]
+        view.refresh(filtered_components)

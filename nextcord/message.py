@@ -415,7 +415,7 @@ class Attachment(Hashable):
 
     def is_remix(self) -> bool:
         """:class:`bool`: Whether the attachment is remixed."""
-        return self.flags.is_remix
+        return self.flags().is_remix
 
 
 class DeletedReferencedMessage:
@@ -674,7 +674,8 @@ class MessageSnapshot:
             StickerItem(state=self._state, data=s) for s in self._message.get("sticker_items", [])
         ]
         self.components: List[Component] = [
-            _component_factory(c) for c in self._message.get("components", [])
+            comp for c in self._message.get("components", [])
+            if (comp := _component_factory(c)) is not None
         ]
 
 
@@ -1126,7 +1127,8 @@ class Message(Hashable):
             StickerItem(data=d, state=state) for d in data.get("sticker_items", [])
         ]
         self.components: List[Component] = [
-            _component_factory(d) for d in data.get("components", [])
+            comp for d in data.get("components", [])
+            if (comp := _component_factory(d)) is not None
         ]
         self._background_tasks: Set[asyncio.Task[None]] = set()
 
@@ -1356,7 +1358,9 @@ class Message(Hashable):
                     self.role_mentions.append(role)
 
     def _handle_components(self, components: List[ComponentPayload]) -> None:
-        self.components = [_component_factory(d) for d in components]
+        self.components = [
+            comp for d in components if (comp := _component_factory(d)) is not None
+        ]
 
     def _handle_thread(self, thread: Optional[ThreadPayload]) -> None:
         if thread:
@@ -1801,6 +1805,8 @@ class Message(Hashable):
         """
 
         payload: Dict[str, Any] = {}
+        flags: Optional[MessageFlags] = None
+        is_cv2 = False
         if content is not MISSING:
             if content is not None:
                 payload["content"] = str(content)
@@ -1823,7 +1829,6 @@ class Message(Hashable):
         if suppress is not MISSING:
             flags = MessageFlags._from_value(self.flags.value)
             flags.suppress_embeds = suppress
-            payload["flags"] = flags.value
 
         if allowed_mentions is MISSING:
             if self._state.allowed_mentions is not None and self.author.id == self._state.self_id:
@@ -1843,13 +1848,27 @@ class Message(Hashable):
             self._state.prevent_view_updates_for(self.id)
             if view:
                 payload["components"] = view.to_components()
+                if hasattr(view, "has_components_v2") and view.has_components_v2():
+                    is_cv2 = True
             else:
                 payload["components"] = []
+                if self.flags.components_v2:
+                    flags = flags or MessageFlags._from_value(self.flags.value)
+                    flags.components_v2 = False
 
         if file is not MISSING:
             payload["files"] = [file]
         elif files is not MISSING:
             payload["files"] = files
+
+        if is_cv2:
+            flags = flags or MessageFlags._from_value(self.flags.value)
+            flags.components_v2 = True
+            payload.pop("content", None)
+            payload.pop("embeds", None)
+
+        if flags is not None:
+            payload["flags"] = flags.value
 
         data = await self._state.http.edit_message(self.channel.id, self.id, **payload)
         message = Message(state=self._state, channel=self.channel, data=data)

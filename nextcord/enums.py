@@ -33,6 +33,8 @@ __all__ = (
     "ComponentType",
     "ButtonStyle",
     "TextInputStyle",
+    "SeparatorSpacing",
+    "MediaItemLoadingState",
     "StagePrivacyLevel",
     "InteractionType",
     "InteractionResponseType",
@@ -1804,6 +1806,51 @@ class ComponentType(IntEnum):
 
     .. versionadded:: 2.3
     """
+    section = 9
+    """Represents a section component.
+
+        .. versionadded:: 3.12
+    """
+    text_display = 10
+    """Represents a text display component.
+
+        .. versionadded:: 3.12
+    """
+    thumbnail = 11
+    """Represents a thumbnail component.
+
+        .. versionadded:: 3.12
+    """
+    media_gallery = 12
+    """Represents a media gallery component.
+
+        .. versionadded:: 3.12
+    """
+    file = 13
+    """Represents a file component.
+
+        .. versionadded:: 3.12
+    """
+    separator = 14
+    """Represents a separator component.
+
+        .. versionadded:: 3.12
+    """
+    container = 17
+    """Represents a container component.
+
+        .. versionadded:: 3.12
+    """
+    label = 18
+    """Represents a label component.
+
+        .. versionadded:: 3.12
+    """
+    file_upload = 19
+    """Represents a file upload component.
+
+        .. versionadded:: 3.12
+    """
 
 
 class ButtonStyle(IntEnum):
@@ -1848,6 +1895,34 @@ class TextInputStyle(IntEnum):
     """Represent a single line input."""
     paragraph = 2
     """Represent a multi line input."""
+
+
+class SeparatorSpacing(IntEnum):
+    """Represents the spacing of a separator component.
+
+        .. versionadded:: 3.12
+    """
+
+    small = 1
+    """Represents small spacing."""
+    large = 2
+    """Represents large spacing."""
+
+
+class MediaItemLoadingState(IntEnum):
+    """Represents the loading state of a media item.
+
+        .. versionadded:: 3.12
+    """
+
+    unknown = 0
+    """The loading state is unknown."""
+    loading = 1
+    """The media item is currently loading."""
+    loaded = 2
+    """The media item has been loaded."""
+    not_found = 3
+    """The media item was not found."""
 
 
 class StagePrivacyLevel(IntEnum):

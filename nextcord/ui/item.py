@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Coroutine, Generic, Optional, Tuple, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, Coroutine, Generic, Optional, Tuple, TypeVar, Union
 
 from ..interactions import ClientT, Interaction
 
@@ -18,10 +18,30 @@ if TYPE_CHECKING:
     from ..types.components import Component as ComponentPayload
     from ..types.interactions import ComponentInteractionData
     from .view import View
+    from .container import Container
+    from .action_row import ActionRow
 
 I = TypeVar("I", bound="Item")
 V_co = TypeVar("V_co", bound="View", covariant=True)
+ContainerType = Union["View", "ActionRow", "Container"]
+C = TypeVar("C", bound=ContainerType, covariant=True)
 ItemCallbackType = Callable[[Any, I, Interaction[ClientT]], Coroutine[Any, Any, Any]]
+ContainedItemCallbackType = Callable[[C, I, Interaction[Any]], Coroutine[Any, Any, Any]]
+
+
+class _ItemCallback:
+    __slots__ = ("parent", "callback", "item")
+
+    def __init__(self, callback: ContainedItemCallbackType[Any, Any], parent: Any, item: Item[Any]) -> None:
+        self.callback: ItemCallbackType[Any, Any] = callback
+        self.parent: Any = parent
+        self.item: Item[Any] = item
+
+    def __repr__(self) -> str:
+        return f"<_ItemCallback callback={self.callback!r}>"
+
+    async def __call__(self, interaction: Interaction) -> None:
+        await self.callback(self.parent, self.item, interaction)
 
 
 class Item(Generic[V_co]):
@@ -46,6 +66,7 @@ class Item(Generic[V_co]):
         self._view: Optional[V_co] = None
         self._row: Optional[int] = None
         self._rendered_row: Optional[int] = None
+        self._parent: Optional[Item[Any]] = None
         # This works mostly well but there is a gotcha with
         # the interaction with from_component, since that technically provides
         # a custom_id most dispatchable items would get this set to True even though
@@ -105,6 +126,13 @@ class Item(Generic[V_co]):
         """Optional[:class:`View`]: The underlying view for this item."""
         return self._view
 
+    def _update_view(self, view: Optional[V_co]) -> None:
+        """Update the view reference for this item.
+
+        .. versionadded:: 3.12
+        """
+        self._view = view
+
     async def callback(self, interaction: Interaction) -> None:
         """|coro|
 
@@ -117,3 +145,25 @@ class Item(Generic[V_co]):
         interaction: :class:`.Interaction`
             The interaction that triggered this UI item.
         """
+
+    def _is_v2(self) -> bool:
+        """Whether this item is a v2 component.
+
+        .. versionadded:: 3.12
+        """
+        return False
+
+    def _has_children(self) -> bool:
+        """Whether this item has children.
+
+        .. versionadded:: 3.12
+        """
+        return False
+
+    @property
+    def _total_count(self) -> int:
+        """The total count of this item including nested children.
+
+        .. versionadded:: 3.12
+        """
+        return 1

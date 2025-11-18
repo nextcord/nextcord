@@ -995,9 +995,6 @@ class InteractionResponse:
         if embed is not MISSING:
             embeds = [embed]
 
-        if embeds:
-            payload["embeds"] = [e.to_dict() for e in embeds]
-
         if file is not MISSING and files is not MISSING:
             raise InvalidArgument("Cannot mix file and files keyword arguments")
 
@@ -1007,9 +1004,6 @@ class InteractionResponse:
         if files and not all(isinstance(f, File) for f in files):
             raise TypeError("Files parameter must be a list of type File")
 
-        if content is not None:
-            payload["content"] = str(content)
-
         if flags is None:
             flags = MessageFlags()
         if suppress_embeds is not None:
@@ -1017,11 +1011,23 @@ class InteractionResponse:
         if ephemeral is not None:
             flags.ephemeral = ephemeral
 
-        if flags.value != 0:
-            payload["flags"] = flags.value
-
+        is_cv2 = False
         if view is not MISSING:
             payload["components"] = view.to_components()
+            
+            if hasattr(view, 'has_components_v2') and view.has_components_v2():
+                flags.components_v2 = True
+                is_cv2 = True
+
+        if not is_cv2:
+            if content is not None:
+                payload["content"] = str(content)
+            
+            if embeds:
+                payload["embeds"] = [e.to_dict() for e in embeds]
+
+        if flags.value != 0:
+            payload["flags"] = flags.value
 
         if allowed_mentions is MISSING or allowed_mentions is None:
             if self._parent._state.allowed_mentions is not None:

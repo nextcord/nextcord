@@ -1459,12 +1459,6 @@ class Messageable:
         if embed is not None and embeds is not None:
             raise InvalidArgument("Cannot pass both embed and embeds parameter to send()")
 
-        if embed is not None:
-            embed_payload = embed.to_dict()
-
-        elif embeds is not None:
-            embeds_payload = [em.to_dict() for em in embeds]
-
         if stickers is not None:
             stickers_payload = [sticker.id for sticker in stickers]
 
@@ -1489,11 +1483,24 @@ class Messageable:
                 ) from None
 
         components: Optional[List[ComponentPayload]] = None
+        is_cv2 = False
         if view:
             if not hasattr(view, "__discord_ui_view__"):
                 raise InvalidArgument(f"view parameter must be View not {view.__class__!r}")
 
             components = cast(List[ComponentPayload], view.to_components())
+            
+            if hasattr(view, 'has_components_v2') and view.has_components_v2():
+                flags.components_v2 = True
+                flag_value = flags.value
+                is_cv2 = True
+
+        if not is_cv2:
+            if embed is not None:
+                embed_payload = embed.to_dict()
+
+            elif embeds is not None:
+                embeds_payload = [em.to_dict() for em in embeds]
 
         if file is not None and files is not None:
             raise InvalidArgument("Cannot pass both file and files parameter to send()")
@@ -1507,10 +1514,10 @@ class Messageable:
                     channel.id,
                     files=[file],
                     allowed_mentions=allowed_mentions_payload,
-                    content=content,
+                    content=None if is_cv2 else content,
                     tts=tts,
-                    embed=embed_payload,
-                    embeds=embeds_payload,
+                    embed=None if is_cv2 else embed_payload,
+                    embeds=None if is_cv2 else embeds_payload,
                     nonce=nonce,
                     message_reference=reference_payload,
                     stickers=stickers_payload,
@@ -1528,10 +1535,10 @@ class Messageable:
                 data = await state.http.send_files(
                     channel.id,
                     files=files,
-                    content=content,
+                    content=None if is_cv2 else content,
                     tts=tts,
-                    embed=embed_payload,
-                    embeds=embeds_payload,
+                    embed=None if is_cv2 else embed_payload,
+                    embeds=None if is_cv2 else embeds_payload,
                     nonce=nonce,
                     allowed_mentions=allowed_mentions_payload,
                     message_reference=reference_payload,
@@ -1545,10 +1552,10 @@ class Messageable:
         else:
             data = await state.http.send_message(
                 channel.id,
-                content,
+                None if is_cv2 else content,
                 tts=tts,
-                embed=embed_payload,
-                embeds=embeds_payload,
+                embed=None if is_cv2 else embed_payload,
+                embeds=None if is_cv2 else embeds_payload,
                 nonce=nonce,
                 allowed_mentions=allowed_mentions_payload,
                 message_reference=reference_payload,

@@ -401,6 +401,16 @@ class MessageFlags(BaseFlags):
         """
         return 1 << 13
 
+    @flag_value
+    def components_v2(self) -> int:
+        """:class:`bool`: Returns ``True`` if the message has Discord's v2 components.
+
+        Does not allow sending any ``content``, ``embed``, ``embeds``, ``stickers``, or ``poll``.
+
+        .. versionadded:: 3.12
+        """
+        return 1 << 15
+
 
 @fill_with_flags()
 class PublicUserFlags(BaseFlags):
