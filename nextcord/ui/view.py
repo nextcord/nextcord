@@ -765,7 +765,11 @@ class LayoutView(View):
 
         .. versionadded:: 3.12
         """
-        return sum(len(item.content) for item in self.walk_children() if isinstance(item, TextDisplay))
+        from .text_display import TextDisplay
+
+        return sum(
+            len(item.content) for item in self.walk_children() if isinstance(item, TextDisplay)
+        )
 
 
 class ViewStore:

@@ -24,8 +24,7 @@ from ..utils import MISSING, get as _utils_get
 from .button import button as _button
 from .item import ContainedItemCallbackType as ItemCallbackType, Item, _ItemCallback
 from .select import select as _select
-from .text_display import TextDisplay
-from .view import LayoutView, _component_to_item
+from .view import _component_to_item
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -34,6 +33,7 @@ if TYPE_CHECKING:
     from ..emoji import Emoji
     from .container import Container
     from .select.base import SelectBase
+    from .view import LayoutView
 
     BaseSelectT = TypeVar("BaseSelectT", bound=SelectBase)
     SelectCallbackDecorator = Callable[[ItemCallbackType["S_co", BaseSelectT]], BaseSelectT]
@@ -180,6 +180,8 @@ class ActionRow(Item[V_co]):
 
     def content_length(self) -> int:
         """:class:`int`: Returns the total length of all text content in this action row."""
+        from .text_display import TextDisplay
+
         return sum(len(item.content) for item in self._children if isinstance(item, TextDisplay))
 
     def add_item(self, item: Item[Any]) -> Self:
@@ -333,4 +335,3 @@ class ActionRow(Item[V_co]):
             disabled=disabled,
             row=row,
         )
-

@@ -1014,15 +1014,15 @@ class InteractionResponse:
         is_cv2 = False
         if view is not MISSING:
             payload["components"] = view.to_components()
-            
-            if hasattr(view, 'has_components_v2') and view.has_components_v2():
+
+            if hasattr(view, "has_components_v2") and view.has_components_v2():
                 flags.components_v2 = True
                 is_cv2 = True
 
         if not is_cv2:
             if content is not None:
                 payload["content"] = str(content)
-            
+
             if embeds:
                 payload["embeds"] = [e.to_dict() for e in embeds]
 

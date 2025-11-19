@@ -249,4 +249,3 @@ class MediaGallery(Item[V_co]):
             *component.items,
             id=component.id,
         )
-

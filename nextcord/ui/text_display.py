@@ -74,4 +74,3 @@ class TextDisplay(Item[V_co]):
             content=component.content,
             id=component.id,
         )
-

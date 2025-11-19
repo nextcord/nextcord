@@ -154,7 +154,9 @@ class FileUpload(Item[V_co]):
     def _handle_submit(
         self, interaction: Interaction, data: Dict[str, Any], resolved: Dict[Any, Any]
     ) -> None:
-        self._values = [v for k, v in resolved.items() if hasattr(k, "id") and k.id in data.get("values", [])]
+        self._values = [
+            v for k, v in resolved.items() if hasattr(k, "id") and k.id in data.get("values", [])
+        ]
 
     @classmethod
     def from_component(cls, component: FileUploadComponent) -> Self:
@@ -172,4 +174,3 @@ class FileUpload(Item[V_co]):
 
     def is_dispatchable(self) -> bool:
         return False
-

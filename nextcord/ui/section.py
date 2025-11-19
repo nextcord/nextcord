@@ -20,12 +20,13 @@ from ..enums import ComponentType
 from ..utils import get as _utils_get
 from .item import Item
 from .text_display import TextDisplay
-from .view import LayoutView, _component_to_item
+from .view import _component_to_item
 
 if TYPE_CHECKING:
     from typing_extensions import Self
 
     from ..components import SectionComponent
+    from .view import LayoutView
 
 V_co = TypeVar("V_co", bound="LayoutView", covariant=True)
 
@@ -118,7 +119,10 @@ class Section(Item[V_co]):
         return True
 
     def _swap_item(self, base: Item, new: Item, custom_id: str) -> None:
-        if self.accessory.is_dispatchable() and getattr(self.accessory, "custom_id", None) == custom_id:
+        if (
+            self.accessory.is_dispatchable()
+            and getattr(self.accessory, "custom_id", None) == custom_id
+        ):
             self.accessory = new
 
     def walk_children(self) -> Generator[Item[V_co], None, None]:
@@ -261,4 +265,3 @@ class Section(Item[V_co]):
         if self.id is not None:
             data["id"] = self.id
         return data
-

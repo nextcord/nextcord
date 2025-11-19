@@ -109,4 +109,3 @@ class Separator(Item[V_co]):
             spacing=component.spacing,
             id=component.id,
         )
-

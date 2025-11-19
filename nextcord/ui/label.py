@@ -113,4 +113,3 @@ class Label(Item[V_co]):
     @property
     def _total_count(self) -> int:
         return 2
-

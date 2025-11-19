@@ -146,4 +146,3 @@ class File(Item[V_co]):
             spoiler=component.spoiler,
             id=component.id,
         )
-

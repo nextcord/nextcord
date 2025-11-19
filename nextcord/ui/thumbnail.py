@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Dict, Literal, Optional, TypeVar, Union
 
-from ..components import ThumbnailComponent, UnfurledMediaItem
+from ..components import UnfurledMediaItem
 from ..enums import ComponentType
 from ..file import File
 from ..utils import MISSING
@@ -13,6 +13,7 @@ from .item import Item
 if TYPE_CHECKING:
     from typing_extensions import Self
 
+    from ..components import ThumbnailComponent
     from .view import LayoutView
 
 V_co = TypeVar("V_co", bound="LayoutView", covariant=True)
@@ -78,9 +79,7 @@ class Thumbnail(Item[V_co]):
             media_url = media.url if isinstance(media, UnfurledMediaItem) else str(media)
 
         self._media: UnfurledMediaItem = (
-            UnfurledMediaItem(media_url)
-            if isinstance(media, (str, File))
-            else media
+            UnfurledMediaItem(media_url) if isinstance(media, (str, File)) else media
         )
         self.description: Optional[str] = None if description is MISSING else description
         self.spoiler: bool = False if spoiler is MISSING else bool(spoiler)
@@ -135,4 +134,3 @@ class Thumbnail(Item[V_co]):
             spoiler=component.spoiler,
             id=component.id,
         )
-

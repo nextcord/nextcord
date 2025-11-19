@@ -674,7 +674,8 @@ class MessageSnapshot:
             StickerItem(state=self._state, data=s) for s in self._message.get("sticker_items", [])
         ]
         self.components: List[Component] = [
-            comp for c in self._message.get("components", [])
+            comp
+            for c in self._message.get("components", [])
             if (comp := _component_factory(c)) is not None
         ]
 
@@ -1127,8 +1128,7 @@ class Message(Hashable):
             StickerItem(data=d, state=state) for d in data.get("sticker_items", [])
         ]
         self.components: List[Component] = [
-            comp for d in data.get("components", [])
-            if (comp := _component_factory(d)) is not None
+            comp for d in data.get("components", []) if (comp := _component_factory(d)) is not None
         ]
         self._background_tasks: Set[asyncio.Task[None]] = set()
 
@@ -1358,9 +1358,7 @@ class Message(Hashable):
                     self.role_mentions.append(role)
 
     def _handle_components(self, components: List[ComponentPayload]) -> None:
-        self.components = [
-            comp for d in components if (comp := _component_factory(d)) is not None
-        ]
+        self.components = [comp for d in components if (comp := _component_factory(d)) is not None]
 
     def _handle_thread(self, thread: Optional[ThreadPayload]) -> None:
         if thread:
