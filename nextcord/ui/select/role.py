@@ -18,9 +18,9 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from ...guild import Guild
-    from ..view import View
     from ...types.components import RoleSelectMenu as RoleSelectMenuPayload
     from ...types.interactions import ComponentInteractionData
+    from ..view import View
 
 __all__ = ("RoleSelect", "RoleSelectValues", "role_select")
 

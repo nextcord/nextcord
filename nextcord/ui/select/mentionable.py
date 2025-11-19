@@ -19,12 +19,12 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from ...guild import Guild
-    from ..view import View
     from ...state import ConnectionState
     from ...types.components import (
         MentionableSelectMenu as MentionableSelectMenuPayload,
     )
     from ...types.interactions import ComponentInteractionData
+    from ..view import View
 
 __all__ = ("MentionableSelect", "MentionableSelectValues", "mentionable_select")
 

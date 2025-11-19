@@ -17,11 +17,11 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from ...enums import ChannelType
-    from ..view import View
     from ...guild import Guild
     from ...state import ConnectionState
     from ...types.components import ChannelSelectMenu as ChannelSelectMenuPayload
     from ...types.interactions import ComponentInteractionData
+    from ..view import View
 
 __all__ = ("ChannelSelect", "ChannelSelectValues", "channel_select")
 

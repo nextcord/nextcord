@@ -77,12 +77,12 @@ def _walk_all_components(components: List[Component]) -> Iterator[Component]:
 
 def _component_to_item(component: Component, parent: Optional[Item] = None) -> Item:
     # Import here to avoid circular imports (these modules import from .view)
-    from .action_row import ActionRow  # noqa: PLC0415
-    from .container import Container  # noqa: PLC0415
-    from .label import Label  # noqa: PLC0415
-    from .section import Section  # noqa: PLC0415
-    from .select import Select  # noqa: PLC0415
-    from .text_input import TextInput  # noqa: PLC0415
+    from .action_row import ActionRow
+    from .container import Container
+    from .label import Label
+    from .section import Section
+    from .select import Select
+    from .text_input import TextInput
 
     if isinstance(component, ActionRowComponent):
         item = ActionRow.from_component(component)
