@@ -13,37 +13,38 @@ from typing import (
     List,
     Literal,
     Optional,
-    Type,
     TypeVar,
     Union,
+    cast,
 )
 
-from .item import Item, ContainedItemCallbackType as ItemCallbackType, _ItemCallback
-from .button import Button, button as _button
-from .select import select as _select, Select
 from ..components import ActionRow as ActionRowComponent
 from ..enums import ButtonStyle, ComponentType
 from ..utils import MISSING, get as _utils_get
+from .button import button as _button
+from .item import ContainedItemCallbackType as ItemCallbackType, Item, _ItemCallback
+from .select import select as _select
+from .text_display import TextDisplay
+from .view import LayoutView, _component_to_item
 
 if TYPE_CHECKING:
     from typing_extensions import Self
 
-    from .view import LayoutView
-    from .select.base import SelectBase
-    from ..emoji import Emoji
     from ..components import SelectOption
+    from ..emoji import Emoji
     from .container import Container
+    from .select.base import SelectBase
 
     BaseSelectT = TypeVar("BaseSelectT", bound=SelectBase)
-    SelectCallbackDecorator = Callable[[ItemCallbackType["S", BaseSelectT]], BaseSelectT]
+    SelectCallbackDecorator = Callable[[ItemCallbackType["S_co", BaseSelectT]], BaseSelectT]
 
-S = TypeVar("S", bound=Union["ActionRow", "Container", "LayoutView"], covariant=True)
-V = TypeVar("V", bound="LayoutView", covariant=True)
+S_co = TypeVar("S_co", bound=Union["ActionRow", "Container", "LayoutView"], covariant=True)
+V_co = TypeVar("V_co", bound="LayoutView", covariant=True)
 
 __all__ = ("ActionRow",)
 
 
-class ActionRow(Item[V]):
+class ActionRow(Item[V_co]):
     r"""Represents a UI action row.
 
     This is a top-level layout component that can only be used on :class:`LayoutView`
@@ -74,12 +75,12 @@ class ActionRow(Item[V]):
 
     def __init__(
         self,
-        *children: Item[V],
+        *children: Item[V_co],
         id: Optional[int] = None,
     ) -> None:
         super().__init__()
         self.id: Optional[int] = id
-        self._children: List[Item[V]] = self._init_children()
+        self._children: List[Item[V_co]] = self._init_children()
         self._weight: int = sum(i.width for i in self._children)
         for child in children:
             self.add_item(child)
@@ -90,11 +91,12 @@ class ActionRow(Item[V]):
     def __init_subclass__(cls) -> None:
         super().__init_subclass__()
 
-        children: Dict[str, ItemCallbackType[Self, Any]] = {}
-        for base in reversed(cls.__mro__):
-            for name, member in base.__dict__.items():
-                if hasattr(member, "__discord_ui_model_type__"):
-                    children[name] = member
+        children: Dict[str, ItemCallbackType[Self, Any]] = {
+            name: member
+            for base in reversed(cls.__mro__)
+            for name, member in base.__dict__.items()
+            if hasattr(member, "__discord_ui_model_type__")
+        }
 
         if len(children) > 5:
             raise TypeError("ActionRow cannot have more than 5 children")
@@ -120,14 +122,11 @@ class ActionRow(Item[V]):
         for child in self._children:
             child._view = view
 
-    def copy(self) -> ActionRow[V]:
+    def copy(self) -> ActionRow[V_co]:
         new = copy.copy(self)
         children = []
         for child in new._children:
-            if hasattr(child, "copy"):
-                newch = child.copy()  # type: ignore
-            else:
-                newch = copy.copy(child)
+            newch = child.copy() if hasattr(child, "copy") else copy.copy(child)  # type: ignore
             newch._parent = new
             if isinstance(newch.callback, _ItemCallback):
                 newch.callback.parent = new
@@ -137,7 +136,7 @@ class ActionRow(Item[V]):
         new._update_view(self.view)
         return new
 
-    def __deepcopy__(self, memo) -> ActionRow[V]:
+    def __deepcopy__(self, memo) -> ActionRow[V_co]:
         return self.copy()
 
     def _has_children(self) -> bool:
@@ -163,11 +162,11 @@ class ActionRow(Item[V]):
         return ComponentType.action_row
 
     @property
-    def children(self) -> List[Item[V]]:
+    def children(self) -> List[Item[V_co]]:
         """List[:class:`Item`]: The list of children attached to this action row."""
         return self._children.copy()
 
-    def walk_children(self) -> Generator[Item[V], Any, None]:
+    def walk_children(self) -> Generator[Item[V_co], Any, None]:
         """An iterator that recursively walks through all the children of this action row
         and its children, if applicable.
 
@@ -181,8 +180,6 @@ class ActionRow(Item[V]):
 
     def content_length(self) -> int:
         """:class:`int`: Returns the total length of all text content in this action row."""
-        from .text_display import TextDisplay
-
         return sum(len(item.content) for item in self._children if isinstance(item, TextDisplay))
 
     def add_item(self, item: Item[Any]) -> Self:
@@ -246,7 +243,7 @@ class ActionRow(Item[V]):
             self._weight -= item.width
         return self
 
-    def find_item(self, id: int, /) -> Optional[Item[V]]:
+    def find_item(self, id: int, /) -> Optional[Item[V_co]]:
         """Gets an item with :attr:`Item.id` set as ``id``, or ``None`` if
         not found.
 
@@ -281,17 +278,12 @@ class ActionRow(Item[V]):
 
     @classmethod
     def from_component(cls, component: ActionRowComponent) -> Self:
-        from .view import _component_to_item
-
         self = cls(id=component.id)  # type: ignore
         self._children = [_component_to_item(c, self) for c in component.children]
         return self
 
     def to_components(self) -> List[Dict[str, Any]]:
-        components = []
-        for component in self._children:
-            components.append(component.to_component_dict())
-        return components
+        return [cast(Dict[str, Any], component.to_component_dict()) for component in self._children]
 
     def to_component_dict(self) -> Dict[str, Any]:
         data = {

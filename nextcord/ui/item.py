@@ -17,20 +17,20 @@ if TYPE_CHECKING:
     from ..state import ConnectionState
     from ..types.components import Component as ComponentPayload
     from ..types.interactions import ComponentInteractionData
-    from .view import View
-    from .container import Container
     from .action_row import ActionRow
+    from .container import Container
+    from .view import View
 
 I = TypeVar("I", bound="Item")
 V_co = TypeVar("V_co", bound="View", covariant=True)
 ContainerType = Union["View", "ActionRow", "Container"]
-C = TypeVar("C", bound=ContainerType, covariant=True)
+C_co = TypeVar("C_co", bound=ContainerType, covariant=True)
 ItemCallbackType = Callable[[Any, I, Interaction[ClientT]], Coroutine[Any, Any, Any]]
-ContainedItemCallbackType = Callable[[C, I, Interaction[Any]], Coroutine[Any, Any, Any]]
+ContainedItemCallbackType = Callable[[C_co, I, Interaction[Any]], Coroutine[Any, Any, Any]]
 
 
 class _ItemCallback:
-    __slots__ = ("parent", "callback", "item")
+    __slots__ = ("callback", "item", "parent")
 
     def __init__(self, callback: ContainedItemCallbackType[Any, Any], parent: Any, item: Item[Any]) -> None:
         self.callback: ItemCallbackType[Any, Any] = callback

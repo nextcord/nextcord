@@ -11,19 +11,19 @@ from ...enums import ComponentType
 from ...interactions import ClientT
 from ...utils import MISSING
 from ..item import ItemCallbackType
-from ..view import View
 from .base import SelectBase, SelectValuesBase
 
 if TYPE_CHECKING:
     from typing_extensions import Self
 
     from ...enums import ChannelType
+    from ..view import View
     from ...guild import Guild
     from ...state import ConnectionState
     from ...types.components import ChannelSelectMenu as ChannelSelectMenuPayload
     from ...types.interactions import ComponentInteractionData
 
-__all__ = ("ChannelSelect", "channel_select", "ChannelSelectValues")
+__all__ = ("ChannelSelect", "ChannelSelectValues", "channel_select")
 
 V_co = TypeVar("V_co", bound="View", covariant=True)
 

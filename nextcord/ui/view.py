@@ -41,9 +41,16 @@ from ..components import (
     ThumbnailComponent,
     _component_factory,
 )
+from ..utils import get as _utils_get
+from .button import Button
+from .file import File
 from .item import Item, ItemCallbackType
+from .media_gallery import MediaGallery
+from .separator import Separator
+from .text_display import TextDisplay
+from .thumbnail import Thumbnail
 
-__all__ = ("View", "LayoutView")
+__all__ = ("LayoutView", "View")
 
 if TYPE_CHECKING:
     from ..interactions import ClientT, Interaction
@@ -69,53 +76,37 @@ def _walk_all_components(components: List[Component]) -> Iterator[Component]:
 
 
 def _component_to_item(component: Component, parent: Optional[Item] = None) -> Item:
-    if isinstance(component, ActionRowComponent):
-        from .action_row import ActionRow
+    # Import here to avoid circular imports (these modules import from .view)
+    from .action_row import ActionRow  # noqa: PLC0415
+    from .container import Container  # noqa: PLC0415
+    from .label import Label  # noqa: PLC0415
+    from .section import Section  # noqa: PLC0415
+    from .select import Select  # noqa: PLC0415
+    from .text_input import TextInput  # noqa: PLC0415
 
+    if isinstance(component, ActionRowComponent):
         item = ActionRow.from_component(component)
     elif isinstance(component, ButtonComponent):
-        from .button import Button
-
         item = Button.from_component(component)
     elif isinstance(component, SelectComponent):
-        from .select import Select
-
         item = Select.from_component(component)
     elif isinstance(component, SectionComponent):
-        from .section import Section
-
         item = Section.from_component(component)
     elif isinstance(component, TextDisplayComponent):
-        from .text_display import TextDisplay
-
         item = TextDisplay.from_component(component)
     elif isinstance(component, MediaGalleryComponent):
-        from .media_gallery import MediaGallery
-
         item = MediaGallery.from_component(component)
     elif isinstance(component, FileComponent):
-        from .file import File
-
         item = File.from_component(component)
     elif isinstance(component, SeparatorComponent):
-        from .separator import Separator
-
         item = Separator.from_component(component)
     elif isinstance(component, ThumbnailComponent):
-        from .thumbnail import Thumbnail
-
         item = Thumbnail.from_component(component)
     elif isinstance(component, ContainerComponent):
-        from .container import Container
-
         item = Container.from_component(component)
     elif isinstance(component, LabelComponent):
-        from .label import Label
-
         item = Label.from_component(component)
     elif isinstance(component, TextComponent):
-        from .text_input import TextInput
-
         item = TextInput.from_component(component)
     else:
         item = Item.from_component(component)
@@ -319,9 +310,7 @@ class View:
             The converted view. This returns a :class:`LayoutView` when the target
             message uses Components V2.
         """
-        if issubclass(cls, LayoutView):
-            view_cls = LayoutView
-        elif getattr(message.flags, "components_v2", False):
+        if issubclass(cls, LayoutView) or getattr(message.flags, "components_v2", False):
             view_cls = LayoutView
         else:
             view_cls = View
@@ -767,8 +756,6 @@ class LayoutView(View):
         Optional[:class:`Item`]
             The item found, or ``None``.
         """
-        from ..utils import get as _utils_get
-
         return _utils_get(self.walk_children(), id=id)
 
     def content_length(self) -> int:
@@ -778,8 +765,6 @@ class LayoutView(View):
 
         .. versionadded:: 3.12
         """
-        from .text_display import TextDisplay
-
         return sum(len(item.content) for item in self.walk_children() if isinstance(item, TextDisplay))
 
 
@@ -814,7 +799,7 @@ class ViewStore:
         self.__verify_integrity()
 
         view._start_listening_from_store(self)
-        items = view.walk_children() if hasattr(view, 'walk_children') else view.children  # type: ignore
+        items = view.walk_children() if hasattr(view, "walk_children") else view.children  # type: ignore
         for item in items:
             if item.is_dispatchable():
                 self._views[(item.type.value, message_id, item.custom_id)] = (view, item)  # type: ignore
@@ -823,7 +808,7 @@ class ViewStore:
             self._synced_message_views[message_id] = view
 
     def remove_view(self, view: View, message_id: Optional[int] = None) -> None:
-        items = view.walk_children() if hasattr(view, 'walk_children') else view.children  # type: ignore
+        items = view.walk_children() if hasattr(view, "walk_children") else view.children  # type: ignore
         for item in items:
             if item.is_dispatchable():
                 self._views.pop((item.type.value, message_id, item.custom_id), None)  # type: ignore

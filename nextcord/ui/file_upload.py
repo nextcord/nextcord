@@ -2,28 +2,27 @@
 
 from __future__ import annotations
 
+import os
 from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, TypeVar
 
-import os
-
-from ..utils import MISSING
 from ..components import FileUploadComponent
 from ..enums import ComponentType
+from ..utils import MISSING
 from .item import Item
 
 if TYPE_CHECKING:
     from typing_extensions import Self
 
-    from ..message import Attachment
     from ..interactions import Interaction
+    from ..message import Attachment
     from .view import View as BaseView
 
 __all__ = ("FileUpload",)
 
-V = TypeVar("V", bound="BaseView", covariant=True)
+V_co = TypeVar("V_co", bound="BaseView", covariant=True)
 
 
-class FileUpload(Item[V]):
+class FileUpload(Item[V_co]):
     """Represents a file upload component within a modal.
 
         .. versionadded:: 3.12
@@ -159,14 +158,13 @@ class FileUpload(Item[V]):
 
     @classmethod
     def from_component(cls, component: FileUploadComponent) -> Self:
-        self = cls(
+        return cls(
             id=component.id,
             custom_id=component.custom_id,
             max_values=component.max_values,
             min_values=component.min_values,
             required=component.required,
         )
-        return self
 
     @property
     def type(self) -> Literal[ComponentType.file_upload]:

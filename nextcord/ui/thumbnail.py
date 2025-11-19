@@ -4,24 +4,23 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Dict, Literal, Optional, TypeVar, Union
 
-from .item import Item
+from ..components import ThumbnailComponent, UnfurledMediaItem
 from ..enums import ComponentType
-from ..components import UnfurledMediaItem
 from ..file import File
 from ..utils import MISSING
+from .item import Item
 
 if TYPE_CHECKING:
     from typing_extensions import Self
 
     from .view import LayoutView
-    from ..components import ThumbnailComponent
 
-V = TypeVar("V", bound="LayoutView", covariant=True)
+V_co = TypeVar("V_co", bound="LayoutView", covariant=True)
 
 __all__ = ("Thumbnail",)
 
 
-class Thumbnail(Item[V]):
+class Thumbnail(Item[V_co]):
     """Represents a UI Thumbnail. This currently can only be used as a :class:`Section`'s accessory.
 
         .. versionadded:: 3.12
@@ -50,12 +49,6 @@ class Thumbnail(Item[V]):
     id: Optional[:class:`int`]
         The ID of this component.
     """
-
-    __slots__ = (
-        "_media",
-        "description",
-        "spoiler",
-    )
 
     __item_repr_attributes__ = (
         "media",

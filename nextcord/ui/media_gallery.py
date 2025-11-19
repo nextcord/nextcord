@@ -2,29 +2,30 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, Any, List, Literal, Optional, TypeVar, Union
+import contextlib
+from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, TypeVar, Union
 
-from .item import Item
-from ..enums import ComponentType
-from ..utils import MISSING
-from ..file import File
 from ..components import (
-    MediaGalleryItem,
     MediaGalleryComponent,
+    MediaGalleryItem,
     UnfurledMediaItem,
 )
+from ..enums import ComponentType
+from ..file import File
+from ..utils import MISSING
+from .item import Item
 
 if TYPE_CHECKING:
     from typing_extensions import Self
 
     from .view import LayoutView
 
-V = TypeVar("V", bound="LayoutView", covariant=True)
+V_co = TypeVar("V_co", bound="LayoutView", covariant=True)
 
 __all__ = ("MediaGallery",)
 
 
-class MediaGallery(Item[V]):
+class MediaGallery(Item[V_co]):
     r"""Represents a UI media gallery.
 
     Can contain up to 10 :class:`.MediaGalleryItem`\s.
@@ -220,10 +221,8 @@ class MediaGallery(Item[V]):
             The item to remove from the gallery.
         """
 
-        try:
+        with contextlib.suppress(ValueError):
             self._underlying.items.remove(item)
-        except ValueError:
-            pass
         return self
 
     def clear_items(self) -> Self:

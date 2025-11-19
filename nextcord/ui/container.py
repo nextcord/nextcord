@@ -14,26 +14,28 @@ from typing import (
     Optional,
     TypeVar,
     Union,
+    cast,
 )
 
-from .item import Item, ContainedItemCallbackType as ItemCallbackType, _ItemCallback
-from .view import _component_to_item, LayoutView
+from ..colour import Color, Colour
 from ..enums import ComponentType
 from ..utils import get as _utils_get
-from ..colour import Colour, Color
+from .item import ContainedItemCallbackType as ItemCallbackType, Item, _ItemCallback
+from .text_display import TextDisplay
+from .view import LayoutView, _component_to_item
 
 if TYPE_CHECKING:
     from typing_extensions import Self
 
     from ..components import Container as ContainerComponent
 
-S = TypeVar("S", bound="Container", covariant=True)
-V = TypeVar("V", bound="LayoutView", covariant=True)
+S_co = TypeVar("S_co", bound="Container", covariant=True)
+V_co = TypeVar("V_co", bound="LayoutView", covariant=True)
 
 __all__ = ("Container",)
 
 
-class Container(Item[V]):
+class Container(Item[V_co]):
     r"""Represents a UI container.
 
     This is a top-level layout component that can only be used on :class:`LayoutView`
@@ -80,14 +82,14 @@ class Container(Item[V]):
 
     def __init__(
         self,
-        *children: Item[V],
+        *children: Item[V_co],
         accent_colour: Optional[Union[Colour, int]] = None,
         accent_color: Optional[Union[Color, int]] = None,
         spoiler: bool = False,
         id: Optional[int] = None,
     ) -> None:
         super().__init__()
-        self._children: List[Item[V]] = self._init_children()
+        self._children: List[Item[V_co]] = self._init_children()
         for child in children:
             self.add_item(child)
 
@@ -104,10 +106,7 @@ class Container(Item[V]):
 
         for name, raw in self.__container_children_items__.items():
             if isinstance(raw, Item):
-                if hasattr(raw, "copy"):
-                    item = raw.copy()  # type: ignore
-                else:
-                    item = copy.copy(raw)
+                item = raw.copy() if hasattr(raw, "copy") else copy.copy(raw)  # type: ignore
                 item._parent = self
                 setattr(self, name, item)
                 children.append(item)
@@ -142,13 +141,10 @@ class Container(Item[V]):
             child._update_view(view)
         return True
 
-    def copy(self) -> Container[V]:
+    def copy(self) -> Container[V_co]:
         new = copy.deepcopy(self)
         for child in new._children:
-            if hasattr(child, "copy"):
-                newch = child.copy()  # type: ignore
-            else:
-                newch = copy.copy(child)
+            newch = child.copy() if hasattr(child, "copy") else copy.copy(child)  # type: ignore
             newch._parent = new
         new._parent = self._parent
         new._update_view(self.view)
@@ -162,17 +158,15 @@ class Container(Item[V]):
         self._children[child_index] = new
 
     @property
-    def children(self) -> List[Item[V]]:
+    def children(self) -> List[Item[V_co]]:
         """List[:class:`Item`]: The children of this container."""
         return self._children.copy()
 
     @property
-    def accent_colour(self) -> Optional[Union[Colour, int]]:
+    def accent_colour(self) -> Optional[Union[Colour, Color, int]]:
         """Optional[Union[:class:`Colour`, :class:`int`]]: The colour of the container, or ``None``."""
-        colour = self._colour
-        if isinstance(colour, Color) and not isinstance(colour, Colour):
-            return Colour(colour.value)
-        return colour
+        # Color is an alias for Colour, so no conversion needed
+        return self._colour
 
     @accent_colour.setter
     def accent_colour(self, value: Optional[Union[Colour, int]]) -> None:
@@ -199,10 +193,7 @@ class Container(Item[V]):
         return True
 
     def to_components(self) -> List[Dict[str, Any]]:
-        components = []
-        for i in self._children:
-            components.append(i.to_component_dict())
-        return components
+        return [cast(Dict[str, Any], i.to_component_dict()) for i in self._children]
 
     def to_component_dict(self) -> Dict[str, Any]:
         components = self.to_components()
@@ -231,7 +222,7 @@ class Container(Item[V]):
         self._children = [_component_to_item(cmp, self) for cmp in component.children]
         return self
 
-    def walk_children(self) -> Generator[Item[V], None, None]:
+    def walk_children(self) -> Generator[Item[V_co], None, None]:
         """An iterator that recursively walks through all the children of this container
         and its children, if applicable.
 
@@ -249,8 +240,6 @@ class Container(Item[V]):
 
     def content_length(self) -> int:
         """:class:`int`: Returns the total length of all text content in this container."""
-        from .text_display import TextDisplay
-
         return sum(len(item.content) for item in self.walk_children() if isinstance(item, TextDisplay))
 
     def add_item(self, item: Item[Any]) -> Self:
@@ -303,7 +292,7 @@ class Container(Item[V]):
                 self._view._add_count(-item._total_count)
         return self
 
-    def find_item(self, id: int, /) -> Optional[Item[V]]:
+    def find_item(self, id: int, /) -> Optional[Item[V_co]]:
         """Gets an item with :attr:`Item.id` set as ``id``, or ``None`` if
         not found.
 

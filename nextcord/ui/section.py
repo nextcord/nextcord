@@ -2,25 +2,37 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, Generator, List, Literal, Optional, TypeVar, Union, ClassVar
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Dict,
+    Generator,
+    List,
+    Literal,
+    Optional,
+    TypeVar,
+    Union,
+    cast,
+)
 
-from .item import Item
-from .text_display import TextDisplay
 from ..enums import ComponentType
 from ..utils import get as _utils_get
+from .item import Item
+from .text_display import TextDisplay
+from .view import LayoutView, _component_to_item
 
 if TYPE_CHECKING:
     from typing_extensions import Self
 
-    from .view import LayoutView
     from ..components import SectionComponent
 
-V = TypeVar("V", bound="LayoutView", covariant=True)
+V_co = TypeVar("V_co", bound="LayoutView", covariant=True)
 
 __all__ = ("Section",)
 
 
-class Section(Item[V]):
+class Section(Item[V_co]):
     r"""Represents a UI section.
 
     This is a top-level layout component that can only be used on :class:`LayoutView`.
@@ -53,24 +65,19 @@ class Section(Item[V]):
 
     __discord_ui_section__: ClassVar[bool] = True
 
-    __slots__ = (
-        "_children",
-        "_accessory",
-    )
-
     def __init__(
         self,
-        *children: Union[Item[V], str],
-        accessory: Item[V],
+        *children: Union[Item[V_co], str],
+        accessory: Item[V_co],
         id: Optional[int] = None,
     ) -> None:
         super().__init__()
-        self._children: List[Item[V]] = []
+        self._children: List[Item[V_co]] = []
         for child in children:
             self.add_item(child)
 
         accessory._parent = self
-        self._accessory: Item[V] = accessory
+        self._accessory: Item[V_co] = accessory
         self.id = id
 
     def __repr__(self) -> str:
@@ -81,7 +88,7 @@ class Section(Item[V]):
         return ComponentType.section
 
     @property
-    def children(self) -> List[Item[V]]:
+    def children(self) -> List[Item[V_co]]:
         """List[:class:`Item`]: The list of children attached to this section."""
         return self._children.copy()
 
@@ -94,12 +101,12 @@ class Section(Item[V]):
         return 2 + len(self._children)
 
     @property
-    def accessory(self) -> Item[V]:
+    def accessory(self) -> Item[V_co]:
         """:class:`Item`: The section's accessory."""
         return self._accessory
 
     @accessory.setter
-    def accessory(self, value: Item[V]) -> None:
+    def accessory(self, value: Item[V_co]) -> None:
         if not isinstance(value, Item):
             raise TypeError(f"Expected an Item, got {value.__class__.__name__!r} instead")
 
@@ -114,7 +121,7 @@ class Section(Item[V]):
         if self.accessory.is_dispatchable() and getattr(self.accessory, "custom_id", None) == custom_id:
             self.accessory = new
 
-    def walk_children(self) -> Generator[Item[V], None, None]:
+    def walk_children(self) -> Generator[Item[V_co], None, None]:
         """An iterator that recursively walks through all the children of this section
         and its children, if applicable. This includes the `accessory`.
 
@@ -199,7 +206,7 @@ class Section(Item[V]):
 
         return self
 
-    def find_item(self, id: int, /) -> Optional[Item[V]]:
+    def find_item(self, id: int, /) -> Optional[Item[V_co]]:
         """Gets an item with :attr:`Item.id` set as ``id``, or ``None`` if
         not found.
 
@@ -233,8 +240,6 @@ class Section(Item[V]):
 
     @classmethod
     def from_component(cls, component: SectionComponent) -> Self:
-        from .view import _component_to_item
-
         if component.accessory is None:
             raise ValueError("Section component must have an accessory")
         accessory = _component_to_item(component.accessory, None)
@@ -245,11 +250,7 @@ class Section(Item[V]):
         return self
 
     def to_components(self) -> List[Dict[str, Any]]:
-        components = []
-
-        for component in self._children:
-            components.append(component.to_component_dict())
-        return components
+        return [cast(Dict[str, Any], component.to_component_dict()) for component in self._children]
 
     def to_component_dict(self) -> Dict[str, Any]:
         data = {

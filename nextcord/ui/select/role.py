@@ -12,17 +12,17 @@ from ...role import Role
 from ...state import ConnectionState
 from ...utils import MISSING
 from ..item import ItemCallbackType
-from ..view import View
 from .base import SelectBase, SelectValuesBase
 
 if TYPE_CHECKING:
     from typing_extensions import Self
 
     from ...guild import Guild
+    from ..view import View
     from ...types.components import RoleSelectMenu as RoleSelectMenuPayload
     from ...types.interactions import ComponentInteractionData
 
-__all__ = ("RoleSelect", "role_select", "RoleSelectValues")
+__all__ = ("RoleSelect", "RoleSelectValues", "role_select")
 
 V_co = TypeVar("V_co", bound="View", covariant=True)
 

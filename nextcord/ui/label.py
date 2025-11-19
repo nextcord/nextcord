@@ -2,24 +2,23 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, Any, Generator, Literal, Optional, Tuple, TypeVar
+from typing import TYPE_CHECKING, Any, Dict, Generator, Literal, Optional, Tuple, TypeVar
 
 from ..components import LabelComponent
 from ..enums import ComponentType
 from ..utils import MISSING
 from .item import Item
+from .view import View as BaseView, _component_to_item
 
 if TYPE_CHECKING:
     from typing_extensions import Self
 
-    from .view import View as BaseView
-
 __all__ = ("Label",)
 
-V = TypeVar("V", bound="BaseView", covariant=True)
+V_co = TypeVar("V_co", bound="BaseView", covariant=True)
 
 
-class Label(Item[V]):
+class Label(Item[V_co]):
     """Represents a UI label within a modal.
 
     This is a top-level layout component that can only be used on :class:`Modal`.
@@ -61,12 +60,12 @@ class Label(Item[V]):
         self,
         *,
         text: str,
-        component: Item[V],
+        component: Item[V_co],
         description: Optional[str] = None,
         id: Optional[int] = None,
     ) -> None:
         super().__init__()
-        self.component: Item[V] = component
+        self.component: Item[V_co] = component
         self.text: str = text
         self.description: Optional[str] = description
         self.id = id
@@ -78,7 +77,7 @@ class Label(Item[V]):
     def _has_children(self) -> bool:
         return True
 
-    def walk_children(self) -> Generator[Item[V], None, None]:
+    def walk_children(self) -> Generator[Item[V_co], None, None]:
         yield self.component
 
     def to_component_dict(self) -> Dict[str, Any]:
@@ -95,8 +94,6 @@ class Label(Item[V]):
 
     @classmethod
     def from_component(cls, component: LabelComponent) -> Self:
-        from .view import _component_to_item
-
         self = cls(
             text=component.label,
             component=MISSING,

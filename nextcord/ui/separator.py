@@ -2,23 +2,23 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, Any, Literal, Optional, TypeVar
+from typing import TYPE_CHECKING, Any, Dict, Literal, Optional, TypeVar
 
-from .item import Item
 from ..components import SeparatorComponent
-from ..enums import SeparatorSpacing, ComponentType
+from ..enums import ComponentType, SeparatorSpacing
+from .item import Item
 
 if TYPE_CHECKING:
     from typing_extensions import Self
 
     from .view import LayoutView
 
-V = TypeVar("V", bound="LayoutView", covariant=True)
+V_co = TypeVar("V_co", bound="LayoutView", covariant=True)
 
 __all__ = ("Separator",)
 
 
-class Separator(Item[V]):
+class Separator(Item[V_co]):
     """Represents a UI separator.
 
     This is a top-level layout component that can only be used on :class:`LayoutView`.
@@ -44,8 +44,6 @@ class Separator(Item[V]):
     id: Optional[:class:`int`]
         The ID of this component.
     """
-
-    __slots__ = ("_underlying",)
 
     __item_repr_attributes__ = (
         "visible",

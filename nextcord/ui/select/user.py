@@ -12,18 +12,18 @@ from ...member import Member
 from ...user import User
 from ...utils import MISSING
 from ..item import ItemCallbackType
-from ..view import View
 from .base import SelectBase, SelectValuesBase
 
 if TYPE_CHECKING:
     from typing_extensions import Self
 
     from ...guild import Guild
+    from ..view import View
     from ...state import ConnectionState
     from ...types.components import UserSelectMenu as UserSelectMenuPayload
     from ...types.interactions import ComponentInteractionData
 
-__all__ = ("UserSelect", "user_select", "UserSelectValues")
+__all__ = ("UserSelect", "UserSelectValues", "user_select")
 
 V_co = TypeVar("V_co", bound="View", covariant=True)
 
