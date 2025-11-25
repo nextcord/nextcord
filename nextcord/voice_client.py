@@ -237,9 +237,7 @@ class VoiceClient(VoiceProtocol):
         self.ws: DiscordVoiceWebSocket = MISSING
 
     warn_nacl = not has_nacl
-    supported_modes: Tuple[SupportedModes, ...] = (
-        "aead_xchacha20_poly1305_rtpsize",
-    )
+    supported_modes: Tuple[SupportedModes, ...] = ("aead_xchacha20_poly1305_rtpsize",)
 
     @property
     def guild(self) -> Optional[Guild]:

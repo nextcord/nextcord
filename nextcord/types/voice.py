@@ -7,9 +7,7 @@ from typing_extensions import NotRequired
 from .member import MemberWithUser
 from .snowflake import Snowflake
 
-SupportedModes = Literal[
-    "aead_xchacha20_poly1305_rtpsize",
-]
+SupportedModes = Literal["aead_xchacha20_poly1305_rtpsize",]
 
 
 class _VoiceState(TypedDict):
