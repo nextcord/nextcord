@@ -9,9 +9,6 @@ from .snowflake import Snowflake
 
 SupportedModes = Literal[
     "aead_xchacha20_poly1305_rtpsize",
-    "xsalsa20_poly1305_lite",
-    "xsalsa20_poly1305_suffix",
-    "xsalsa20_poly1305",
 ]
 
 
