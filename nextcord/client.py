@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import inspect
 import logging
 import signal
 import sys
@@ -1301,7 +1302,7 @@ class Client:
             The coroutine passed is not actually a coroutine.
         """
 
-        if not asyncio.iscoroutinefunction(coro):
+        if not inspect.iscoroutinefunction(coro):
             raise TypeError("event registered must be a coroutine function")
 
         setattr(self, coro.__name__, coro)
@@ -1334,7 +1335,7 @@ class Client:
         """
         name = func.__name__ if name is MISSING else name
 
-        if not asyncio.iscoroutinefunction(func):
+        if not inspect.iscoroutinefunction(func):
             raise TypeError("Listeners must be coroutines")
 
         if name in self.extra_events:
@@ -1448,7 +1449,7 @@ class Client:
 
         for guild in self._connection.guilds:
             me = guild.me
-            if me is None:  # pyright: ignore[reportUnnecessaryComparison]
+            if me is None:
                 continue
 
             if activity is not None:
@@ -3029,7 +3030,7 @@ class Client:
         TypeError
             The coroutine passed is not actually a coroutine.
         """
-        if not asyncio.iscoroutinefunction(coro):
+        if not inspect.iscoroutinefunction(coro):
             raise TypeError("The pre-invoke hook must be a coroutine.")
 
         self._application_command_before_invoke = coro
@@ -3062,8 +3063,97 @@ class Client:
         TypeError
             The coroutine passed is not actually a coroutine.
         """
-        if not asyncio.iscoroutinefunction(coro):
+        if not inspect.iscoroutinefunction(coro):
             raise TypeError("The post-invoke hook must be a coroutine.")
 
         self._application_command_after_invoke = coro
         return coro
+
+    async def create_application_emoji(
+        self,
+        *,
+        name: str,
+        image: bytes | Asset | Attachment | File,
+    ) -> Emoji:
+        """|coro|
+
+        Creates an emoji for the current application.
+
+        Parameters
+        ----------
+        name: :class:`str`
+            The name of the emoji.
+        image: Union[:class:`bytes`, :class:`~nextcord.Asset`, :class:`~nextcord.Attachment`, :class:`~nextcord.File`]
+            The image data to create the emoji with.
+
+        Returns
+        -------
+        :class:`~nextcord.Emoji`
+            The created emoji.
+
+        Raises
+        ------
+        HTTPException
+            An error occurred creating the emoji.
+        TypeError
+            The client's application ID was not set.
+        """
+        if self.application_id is None:
+            raise TypeError("Could not get the current application's id")
+
+        img_base64 = await utils.obj_to_base64_data(image)
+        data = await self.http.create_application_emoji(
+            self.application_id, name=name, image=img_base64
+        )
+        return Emoji(state=self._connection, data=data, application_id=self.application_id)
+
+    async def fetch_application_emojis(self) -> list[Emoji]:
+        """|coro|
+
+        Fetches the emojis that the current application has.
+
+        Raises
+        ------
+        TypeError
+            The client's application ID was not set.
+
+        Returns
+        -------
+        List[:class:`~nextcord.Emoji`]
+            The emojis that the application has.
+        """
+        if self.application_id is None:
+            raise TypeError("Could not get the current application's id")
+        data = await self.http.list_application_emojis(self.application_id)
+        return [
+            Emoji(state=self._connection, data=emoji, application_id=self.application_id)
+            for emoji in data.get("items", [])
+        ]
+
+    async def fetch_application_emoji(self, emoji_id: int) -> Emoji:
+        """|coro|
+
+        Fetches an emoji that the current application has.
+
+        Parameters
+        ----------
+        emoji_id: :class:`int`
+            The ID of the emoji to fetch.
+
+        Raises
+        ------
+        TypeError
+            The client's application ID was not set.
+        NotFound
+            The emoji requested was not found.
+
+        Returns
+        -------
+        :class:`~nextcord.Emoji`
+            The emoji that the application has.
+        """
+        if self.application_id is None:
+            raise TypeError("Could not get the current application's id")
+
+        data = await self.http.get_application_emoji(self.application_id, emoji_id)
+        return Emoji(state=self._connection, data=data, application_id=self.application_id)

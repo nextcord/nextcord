@@ -39,6 +39,7 @@ from typing import (
     Type,
     TypeVar,
     Union,
+    get_args,
     overload,
 )
 
@@ -535,9 +536,7 @@ async def maybe_coroutine(
     value = f(*args, **kwargs)
     if _isawaitable(value):
         return await value
-    return value  # type: ignore
-    # type ignored as `_isawaitable` provides `TypeGuard[Awaitable[Any]]`
-    # yet we need a more specific type guard
+    return value
 
 
 async def async_all(
@@ -566,7 +565,7 @@ async def sane_wait_for(
 def get_slots(cls: Type[Any]) -> Iterator[str]:
     for mro in reversed(cls.__mro__):
         try:
-            yield from mro.__slots__  # type: ignore # handled below
+            yield from mro.__slots__
         except AttributeError:
             continue
 
@@ -975,11 +974,11 @@ def as_chunks(iterator: _Iter[T], max_size: int) -> _Iter[List[T]]:
 
 
 def flatten_literal_params(parameters: Iterable[Any]) -> Tuple[Any, ...]:
-    params = []
+    params: list[Any] = []
     literal_cls = type(Literal[0])
     for p in parameters:
         if isinstance(p, literal_cls):
-            params.extend(p.__args__)
+            params.extend(get_args(p))
         else:
             params.append(p)
     return tuple(params)
@@ -1017,7 +1016,7 @@ def evaluate_annotation(
         args = tp.__args__
         if not hasattr(tp, "__origin__"):
             if tp.__class__ is UnionType:
-                converted = Union[args]  # type: ignore
+                converted = Union[args]
                 return evaluate_annotation(converted, globals, locals, cache)
 
             return tp

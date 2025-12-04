@@ -12,7 +12,7 @@ import time
 import traceback
 import zlib
 from collections import deque, namedtuple
-from typing import TYPE_CHECKING, Awaitable, Callable, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Awaitable, Callable, Dict, List, Optional, Union, cast
 
 import aiohttp
 
@@ -143,7 +143,7 @@ class KeepAliveHandler(threading.Thread):
                     _log.exception("An error occurred while stopping the gateway. Ignoring.")
                 finally:
                     self.stop()
-                    return  # noqa: B012  # ignoring is intentional
+                return
 
             data = self.get_payload()
             _log.debug(self.msg, self.shard_id, data["d"])
@@ -190,6 +190,9 @@ class KeepAliveHandler(threading.Thread):
 
 
 class VoiceKeepAliveHandler(KeepAliveHandler):
+    if TYPE_CHECKING:
+        ws: DiscordVoiceWebSocket
+
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.recent_ack_latencies = deque(maxlen=20)
@@ -197,8 +200,11 @@ class VoiceKeepAliveHandler(KeepAliveHandler):
         self.block_msg = "Shard ID %s voice heartbeat blocked for more than %s seconds"
         self.behind_msg = "High socket latency, shard ID %s heartbeat is %.1fs behind"
 
-    def get_payload(self) -> Dict[str, int]:
-        return {"op": self.ws.HEARTBEAT, "d": int(time.time() * 1000)}
+    def get_payload(self) -> Dict[str, Union[int, Dict[str, int]]]:
+        return {
+            "op": self.ws.HEARTBEAT,
+            "d": {"t": int(time.time() * 1000), "seq_ack": self.ws.seq_ack},
+        }
 
     def ack(self) -> None:
         ack_time = time.perf_counter()
@@ -502,7 +508,8 @@ class DiscordWebSocket:
                 return
 
             if op == self.INVALIDATE_SESSION:
-                if data is True:
+                resumable = cast(bool, data)
+                if resumable is True:
                     await self.close()
                     raise ReconnectWebSocket(self.shard_id)
 
@@ -581,7 +588,10 @@ class DiscordWebSocket:
 
     def _can_handle_close(self) -> bool:
         code = self._close_code or self.socket.close_code
-        return code not in (1000, 4004, 4010, 4011, 4012, 4013, 4014)
+        # If the socket is closed remotely with 1000 and it's not our own explicit close
+        # then it's an improper close that should be handled and reconnected
+        is_improper_close = self._close_code is None and self.socket.close_code == 1000
+        return is_improper_close or code not in (1000, 4004, 4010, 4011, 4012, 4013, 4014)
 
     async def poll_event(self) -> None:
         """Polls for a DISPATCH event and handles the general gateway loop.
@@ -790,6 +800,7 @@ class DiscordVoiceWebSocket:
         self._keep_alive: Optional[VoiceKeepAliveHandler] = None
         self._close_code: Optional[int] = None
         self.secret_key: Optional[List[int]] = None
+        self.seq_ack: int = -1
         self._hook: Optional[Callable[..., Awaitable[None]]] = (
             hook or getattr(self, "_hook", None) or self._default_hook
         )
@@ -810,6 +821,7 @@ class DiscordVoiceWebSocket:
                 "token": state.token,
                 "server_id": str(state.server_id),
                 "session_id": state.session_id,
+                "seq_ack": self.seq_ack,
             },
         }
         await self.send_as_json(payload)
@@ -836,7 +848,7 @@ class DiscordVoiceWebSocket:
         hook: Optional[Callable[..., Awaitable[None]]] = None,
     ):
         """Creates a voice websocket for the :class:`VoiceClient`."""
-        gateway = "wss://" + client.endpoint + "/?v=4"
+        gateway = f"wss://{client.endpoint}/?v=8"
         http = client._state.http
         socket = await http.ws_connect(gateway, compress=15)
         ws = cls(socket, loop=client.loop, hook=hook)
@@ -881,6 +893,7 @@ class DiscordVoiceWebSocket:
         _log.debug("Voice websocket frame received: %s", msg)
         op: int = msg["op"]
         data: Dict[str, Any] = msg["d"]
+        self.seq_ack = data.get("seq", self.seq_ack)
 
         if op == self.READY:
             await self.initial_connection(data)

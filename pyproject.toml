@@ -58,7 +58,7 @@ pre-commit = "3.5.0"
 taskipy = "1.10.3"
 slotscheck = "0.19.1"
 python-dotenv = "0.20.0"
-pyright = "1.1.317"
+pyright = "1.1.391"
 sphinx_autobuild = "2021.3.14"
 
 [tool.poetry.group.docs.dependencies]

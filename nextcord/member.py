@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import asyncio
 import contextlib
 import datetime
+import inspect
 import itertools
 import sys
 from operator import attrgetter
@@ -44,6 +44,7 @@ if TYPE_CHECKING:
     )
     from .types.user import User as UserPayload
     from .types.voice import VoiceState as VoiceStatePayload
+    from .user import AvatarDecoration
 
     VocalGuildChannel = Union[VoiceChannel, StageChannel]
 
@@ -160,7 +161,7 @@ def flatten_user(cls):
             # probably a member function by now
             def generate_function(x, value):
                 # We want sphinx to properly show coroutine functions as coroutines
-                if asyncio.iscoroutinefunction(value):
+                if inspect.iscoroutinefunction(value):
 
                     async def general(self, *args, **kwargs):  # type: ignore
                         return await getattr(self._user, x)(*args, **kwargs)
@@ -267,6 +268,7 @@ class Member(abc.Messageable, _UserTag):
         banner: Optional[Asset]
         accent_color: Optional[Colour]
         accent_colour: Optional[Colour]
+        avatar_decoration: Optional[AvatarDecoration]
 
     def __init__(
         self, *, data: MemberWithUserPayload, guild: Guild, state: ConnectionState
@@ -366,10 +368,9 @@ class Member(abc.Messageable, _UserTag):
     def _update(self, data: MemberPayload) -> None:
         # the nickname change is optional,
         # if it isn't in the payload then it didn't change
-        with contextlib.suppress(KeyError):
+        if "nick" in data:
             self.nick = data["nick"]
-
-        with contextlib.suppress(KeyError):
+        if "pending" in data:
             self.pending = data["pending"]
 
         self.premium_since = utils.parse_time(data.get("premium_since"))

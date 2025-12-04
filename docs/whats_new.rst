@@ -12,6 +12,35 @@ Changelog
 This page keeps a detailed human-friendly rendering of what's new and changed
 in specific versions.
 
+.. _vp3p1p0:
+
+v3.1.0
+------
+
+This version is a minor release, with mostly bug fixes, and the addition of application-managed emojis.
+
+New Features
+~~~~~~~~~~~~
+
+- Add support for application-managed emojis (:issue:`1240`):
+    - :meth:`Client.create_application_emoji`
+    - :meth:`Client.fetch_application_emojis`
+    - :meth:`Client.fetch_application_emoji`
+    - :attr:`Emoji.guild_id` and :attr:`Emoji.guild` are now optional, and will be ``None`` for application-managed emojis
+    - :attr:`Emoji.application_id`
+    - :meth:`Emoji.is_usable` has been modified to account for application emojis
+    - :meth:`Emoji.is_application_emoji`
+    - :meth:`Emoji.is_guild_emoji`
+
+Bug Fixes
+~~~~~~~~~
+
+- Fix scheduled event ``entity_metadata`` not being editable (:issue:`1245`).
+- Fix Opus support for Apple Silicon (:issue:`1251`).
+- Handle false gateway disconnects from Discord (:issue:`1250`).
+- Fix condition for :attr:`User.default_avatar` (:issue:`1237`).
+- Fix ``UnboundLocalError`` with :class:`SelectOption`\s not having emojis (:issue:`1252`).
+
 .. _vp3p0p0:
 
 v3.0.0
