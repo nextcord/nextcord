@@ -246,6 +246,7 @@ class VoiceClient(VoiceProtocol):
         self.encoder: Encoder = MISSING
         self._incr_nonce: int = 0
         self.ws: DiscordVoiceWebSocket = MISSING
+        self.e2ee_state: Optional[E2EEState] = E2EEState() if has_dave else None
 
     warn_nacl = not has_nacl
     supported_modes: Tuple[SupportedModes, ...] = ("aead_xchacha20_poly1305_rtpsize",)

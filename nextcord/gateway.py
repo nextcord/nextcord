@@ -927,6 +927,20 @@ class DiscordVoiceWebSocket:
         if self._hook is not None:
             await self._hook(self, msg)
 
+    async def received_message_binary(self, msg: bytes) -> None:
+        # Sequence  Numbe    big-endian uint16 sequence number	        2 bytes
+        # Opcode	Unsigned integer opcode value	                    1 bytes
+        # Payload	Binary   message payload (format defined by opcode)	Variable bytes
+        _log.debug("Received binary message on voice websocket: %s", msg.hex())
+
+        self.seq_ack = int.from_bytes(msg[0:2], byteorder="big", signed=False)
+
+        if self._connection.e2ee_state is None:
+            _log.debug(
+                "Received binary message on voice websocket but E2EE state is not set, ignoring."
+            )
+            return
+
     async def initial_connection(self, data: Dict[str, Any]) -> None:
         state = self._connection
         state.ssrc = data["ssrc"]
@@ -990,6 +1004,8 @@ class DiscordVoiceWebSocket:
         msg = await asyncio.wait_for(self.ws.receive(), timeout=30.0)
         if msg.type is aiohttp.WSMsgType.TEXT:
             await self.received_message(utils.from_json(msg.data))
+        elif msg.type is aiohttp.WSMsgType.BINARY:
+            await self.received_message_binary(msg.data)
         elif msg.type is aiohttp.WSMsgType.ERROR:
             _log.debug("Received %s", msg)
             raise ConnectionClosed(self.ws, shard_id=None) from msg.data
