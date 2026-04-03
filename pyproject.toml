@@ -52,6 +52,7 @@ aiodns = { version = ">1.1", optional = true, markers = "sys_platform == 'linux'
 Brotli = { version = "*", optional = true, markers = "platform_python_implementation == 'CPython'" }
 # If brotlicffi is unsupported by an older aiohttp version, it will simply be ignored.
 brotlicffi = { version = "*", optional = true, markers = "platform_python_implementation != 'CPython'" }
+dave-py = { version = "^0.1.2", optional = true }
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "3.5.0"
@@ -71,7 +72,7 @@ sphinxcontrib-websupport = "^1.2.4"
 "Issue tracker" = "https://github.com/nextcord/nextcord/issues"
 
 [tool.poetry.extras]
-voice = ["PyNaCl"]
+voice = ["PyNaCl", "dave.py"]
 speed = ["orjson", "aiodns", "Brotli", "brotlicffi"]
 
 [tool.poetry-dynamic-versioning]

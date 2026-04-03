@@ -32,6 +32,8 @@ from .player import AudioPlayer, AudioSource
 from .utils import MISSING
 
 if TYPE_CHECKING:
+    import dave
+
     from . import abc
     from .client import Client
     from .guild import Guild
@@ -53,6 +55,15 @@ try:
     has_nacl = True
 except ImportError:
     has_nacl = False
+
+has_dave: bool
+
+try:
+    import dave
+
+    has_dave = True
+except ImportError:
+    has_dave = False
 
 __all__ = (
     "VoiceProtocol",
@@ -650,3 +661,18 @@ class VoiceClient(VoiceProtocol):
             )
 
         self.checked_add("timestamp", opus.Encoder.SAMPLES_PER_FRAME, 4294967295)
+
+    def get_max_dave_protocol_version(self) -> int:
+        if not has_dave:
+            return 0
+
+        return min(
+            E2EEState.MAX_SUPPORTED_PROTOCOL_VERSION,
+            dave.get_max_supported_protocol_version(),
+        )
+
+
+class E2EEState:
+    MAX_SUPPORTED_PROTOCOL_VERSION = 1
+
+    def __init__(self) -> None: ...

@@ -27,6 +27,7 @@ if TYPE_CHECKING:
     from .client import Client
     from .state import ConnectionState
     from .types.activity import Activity
+    from .types.voice import VoiceIdentify
     from .voice_client import VoiceClient
 
     class VariadicArgNone(Protocol):
@@ -839,14 +840,16 @@ class DiscordVoiceWebSocket:
 
     async def identify(self) -> None:
         state = self._connection
+        identify_data: VoiceIdentify = {
+            "server_id": str(state.server_id),
+            "user_id": str(state.user.id),
+            "session_id": state.session_id,
+            "token": state.token,
+            "max_dave_protocol_version": state.get_max_dave_protocol_version(),
+        }
         payload = {
             "op": self.IDENTIFY,
-            "d": {
-                "server_id": str(state.server_id),
-                "user_id": str(state.user.id),
-                "session_id": state.session_id,
-                "token": state.token,
-            },
+            "d": identify_data,
         }
         await self.send_as_json(payload)
 
