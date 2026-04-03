@@ -52,6 +52,7 @@ class VoiceIdentify(TypedDict):
     user_id: Snowflake
     session_id: str
     token: str
+    max_dave_protocol_version: int
 
 
 class VoiceReady(TypedDict):
