@@ -246,7 +246,7 @@ class VoiceClient(VoiceProtocol):
         self.encoder: Encoder = MISSING
         self._incr_nonce: int = 0
         self.ws: DiscordVoiceWebSocket = MISSING
-        self.e2ee_state: Optional[E2EEState] = E2EEState() if has_dave else None
+        self.e2ee_state: Optional[E2EEState] = E2EEState(self) if has_dave else None
 
     warn_nacl = not has_nacl
     supported_modes: Tuple[SupportedModes, ...] = ("aead_xchacha20_poly1305_rtpsize",)
@@ -676,4 +676,45 @@ class VoiceClient(VoiceProtocol):
 class E2EEState:
     MAX_SUPPORTED_PROTOCOL_VERSION = 1
 
-    def __init__(self) -> None: ...
+    def __init__(self, voice_client: VoiceClient) -> None:
+        self.voice_client: VoiceClient = voice_client
+
+        # transaction_id -> protocol_version
+        self._prepared_transitions: dict[int, int] = {}
+
+    async def prepare_transition(self, transaction_id: int, protocol_version: int) -> None:
+        # "This can occur when:
+        # - the call is upgrading/downgrading to/from E2EE (in the initial transition phase),
+        # - changing protocol versions,
+        # - or when the MLS group is changing."
+        # No need to worry about MLS groups here as decryption is not supported.
+
+        self._prepared_transitions[transaction_id] = protocol_version
+
+        await self.voice_client.ws.send_dave_protocol_transition_ready(transaction_id)
+
+    async def execute_transition(self, transaction_id: int) -> None:
+        version = self._prepared_transitions.pop(transaction_id, None)
+
+        if version is None:
+            _log.warning(
+                "Received unexpected protocol transition execution for transaction ID %d.",
+                transaction_id,
+            )
+            return
+
+        _log.debug(
+            "Executing protocol transition for transaction ID %d to protocol version %d.",
+            transaction_id,
+            version,
+        )
+
+        # https://daveprotocol.com/#downgrade-to-transport-only-encryption
+        # receivers temporarily retain the key ratchets for previous protocol epochs
+        # for a period of up to ten seconds, in case frames in-flight before transition
+        # execution arrive and require decryption.
+        if version == 0:
+            # TODO: handle transition to non-E2EE mode
+            ...
+
+        # TODO: handle transition

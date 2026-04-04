@@ -825,6 +825,13 @@ class DiscordVoiceWebSocket:
 
     send_heartbeat = send_as_json
 
+    async def send_dave_protocol_transition_ready(self, transaction_id: int) -> None:
+        payload = {
+            "op": self.DAVE_TRANSITION_READY,
+            "d": {"transaction_id": transaction_id},
+        }
+        await self.send_as_json(payload)
+
     async def resume(self) -> None:
         state = self._connection
         payload = {
@@ -923,6 +930,11 @@ class DiscordVoiceWebSocket:
             interval = data["heartbeat_interval"] / 1000.0
             self._keep_alive = VoiceKeepAliveHandler(ws=self, interval=min(interval, 5.0))
             self._keep_alive.start()
+        elif e2ee_state := self._connection.e2ee_state:  # noqa: SIM102
+            if op == self.DAVE_PREPARE_TRANSITION:
+                await e2ee_state.prepare_transition(
+                    data["transaction_id"], data["protocol_version"]
+                )
 
         if self._hook is not None:
             await self._hook(self, msg)
