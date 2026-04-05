@@ -773,3 +773,24 @@ class E2EEState:
 
         # When the epoch is greater than 1, the protocol version of the existing MLS group is changing.
         # No version above 1 is supported so no logic here yet.
+
+    async def mls_announce_commit_transition(self, transition_id: int, data: bytes) -> None:
+        _log.debug("Handling MLS commit transition for transaction ID %d.", transition_id)
+
+        commit_result = self._session.process_commit(data)
+
+        if commit_result is dave.RejectType.ignored:
+            _log.debug("Ignoring MLS commit transition")
+            return
+        if commit_result is dave.RejectType.failed:
+            _log.error("MLS commit transition failed and was rejected.")
+            # If the group received in an Opcode 30 DAVE MLS Welcome or Opcode 29 DAVE MLS Announce Commit Transition is unprocessable,
+            # the member receiving the unprocessable message sends Opcode 31 DAVE MLS Invalid Commit Welcome
+            # to the voice gateway. Additionally, the local group state is reset and a new key package is
+            # generated and sent to the voice gateway via Opcode 26 DAVE MLS Key Package.
+
+            await self.voice_client.ws.send_dave_mls_invalid_commit_welcome(transition_id)
+            await self.initialise(self._session.get_protocol_version())
+        else:
+            _log.debug("Successful commit with keys %s", commit_result.keys())
+            await self.prepare_transition(transition_id, self._session.get_protocol_version())

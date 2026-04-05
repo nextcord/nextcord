@@ -840,6 +840,13 @@ class DiscordVoiceWebSocket:
         data = struct.pack(">B", self.DAVE_MLS_KEY_PACKAGE) + key_package
         await self.send_as_bytes(data)
 
+    async def send_dave_mls_invalid_commit_welcome(self, transition_id: int) -> None:
+        payload = {
+            "op": self.DAVE_MLS_INVALID_COMMIT_WELCOME,
+            "d": {"transition_id": transition_id},
+        }
+        await self.send_as_json(payload)
+
     async def resume(self) -> None:
         state = self._connection
         payload = {
@@ -965,6 +972,11 @@ class DiscordVoiceWebSocket:
                 "Received binary message on voice websocket but E2EE state is not set, ignoring."
             )
             return
+
+        op = msg[2]
+        if op == self.DAVE_MLS_ANNOUNCE_COMMIT_TRANSITION:
+            transition_id = int.from_bytes(msg[3:5], "big", signed=False)
+            await self._connection.e2ee_state.mls_announce_commit_transition(transition_id, msg[5:])
 
     async def initial_connection(self, data: Dict[str, Any]) -> None:
         state = self._connection
