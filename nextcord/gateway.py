@@ -851,10 +851,10 @@ class DiscordVoiceWebSocket:
 
     send_heartbeat = send_as_json
 
-    async def send_dave_protocol_transition_ready(self, transaction_id: int) -> None:
+    async def send_dave_protocol_transition_ready(self, transition_id: int) -> None:
         payload = {
             "op": self.DAVE_TRANSITION_READY,
-            "d": {"transaction_id": transaction_id},
+            "d": {"transition_id": transition_id},
         }
         await self.send_as_json(payload)
 
@@ -973,11 +973,9 @@ class DiscordVoiceWebSocket:
             self._keep_alive.start()
         elif e2ee_state := self._connection.e2ee_state:
             if op == self.DAVE_PREPARE_TRANSITION:
-                await e2ee_state.prepare_transition(
-                    data["transaction_id"], data["protocol_version"]
-                )
+                await e2ee_state.prepare_transition(data["transition_id"], data["protocol_version"])
             elif op == self.DAVE_EXECUTE_TRANSITION:
-                await e2ee_state.execute_transition(data["transaction_id"])
+                await e2ee_state.execute_transition(data["transition_id"])
             elif op == self.CLIENTS_CONNECT:
                 for user_id in map(int, data["user_ids"]):
                     e2ee_state.add_recognised_user(user_id)

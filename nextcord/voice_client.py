@@ -689,7 +689,7 @@ class E2EEState:
     def __init__(self, voice_client: VoiceClient) -> None:
         self.voice_client: VoiceClient = voice_client
 
-        # transaction_id -> protocol_version
+        # transition_id -> protocol_version
         self._prepared_transitions: dict[int, int] = {}
         # protocol_version -> SignatureKeyPair
         self._transient_keys: dict[int, dave.SignatureKeyPair] = {}
@@ -755,30 +755,30 @@ class E2EEState:
 
         self._encryptor.set_key_ratchet(ratchet)
 
-    async def prepare_transition(self, transaction_id: int, protocol_version: int) -> None:
+    async def prepare_transition(self, transition_id: int, protocol_version: int) -> None:
         # "This can occur when:
         # - the call is upgrading/downgrading to/from E2EE (in the initial transition phase),
         # - changing protocol versions,
         # - or when the MLS group is changing."
         # No need to worry about MLS groups here as decryption is not supported.
 
-        self._prepared_transitions[transaction_id] = protocol_version
+        self._prepared_transitions[transition_id] = protocol_version
 
-        await self.voice_client.ws.send_dave_protocol_transition_ready(transaction_id)
+        await self.voice_client.ws.send_dave_protocol_transition_ready(transition_id)
 
-    async def execute_transition(self, transaction_id: int) -> None:
-        version = self._prepared_transitions.pop(transaction_id, None)
+    async def execute_transition(self, transition_id: int) -> None:
+        version = self._prepared_transitions.pop(transition_id, None)
 
         if version is None:
             _log.warning(
-                "Received unexpected protocol transition execution for transaction ID %d.",
-                transaction_id,
+                "Received unexpected protocol transition execution for ID %d.",
+                transition_id,
             )
             return
 
         _log.debug(
-            "Executing protocol transition for transaction ID %d to protocol version %d.",
-            transaction_id,
+            "Executing protocol transition for ID %d to protocol version %d.",
+            transition_id,
             version,
         )
 
@@ -823,7 +823,7 @@ class E2EEState:
         # No version above 1 is supported so no logic here yet.
 
     async def mls_announce_commit_transition(self, transition_id: int, data: bytes) -> None:
-        _log.debug("Handling MLS commit transition for transaction ID %d.", transition_id)
+        _log.debug("Handling MLS commit transition for ID %d.", transition_id)
 
         commit_result = self._session.process_commit(data)
 
@@ -844,7 +844,7 @@ class E2EEState:
             await self.prepare_transition(transition_id, self._session.get_protocol_version())
 
     async def mls_welcome(self, transition_id: int, data: bytes) -> None:
-        _log.debug("Handling MLS welcome for transaction ID %d.", transition_id)
+        _log.debug("Handling MLS welcome for ID %d.", transition_id)
 
         welcome_result = self._session.process_welcome(
             data,
