@@ -519,7 +519,17 @@ class VoiceClient(VoiceProtocol):
 
     # audio related
 
-    def _get_voice_packet(self, data):
+    def _get_voice_packet(self, data) -> bytes:
+        e2ee_state = self.e2ee_state
+        if e2ee_state is not None and e2ee_state.can_encrypt():
+            frame = e2ee_state.encrypt(data)
+
+            if frame is None:
+                msg = "Failed to encrypt voice packet."
+                raise RuntimeError(msg)
+        else:
+            frame = data
+
         header = bytearray(12)
 
         # Formulate rtp header
@@ -530,7 +540,7 @@ class VoiceClient(VoiceProtocol):
         struct.pack_into(">I", header, 8, self.ssrc)
 
         encrypt_packet = getattr(self, "_encrypt_" + self.mode)
-        return encrypt_packet(header, data)
+        return encrypt_packet(header, frame)
 
     def _encrypt_aead_xchacha20_poly1305_rtpsize(self, header: bytes, data) -> bytes:
         box = nacl.secret.Aead(bytes(self.secret_key))
@@ -687,6 +697,16 @@ class E2EEState:
 
         self._encryptor: Optional[dave.Encryptor] = None
         self._session: dave.Session = dave.Session(self._handle_mls_failure)
+
+    def can_encrypt(self) -> bool:
+        return self._encryptor is not None and self._encryptor.has_key_ratchet()
+
+    def encrypt(self, data: bytes) -> bytes | None:
+        if not self._encryptor:
+            msg = "Cannot encrypt data, encryptor is not initialised."
+            raise RuntimeError(msg)
+
+        return self._encryptor.encrypt(dave.MediaType.audio, self.voice_client.ssrc, data)
 
     def _handle_mls_failure(self, source: str, reason: str) -> None:
         _log.error("MLS failure in %s: %s", source, reason)
