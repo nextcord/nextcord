@@ -839,3 +839,19 @@ class E2EEState:
         else:
             _log.debug("MLS welcome processed successfully with keys %s.", welcome_result.keys())
             await self.prepare_transition(transition_id, self._session.get_protocol_version())
+
+    async def mls_proposals(self, data: bytes) -> None:
+        # All members of the established or pending MLS group must append or revoke the proposals they receive,
+        # and then produce an MLS commit message and optionally an MLS welcome message
+        # which they send to the voice gateway via Opcode 28 DAVE MLS Commit Welcome.
+        commit_welcome = self._session.process_proposals(
+            data, recognized_user_ids={str(user_id) for user_id in self._recognised_users}
+        )
+
+        if commit_welcome is not None:
+            _log.debug("Sending MLS Commit Welcome")
+            await self.voice_client.ws.send_dave_mls_commit_welcome(commit_welcome)
+
+    def mls_external_sender(self, data: bytes) -> None:
+        _log.debug("Handling MLS external sender message.")
+        self._session.set_external_sender(data)

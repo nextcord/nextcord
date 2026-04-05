@@ -759,15 +759,37 @@ class DiscordVoiceWebSocket:
     HEARTBEAT_ACK
         Receive only. Tells you your heartbeat has been acknowledged.
     RESUME
-        Sent only. Tells the client to resume its session.
+        Send only. Tells the client to resume its session.
     HELLO
         Receive only. Tells you that your websocket connection was acknowledged.
     RESUMED
-        Sent only. Tells you that your RESUME request has succeeded.
-    CLIENT_CONNECT
-        Indicates a user has connected to voice.
+        Send only. Tells you that your RESUME request has succeeded.
+    CLIENTS_CONNECT
+        Receive only. Tells you that a new client has connected to the voice channel.
     CLIENT_DISCONNECT
-        Receive only.  Indicates a user has disconnected from voice.
+        Receive only. Tells you that a client has disconnected from the voice channel.
+    DAVE_PREPARE_TRANSITION
+        Receive only. Tells you that a DAVE protocol transition is being prepared.
+    DAVE_EXECUTE_TRANSITION
+        Receive only. Tells you that a DAVE protocol transition is being executed.
+    DAVE_TRANSITION_READY
+        Send only. Tells you to acknowledge that you are ready for the DAVE protocol transition
+    DAVE_PREPARE_EPOCH
+        Receive only. Tells you that a DAVE protocol epoch is being prepared.
+    DAVE_MLS_EXTERNAL_SENDER
+        Receive only. Tells you that an external sender is being added to the MLS group (the gateway).
+    DAVE_MLS_KEY_PACKAGE
+        Send only. Sends a key package for the MLS protocol.
+    DAVE_MLS_PROPOSALS
+        Receive only. Tells you about the current MLS proposals for the voice channel.
+    DAVE_MLS_COMMIT_WELCOME
+        Send only. Sends a commit + welcome for the MLS protocol.
+    DAVE_MLS_ANNOUNCE_COMMIT_TRANSITION
+        Send only. Announces a commit transition for the MLS protocol.
+    DAVE_MLS_WELCOME
+        Receive only. Tells you that the MLS commit was successful and provides the welcome data.
+    DAVE_MLS_INVALID_COMMIT_WELCOME
+        Send only. Tells the gateway that the commit/welcome was invalid and to restart the process.
     """
 
     IDENTIFY = 0
@@ -780,7 +802,7 @@ class DiscordVoiceWebSocket:
     RESUME = 7
     HELLO = 8
     RESUMED = 9
-    CLIENT_CONNECT = 12
+    CLIENTS_CONNECT = 11
     CLIENT_DISCONNECT = 13
     DAVE_PREPARE_TRANSITION = 21
     DAVE_EXECUTE_TRANSITION = 22
@@ -847,6 +869,10 @@ class DiscordVoiceWebSocket:
         }
         await self.send_as_json(payload)
 
+    async def send_dave_mls_commit_welcome(self, data: bytes) -> None:
+        data = struct.pack(">B", self.DAVE_MLS_COMMIT_WELCOME) + data
+        await self.send_as_bytes(data)
+
     async def resume(self) -> None:
         state = self._connection
         payload = {
@@ -908,11 +934,6 @@ class DiscordVoiceWebSocket:
 
         await self.send_as_json(payload)
 
-    async def client_connect(self) -> None:
-        payload = {"op": self.CLIENT_CONNECT, "d": {"audio_ssrc": self._connection.ssrc}}
-
-        await self.send_as_json(payload)
-
     async def speak(self, state: SpeakingState = SpeakingState.voice) -> None:
         payload = {
             "op": self.SPEAKING,
@@ -950,11 +971,18 @@ class DiscordVoiceWebSocket:
             interval = data["heartbeat_interval"] / 1000.0
             self._keep_alive = VoiceKeepAliveHandler(ws=self, interval=min(interval, 5.0))
             self._keep_alive.start()
-        elif e2ee_state := self._connection.e2ee_state:  # noqa: SIM102
+        elif e2ee_state := self._connection.e2ee_state:
             if op == self.DAVE_PREPARE_TRANSITION:
                 await e2ee_state.prepare_transition(
                     data["transaction_id"], data["protocol_version"]
                 )
+            elif op == self.DAVE_EXECUTE_TRANSITION:
+                await e2ee_state.execute_transition(data["transaction_id"])
+            elif op == self.CLIENTS_CONNECT:
+                for user_id in map(int, data["user_ids"]):
+                    e2ee_state.add_recognised_user(user_id)
+            elif op == self.CLIENT_DISCONNECT:
+                e2ee_state.remove_recognised_user(int(data["user_id"]))
 
         if self._hook is not None:
             await self._hook(self, msg)
@@ -980,6 +1008,10 @@ class DiscordVoiceWebSocket:
         elif op == self.DAVE_MLS_WELCOME:
             transition_id = int.from_bytes(msg[3:5], "big", signed=False)
             await self._connection.e2ee_state.mls_welcome(transition_id, msg[5:])
+        elif op == self.DAVE_MLS_EXTERNAL_SENDER:
+            self._connection.e2ee_state.mls_external_sender(msg[3:])
+        elif op == self.DAVE_MLS_PROPOSALS:
+            await self._connection.e2ee_state.mls_proposals(msg[3:])
 
     async def initial_connection(self, data: Dict[str, Any]) -> None:
         state = self._connection
