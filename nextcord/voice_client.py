@@ -717,6 +717,24 @@ class E2EEState:
             self._encryptor = dave.Encryptor()
             self._encryptor.assign_ssrc_to_codec(self.voice_client.ssrc, dave.Codec.opus)
 
+    def _set_ratchet(self, user_id: int, version: int) -> None:
+        if user_id != self.voice_client.user.id:
+            # We only set up ratchets for ourselves since we don't do decryption.
+            return
+
+        if self._session.has_established_group():
+            ratchet = self._session.get_key_ratchet(str(user_id))
+        else:
+            ratchet = None
+
+        _log.debug("Setting up ratchet for user ID %d with protocol version %d.", user_id, version)
+        if self._encryptor is None:
+            # should never happen
+            _log.error("Failed to set up ratchet, encryptor is not initialised.")
+            return
+
+        self._encryptor.set_key_ratchet(ratchet)
+
     async def prepare_transition(self, transaction_id: int, protocol_version: int) -> None:
         # "This can occur when:
         # - the call is upgrading/downgrading to/from E2EE (in the initial transition phase),
@@ -749,10 +767,9 @@ class E2EEState:
         # for a period of up to ten seconds, in case frames in-flight before transition
         # execution arrive and require decryption.
         if version == 0:
-            # TODO: handle transition to non-E2EE mode
-            ...
+            self._session.reset()
 
-        # TODO: handle transition
+        self._set_ratchet(self.voice_client.user.id, version)
 
     async def prepare_epoch(self, epoch: int, protocol_version: int) -> None:
         _log.debug("Preparing epoch %d for protocol version %d.", epoch, protocol_version)
