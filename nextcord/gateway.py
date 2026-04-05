@@ -977,6 +977,9 @@ class DiscordVoiceWebSocket:
         if op == self.DAVE_MLS_ANNOUNCE_COMMIT_TRANSITION:
             transition_id = int.from_bytes(msg[3:5], "big", signed=False)
             await self._connection.e2ee_state.mls_announce_commit_transition(transition_id, msg[5:])
+        elif op == self.DAVE_MLS_WELCOME:
+            transition_id = int.from_bytes(msg[3:5], "big", signed=False)
+            await self._connection.e2ee_state.mls_welcome(transition_id, msg[5:])
 
     async def initial_connection(self, data: Dict[str, Any]) -> None:
         state = self._connection

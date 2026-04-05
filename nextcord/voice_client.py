@@ -683,12 +683,23 @@ class E2EEState:
         self._prepared_transitions: dict[int, int] = {}
         # protocol_version -> SignatureKeyPair
         self._transient_keys: dict[int, dave.SignatureKeyPair] = {}
+        self._recognised_users: set[int] = {voice_client.user.id}
 
         self._encryptor: Optional[dave.Encryptor] = None
         self._session: dave.Session = dave.Session(self._handle_mls_failure)
 
     def _handle_mls_failure(self, source: str, reason: str) -> None:
         _log.error("MLS failure in %s: %s", source, reason)
+
+    def add_recognised_user(self, user_id: int) -> None:
+        self._recognised_users.add(user_id)
+
+    def remove_recognised_user(self, user_id: int) -> None:
+        if user_id == self.voice_client.user.id:
+            # Ignore attempts to remove self, always recognise self within an active vc.
+            return
+
+        self._recognised_users.discard(user_id)
 
     async def initialise(self, protocol_version: int) -> None:
         max_version = self.voice_client.get_max_dave_protocol_version()
@@ -793,4 +804,21 @@ class E2EEState:
             await self.initialise(self._session.get_protocol_version())
         else:
             _log.debug("Successful commit with keys %s", commit_result.keys())
+            await self.prepare_transition(transition_id, self._session.get_protocol_version())
+
+    async def mls_welcome(self, transition_id: int, data: bytes) -> None:
+        _log.debug("Handling MLS welcome for transaction ID %d.", transition_id)
+
+        welcome_result = self._session.process_welcome(
+            data,
+            recognized_user_ids={str(user_id) for user_id in self._recognised_users},
+        )
+
+        if welcome_result is None:
+            _log.error("Failed to process MLS welcome.")
+
+            await self.voice_client.ws.send_dave_mls_invalid_commit_welcome(transition_id)
+            await self.initialise(self._session.get_protocol_version())
+        else:
+            _log.debug("MLS welcome processed successfully with keys %s.", welcome_result.keys())
             await self.prepare_transition(transition_id, self._session.get_protocol_version())
