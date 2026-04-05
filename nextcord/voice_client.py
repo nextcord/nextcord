@@ -339,13 +339,12 @@ class VoiceClient(VoiceProtocol):
         self._voice_server_complete.clear()
         self._voice_state_complete.clear()
 
-    async def connect_websocket(self) -> DiscordVoiceWebSocket:
-        ws = await DiscordVoiceWebSocket.from_client(self)
+    async def connect_websocket(self) -> None:
+        self.ws = ws = await DiscordVoiceWebSocket.from_client(self)
         self._connected.clear()
         while ws.secret_key is None:
             await ws.poll_event()
         self._connected.set()
-        return ws
 
     async def connect(self, *, reconnect: bool, timeout: float) -> None:
         _log.info("Connecting to voice...")
@@ -372,7 +371,7 @@ class VoiceClient(VoiceProtocol):
             self.finish_handshake()
 
             try:
-                self.ws = await self.connect_websocket()
+                await self.connect_websocket()
                 break
             except (ConnectionClosed, asyncio.TimeoutError):
                 if reconnect:
@@ -401,7 +400,7 @@ class VoiceClient(VoiceProtocol):
         self.finish_handshake()
         self._potentially_reconnecting = False
         try:
-            self.ws = await self.connect_websocket()
+            await self.connect_websocket()
         except (ConnectionClosed, asyncio.TimeoutError):
             return False
         else:
@@ -675,12 +674,37 @@ class VoiceClient(VoiceProtocol):
 
 class E2EEState:
     MAX_SUPPORTED_PROTOCOL_VERSION = 1
+    NEW_MLS_GROUP_EPOCH = 1
 
     def __init__(self, voice_client: VoiceClient) -> None:
         self.voice_client: VoiceClient = voice_client
 
         # transaction_id -> protocol_version
         self._prepared_transitions: dict[int, int] = {}
+        # protocol_version -> SignatureKeyPair
+        self._transient_keys: dict[int, dave.SignatureKeyPair] = {}
+
+        self._encryptor: Optional[dave.Encryptor] = None
+        self._session: dave.Session = dave.Session(self._handle_mls_failure)
+
+    def _handle_mls_failure(self, source: str, reason: str) -> None:
+        _log.error("MLS failure in %s: %s", source, reason)
+
+    async def initialise(self, protocol_version: int) -> None:
+        max_version = self.voice_client.get_max_dave_protocol_version()
+        if protocol_version > max_version:
+            msg = (
+                f"Unsupported DAVE protocol version {protocol_version} received from Discord. "
+                f"Maximum supported version is {max_version}."
+            )
+            raise RuntimeError(msg)
+
+        if protocol_version > 0:
+            _log.debug(f"Initialising E2EE state with DAVE protocol version {protocol_version}.")
+
+            await self.prepare_epoch(1, protocol_version)
+            self._encryptor = dave.Encryptor()
+            self._encryptor.assign_ssrc_to_codec(self.voice_client.ssrc, dave.Codec.opus)
 
     async def prepare_transition(self, transaction_id: int, protocol_version: int) -> None:
         # "This can occur when:
@@ -718,3 +742,34 @@ class E2EEState:
             ...
 
         # TODO: handle transition
+
+    async def prepare_epoch(self, epoch: int, protocol_version: int) -> None:
+        _log.debug("Preparing epoch %d for protocol version %d.", epoch, protocol_version)
+
+        # Receiving Opcode 24 DAVE Protocol Prepare Epoch with epoch = 1 indicates that a new MLS group is being created.
+        # Participants must:
+
+        # - prepare a local MLS group with the parameters appropriate for the DAVE protocol version
+        # - generate and send Opcode 26 DAVE MLS Key Package to deliver a new MLS key package to the voice gateway
+
+        if epoch == self.NEW_MLS_GROUP_EPOCH:
+            channel_id = self.voice_client.channel.id  # type: ignore
+            _log.debug("Reinitialising MLS group %d for epoch %d.", channel_id, epoch)
+
+            transitent_key = self._transient_keys.get(protocol_version)
+            if transitent_key is None:
+                transient_key = dave.SignatureKeyPair.generate(protocol_version)
+                self._transient_keys[protocol_version] = transient_key
+
+            self._session.init(
+                version=protocol_version,
+                group_id=channel_id,
+                self_user_id=str(self.voice_client.user.id),
+                transient_key=transient_key,
+            )
+
+            key_package = self._session.get_marshalled_key_package()
+            await self.voice_client.ws.send_dave_mls_key_package(key_package)
+
+        # When the epoch is greater than 1, the protocol version of the existing MLS group is changing.
+        # No version above 1 is supported so no logic here yet.

@@ -823,6 +823,10 @@ class DiscordVoiceWebSocket:
         _log.debug("Sending voice websocket frame: %s.", data)
         await self.ws.send_str(utils.to_json(data))
 
+    async def send_as_bytes(self, data: bytes) -> None:
+        _log.debug("Sending voice websocket binary frame: %s.", data.hex())
+        await self.ws.send_bytes(data)
+
     send_heartbeat = send_as_json
 
     async def send_dave_protocol_transition_ready(self, transaction_id: int) -> None:
@@ -831,6 +835,10 @@ class DiscordVoiceWebSocket:
             "d": {"transaction_id": transaction_id},
         }
         await self.send_as_json(payload)
+
+    async def send_dave_mls_key_package(self, key_package: bytes) -> None:
+        data = struct.pack(">B", self.DAVE_MLS_KEY_PACKAGE) + key_package
+        await self.send_as_bytes(data)
 
     async def resume(self) -> None:
         state = self._connection
@@ -926,6 +934,11 @@ class DiscordVoiceWebSocket:
         elif op == self.SESSION_DESCRIPTION:
             self._connection.mode = data["mode"]
             await self.load_secret_key(data)
+            if (e2ee_state := self._connection.e2ee_state) is not None and (
+                version := data.get("dave_protocol_version")
+            ) is not None:
+                await e2ee_state.initialise(version)
+
         elif op == self.HELLO:
             interval = data["heartbeat_interval"] / 1000.0
             self._keep_alive = VoiceKeepAliveHandler(ws=self, interval=min(interval, 5.0))
