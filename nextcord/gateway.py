@@ -975,7 +975,7 @@ class DiscordVoiceWebSocket:
             if op == self.DAVE_PREPARE_TRANSITION:
                 await e2ee_state.prepare_transition(data["transition_id"], data["protocol_version"])
             elif op == self.DAVE_EXECUTE_TRANSITION:
-                await e2ee_state.execute_transition(data["transition_id"])
+                e2ee_state.execute_transition(data["transition_id"])
             elif op == self.CLIENTS_CONNECT:
                 for user_id in map(int, data["user_ids"]):
                     e2ee_state.add_recognised_user(user_id)

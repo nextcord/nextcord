@@ -736,6 +736,9 @@ class E2EEState:
             await self.prepare_epoch(1, protocol_version)
             self._encryptor = dave.Encryptor()
             self._encryptor.assign_ssrc_to_codec(self.voice_client.ssrc, dave.Codec.opus)
+        else:
+            # Upon receiving this opcode for a transition to protocol version 0, clients immediately transition their send-side encoded transform to passthrough mode.
+            await self.prepare_transition(0, 0)
 
     def _set_ratchet(self, user_id: int, version: int) -> None:
         if user_id != self.voice_client.user.id:
@@ -764,9 +767,17 @@ class E2EEState:
 
         self._prepared_transitions[transition_id] = protocol_version
 
-        await self.voice_client.ws.send_dave_protocol_transition_ready(transition_id)
+        if transition_id == 0:
+            # Upon receiving dave_protocol_prepare_transition opcode (21) with transition_id = 0,
+            # the client immediately executes the transition.
+            #
+            # + This happens also with sole member voice calls.
+            self.execute_transition(transition_id)
+        else:
+            _log.debug("sending ready for transition ID %d", transition_id)
+            await self.voice_client.ws.send_dave_protocol_transition_ready(transition_id)
 
-    async def execute_transition(self, transition_id: int) -> None:
+    def execute_transition(self, transition_id: int) -> None:
         version = self._prepared_transitions.pop(transition_id, None)
 
         if version is None:
