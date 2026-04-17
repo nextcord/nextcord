@@ -986,9 +986,9 @@ class DiscordVoiceWebSocket:
             await self._hook(self, msg)
 
     async def received_message_binary(self, msg: bytes) -> None:
-        # Sequence  Numbe    big-endian uint16 sequence number	        2 bytes
-        # Opcode	Unsigned integer opcode value	                    1 bytes
-        # Payload	Binary   message payload (format defined by opcode)	Variable bytes
+        # Sequence Number   big-endian uint16   sequence number	                            2 bytes
+        # Opcode	        Unsigned integer    opcode value	                            1 bytes
+        # Payload           Binary              message payload (format defined by opcode)	Variable bytes
         _log.debug("Received binary message on voice websocket: %s", msg.hex())
 
         self.seq_ack = int.from_bytes(msg[0:2], byteorder="big", signed=False)
