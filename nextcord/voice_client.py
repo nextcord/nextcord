@@ -340,10 +340,10 @@ class VoiceClient(VoiceProtocol):
         self._voice_state_complete.clear()
 
     async def connect_websocket(self) -> None:
-        self.ws = ws = await DiscordVoiceWebSocket.from_client(self)
+        self.ws = await DiscordVoiceWebSocket.from_client(self)
         self._connected.clear()
-        while ws.secret_key is None:
-            await ws.poll_event()
+        while self.ws.secret_key is None:
+            await self.ws.poll_event()
         self._connected.set()
 
     async def connect(self, *, reconnect: bool, timeout: float) -> None:
