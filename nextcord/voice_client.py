@@ -32,6 +32,8 @@ from .player import AudioPlayer, AudioSource
 from .utils import MISSING
 
 if TYPE_CHECKING:
+    import dave
+
     from . import abc
     from .client import Client
     from .guild import Guild
@@ -53,6 +55,15 @@ try:
     has_nacl = True
 except ImportError:
     has_nacl = False
+
+has_dave: bool
+
+try:
+    import dave
+
+    has_dave = True
+except ImportError:
+    has_dave = False
 
 __all__ = (
     "VoiceProtocol",
@@ -233,15 +244,12 @@ class VoiceClient(VoiceProtocol):
         self._runner: asyncio.Task = MISSING
         self._player: Optional[AudioPlayer] = None
         self.encoder: Encoder = MISSING
-        self._lite_nonce: int = 0
+        self._incr_nonce: int = 0
         self.ws: DiscordVoiceWebSocket = MISSING
+        self.e2ee_state: Optional[E2EEState] = E2EEState(self) if has_dave else None
 
     warn_nacl = not has_nacl
-    supported_modes: Tuple[SupportedModes, ...] = (
-        "xsalsa20_poly1305_lite",
-        "xsalsa20_poly1305_suffix",
-        "xsalsa20_poly1305",
-    )
+    supported_modes: Tuple[SupportedModes, ...] = ("aead_xchacha20_poly1305_rtpsize",)
 
     @property
     def guild(self) -> Optional[Guild]:
@@ -331,13 +339,12 @@ class VoiceClient(VoiceProtocol):
         self._voice_server_complete.clear()
         self._voice_state_complete.clear()
 
-    async def connect_websocket(self) -> DiscordVoiceWebSocket:
-        ws = await DiscordVoiceWebSocket.from_client(self)
+    async def connect_websocket(self) -> None:
+        self.ws = await DiscordVoiceWebSocket.from_client(self)
         self._connected.clear()
-        while ws.secret_key is None:
-            await ws.poll_event()
+        while self.ws.secret_key is None:
+            await self.ws.poll_event()
         self._connected.set()
-        return ws
 
     async def connect(self, *, reconnect: bool, timeout: float) -> None:
         _log.info("Connecting to voice...")
@@ -364,7 +371,7 @@ class VoiceClient(VoiceProtocol):
             self.finish_handshake()
 
             try:
-                self.ws = await self.connect_websocket()
+                await self.connect_websocket()
                 break
             except (ConnectionClosed, asyncio.TimeoutError):
                 if reconnect:
@@ -393,7 +400,7 @@ class VoiceClient(VoiceProtocol):
         self.finish_handshake()
         self._potentially_reconnecting = False
         try:
-            self.ws = await self.connect_websocket()
+            await self.connect_websocket()
         except (ConnectionClosed, asyncio.TimeoutError):
             return False
         else:
@@ -512,7 +519,17 @@ class VoiceClient(VoiceProtocol):
 
     # audio related
 
-    def _get_voice_packet(self, data):
+    def _get_voice_packet(self, data) -> bytes:
+        e2ee_state = self.e2ee_state
+        if e2ee_state is not None and e2ee_state.can_encrypt():
+            frame = e2ee_state.encrypt(data)
+
+            if frame is None:
+                msg = "Failed to encrypt voice packet."
+                raise RuntimeError(msg)
+        else:
+            frame = data
+
         header = bytearray(12)
 
         # Formulate rtp header
@@ -523,29 +540,16 @@ class VoiceClient(VoiceProtocol):
         struct.pack_into(">I", header, 8, self.ssrc)
 
         encrypt_packet = getattr(self, "_encrypt_" + self.mode)
-        return encrypt_packet(header, data)
+        return encrypt_packet(header, frame)
 
-    def _encrypt_xsalsa20_poly1305(self, header: bytes, data) -> bytes:
-        box = nacl.secret.SecretBox(bytes(self.secret_key))
-        nonce = bytearray(24)
-        nonce[:12] = header
-
-        return header + box.encrypt(bytes(data), bytes(nonce)).ciphertext
-
-    def _encrypt_xsalsa20_poly1305_suffix(self, header: bytes, data) -> bytes:
-        box = nacl.secret.SecretBox(bytes(self.secret_key))
-        nonce = nacl.utils.random(nacl.secret.SecretBox.NONCE_SIZE)  # type: ignore
-
-        return header + box.encrypt(bytes(data), nonce).ciphertext + nonce
-
-    def _encrypt_xsalsa20_poly1305_lite(self, header: bytes, data) -> bytes:
-        box = nacl.secret.SecretBox(bytes(self.secret_key))
+    def _encrypt_aead_xchacha20_poly1305_rtpsize(self, header: bytes, data) -> bytes:
+        box = nacl.secret.Aead(bytes(self.secret_key))
         nonce = bytearray(24)
 
-        nonce[:4] = struct.pack(">I", self._lite_nonce)
-        self.checked_add("_lite_nonce", 1, 4294967295)
+        nonce[:4] = struct.pack(">I", self._incr_nonce)
+        self.checked_add("_incr_nonce", 1, 4294967295)
 
-        return header + box.encrypt(bytes(data), bytes(nonce)).ciphertext + nonce[:4]
+        return header + box.encrypt(bytes(data), bytes(header), bytes(nonce)).ciphertext + nonce[:4]
 
     def play(
         self, source: AudioSource, *, after: Optional[Callable[[Optional[Exception]], Any]] = None
@@ -667,3 +671,218 @@ class VoiceClient(VoiceProtocol):
             )
 
         self.checked_add("timestamp", opus.Encoder.SAMPLES_PER_FRAME, 4294967295)
+
+    def get_max_dave_protocol_version(self) -> int:
+        if not has_dave:
+            return 0
+
+        return min(
+            E2EEState.MAX_SUPPORTED_PROTOCOL_VERSION,
+            dave.get_max_supported_protocol_version(),
+        )
+
+
+class E2EEState:
+    MAX_SUPPORTED_PROTOCOL_VERSION = 1
+    NEW_MLS_GROUP_EPOCH = 1
+
+    def __init__(self, voice_client: VoiceClient) -> None:
+        self.voice_client: VoiceClient = voice_client
+
+        # transition_id -> protocol_version
+        self._prepared_transitions: dict[int, int] = {}
+        # protocol_version -> SignatureKeyPair
+        self._transient_keys: dict[int, dave.SignatureKeyPair] = {}
+        self._recognised_users: set[int] = {voice_client.user.id}
+
+        self._encryptor: Optional[dave.Encryptor] = None
+        self._session: dave.Session = dave.Session(self._handle_mls_failure)
+
+    def can_encrypt(self) -> bool:
+        return self._encryptor is not None and self._encryptor.has_key_ratchet()
+
+    def encrypt(self, data: bytes) -> bytes | None:
+        if not self._encryptor:
+            msg = "Cannot encrypt data, encryptor is not initialised."
+            raise RuntimeError(msg)
+
+        return self._encryptor.encrypt(dave.MediaType.audio, self.voice_client.ssrc, data)
+
+    def _handle_mls_failure(self, source: str, reason: str) -> None:
+        _log.error("MLS failure in %s: %s", source, reason)
+
+    def add_recognised_user(self, user_id: int) -> None:
+        self._recognised_users.add(user_id)
+
+    def remove_recognised_user(self, user_id: int) -> None:
+        if user_id == self.voice_client.user.id:
+            # Ignore attempts to remove self, always recognise self within an active vc.
+            return
+
+        self._recognised_users.discard(user_id)
+
+    async def initialise(self, protocol_version: int) -> None:
+        max_version = self.voice_client.get_max_dave_protocol_version()
+        if protocol_version > max_version:
+            msg = (
+                f"Unsupported DAVE protocol version {protocol_version} received from Discord. "
+                f"Maximum supported version is {max_version}."
+            )
+            raise RuntimeError(msg)
+
+        if protocol_version > 0:
+            _log.debug(f"Initialising E2EE state with DAVE protocol version {protocol_version}.")
+
+            await self.prepare_epoch(1, protocol_version)
+            self._encryptor = dave.Encryptor()
+            self._encryptor.assign_ssrc_to_codec(self.voice_client.ssrc, dave.Codec.opus)
+        else:
+            # Upon receiving this opcode for a transition to protocol version 0, clients immediately transition their send-side encoded transform to passthrough mode.
+            await self.prepare_transition(0, 0)
+
+    def _set_ratchet(self, user_id: int, version: int) -> None:
+        if user_id != self.voice_client.user.id:
+            # We only set up ratchets for ourselves since we don't do decryption.
+            return
+
+        if self._session.has_established_group():
+            ratchet = self._session.get_key_ratchet(str(user_id))
+        else:
+            ratchet = None
+
+        _log.debug("Setting up ratchet for user ID %d with protocol version %d.", user_id, version)
+        if self._encryptor is None:
+            # should never happen
+            _log.error("Failed to set up ratchet, encryptor is not initialised.")
+            return
+
+        self._encryptor.set_key_ratchet(ratchet)
+
+    async def prepare_transition(self, transition_id: int, protocol_version: int) -> None:
+        # "This can occur when:
+        # - the call is upgrading/downgrading to/from E2EE (in the initial transition phase),
+        # - changing protocol versions,
+        # - or when the MLS group is changing."
+        # No need to worry about MLS groups here as decryption is not supported.
+
+        self._prepared_transitions[transition_id] = protocol_version
+
+        if transition_id == 0:
+            # Upon receiving dave_protocol_prepare_transition opcode (21) with transition_id = 0,
+            # the client immediately executes the transition.
+            #
+            # + This happens also with sole member voice calls.
+            self.execute_transition(transition_id)
+        else:
+            _log.debug("sending ready for transition ID %d", transition_id)
+            await self.voice_client.ws.send_dave_protocol_transition_ready(transition_id)
+
+    def execute_transition(self, transition_id: int) -> None:
+        version = self._prepared_transitions.pop(transition_id, None)
+
+        if version is None:
+            _log.warning(
+                "Received unexpected protocol transition execution for ID %d.",
+                transition_id,
+            )
+            return
+
+        _log.debug(
+            "Executing protocol transition for ID %d to protocol version %d.",
+            transition_id,
+            version,
+        )
+
+        # https://daveprotocol.com/#downgrade-to-transport-only-encryption
+        # receivers temporarily retain the key ratchets for previous protocol epochs
+        # for a period of up to ten seconds, in case frames in-flight before transition
+        # execution arrive and require decryption.
+        if version == 0:
+            self._session.reset()
+
+        self._set_ratchet(self.voice_client.user.id, version)
+
+    async def prepare_epoch(self, epoch: int, protocol_version: int) -> None:
+        _log.debug("Preparing epoch %d for protocol version %d.", epoch, protocol_version)
+
+        # Receiving Opcode 24 DAVE Protocol Prepare Epoch with epoch = 1 indicates that a new MLS group is being created.
+        # Participants must:
+
+        # - prepare a local MLS group with the parameters appropriate for the DAVE protocol version
+        # - generate and send Opcode 26 DAVE MLS Key Package to deliver a new MLS key package to the voice gateway
+
+        if epoch == self.NEW_MLS_GROUP_EPOCH:
+            channel_id = self.voice_client.channel.id  # type: ignore
+            _log.debug("Reinitialising MLS group %d for epoch %d.", channel_id, epoch)
+
+            transitent_key = self._transient_keys.get(protocol_version)
+            if transitent_key is None:
+                transient_key = dave.SignatureKeyPair.generate(protocol_version)
+                self._transient_keys[protocol_version] = transient_key
+
+            self._session.init(
+                version=protocol_version,
+                group_id=channel_id,
+                self_user_id=str(self.voice_client.user.id),
+                transient_key=transient_key,
+            )
+
+            key_package = self._session.get_marshalled_key_package()
+            await self.voice_client.ws.send_dave_mls_key_package(key_package)
+
+        # When the epoch is greater than 1, the protocol version of the existing MLS group is changing.
+        # No version above 1 is supported so no logic here yet.
+
+    async def mls_announce_commit_transition(self, transition_id: int, data: bytes) -> None:
+        _log.debug("Handling MLS commit transition for ID %d.", transition_id)
+
+        commit_result = self._session.process_commit(data)
+
+        if commit_result is dave.RejectType.ignored:
+            _log.debug("Ignoring MLS commit transition")
+            return
+        if commit_result is dave.RejectType.failed:
+            _log.error("MLS commit transition failed and was rejected.")
+            # If the group received in an Opcode 30 DAVE MLS Welcome or Opcode 29 DAVE MLS Announce Commit Transition is unprocessable,
+            # the member receiving the unprocessable message sends Opcode 31 DAVE MLS Invalid Commit Welcome
+            # to the voice gateway. Additionally, the local group state is reset and a new key package is
+            # generated and sent to the voice gateway via Opcode 26 DAVE MLS Key Package.
+
+            await self.voice_client.ws.send_dave_mls_invalid_commit_welcome(transition_id)
+            await self.initialise(self._session.get_protocol_version())
+        else:
+            _log.debug("Successful commit with keys %s", commit_result.keys())
+            await self.prepare_transition(transition_id, self._session.get_protocol_version())
+
+    async def mls_welcome(self, transition_id: int, data: bytes) -> None:
+        _log.debug("Handling MLS welcome for ID %d.", transition_id)
+
+        welcome_result = self._session.process_welcome(
+            data,
+            recognized_user_ids={str(user_id) for user_id in self._recognised_users},
+        )
+
+        if welcome_result is None:
+            _log.error("Failed to process MLS welcome.")
+
+            await self.voice_client.ws.send_dave_mls_invalid_commit_welcome(transition_id)
+            await self.initialise(self._session.get_protocol_version())
+        else:
+            _log.debug("MLS welcome processed successfully with keys %s.", welcome_result.keys())
+            await self.prepare_transition(transition_id, self._session.get_protocol_version())
+
+    async def mls_proposals(self, data: bytes) -> None:
+        # All members of the established or pending MLS group must append or revoke the proposals they receive,
+        # and then produce an MLS commit message and optionally an MLS welcome message
+        # which they send to the voice gateway via Opcode 28 DAVE MLS Commit Welcome.
+        commit_welcome = self._session.process_proposals(
+            data, recognized_user_ids={str(user_id) for user_id in self._recognised_users}
+        )
+
+        if commit_welcome is not None:
+            _log.debug("Sending MLS Commit Welcome")
+            await self.voice_client.ws.send_dave_mls_commit_welcome(commit_welcome)
+
+    def mls_external_sender(self, data: bytes) -> None:
+        _log.debug("Handling MLS external sender message.")
+        self._session.set_external_sender(data)
