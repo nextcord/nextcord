@@ -696,12 +696,10 @@ class AudioPlayer(threading.Thread):
             raise TypeError('Expected a callable for the "after" parameter.')
 
     def _do_run(self) -> None:
-        self.loops = 0
-        self._start = time.perf_counter()
+        self._reset_state(speak=True)
 
         # getattr lookup speed ups
         play_audio = self.client.send_audio_packet
-        self._speak(True)
 
         while not self._end.is_set():
             # are we paused?
@@ -715,8 +713,7 @@ class AudioPlayer(threading.Thread):
                 # wait until we are connected
                 self._connected.wait()
                 # reset our internal data
-                self.loops = 0
-                self._start = time.perf_counter()
+                self._reset_state(speak=self._resumed.is_set())
 
             self.loops += 1
             data = self.source.read()
@@ -729,6 +726,14 @@ class AudioPlayer(threading.Thread):
             next_time = self._start + self.DELAY * self.loops
             delay = max(0, self.DELAY + (next_time - time.perf_counter()))
             time.sleep(delay)
+
+    # this is called right after (re)connecting;
+    # reset the timings and set the speaking state accordingly
+    def _reset_state(self, *, speak: bool) -> None:
+        self.loops = 0
+        self._start = time.perf_counter()
+        if speak:
+            self._speak(True)
 
     def run(self) -> None:
         try:
