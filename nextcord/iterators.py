@@ -22,10 +22,11 @@ __all__ = (
     "archived_thread_iterator",
     "scheduled_event_iterator",
     "scheduled_event_user_iterator",
+    "pin_iterator",
 )
 
 if TYPE_CHECKING:
-    from .abc import Messageable, Snowflake, SnowflakeTime
+    from .abc import Messageable, MessageableChannel, Snowflake, SnowflakeTime
     from .client import Client
     from .enums import AuditLogAction
     from .guild import Guild
@@ -566,3 +567,41 @@ async def scheduled_event_user_iterator(
 
         for item in reversed(data):
             yield event._update_user(item)
+
+
+async def pin_iterator(
+    channel: MessageableChannel,
+    limit: Optional[int] = None,
+    before: Optional[Union[Snowflake, datetime.datetime]] = None,
+):
+    from .message import MessagePin
+
+    state = channel._state
+    has_more = True
+    retrieve = 0
+
+    cbefore: Optional[str] = None
+    if isinstance(before, datetime.datetime):
+        cbefore = before.isoformat()
+    elif before is not None:
+        cbefore = snowflake_time(before.id).isoformat()
+
+    while has_more:
+        retrieve = min(limit, 50) if limit is not None else 50
+        if retrieve <= 0:
+            has_more = False
+            break
+
+        data = await state.http.get_channel_pins(channel.id, before=cbefore, limit=retrieve)
+
+        pins = data["items"]
+        has_more = data["has_more"]
+
+        if limit:
+            limit -= len(pins)
+
+        if has_more:
+            cbefore = pins[-1]["pinned_at"]
+
+        for item in pins:
+            yield MessagePin(channel=channel, data=item, state=state)

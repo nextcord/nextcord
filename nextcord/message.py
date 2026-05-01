@@ -70,6 +70,7 @@ if TYPE_CHECKING:
         Message as MessagePayload,
         MessageActivity as MessageActivityPayload,
         MessageApplication as MessageApplicationPayload,
+        MessagePin as MessagePinPayload,
         MessageReference as MessageReferencePayload,
         MessageSnapshot as MessageSnapshotPayload,
         Reaction as ReactionPayload,
@@ -92,6 +93,7 @@ __all__ = (
     "MessageInteractionMetadata",
     "MessageSnapshot",
     "MessageRoleSubscription",
+    "MessagePin",
 )
 
 
@@ -908,6 +910,31 @@ class MessageInteractionMetadata(Hashable):
     def cached_interacted_message(self) -> Optional[Message]:
         """Optional[:class:`~nextcord.Message`]: The interacted message, if found in the internal message cache."""
         return self._state._get_message(self.interacted_message_id)
+
+
+class MessagePin:
+    """Represents a pinned message and its metadata.
+
+    .. versionadded:: 3.2
+
+    Attributes
+    ----------
+    message: :class:`Message`
+        The pinned message.
+    pinned_at: :class:`datetime.datetime`
+        The time when the message was pinned.
+    """
+
+    __slots__ = ("message", "pinned_at")
+
+    def __init__(
+        self, *, channel: MessageableChannel, data: MessagePinPayload, state: ConnectionState
+    ) -> None:
+        self.message: Message = state.create_message(channel=channel, data=data["message"])
+        self.pinned_at: datetime.datetime = utils.parse_time(data["pinned_at"])
+
+    def __hash__(self) -> int:
+        return hash(self.message)
 
 
 @flatten_handlers

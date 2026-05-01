@@ -2369,6 +2369,14 @@ MessageInteractionMetadata
 .. autoclass:: MessageInteractionMetadata()
     :members:
 
+MessagePin
+~~~~~~~~~~
+
+.. attributetable:: MessagePin
+
+.. autoclass:: MessagePin()
+    :members:
+
 Member
 ~~~~~~
 
