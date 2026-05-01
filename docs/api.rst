@@ -1431,6 +1431,12 @@ of :class:`enum.Enum`.
 .. autoclass:: ForumLayoutType
     :members:
 
+.. autoclass:: OnboardingPromptType
+    :members:
+
+.. autoclass:: OnboardingMode
+    :members:
+
 .. autoclass:: AuditLogAction
     :members:
 
@@ -2299,6 +2305,18 @@ GuildPreview
 ~~~~~~~~~~~~
 
 .. autoclass:: GuildPreview()
+    :members:
+
+Onboarding
+~~~~~~~~~~
+
+.. autoclass:: Onboarding()
+    :members:
+
+.. autoclass:: OnboardingPrompt()
+    :members:
+
+.. autoclass:: OnboardingPromptOption()
     :members:
 
 Integration
