@@ -817,8 +817,8 @@ class E2EEState:
             channel_id = self.voice_client.channel.id  # type: ignore
             _log.debug("Reinitialising MLS group %d for epoch %d.", channel_id, epoch)
 
-            transitent_key = self._transient_keys.get(protocol_version)
-            if transitent_key is None:
+            transient_key = self._transient_keys.get(protocol_version)
+            if transient_key is None:
                 transient_key = dave.SignatureKeyPair.generate(protocol_version)
                 self._transient_keys[protocol_version] = transient_key
 
