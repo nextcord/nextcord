@@ -435,11 +435,19 @@ class Button(InteractiveComponent):  # Component type 2
         disabled: bool = MISSING,
         component_id: int = MISSING,
     ) -> None:
-        super().__init__(custom_id, component_type=ComponentType.button, component_id=component_id)
         if isinstance(style, ButtonStyle):
             self.style = style
         else:
             self.style = try_enum(ButtonStyle, style)
+
+        custom_id = (
+            None
+            # Use values to also check aliases
+            if self.style.value not in (ButtonStyle.link.value, ButtonStyle.premium.value)
+            and custom_id is MISSING
+            else custom_id
+        )
+        super().__init__(custom_id, component_type=ComponentType.button, component_id=component_id)
 
         self.label = label
 
