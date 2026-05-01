@@ -1274,6 +1274,33 @@ to handle it, which defaults to print a traceback and ignoring the exception.
     :param entry: The entry that was created.
     :type entry: :class:`AuditLogEntry`
 
+.. function:: on_message_poll_vote_add(message, answer_id, user)
+
+   Called when a :class:`User` voted on a :class:`Poll`.
+
+   .. versionadded:: 3.0
+
+    :param message: The message of the poll which has been voted on.
+    :type message: :class:`Message`
+    :param answer_id: The ID of the answer which had a vote cast.
+    :type answer_id: :class:`int`
+    :param user: The user who cast a vote on the poll. Can be ``None`` if :attr:`Intents.members` is not enabled.
+    :type user: Optional[:class:`User`]
+
+
+.. function:: on_message_poll_vote_remove(message, answer_id, user)
+
+   Called when a :class:`User` removed their vote on a :class:`Poll`.
+
+   .. versionadded:: 3.0
+
+    :param message: The message of the poll which has been voted on.
+    :type message: :class:`Message`
+    :param answer_id: The ID of the answer which had a vote removed.
+    :type answer_id: :class:`int`
+    :param user: The user who removed their vote on the poll. Can be ``None`` if :attr:`Intents.members` is not enabled.
+    :type user: :class:`User`
+
 .. _discord-api-utils:
 
 Utility Functions
@@ -1447,6 +1474,9 @@ of :class:`enum.Enum`.
     :members:
 
 .. autoclass:: MessageReferenceType
+    :members:
+
+.. autoclass:: PollLayoutType
     :members:
 
 Async Iterator
@@ -2768,6 +2798,54 @@ AutoModerationActionExecution
 
 .. autoclass:: AutoModerationActionExecution()
     :members:
+
+Poll
+~~~~
+
+.. attributetable:: Poll
+
+.. autoclass:: Poll()
+   :members:
+
+PollMedia
+~~~~~~~~~
+
+.. attributetable:: PollMedia
+
+.. autoclass:: PollMedia()
+   :members:
+
+PollAnswer
+~~~~~~~~~~
+
+.. attributetable:: PollAnswer
+
+.. autoclass:: PollAnswer()
+   :members:
+
+PollCreateRequest
+~~~~~~~~~~~~~~~~~
+
+.. attributetable:: PollCreateRequest
+
+.. autoclass:: PollCreateRequest
+   :members:
+
+PollAnswerCount
+~~~~~~~~~~~~~~~
+
+.. attributetable:: PollAnswerCount
+
+.. autoclass:: PollAnswerCount()
+   :members:
+
+PollResults
+~~~~~~~~~~~
+
+.. attributetable:: PollResults
+
+.. autoclass:: PollResults()
+   :members:
 
 .. _discord_api_data:
 
