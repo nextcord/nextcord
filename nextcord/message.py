@@ -25,7 +25,7 @@ from typing import (
 )
 
 from . import utils
-from .components import _component_factory
+from .components import resolve_component
 from .embeds import Embed
 from .emoji import Emoji
 from .enums import ChannelType, IntegrationType, MessageReferenceType, MessageType, try_enum
@@ -673,8 +673,8 @@ class MessageSnapshot:
         self.sticker_items: List[StickerItem] = [
             StickerItem(state=self._state, data=s) for s in self._message.get("sticker_items", [])
         ]
-        self.components: List[Component] = [
-            _component_factory(c) for c in self._message.get("components", [])
+        self.components: list[Component] = [
+            resolve_component(comp_data) for comp_data in self._message.get("components", [])
         ]
 
 
@@ -1125,8 +1125,8 @@ class Message(Hashable):
         self.stickers: List[StickerItem] = [
             StickerItem(data=d, state=state) for d in data.get("sticker_items", [])
         ]
-        self.components: List[Component] = [
-            _component_factory(d) for d in data.get("components", [])
+        self.components: list[Component] = [
+            resolve_component(comp_data) for comp_data in data.get("components", [])
         ]
         self._background_tasks: Set[asyncio.Task[None]] = set()
 
@@ -1355,8 +1355,8 @@ class Message(Hashable):
                 if role is not None:
                     self.role_mentions.append(role)
 
-    def _handle_components(self, components: List[ComponentPayload]) -> None:
-        self.components = [_component_factory(d) for d in components]
+    def _handle_components(self, components: list[ComponentPayload]) -> None:
+        self.components = [resolve_component(comp_data) for comp_data in components]
 
     def _handle_thread(self, thread: Optional[ThreadPayload]) -> None:
         if thread:

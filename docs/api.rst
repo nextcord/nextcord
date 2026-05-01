@@ -2834,14 +2834,6 @@ PartialMessage
 .. autoclass:: PartialMessage
     :members:
 
-SelectOption
-~~~~~~~~~~~~
-
-.. attributetable:: SelectOption
-
-.. autoclass:: SelectOption
-    :members:
-
 Intents
 ~~~~~~~
 
@@ -3156,6 +3148,175 @@ ChannelSelect
 
 .. autoclass:: nextcord.ui.ChannelSelectValues
     :members:
+
+
+Low Level UI Components
+-----------------------
+These are relatively simple representations of Discord's Component objects, able to be directly instantiated and
+sent with messages. While there are helper functions to aid with usage, they are intended to be rather bare and thus
+there are almost no safe guards nor data validation checks when creating or sending them. Higher level/friendlier UI
+Component objects can be found in the :ref:`discord_ui_kit` section.
+
+Base Components
+~~~~~~~~~~~~~~~
+Base component classes. Not intended to be instantiated by users, but can be used for :func:`isinstance` checks.
+
+.. attributetable:: Component
+.. autoclass:: Component
+    :members:
+
+.. attributetable:: InteractiveComponent
+.. autoclass:: InteractiveComponent
+    :show-inheritance:
+    :inherited-members:
+
+.. attributetable:: HolderComponent
+.. autoclass:: HolderComponent
+    :show-inheritance:
+    :inherited-members:
+
+
+Action Row
+~~~~~~~~~~
+
+.. attributetable:: ActionRow
+.. autoclass:: ActionRow
+    :show-inheritance:
+    :inherited-members:
+
+Button
+~~~~~~
+
+.. attributetable:: Button
+.. autoclass:: Button
+    :show-inheritance:
+    :inherited-members:
+
+String Select
+~~~~~~~~~~~~~
+
+.. attributetable:: StringSelect
+.. autoclass:: StringSelect
+    :show-inheritance:
+    :inherited-members:
+
+Text Input
+~~~~~~~~~~
+
+.. attributetable:: TextInput
+.. autoclass:: TextInput
+    :show-inheritance:
+    :inherited-members:
+
+User Select
+~~~~~~~~~~~
+
+.. attributetable:: UserSelect
+.. autoclass:: UserSelect
+    :show-inheritance:
+    :inherited-members:
+
+Role Select
+~~~~~~~~~~~
+
+.. attributetable:: RoleSelect
+.. autoclass:: RoleSelect
+    :show-inheritance:
+    :inherited-members:
+
+Mentionable Select
+~~~~~~~~~~~~~~~~~~
+
+.. attributetable:: MentionableSelect
+.. autoclass:: MentionableSelect
+    :show-inheritance:
+    :inherited-members:
+
+Channel Select
+~~~~~~~~~~~~~~
+
+.. attributetable:: ChannelSelect
+.. autoclass:: ChannelSelect
+    :show-inheritance:
+    :inherited-members:
+
+Section
+~~~~~~~
+
+.. attributetable:: Section
+.. autoclass:: Section
+    :show-inheritance:
+    :inherited-members:
+
+Text Display
+~~~~~~~~~~~~
+
+.. attributetable:: TextDisplay
+.. autoclass:: TextDisplay
+    :show-inheritance:
+    :inherited-members:
+
+Thumbnail
+~~~~~~~~~
+
+.. attributetable:: Thumbnail
+.. autoclass:: Thumbnail
+    :show-inheritance:
+    :inherited-members:
+
+Media Gallery
+~~~~~~~~~~~~~
+
+.. attributetable:: MediaGallery
+.. autoclass:: MediaGallery
+    :show-inheritance:
+    :inherited-members:
+
+File Display
+~~~~~~~~~~~~
+
+.. attributetable:: FileDisplay
+.. autoclass:: FileDisplay
+    :show-inheritance:
+    :inherited-members:
+
+Separator
+~~~~~~~~~
+
+.. attributetable:: Separator
+.. autoclass:: Separator
+    :show-inheritance:
+    :inherited-members:
+
+Container
+~~~~~~~~~
+
+.. attributetable:: Container
+.. autoclass:: Container
+    :show-inheritance:
+    :inherited-members:
+
+Component Data Objects
+~~~~~~~~~~~~~~~~~~~~~~
+While these are not components, they are required to create/populate certain components.
+Components for components, if you will.
+
+.. attributetable:: SelectOption
+.. autoclass:: SelectOption
+    :members:
+
+.. attributetable:: SelectDefaultValue
+.. autoclass:: SelectDefaultValue
+    :members:
+
+.. attributetable:: UnfurledMedia
+.. autoclass:: UnfurledMedia
+    :members:
+
+.. attributetable:: MediaGalleryItem
+.. autoclass:: MediaGalleryItem
+    :members:
+
 
 Application Commands
 --------------------
