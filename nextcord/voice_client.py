@@ -68,8 +68,8 @@ except ImportError:
     has_dave = False
 
 __all__ = (
-    "VoiceProtocol",
     "VoiceClient",
+    "VoiceProtocol",
 )
 
 

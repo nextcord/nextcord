@@ -90,26 +90,26 @@ else:
     UnionType = None
 
 __all__ = (
-    "CallbackWrapper",
     "ApplicationCommandOption",
-    "BaseCommandOption",
-    "OptionConverter",
-    "ClientCog",
-    "CallbackMixin",
-    "SlashOption",
-    "SlashCommandOption",
     "BaseApplicationCommand",
-    "SlashApplicationSubcommand",
-    "SlashApplicationCommand",
-    "UserApplicationCommand",
-    "MessageApplicationCommand",
-    "slash_command",
-    "message_command",
-    "user_command",
+    "BaseCommandOption",
+    "CallbackMixin",
+    "CallbackWrapper",
+    "ClientCog",
     "Mentionable",
-    "Range",
-    "String",
+    "MessageApplicationCommand",
     "MissingApplicationCommandParametersWarning",
+    "OptionConverter",
+    "Range",
+    "SlashApplicationCommand",
+    "SlashApplicationSubcommand",
+    "SlashCommandOption",
+    "SlashOption",
+    "String",
+    "UserApplicationCommand",
+    "message_command",
+    "slash_command",
+    "user_command",
 )
 
 _log = logging.getLogger(__name__)
@@ -3539,7 +3539,7 @@ def unpack_annotated(given_annotation: Any, resolve_list: Optional[list[type]] =
         # arg_list = typing.get_args(given_annotation)  # noqa: ERA001
         arg_list = typing_extensions.get_args(given_annotation)
         for arg in reversed(arg_list[1:]):
-            if arg in resolve_list or isinstance(arg, type) and issubclass(arg, OptionConverter):
+            if arg in resolve_list or (isinstance(arg, type) and issubclass(arg, OptionConverter)):
                 located_annotation = arg
                 break
 

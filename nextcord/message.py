@@ -84,14 +84,14 @@ if TYPE_CHECKING:
 
 __all__ = (
     "Attachment",
-    "Message",
-    "PartialMessage",
-    "MessageReference",
     "DeletedReferencedMessage",
+    "Message",
     "MessageInteraction",
     "MessageInteractionMetadata",
-    "MessageSnapshot",
+    "MessageReference",
     "MessageRoleSubscription",
+    "MessageSnapshot",
+    "PartialMessage",
 )
 
 
@@ -171,20 +171,20 @@ class Attachment(Hashable):
     """
 
     __slots__ = (
-        "id",
-        "size",
-        "height",
-        "width",
-        "filename",
-        "url",
-        "proxy_url",
+        "_cs_waveform",
+        "_flags",
         "_http",
+        "_waveform",
         "content_type",
         "description",
         "duration_secs",
-        "_waveform",
-        "_cs_waveform",
-        "_flags",
+        "filename",
+        "height",
+        "id",
+        "proxy_url",
+        "size",
+        "url",
+        "width",
     )
 
     def __init__(self, *, data: AttachmentPayload, state: ConnectionState) -> None:
@@ -492,12 +492,12 @@ class MessageReference:
     """
 
     __slots__ = (
-        "message_id",
-        "channel_id",
-        "guild_id",
-        "fail_if_not_exists",
-        "resolved",
         "_state",
+        "channel_id",
+        "fail_if_not_exists",
+        "guild_id",
+        "message_id",
+        "resolved",
         "type",
     )
 
@@ -723,8 +723,8 @@ class MessageInteraction(Hashable):
         "_state",
         "data",
         "id",
-        "type",
         "name",
+        "type",
         "user",
     )
 
@@ -773,10 +773,10 @@ class MessageRoleSubscription:
     """
 
     __slots__ = (
+        "is_renewal",
         "role_subscription_listing_id",
         "tier_name",
         "total_months_subscribed",
-        "is_renewal",
     )
 
     def __init__(self, data: RoleSubscriptionDataPayload) -> None:
@@ -840,15 +840,15 @@ class MessageInteractionMetadata(Hashable):
 
     __slots__ = (
         "_state",
+        "authorizing_integration_owners",
         "data",
         "id",
-        "type",
-        "user",
-        "authorizing_integration_owners",
+        "interacted_message_id",
         "name",
         "original_response_message_id",
-        "interacted_message_id",
         "triggering_interaction_metadata",
+        "type",
+        "user",
     )
 
     def __init__(
@@ -1046,41 +1046,41 @@ class Message(Hashable):
     """
 
     __slots__ = (
-        "_state",
-        "_edited_timestamp",
+        "_background_tasks",
         "_cs_channel_mentions",
-        "_cs_raw_mentions",
         "_cs_clean_content",
         "_cs_raw_channel_mentions",
+        "_cs_raw_mentions",
         "_cs_raw_role_mentions",
         "_cs_system_content",
-        "tts",
-        "content",
+        "_edited_timestamp",
+        "_state",
+        "activity",
+        "application",
+        "attachments",
+        "author",
         "channel",
-        "webhook_id",
-        "mention_everyone",
+        "components",
+        "content",
         "embeds",
+        "flags",
+        "guild",
         "id",
         "interaction",
         "interaction_metadata",
+        "mention_everyone",
         "mentions",
-        "author",
-        "attachments",
         "nonce",
         "pinned",
-        "role_mentions",
-        "type",
-        "flags",
         "reactions",
         "reference",
-        "application",
-        "activity",
-        "stickers",
-        "components",
-        "_background_tasks",
-        "guild",
-        "snapshots",
+        "role_mentions",
         "role_subscription",
+        "snapshots",
+        "stickers",
+        "tts",
+        "type",
+        "webhook_id",
     )
 
     if TYPE_CHECKING:
@@ -2229,7 +2229,7 @@ class PartialMessage(Hashable):
         The message ID.
     """
 
-    __slots__ = ("channel", "id", "_cs_guild", "_state")
+    __slots__ = ("_cs_guild", "_state", "channel", "id")
 
     jump_url: str = Message.jump_url  # type: ignore
     delete = Message.delete
