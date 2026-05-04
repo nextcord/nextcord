@@ -40,12 +40,12 @@ from .utils import MISSING, get, snowflake_time
 from .voice_client import VoiceClient, VoiceProtocol
 
 __all__ = (
-    "Snowflake",
-    "User",
-    "PrivateChannel",
+    "Connectable",
     "GuildChannel",
     "Messageable",
-    "Connectable",
+    "PrivateChannel",
+    "Snowflake",
+    "User",
 )
 
 T = TypeVar("T", bound=VoiceProtocol)
@@ -196,7 +196,7 @@ class PrivateChannel(Snowflake, Protocol):
 
 
 class _Overwrites:
-    __slots__ = ("id", "allow", "deny", "type")
+    __slots__ = ("allow", "deny", "id", "type")
 
     ROLE = 0
     MEMBER = 1
@@ -889,7 +889,7 @@ class GuildChannel:
         if overwrite is None:
             await http.delete_channel_permissions(self.id, target.id, reason=reason)
         elif isinstance(overwrite, PermissionOverwrite):
-            (allow, deny) = overwrite.pair()
+            allow, deny = overwrite.pair()
             await http.edit_channel_permissions(
                 self.id, target.id, str(allow.value), str(deny.value), perm_type, reason=reason
             )
