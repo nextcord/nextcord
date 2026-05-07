@@ -7,8 +7,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 from . import abc
 from .asset import Asset
 from .colour import Colour
-from .enums import DefaultAvatar
-from .enums import PremiumType
+from .enums import DefaultAvatar, PremiumType
 from .flags import PublicUserFlags
 from .utils import MISSING, obj_to_base64_data, snowflake_time
 
