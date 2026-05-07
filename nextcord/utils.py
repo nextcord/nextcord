@@ -73,6 +73,7 @@ if TYPE_CHECKING:
 
 __all__ = (
     "oauth_url",
+    "OAUTH2_SCOPE_IDENTIFY_PREMIUM",
     "snowflake_time",
     "time_snowflake",
     "find",
@@ -92,6 +93,10 @@ __all__ = (
 )
 
 DISCORD_EPOCH = 1420070400000
+
+# OAuth2 scope Discord requires for truthful ``premium_type`` on user objects (partner-only;
+# applications without approval always receive ``0``).
+OAUTH2_SCOPE_IDENTIFY_PREMIUM = "identify.premium"
 
 
 class _MissingSentinel:
