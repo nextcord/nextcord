@@ -12,6 +12,24 @@ Changelog
 This page keeps a detailed human-friendly rendering of what's new and changed
 in specific versions.
 
+.. _vp3p1p1:
+
+v3.1.1
+------
+
+This patch release aligns with Discord's OAuth behaviour for Nitro tiers on user payloads.
+
+Discord API
+~~~~~~~~~~~
+
+- Discord now masks ``premium_type`` as ``0`` unless the ``identify.premium`` OAuth2 scope is granted (partner applications only). The library documents this on :attr:`User.premium_type <nextcord.User.premium_type>` and adds :data:`utils.OAUTH2_SCOPE_IDENTIFY_PREMIUM <nextcord.utils.OAUTH2_SCOPE_IDENTIFY_PREMIUM>`.
+
+New Features
+~~~~~~~~~~~~
+
+- Add :class:`PremiumType` and :attr:`User.premium_type <nextcord.User.premium_type>`.
+- Add :data:`utils.OAUTH2_SCOPE_IDENTIFY_PREMIUM <nextcord.utils.OAUTH2_SCOPE_IDENTIFY_PREMIUM>`.
+
 .. _vp3p1p0:
 
 v3.1.0
