@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 from . import abc
 from .asset import Asset
 from .colour import Colour
-from .enums import DefaultAvatar
+from .enums import DefaultAvatar, PremiumType
 from .flags import PublicUserFlags
 from .utils import MISSING, obj_to_base64_data, snowflake_time
 
@@ -104,6 +104,7 @@ class BaseUser(_UserTag):
         "_state",
         "global_name",
         "_avatar_decoration",
+        "_premium_type",
     )
 
     if TYPE_CHECKING:
@@ -119,11 +120,13 @@ class BaseUser(_UserTag):
         _accent_colour: Optional[str]
         _public_flags: int
         _avatar_decoration: Optional[AvatarDecorationDataPayload]
+        _premium_type: int
 
     def __init__(
         self, *, state: ConnectionState, data: Union[PartialUserPayload, UserPayload]
     ) -> None:
         self._state = state
+        self._premium_type = 0
         self._update(data)
 
     def __repr__(self) -> str:
@@ -157,6 +160,8 @@ class BaseUser(_UserTag):
         self.bot = data.get("bot", False)
         self.system = data.get("system", False)
         self.global_name = data.get("global_name", None)
+        if "premium_type" in data:
+            self._premium_type = int(data["premium_type"])
 
     @classmethod
     def _copy(cls, user: Self) -> Self:
@@ -172,6 +177,7 @@ class BaseUser(_UserTag):
         self.bot = user.bot
         self._state = user._state
         self._public_flags = user._public_flags
+        self._premium_type = user._premium_type
 
         return self
 
@@ -189,6 +195,24 @@ class BaseUser(_UserTag):
     def public_flags(self) -> PublicUserFlags:
         """:class:`PublicUserFlags`: The publicly available flags the user has."""
         return PublicUserFlags._from_value(self._public_flags)
+
+    @property
+    def premium_type(self) -> Union[PremiumType, int]:
+        """The user's Nitro subscription level from the ``premium_type`` field.
+
+        Returns either a :class:`PremiumType` value or an :class:`int` if Discord introduces
+        a new tier that is not yet been modeled.
+
+        .. note::
+
+            Unless your application is an approved Discord partner **and** you request the
+            ``identify.premium`` OAuth2 scope during user authorization (see
+            :data:`~nextcord.utils.OAUTH2_SCOPE_IDENTIFY_PREMIUM`), Discord returns ``0`` for every user
+            regardless of their real subscription tier.
+
+        .. versionadded:: 3.1.1
+        """
+        return PremiumType.try_value(self._premium_type)
 
     @property
     def avatar(self) -> Optional[Asset]:

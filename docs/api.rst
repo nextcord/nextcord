@@ -1379,6 +1379,9 @@ of :class:`enum.Enum`.
 .. autoclass:: InteractionResponseType
     :members:
 
+.. autoclass:: PremiumType
+    :members:
+
 .. autoclass:: Locale
     :members:
 
