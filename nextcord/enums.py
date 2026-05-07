@@ -53,6 +53,7 @@ __all__ = (
     "IntegrationType",
     "InteractionContextType",
     "MessageReferenceType",
+    "PremiumType",
 )
 
 
@@ -1403,6 +1404,24 @@ class AuditLogAction(IntEnum):
         if v < 143:
             return "auto_moderation_rule"
         return None
+
+
+class PremiumType(IntEnum):
+    """The Nitro subscription type reported in a user's ``premium_type`` field.
+
+    .. versionadded:: 3.1.1
+
+    Note that Discord intentionally returns :attr:`~PremiumType.none` when the requesting
+    application does not have the partner-restricted ``identify.premium`` OAuth2 scope;
+    see :attr:`User.premium_type <nextcord.User.premium_type>`.
+    """
+
+    none = 0
+    """No Nitro subscription (or masked, see :attr:`~nextcord.User.premium_type`)."""
+    nitro_classic = 1
+    """Nitro Classic."""
+    nitro = 2
+    """Nitro."""
 
 
 class UserFlags(IntEnum):
