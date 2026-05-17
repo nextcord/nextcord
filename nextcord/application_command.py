@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import asyncio
 import contextlib
+import inspect
 import logging
 import sys
 import warnings
@@ -657,7 +657,7 @@ class CallbackMixin:
             if isinstance(callback, CallbackWrapper):
                 self.callback = callback.callback
 
-            if not asyncio.iscoroutinefunction(self.callback):
+            if not inspect.iscoroutinefunction(self.callback):
                 raise TypeError(f"{self.error_name} Callback must be a coroutine")
 
         self.parent_cog = parent_cog
@@ -797,7 +797,7 @@ class CallbackMixin:
             )
 
         try:
-            if not asyncio.iscoroutinefunction(self.callback):
+            if not inspect.iscoroutinefunction(self.callback):
                 raise TypeError("Callback must be a coroutine")
             # While this arguably is Slash Commands only, we could do some neat stuff in the future with it in other
             #  commands. While Discord doesn't support anything else having Options, we
@@ -1027,7 +1027,7 @@ class CallbackMixin:
         callback: Callable[[:class:`Interaction`, :class:`ApplicationError`], :class:`asyncio.Awaitable[Any]`]
             The callback to call when an error occurs.
         """
-        if not asyncio.iscoroutinefunction(callback):
+        if not inspect.iscoroutinefunction(callback):
             raise TypeError("The error handler must be a coroutine.")
 
         self.error_callback = callback
@@ -1095,7 +1095,7 @@ class AutocompleteOptionMixin:
     def from_autocomplete_callback(self, callback: Callable) -> AutocompleteOptionMixin:
         """Parses a callback meant to be the autocomplete function."""
         self.autocomplete_callback = callback
-        if not asyncio.iscoroutinefunction(self.autocomplete_callback):
+        if not inspect.iscoroutinefunction(self.autocomplete_callback):
             raise TypeError("Callback must be a coroutine")
 
         skip_count = 2  # We skip the first and second args, they are always the Interaction and

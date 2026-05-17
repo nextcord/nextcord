@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import asyncio
 import functools
+import inspect
 from typing import TYPE_CHECKING, Callable, Dict, Union
 
 import nextcord
@@ -58,7 +58,7 @@ class CheckWrapper(CallbackWrapper):
     def __init__(self, callback: Union[Callable, CallbackWrapper], predicate) -> None:
         super().__init__(callback)
 
-        if not asyncio.iscoroutinefunction(predicate):
+        if not inspect.iscoroutinefunction(predicate):
 
             @functools.wraps(predicate)
             async def async_wrapper(ctx):

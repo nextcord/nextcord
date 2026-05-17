@@ -434,7 +434,7 @@ class BotBase(GroupMixin):
         TypeError
             The coroutine passed is not actually a coroutine.
         """
-        if not asyncio.iscoroutinefunction(coro):
+        if not inspect.iscoroutinefunction(coro):
             raise TypeError("The pre-invoke hook must be a coroutine.")
 
         self._before_invoke = coro
@@ -467,7 +467,7 @@ class BotBase(GroupMixin):
         TypeError
             The coroutine passed is not actually a coroutine.
         """
-        if not asyncio.iscoroutinefunction(coro):
+        if not inspect.iscoroutinefunction(coro):
             raise TypeError("The post-invoke hook must be a coroutine.")
 
         self._after_invoke = coro
@@ -670,7 +670,7 @@ class BotBase(GroupMixin):
 
         extras = extras or {}
         try:
-            if asyncio.iscoroutinefunction(setup):
+            if inspect.iscoroutinefunction(setup):
                 try:
                     # I don't want to deal with handling tasks with a niche feature.
                     asyncio.create_task(setup(self, **extras))  # noqa: RUF006
