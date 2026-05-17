@@ -497,6 +497,11 @@ class Interaction(Hashable, Generic[ClientT]):
 
     def _resolve_channels(self) -> list[abc.GuildChannel | abc.PrivateChannel]:
         ret = []
+
+        # TODO: Raise error? Log.warn?
+        if self.data is None:
+            return ret
+
         if "resolved" in self.data and "channels" in self.data["resolved"]:
             channel_payloads = self.data["resolved"]["channels"]
             for ch_id, ch_data in channel_payloads.items():
@@ -517,6 +522,8 @@ class Interaction(Hashable, Generic[ClientT]):
                     ret.append(channel)
                 else:
                     pass  # TODO: Raise error? Log.warn?
+
+        return ret
 
     async def edit_original_message(
         self,
