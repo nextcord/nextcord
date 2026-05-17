@@ -25,6 +25,7 @@ from typing import (
 import nextcord
 
 from .errors import *
+from .errors import ChannelTypeNotFound
 
 if TYPE_CHECKING:
     from typing import Callable
@@ -410,13 +411,17 @@ class GuildChannelConverter(IDConverter[nextcord.abc.GuildChannel]):
     3. Lookup by name.
 
     .. versionadded:: 2.0
+
+    .. versionchanged:: 3.2
+        Raises :exc:`.ChannelTypeNotFound` instead of generic :exc:`.ChannelNotFound`
+        when the channel type does not match.
     """
 
     async def convert(self, ctx: Context, argument: str) -> nextcord.abc.GuildChannel:
         return self._resolve_channel(ctx, argument, "channels", nextcord.abc.GuildChannel)
 
     @staticmethod
-    def _resolve_channel(ctx: Context, argument: str, attribute: str, type: Type[CT]) -> CT:
+    def _resolve_channel(ctx: Context, argument: str, attribute: str, type_: Type[CT]) -> CT:
         bot = ctx.bot
 
         match = IDConverter._get_id_match(argument) or re.match(r"<#([0-9]{15,20})>$", argument)
@@ -431,7 +436,7 @@ class GuildChannelConverter(IDConverter[nextcord.abc.GuildChannel]):
             else:
 
                 def check(c):
-                    return isinstance(c, type) and c.name == argument
+                    return isinstance(c, type_) and c.name == argument
 
                 result = nextcord.utils.find(check, bot.get_all_channels())
         else:
@@ -441,8 +446,11 @@ class GuildChannelConverter(IDConverter[nextcord.abc.GuildChannel]):
             else:
                 result = _get_from_guilds(bot, "get_channel", channel_id)
 
-        if not isinstance(result, type):
+        if result is None:
             raise ChannelNotFound(argument)
+
+        if not isinstance(result, type_):
+            raise ChannelTypeNotFound(actual=type(result), expected=type_)
 
         return result
 
@@ -482,6 +490,10 @@ class TextChannelConverter(IDConverter[nextcord.TextChannel]):
 
     .. versionchanged:: 1.5
          Raise :exc:`.ChannelNotFound` instead of generic :exc:`.BadArgument`
+
+    .. versionchanged:: 3.2
+        Raises :exc:`.ChannelTypeNotFound` instead of generic :exc:`.ChannelNotFound`
+        when the channel type does not match.
     """
 
     async def convert(self, ctx: Context, argument: str) -> nextcord.TextChannel:
@@ -504,6 +516,10 @@ class VoiceChannelConverter(IDConverter[nextcord.VoiceChannel]):
 
     .. versionchanged:: 1.5
          Raise :exc:`.ChannelNotFound` instead of generic :exc:`.BadArgument`
+
+    .. versionchanged:: 3.2
+        Raises :exc:`.ChannelTypeNotFound` instead of generic :exc:`.ChannelNotFound`
+        when the channel type does not match.
     """
 
     async def convert(self, ctx: Context, argument: str) -> nextcord.VoiceChannel:
@@ -525,6 +541,10 @@ class StageChannelConverter(IDConverter[nextcord.StageChannel]):
     1. Lookup by ID.
     2. Lookup by mention.
     3. Lookup by name
+
+    .. versionchanged:: 3.2
+        Raises :exc:`.ChannelTypeNotFound` instead of generic :exc:`.ChannelNotFound`
+        when the channel type does not match.
     """
 
     async def convert(self, ctx: Context, argument: str) -> nextcord.StageChannel:
@@ -547,6 +567,10 @@ class CategoryChannelConverter(IDConverter[nextcord.CategoryChannel]):
 
     .. versionchanged:: 1.5
          Raise :exc:`.ChannelNotFound` instead of generic :exc:`.BadArgument`
+
+    .. versionchanged:: 3.2
+        Raises :exc:`.ChannelTypeNotFound` instead of generic :exc:`.ChannelNotFound`
+        when the channel type does not match.
     """
 
     async def convert(self, ctx: Context, argument: str) -> nextcord.CategoryChannel:
@@ -567,6 +591,10 @@ class ThreadConverter(IDConverter[nextcord.Thread]):
     3. Lookup by name.
 
     .. versionadded: 2.0
+
+    .. versionchanged:: 3.2
+        Raises :exc:`.ChannelTypeNotFound` instead of generic :exc:`.ChannelNotFound`
+        when the channel type does not match.
     """
 
     async def convert(self, ctx: Context, argument: str) -> nextcord.Thread:
