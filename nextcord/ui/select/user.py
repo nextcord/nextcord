@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import asyncio
+import inspect
 from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, TypeVar
 
 from ...components import UserSelectMenu
@@ -185,7 +185,7 @@ def user_select(
     """
 
     def decorator(func: ItemCallbackType) -> ItemCallbackType:
-        if not asyncio.iscoroutinefunction(func):
+        if not inspect.iscoroutinefunction(func):
             raise TypeError("Select function must be a coroutine function")
 
         func.__discord_ui_model_type__ = UserSelect

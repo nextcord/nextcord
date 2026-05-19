@@ -2435,6 +2435,14 @@ RoleTags
 .. autoclass:: RoleTags()
     :members:
 
+RoleColours
+~~~~~~~~~~~
+
+.. attributetable:: RoleColours
+
+.. autoclass:: RoleColours()
+    :members:
+
 PartialMessageable
 ~~~~~~~~~~~~~~~~~~
 
