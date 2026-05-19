@@ -1119,7 +1119,7 @@ def get_converter(param: inspect.Parameter) -> Any:
 
 
 def is_generic_type(tp: Any) -> bool:
-    return isinstance(tp, type) and issubclass(tp, Generic) or isinstance(tp, GenericAlias)
+    return (isinstance(tp, type) and issubclass(tp, Generic)) or isinstance(tp, GenericAlias)
 
 
 CONVERTER_MAPPING: Dict[Type[Any], Any] = {

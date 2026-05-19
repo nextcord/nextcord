@@ -675,13 +675,11 @@ class BotBase(GroupMixin):
                     # I don't want to deal with handling tasks with a niche feature.
                     asyncio.create_task(setup(self, **extras))  # noqa: RUF006
                 except RuntimeError:
-                    raise RuntimeError(
-                        """
+                    raise RuntimeError("""
                     Looks like you are attempting to load an asynchronous setup function incorrectly.
                     Please read our FAQ here:
                     https://docs.nextcord.dev/en/stable/faq.html#how-do-i-make-my-setup-function-a-coroutine-and-load-it
-                    """
-                    ) from None
+                    """) from None
             else:
                 setup(self, **extras)
         except Exception as e:

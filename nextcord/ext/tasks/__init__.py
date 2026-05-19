@@ -258,7 +258,7 @@ class Loop(Generic[LF]):
         """
         if self._task is MISSING:
             return None
-        if self._task and self._task.done() or self._stop_next_iteration:
+        if (self._task and self._task.done()) or self._stop_next_iteration:
             return None
         return self._next_iteration
 
