@@ -39,6 +39,7 @@ from .errors import Forbidden
 from .flags import ApplicationFlags, Intents, MemberCacheFlags
 from .guild import Guild
 from .integrations import _integration_factory
+from .interactions import GuildApplicationCommandPermissions
 from .invite import Invite
 from .member import Member
 from .mentions import AllowedMentions
@@ -68,7 +69,10 @@ if TYPE_CHECKING:
     from .types.channel import DMChannel as DMChannelPayload
     from .types.emoji import Emoji as EmojiPayload
     from .types.guild import Guild as GuildPayload
-    from .types.interactions import ApplicationCommand as ApplicationCommandPayload
+    from .types.interactions import (
+        ApplicationCommand as ApplicationCommandPayload,
+        GuildApplicationCommandPermissions as GuildApplicationCommandPermissionsPayload,
+    )
     from .types.message import Message as MessagePayload
     from .types.scheduled_events import ScheduledEvent as ScheduledEventPayload
     from .types.sticker import GuildSticker as GuildStickerPayload
@@ -1796,6 +1800,12 @@ class ConnectionState:
             self._stickers.pop(emoji.id, None)
         guild.stickers = tuple([self.store_sticker(guild, d) for d in data["stickers"]])
         self.dispatch("guild_stickers_update", guild, before_stickers, guild.stickers)
+
+    def parse_application_command_permissions_update(
+        self, data: GuildApplicationCommandPermissionsPayload
+    ) -> None:
+        permissions = GuildApplicationCommandPermissions(data=data)
+        self.dispatch("application_command_permissions_update", permissions)
 
     def _get_create_guild(self, data):
         if data.get("unavailable") is False:
