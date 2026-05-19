@@ -324,7 +324,7 @@ class FlagsMeta(type):
 
         keys = [re.escape(k) for k in flags]
         keys.extend(re.escape(a) for a in aliases)
-        keys = sorted(keys, key=lambda t: len(t), reverse=True)
+        keys = sorted(keys, key=len, reverse=True)
 
         joined = "|".join(keys)
         pattern = re.compile(
