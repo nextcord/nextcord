@@ -1879,7 +1879,7 @@ class Label(Component):  # Component type 18
     def to_dict(self):
         ret = cast(comp_payloads.Label, super().to_dict())
         ret["label"] = self.label
-        ret["component"] = self.component.to_dict()
+        ret["component"] = cast(comp_payloads.Component, self.component.to_dict())
         if self.description is not MISSING:
             ret["description"] = self.description
 
