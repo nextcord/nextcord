@@ -134,7 +134,7 @@ class Modal:
             if not children:
                 continue
 
-            components.append({"type": 1, "components": children})  # type: ignore  # When sending data, we don't
+            components.append({"type": 1, "components": children})  # When sending data, we don't
             #  need to specify the ID.
 
         return components
