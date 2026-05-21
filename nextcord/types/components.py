@@ -134,8 +134,8 @@ class File(BaseComponent):
     type: Literal[13]
     file: UnfurledMedia
     spoiler: NotRequired[bool]
-    name: str  # Sent back as part of the API, ignored when sending.
-    size: int  # Sent back as part of the API, ignored when sending.
+    name: NotRequired[str]  # Sent back as part of the API, ignored when sending.
+    size: NotRequired[int]  # Sent back as part of the API, ignored when sending.
 
 
 class Separator(BaseComponent):
