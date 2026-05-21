@@ -2169,5 +2169,7 @@ def resolve_component(payload: comp_payloads.Component) -> Component:
             return Separator.from_dict(payload)
         case 17:
             return Container.from_dict(payload)
+        case 18:
+            return Label.from_dict(payload)
         case _:  # Just in case new components are added that we don't have yet.
             return Component.from_dict(payload)
