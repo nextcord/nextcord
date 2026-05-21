@@ -12,6 +12,55 @@ Changelog
 This page keeps a detailed human-friendly rendering of what's new and changed
 in specific versions.
 
+.. _vp3p2p0:
+
+v3.2.0
+------
+
+This version adds initial support for `"Components V2" <https://docs.discord.com/developers/components/overview#components-overview>`_,
+specifically lower-level support for the "Message Components" section.
+
+New Features
+~~~~~~~~~~~~
+
+- Add support for new auto moderation types (:issue:`1087`):
+    - :attr:`AutoModerationEventType.member_update`
+    - :attr:`AutoModerationTriggerType.member_profile`
+    - :attr:`AutoModerationActionType.block_member_interaction`
+- Add support for role gradients and "holographic styles" (:issue:`1261`):
+    - :class:`RoleColours`
+    - ``colours`` parameter in :meth:`Role.edit`
+    - ``colours`` parameter in :meth:`Guild.create_role`
+    - :attr:`Role.colours`
+- Add support for avatar decorations (:issue:`937`, :issue:`941`):
+    - :class:`AvatarDecoration`
+    - :attr:`User.avatar_decoration`
+    - :attr:`Member.avatar_decoration`
+- Add support for role subscriptions (:issue:`938`, :issue:`940`):
+    - :attr:`MessageType.role_subscription_purchase`
+    - :attr:`SystemChannelFlags.role_subscription_purchase_notifications`
+    - :attr:`SystemChannelFlags.role_subscription_purchase_notification_replies`
+    - :class:`MessageRoleSubscription`
+    - :attr:`Message.role_subscription`
+    - :attr:`RoleTags.premium_subscriber`
+    - :attr:`RoleTags.available_for_purchase`
+    - :attr:`RoleTags.guild_connections`
+- |commands| Add a specific :exc:`ChannelTypeNotFound <nextcord.ext.commands.errors.ChannelTypeNotFound>` exception for channel converters when the channel is found but not of the right type (:issue:`1274`).
+
+Bug Fixes
+~~~~~~~~~
+
+- Fix voice client playing state mismatch when forcibly moving channels (:issue:`882`, :issue:`1271`).
+- Fix ``proxy`` not being used within some HTTP client sessions (:issue:`1257`, :issue:`1276`).
+- Fix voice websocket connection error 4006 (:issue:`1262`, :issue:`1264`).
+
+Miscellaneous
+~~~~~~~~~~~~~
+
+- Add support for DAVE End-to-End Encryption for voice connections (:issue:`1278`, :issue:`1284`).
+- Fix syntax warnings in 3.14 (:issue:`1268`).
+- Move to voice API V8 (:issue:`1265`).
+
 .. _vp3p1p0:
 
 v3.1.0
