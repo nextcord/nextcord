@@ -327,7 +327,7 @@ class _SelectComponent(InteractiveComponent):
             min_values=payload.get("min_values", MISSING),
             max_values=payload.get("max_values", MISSING),
             disabled=payload.get("disabled", MISSING),
-            component_id=payload["id"],
+            component_id=payload.get("id", MISSING),
         )
 
 
@@ -386,7 +386,7 @@ class ActionRow(HolderComponent):  # Component type 1
     def from_dict(cls, payload: comp_payloads.ActionRow):
         return cls(
             components=[resolve_component(comp_data) for comp_data in payload["components"]],
-            component_id=payload["id"],
+            component_id=payload.get("id", MISSING),
         )
 
     def to_dict(self) -> comp_payloads.ActionRow:
@@ -494,7 +494,7 @@ class Button(InteractiveComponent):  # Component type 2
             sku_id=payload.get("sku_id", MISSING),
             url=payload.get("url", MISSING),
             disabled=payload.get("disabled", MISSING),
-            component_id=payload["id"],
+            component_id=payload.get("id", MISSING),
         )
 
     async def wait_for_interaction[ClientT: Client](
@@ -1153,7 +1153,7 @@ class UserSelect(_SelectComponent):  # Component type 5
             min_values=payload.get("min_values", MISSING),
             max_values=payload.get("max_values", MISSING),
             disabled=payload.get("disabled", MISSING),
-            component_id=payload["id"],
+            component_id=payload.get("id", MISSING),
         )
 
     def to_dict(self) -> comp_payloads.UserSelectMenu:
@@ -1239,7 +1239,7 @@ class RoleSelect(_SelectComponent):  # Component type 6
             min_values=payload.get("min_values", MISSING),
             max_values=payload.get("max_values", MISSING),
             disabled=payload.get("disabled", MISSING),
-            component_id=payload["id"],
+            component_id=payload.get("id", MISSING),
         )
 
     def to_dict(self) -> comp_payloads.RoleSelectMenu:
@@ -1332,7 +1332,7 @@ class MentionableSelect(_SelectComponent):  # Component type 7
             min_values=payload.get("min_values", MISSING),
             max_values=payload.get("max_values", MISSING),
             disabled=payload.get("disabled", MISSING),
-            component_id=payload["id"],
+            component_id=payload.get("id", MISSING),
         )
 
     def to_dict(self) -> comp_payloads.MentionableSelectMenu:
@@ -1442,7 +1442,7 @@ class ChannelSelect(_SelectComponent):  # Component type 8
             min_values=payload.get("min_values", MISSING),
             max_values=payload.get("max_values", MISSING),
             disabled=payload.get("disabled", MISSING),
-            component_id=payload["id"],
+            component_id=payload.get("id", MISSING),
         )
 
 
@@ -1504,7 +1504,7 @@ class Section(HolderComponent):  # Component type 9
         return cls(
             accessory=resolve_component(payload["accessory"]),
             components=[resolve_component(comp_data) for comp_data in payload["components"]],
-            component_id=payload["id"],
+            component_id=payload.get("id", MISSING),
         )
 
 
@@ -1537,7 +1537,7 @@ class TextDisplay(Component):  # Component type 10
 
     @classmethod
     def from_dict(cls, payload: comp_payloads.TextDisplay):
-        return cls(content=payload["content"], component_id=payload["id"])
+        return cls(content=payload["content"], component_id=payload.get("id", MISSING))
 
 
 class Thumbnail(Component):  # Component type 11
@@ -1596,7 +1596,7 @@ class Thumbnail(Component):  # Component type 11
             media=UnfurledMedia.from_dict(payload["media"]),
             description=payload.get("description", MISSING),
             spoiler=payload.get("spoiler", MISSING),
-            component_id=payload["id"],
+            component_id=payload.get("id", MISSING),
         )
 
     @classmethod
@@ -1648,7 +1648,7 @@ class MediaGallery(Component):  # Component type 12
     def from_dict(cls, payload: comp_payloads.MediaGallery):
         return cls(
             items=[MediaGalleryItem.from_dict(media_data) for media_data in payload["items"]],
-            component_id=payload["id"],
+            component_id=payload.get("id", MISSING),
         )
 
 
@@ -1694,7 +1694,7 @@ class FileDisplay(Component):  # Component type 13
         return cls(
             file=UnfurledMedia.from_dict(payload["file"]),
             spoiler=payload.get("spoiler", MISSING),
-            component_id=payload["id"],
+            component_id=payload.get("id", MISSING),
         )
 
     @classmethod
@@ -1767,7 +1767,7 @@ class Separator(Component):  # Component type 14
         return cls(
             divider=payload.get("divider", MISSING),
             spacing=payload.get("spacing", MISSING),
-            component_id=payload["id"],
+            component_id=payload.get("id", MISSING),
         )
 
 
@@ -1826,7 +1826,7 @@ class Container(HolderComponent):  # Component type 17
             components=[resolve_component(comp_data) for comp_data in payload["components"]],
             accent_color=payload.get("accent_color", MISSING),
             spoiler=payload.get("spoiler", MISSING),
-            component_id=payload["id"],
+            component_id=payload.get("id", MISSING),
         )
 
 
@@ -1885,7 +1885,7 @@ class Label(Component):  # Component type 18
             label=payload["label"],
             component=resolve_component(payload["component"]),
             description=payload.get("description", MISSING),
-            component_id=payload["id"],
+            component_id=payload.get("id", MISSING),
         )
 
 
