@@ -23,11 +23,11 @@ specifically lower-level support for the "Message Components" section.
 New Features
 ~~~~~~~~~~~~
 
-- Add support for new auto moderation types (:issue:`1087`):
+- Add support for `new auto moderation types <https://docs.discord.com/developers/change-log#may-31-2024>`_ (:issue:`1087`):
     - :attr:`AutoModerationEventType.member_update`
     - :attr:`AutoModerationTriggerType.member_profile`
     - :attr:`AutoModerationActionType.block_member_interaction`
-- Add support for role gradients and "holographic styles" (:issue:`1261`):
+- Add support for `role gradients <https://docs.discord.com/developers/change-log#july-02-2025>`_ and "holographic styles" (:issue:`1261`):
     - :class:`RoleColours`
     - ``colours`` parameter in :meth:`Role.edit`
     - ``colours`` parameter in :meth:`Guild.create_role`
