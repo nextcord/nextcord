@@ -161,9 +161,7 @@ class InteractiveComponent(Component):
         else:
             self.custom_id = custom_id
 
-    async def _wait_for_interaction[
-        ClientT: Client, *T
-    ](
+    async def _wait_for_interaction[ClientT: Client, *T](
         self,
         bot: ClientT,
         callback: Callable[[Interaction[ClientT], *T], Coroutine[None, None, Any]],
@@ -499,9 +497,7 @@ class Button(InteractiveComponent):  # Component type 2
             component_id=payload["id"],
         )
 
-    async def wait_for_interaction[
-        ClientT: Client
-    ](
+    async def wait_for_interaction[ClientT: Client](
         self,
         bot: ClientT,
         callback: Callable[[Interaction[ClientT]], Coroutine[None, None, Any]],
@@ -1121,9 +1117,7 @@ class UserSelect(_SelectComponent):  # Component type 5
     ):
         return super().add_default_value(value_id, value_type)
 
-    async def wait_for_interaction[
-        ClientT: Client
-    ](
+    async def wait_for_interaction[ClientT: Client](
         self,
         bot: ClientT,
         callback: Callable[
