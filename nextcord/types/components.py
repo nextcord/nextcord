@@ -17,7 +17,7 @@ TextInputStyle = Literal[1, 2]
 
 class BaseComponent(TypedDict):
     type: ComponentType
-    id: int
+    id: NotRequired[int]
 
 
 class ActionRow(BaseComponent):
