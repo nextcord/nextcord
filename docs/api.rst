@@ -1322,131 +1322,130 @@ from being stringly typed in case the strings change in the future.
 All enumerations are subclasses of an internal class which mimics the behaviour
 of :class:`enum.Enum`.
 
-.. autoclass:: ChannelType
+.. autoclass:: ChannelType()
     :members:
 
-.. autoclass:: MessageType
+.. autoclass:: MessageType()
     :members:
 
-.. autoclass:: VoiceRegion
+.. autoclass:: VoiceRegion()
     :members:
 
-.. autoclass:: VerificationLevel
+.. autoclass:: VerificationLevel()
     :members:
 
-.. autoclass:: ContentFilter
+.. autoclass:: ContentFilter()
     :members:
 
-.. autoclass:: Status
+.. autoclass:: Status()
     :members:
 
-.. autoclass:: DefaultAvatar
+.. autoclass:: DefaultAvatar()
     :members:
 
-.. autoclass:: NotificationLevel
+.. autoclass:: NotificationLevel()
     :members:
 
-.. autoclass:: AuditLogActionCategory
+.. autoclass:: AuditLogActionCategory()
     :members:
 
-.. autoclass:: UserFlags
+.. autoclass:: UserFlags()
     :members:
 
-.. autoclass:: ActivityType
+.. autoclass:: ActivityType()
     :members:
 
-.. autoclass:: TeamMembershipState
+.. autoclass:: TeamMembershipState()
     :members:
 
-.. autoclass:: WebhookType
+.. autoclass:: WebhookType()
     :members:
 
-.. autoclass:: ExpireBehaviour
+.. autoclass:: ExpireBehaviour()
     :members:
 
-.. autoclass:: StickerType
+.. autoclass:: StickerType()
     :members:
 
-.. autoclass:: StickerFormatType
+.. autoclass:: StickerFormatType()
     :members:
 
-.. autoclass:: InviteTarget
+.. autoclass:: InviteTarget()
     :members:
 
-.. autoclass:: InteractionType
+.. autoclass:: InteractionType()
     :members:
 
-.. autoclass:: InteractionResponseType
+.. autoclass:: InteractionResponseType()
     :members:
 
-.. autoclass:: Locale
+.. autoclass:: Locale()
     :members:
 
-.. autoclass:: VideoQualityMode
+.. autoclass:: VideoQualityMode()
     :members:
 
-.. autoclass:: ComponentType
+.. autoclass:: ComponentType()
     :members:
 
-.. autoclass:: ButtonStyle
+.. autoclass:: ButtonStyle()
     :members:
 
-.. autoclass:: TextInputStyle
+.. autoclass:: TextInputStyle()
     :members:
 
-.. autoclass:: StagePrivacyLevel
+.. autoclass:: StagePrivacyLevel()
     :members:
 
-.. autoclass:: NSFWLevel
+.. autoclass:: NSFWLevel()
     :members:
 
-.. autoclass:: ScheduledEventEntityType
+.. autoclass:: ScheduledEventEntityType()
     :members:
 
-.. autoclass:: ScheduledEventPrivacyLevel
+.. autoclass:: ScheduledEventPrivacyLevel()
     :members:
 
-.. autoclass:: ScheduledEventStatus
+.. autoclass:: ScheduledEventStatus()
     :members:
 
-.. autoclass:: AutoModerationEventType
+.. autoclass:: AutoModerationEventType()
     :members:
 
-.. autoclass:: AutoModerationTriggerType
+.. autoclass:: AutoModerationTriggerType()
     :members:
 
-.. autoclass:: KeywordPresetType
+.. autoclass:: KeywordPresetType()
     :members:
 
-.. autoclass:: AutoModerationActionType
+.. autoclass:: AutoModerationActionType()
     :members:
 
-.. autoclass:: SortOrderType
+.. autoclass:: SortOrderType()
     :members:
 
-.. autoclass:: RoleConnectionMetadataType
-    :members:
-    :undoc-members:
-
-.. autoclass:: ForumLayoutType
+.. autoclass:: RoleConnectionMetadataType()
     :members:
 
-.. autoclass:: AuditLogAction
+.. autoclass:: ForumLayoutType()
     :members:
 
-.. autoclass:: InviteType
+.. autoclass:: AuditLogAction()
     :members:
 
-.. autoclass:: IntegrationType
+.. autoclass:: InviteType()
     :members:
 
-.. autoclass:: InteractionContextType
+.. autoclass:: IntegrationType()
     :members:
 
-.. autoclass:: ApplicationCommandType
+.. autoclass:: InteractionContextType()
     :members:
 
-.. autoclass:: MessageReferenceType
+.. autoclass:: ApplicationCommandType()
+    :members:
+
+.. autoclass:: MessageReferenceType()
     :members:
 
 Async Iterator
@@ -2775,6 +2774,14 @@ AutoModerationActionExecution
 .. attributetable:: AutoModerationActionExecution
 
 .. autoclass:: AutoModerationActionExecution()
+    :members:
+
+MessageRoleSubscription
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. attributetable:: MessageRoleSubscription
+
+.. autoclass:: MessageRoleSubscription()
     :members:
 
 .. _discord_api_data:
