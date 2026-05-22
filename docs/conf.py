@@ -377,7 +377,4 @@ toc_object_entries = False
 
 
 def setup(app):
-    if app.config.language == "ja":
-        app.config.intersphinx_mapping["py"] = ("https://docs.python.org/ja/3", None)
-        app.config.html_context["discord_invite"] = "https://discord.gg/ZebatWssCB"
-        app.config.resource_links["discord"] = "https://discord.gg/ZebatWssCB"
+    pass

@@ -18,7 +18,7 @@ repos:
         files: nextcord/
         additional_dependencies:
           - autotyping==24.9.0
-          - black==23.12.1
+          - black==24.10.0
           - libcst==1.8.6
 
   - repo: https://github.com/astral-sh/ruff-pre-commit

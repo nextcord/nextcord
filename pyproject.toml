@@ -56,16 +56,16 @@ dave-py = { version = "^0.1.2", optional = true }
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "3.5.0"
-taskipy = "1.10.3"
+taskipy = "1.14.1"
 slotscheck = "0.19.1"
 python-dotenv = "0.20.0"
 pyright = "1.1.391"
-sphinx_autobuild = "2021.3.14"
+sphinx_autobuild = "2025.8.25"
 
 [tool.poetry.group.docs.dependencies]
-sphinx = "6.2.0"
-sphinxcontrib-trio = "1.1.2"
-sphinxcontrib-websupport = "^1.2.4"
+sphinx = "9.1.0"
+sphinxcontrib-trio = "1.2.0"
+sphinxcontrib-websupport = "2.0.0"
 
 [tool.poetry.urls]
 "Documentation" = "https://docs.nextcord.dev/"
