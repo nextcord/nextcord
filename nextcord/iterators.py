@@ -134,7 +134,7 @@ async def history_iterator(
 
     reverse = oldest_first
     before_strategy = False
-    after_stategy = False
+    after_strategy = False
     around_strategy = False
 
     state = messageable._state
@@ -169,7 +169,7 @@ async def history_iterator(
 
             checks.append(_check)
     elif reverse:
-        after_stategy = True
+        after_strategy = True
         if before is not None:
 
             def _check(msg: MessagePayload):
@@ -199,8 +199,10 @@ async def history_iterator(
     while get_retrieve():
         if around is not None and around_strategy:
             data = await state.http.logs_from(channel.id, retrieve, around=around.id)
-        elif before is not None and before_strategy:
-            data = await state.http.logs_from(channel.id, retrieve, before=before.id)
+        elif before_strategy:
+            data = await state.http.logs_from(
+                channel.id, retrieve, before=before.id if before is not None else None
+            )
         else:
             data = await state.http.logs_from(channel.id, retrieve, after=after.id)
 
@@ -212,7 +214,7 @@ async def history_iterator(
                 around = None
             if before_strategy:
                 before = Object(id=int(data[-1]["id"]))
-            if after_stategy:
+            if after_strategy:
                 after = Object(id=int(data[0]["id"]))
 
         if len(data) < 100:
