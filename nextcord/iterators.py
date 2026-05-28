@@ -9,17 +9,18 @@ from typing import TYPE_CHECKING, Awaitable, Callable, List, Optional, Union, ca
 from .audit_logs import AuditLogEntry
 from .auto_moderation import AutoModerationRule
 from .bans import BanEntry
+from .enums import ReactionType
 from .object import Object
 from .utils import snowflake_time, time_snowflake
 
 __all__ = (
-    "reaction_iterator",
-    "history_iterator",
-    "ban_iterator",
-    "audit_log_iterator",
-    "guild_iterator",
-    "member_iterator",
     "archived_thread_iterator",
+    "audit_log_iterator",
+    "ban_iterator",
+    "guild_iterator",
+    "history_iterator",
+    "member_iterator",
+    "reaction_iterator",
     "scheduled_event_iterator",
     "scheduled_event_user_iterator",
 )
@@ -47,7 +48,11 @@ OLDEST_OBJECT = Object(id=0)
 
 
 async def reaction_iterator(
-    message: Message, emoji: str, limit: int = 100, after: Optional[Snowflake] = None
+    message: Message,
+    emoji: str,
+    limit: int = 100,
+    after: Optional[Snowflake] = None,
+    type: Optional[ReactionType] = None,
 ):
     from .user import User
 
@@ -57,7 +62,12 @@ async def reaction_iterator(
         retrieve = min(limit, 100)
 
         data = await state.http.get_reaction_users(
-            message.channel.id, message.id, emoji, retrieve, after=after.id if after else None
+            message.channel.id,
+            message.id,
+            emoji,
+            retrieve,
+            after=after.id if after else None,
+            type=type,
         )
 
         if data:

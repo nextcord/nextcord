@@ -55,6 +55,7 @@ __all__ = (
     "MessageReferenceType",
     "SelectDefaultValueType",
     "SeparatorSpacingSize",
+    "ReactionType",
 )
 
 
@@ -2133,6 +2134,18 @@ class SelectDefaultValueType(StrEnum):
 class SeparatorSpacingSize(IntEnum):
     small = 1
     large = 2
+
+
+class ReactionType(IntEnum):
+    """Represents the type of a message reaction.
+
+    .. versionadded:: 3.2
+    """
+
+    normal = 0
+    """The message reaction is a normal reaction."""
+    burst = 1
+    """The message reaction is a burst/super reaction."""
 
 
 T = TypeVar("T")
