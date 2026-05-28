@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-import asyncio
+import inspect
 from typing import TYPE_CHECKING, Callable, Generic, List, Optional, Tuple, TypeVar
 
 from ...abc import GuildChannel
 from ...components import ChannelSelectMenu
-from ...enums import ComponentType
 from ...interactions import ClientT
 from ...utils import MISSING
 from ..item import ItemCallbackType
@@ -83,13 +82,13 @@ class ChannelSelect(SelectBase, Generic[V_co]):
     def __init__(
         self,
         *,
-        custom_id: str = MISSING,
+        custom_id: str | None = None,
         placeholder: Optional[str] = None,
         min_values: int = 1,
         max_values: int = 1,
         disabled: bool = False,
         row: Optional[int] = None,
-        channel_types: List[ChannelType] = MISSING,
+        channel_types: list[ChannelType] = MISSING,
     ) -> None:
         super().__init__(
             custom_id=custom_id,
@@ -100,15 +99,15 @@ class ChannelSelect(SelectBase, Generic[V_co]):
             row=row,
         )
         self._selected_values: ChannelSelectValues = ChannelSelectValues()
-        self.channel_types: List[ChannelType] = channel_types
-        self._underlying = ChannelSelectMenu._raw_construct(
-            custom_id=self.custom_id,
-            type=ComponentType.channel_select,
-            placeholder=self.placeholder,
-            min_values=self.min_values,
-            max_values=self.max_values,
-            disabled=self.disabled,
+        self.channel_types: list[ChannelType] = channel_types
+        self._underlying = ChannelSelectMenu(
+            custom_id=custom_id,
             channel_types=channel_types,
+            placeholder=placeholder if placeholder is not None else MISSING,
+            # default_values=
+            min_values=min_values,
+            max_values=max_values,
+            disabled=disabled,
         )
 
     @property
@@ -190,7 +189,7 @@ def channel_select(
     """
 
     def decorator(func: ItemCallbackType) -> ItemCallbackType:
-        if not asyncio.iscoroutinefunction(func):
+        if not inspect.iscoroutinefunction(func):
             raise TypeError("Select function must be a coroutine function")
 
         func.__discord_ui_model_type__ = ChannelSelect

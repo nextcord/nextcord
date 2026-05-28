@@ -87,16 +87,15 @@ class TextInput(Item[V_co]):
     ) -> None:
         self._provided_custom_id = custom_id is not MISSING
         custom_id = os.urandom(16).hex() if custom_id is MISSING else custom_id
-        self._underlying = TextInputComponent._raw_construct(
-            type=ComponentType.text_input,
-            custom_id=custom_id,
-            label=label,
+        self._underlying = TextInputComponent(
             style=style,
-            min_length=min_length,
-            max_length=max_length,
-            required=required,
-            value=default_value,
-            placeholder=placeholder,
+            label=label,
+            custom_id=custom_id,
+            min_length=min_length if min_length is not None else MISSING,
+            max_length=max_length if max_length is not None else MISSING,
+            required=required if required is not None else MISSING,
+            value=default_value if default_value is not None else MISSING,
+            placeholder=placeholder if placeholder is not None else MISSING,
         )
         self.row = row
         self._inputed_value: Optional[str] = None
@@ -130,13 +129,14 @@ class TextInput(Item[V_co]):
     @label.setter
     def label(self, value: str) -> None:
         if value is None:  # pyright: ignore[reportUnnecessaryComparison]
-            raise TypeError("label must cannot be None")
+            raise TypeError("label cannot be None")
+
         self._underlying.label = str(value)
 
     @property
     def min_length(self) -> Optional[int]:
         """:class:`int`: The minimum input length for a text input"""
-        return self._underlying.min_length
+        return self._underlying.min_length if self._underlying.min_length is not MISSING else None
 
     @min_length.setter
     def min_length(self, value: int) -> None:
@@ -145,7 +145,7 @@ class TextInput(Item[V_co]):
     @property
     def max_length(self) -> Optional[int]:
         """:class:`int`: The maximum input length for a text input"""
-        return self._underlying.max_length
+        return self._underlying.max_length if self._underlying.max_length is not MISSING else None
 
     @max_length.setter
     def max_length(self, value: int) -> None:
@@ -154,25 +154,25 @@ class TextInput(Item[V_co]):
     @property
     def required(self) -> Optional[bool]:
         """:class:`bool`: Whether this component is required to be filled"""
-        return self._underlying.required
+        return self._underlying.required if self._underlying.required is not MISSING else MISSING
 
     @required.setter
     def required(self, value: Optional[bool]) -> None:
         if value is not None and not isinstance(value, bool):
             raise TypeError("required must be None or bool")
 
-        self._underlying.required = value
+        self._underlying.required = value if value is not None else MISSING
 
     @property
     def default_value(self) -> Optional[str]:
         """Optional[:class:`str`]: The value already in the text input when the user open the form."""
-        return self._underlying.value
+        return self._underlying.value if self._underlying.value is not MISSING else None
 
     @default_value.setter
     def default_value(self, value: Optional[str]) -> None:
         if value is not None and not isinstance(value, str):
             raise TypeError("default_value must be None or str")
-        self._underlying.value = value
+        self._underlying.value = value if value is not None else MISSING
 
     @property
     def value(self) -> Optional[str]:
@@ -185,14 +185,14 @@ class TextInput(Item[V_co]):
     @property
     def placeholder(self) -> Optional[str]:
         """Optional[:class:`str`]: The text shown to the user when the text input is empty."""
-        return self._underlying.placeholder
+        return self._underlying.placeholder if self._underlying.placeholder is not MISSING else None
 
     @placeholder.setter
     def placeholder(self, value: Optional[str]) -> None:
         if value is not None and not isinstance(value, str):
             raise TypeError("placeholder must be None or str")
 
-        self._underlying.placeholder = value
+        self._underlying.placeholder = value if value is not None else MISSING
 
     @property
     def width(self) -> int:

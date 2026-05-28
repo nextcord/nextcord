@@ -1322,131 +1322,130 @@ from being stringly typed in case the strings change in the future.
 All enumerations are subclasses of an internal class which mimics the behaviour
 of :class:`enum.Enum`.
 
-.. autoclass:: ChannelType
+.. autoclass:: ChannelType()
     :members:
 
-.. autoclass:: MessageType
+.. autoclass:: MessageType()
     :members:
 
-.. autoclass:: VoiceRegion
+.. autoclass:: VoiceRegion()
     :members:
 
-.. autoclass:: VerificationLevel
+.. autoclass:: VerificationLevel()
     :members:
 
-.. autoclass:: ContentFilter
+.. autoclass:: ContentFilter()
     :members:
 
-.. autoclass:: Status
+.. autoclass:: Status()
     :members:
 
-.. autoclass:: DefaultAvatar
+.. autoclass:: DefaultAvatar()
     :members:
 
-.. autoclass:: NotificationLevel
+.. autoclass:: NotificationLevel()
     :members:
 
-.. autoclass:: AuditLogActionCategory
+.. autoclass:: AuditLogActionCategory()
     :members:
 
-.. autoclass:: UserFlags
+.. autoclass:: UserFlags()
     :members:
 
-.. autoclass:: ActivityType
+.. autoclass:: ActivityType()
     :members:
 
-.. autoclass:: TeamMembershipState
+.. autoclass:: TeamMembershipState()
     :members:
 
-.. autoclass:: WebhookType
+.. autoclass:: WebhookType()
     :members:
 
-.. autoclass:: ExpireBehaviour
+.. autoclass:: ExpireBehaviour()
     :members:
 
-.. autoclass:: StickerType
+.. autoclass:: StickerType()
     :members:
 
-.. autoclass:: StickerFormatType
+.. autoclass:: StickerFormatType()
     :members:
 
-.. autoclass:: InviteTarget
+.. autoclass:: InviteTarget()
     :members:
 
-.. autoclass:: InteractionType
+.. autoclass:: InteractionType()
     :members:
 
-.. autoclass:: InteractionResponseType
+.. autoclass:: InteractionResponseType()
     :members:
 
-.. autoclass:: Locale
+.. autoclass:: Locale()
     :members:
 
-.. autoclass:: VideoQualityMode
+.. autoclass:: VideoQualityMode()
     :members:
 
-.. autoclass:: ComponentType
+.. autoclass:: ComponentType()
     :members:
 
-.. autoclass:: ButtonStyle
+.. autoclass:: ButtonStyle()
     :members:
 
-.. autoclass:: TextInputStyle
+.. autoclass:: TextInputStyle()
     :members:
 
-.. autoclass:: StagePrivacyLevel
+.. autoclass:: StagePrivacyLevel()
     :members:
 
-.. autoclass:: NSFWLevel
+.. autoclass:: NSFWLevel()
     :members:
 
-.. autoclass:: ScheduledEventEntityType
+.. autoclass:: ScheduledEventEntityType()
     :members:
 
-.. autoclass:: ScheduledEventPrivacyLevel
+.. autoclass:: ScheduledEventPrivacyLevel()
     :members:
 
-.. autoclass:: ScheduledEventStatus
+.. autoclass:: ScheduledEventStatus()
     :members:
 
-.. autoclass:: AutoModerationEventType
+.. autoclass:: AutoModerationEventType()
     :members:
 
-.. autoclass:: AutoModerationTriggerType
+.. autoclass:: AutoModerationTriggerType()
     :members:
 
-.. autoclass:: KeywordPresetType
+.. autoclass:: KeywordPresetType()
     :members:
 
-.. autoclass:: AutoModerationActionType
+.. autoclass:: AutoModerationActionType()
     :members:
 
-.. autoclass:: SortOrderType
+.. autoclass:: SortOrderType()
     :members:
 
-.. autoclass:: RoleConnectionMetadataType
-    :members:
-    :undoc-members:
-
-.. autoclass:: ForumLayoutType
+.. autoclass:: RoleConnectionMetadataType()
     :members:
 
-.. autoclass:: AuditLogAction
+.. autoclass:: ForumLayoutType()
     :members:
 
-.. autoclass:: InviteType
+.. autoclass:: AuditLogAction()
     :members:
 
-.. autoclass:: IntegrationType
+.. autoclass:: InviteType()
     :members:
 
-.. autoclass:: InteractionContextType
+.. autoclass:: IntegrationType()
     :members:
 
-.. autoclass:: ApplicationCommandType
+.. autoclass:: InteractionContextType()
     :members:
 
-.. autoclass:: MessageReferenceType
+.. autoclass:: ApplicationCommandType()
+    :members:
+
+.. autoclass:: MessageReferenceType()
     :members:
 
 Async Iterator
@@ -2441,6 +2440,14 @@ RoleTags
 .. autoclass:: RoleTags()
     :members:
 
+RoleColours
+~~~~~~~~~~~
+
+.. attributetable:: RoleColours
+
+.. autoclass:: RoleColours()
+    :members:
+
 PartialMessageable
 ~~~~~~~~~~~~~~~~~~
 
@@ -2775,6 +2782,14 @@ AutoModerationActionExecution
 .. autoclass:: AutoModerationActionExecution()
     :members:
 
+MessageRoleSubscription
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. attributetable:: MessageRoleSubscription
+
+.. autoclass:: MessageRoleSubscription()
+    :members:
+
 .. _discord_api_data:
 
 Data Classes
@@ -2838,14 +2853,6 @@ PartialMessage
 .. attributetable:: PartialMessage
 
 .. autoclass:: PartialMessage
-    :members:
-
-SelectOption
-~~~~~~~~~~~~
-
-.. attributetable:: SelectOption
-
-.. autoclass:: SelectOption
     :members:
 
 Intents
@@ -3162,6 +3169,175 @@ ChannelSelect
 
 .. autoclass:: nextcord.ui.ChannelSelectValues
     :members:
+
+
+Low Level UI Components
+-----------------------
+These are relatively simple representations of Discord's Component objects, able to be directly instantiated and
+sent with messages. While there are helper functions to aid with usage, they are intended to be rather bare and thus
+there are almost no safe guards nor data validation checks when creating or sending them. Higher level/friendlier UI
+Component objects can be found in the :ref:`discord_ui_kit` section.
+
+Base Components
+~~~~~~~~~~~~~~~
+Base component classes. Not intended to be instantiated by users, but can be used for :func:`isinstance` checks.
+
+.. attributetable:: Component
+.. autoclass:: Component
+    :members:
+
+.. attributetable:: InteractiveComponent
+.. autoclass:: InteractiveComponent
+    :show-inheritance:
+    :inherited-members:
+
+.. attributetable:: HolderComponent
+.. autoclass:: HolderComponent
+    :show-inheritance:
+    :inherited-members:
+
+
+Action Row
+~~~~~~~~~~
+
+.. attributetable:: ActionRow
+.. autoclass:: ActionRow
+    :show-inheritance:
+    :inherited-members:
+
+Button
+~~~~~~
+
+.. attributetable:: Button
+.. autoclass:: Button
+    :show-inheritance:
+    :inherited-members:
+
+String Select
+~~~~~~~~~~~~~
+
+.. attributetable:: StringSelect
+.. autoclass:: StringSelect
+    :show-inheritance:
+    :inherited-members:
+
+Text Input
+~~~~~~~~~~
+
+.. attributetable:: TextInput
+.. autoclass:: TextInput
+    :show-inheritance:
+    :inherited-members:
+
+User Select
+~~~~~~~~~~~
+
+.. attributetable:: UserSelect
+.. autoclass:: UserSelect
+    :show-inheritance:
+    :inherited-members:
+
+Role Select
+~~~~~~~~~~~
+
+.. attributetable:: RoleSelect
+.. autoclass:: RoleSelect
+    :show-inheritance:
+    :inherited-members:
+
+Mentionable Select
+~~~~~~~~~~~~~~~~~~
+
+.. attributetable:: MentionableSelect
+.. autoclass:: MentionableSelect
+    :show-inheritance:
+    :inherited-members:
+
+Channel Select
+~~~~~~~~~~~~~~
+
+.. attributetable:: ChannelSelect
+.. autoclass:: ChannelSelect
+    :show-inheritance:
+    :inherited-members:
+
+Section
+~~~~~~~
+
+.. attributetable:: Section
+.. autoclass:: Section
+    :show-inheritance:
+    :inherited-members:
+
+Text Display
+~~~~~~~~~~~~
+
+.. attributetable:: TextDisplay
+.. autoclass:: TextDisplay
+    :show-inheritance:
+    :inherited-members:
+
+Thumbnail
+~~~~~~~~~
+
+.. attributetable:: Thumbnail
+.. autoclass:: Thumbnail
+    :show-inheritance:
+    :inherited-members:
+
+Media Gallery
+~~~~~~~~~~~~~
+
+.. attributetable:: MediaGallery
+.. autoclass:: MediaGallery
+    :show-inheritance:
+    :inherited-members:
+
+File Display
+~~~~~~~~~~~~
+
+.. attributetable:: FileDisplay
+.. autoclass:: FileDisplay
+    :show-inheritance:
+    :inherited-members:
+
+Separator
+~~~~~~~~~
+
+.. attributetable:: Separator
+.. autoclass:: Separator
+    :show-inheritance:
+    :inherited-members:
+
+Container
+~~~~~~~~~
+
+.. attributetable:: Container
+.. autoclass:: Container
+    :show-inheritance:
+    :inherited-members:
+
+Component Data Objects
+~~~~~~~~~~~~~~~~~~~~~~
+While these are not components, they are required to create/populate certain components.
+Components for components, if you will.
+
+.. attributetable:: SelectOption
+.. autoclass:: SelectOption
+    :members:
+
+.. attributetable:: SelectDefaultValue
+.. autoclass:: SelectDefaultValue
+    :members:
+
+.. attributetable:: UnfurledMedia
+.. autoclass:: UnfurledMedia
+    :members:
+
+.. attributetable:: MediaGalleryItem
+.. autoclass:: MediaGalleryItem
+    :members:
+
 
 Application Commands
 --------------------
