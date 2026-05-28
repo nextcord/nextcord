@@ -7,12 +7,30 @@ from __future__ import annotations
 import asyncio
 import contextlib
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Any, Dict, Generic, List, Optional, Set, Tuple, TypeVar, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Generic,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    TypeVar,
+    Union,
+    cast,
+)
 
 from . import utils
-from .channel import ChannelType, PartialMessageable
+from .channel import ChannelType, PartialMessageable, _threaded_channel_factory
 from .embeds import Embed
-from .enums import InteractionResponseType, InteractionType, try_enum
+from .enums import (
+    IntegrationType,
+    InteractionContextType,
+    InteractionResponseType,
+    InteractionType,
+    try_enum,
+)
 from .errors import ClientException, HTTPException, InteractionResponded, InvalidArgument
 from .file import File
 from .flags import MessageFlags
@@ -21,6 +39,8 @@ from .message import Attachment, Message
 from .mixins import Hashable
 from .object import Object
 from .permissions import Permissions
+from .role import Role
+from .types import interactions as interaction_payloads
 from .user import ClientUser, User
 from .utils import snowflake_time
 from .webhook.async_ import Webhook, WebhookMessage, async_context, handle_message_parameters
@@ -35,6 +55,7 @@ __all__ = (
 if TYPE_CHECKING:
     from aiohttp import ClientSession
 
+    from . import abc, components
     from .abc import MessageableChannel
     from .application_command import BaseApplicationCommand, SlashApplicationSubcommand
     from .channel import CategoryChannel, ForumChannel, StageChannel, TextChannel, VoiceChannel
@@ -149,32 +170,47 @@ class Interaction(Hashable, Generic[ClientT]):
         The attached data of the interaction. This is used to store any data you may need inside the interaction for convenience. This data will stay on the interaction, even after a :meth:`Interaction.application_command_before_invoke`.
     application_command: Optional[:class:`ApplicationCommand`]
         The application command that handled the interaction.
+    authorizing_integration_owners: Optional[Dict[:class:`IntegrationType`, :class:`int`]]
+        Mapping of installation contexts that the interaction was authorized for to related user or guild IDs.
+        You can find out about this field in the `official Discord documentation`__.
+
+        .. _integration_docs: https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-authorizing-integration-owners-object
+
+        __ integration_docs_
+
+        .. versionadded:: 3.0
+    context: Optional[:class:`InteractionContextType`]
+        Context where the interaction was triggered from.
+
+        .. versionadded:: 3.0
     """
 
     __slots__: Tuple[str, ...] = (
-        "id",
-        "type",
-        "guild_id",
-        "channel_id",
-        "data",
-        "application_id",
-        "message",
-        "user",
-        "locale",
-        "guild_locale",
-        "token",
-        "version",
-        "application_command",
-        "attached",
-        "_background_tasks",
-        "_permissions",
         "_app_permissions",
-        "_state",
-        "_session",
-        "_original_message",
-        "_cs_response",
-        "_cs_followup",
+        "_background_tasks",
         "_cs_channel",
+        "_cs_followup",
+        "_cs_response",
+        "_original_message",
+        "_permissions",
+        "_session",
+        "_state",
+        "application_command",
+        "application_id",
+        "attached",
+        "authorizing_integration_owners",
+        "channel_id",
+        "context",
+        "data",
+        "guild_id",
+        "guild_locale",
+        "id",
+        "locale",
+        "message",
+        "token",
+        "type",
+        "user",
+        "version",
     )
 
     def __init__(self, *, data: InteractionPayload, state: ConnectionState) -> None:
@@ -201,14 +237,11 @@ class Interaction(Hashable, Generic[ClientT]):
         self.locale: Optional[str] = data.get("locale")
         self.guild_locale: Optional[str] = data.get("guild_locale")
 
-        self.message: Optional[Message]
-        try:
-            message = data["message"]
+        self.message: Optional[Message] = None
+        if message := data.get("message"):
             self.message = self._state._get_message(int(message["id"])) or Message(
                 state=self._state, channel=self.channel, data=message  # type: ignore
             )
-        except KeyError:
-            self.message = None
 
         self.user: Optional[Union[User, Member]] = None
         self._app_permissions: int = int(data.get("app_permissions", 0))
@@ -217,22 +250,26 @@ class Interaction(Hashable, Generic[ClientT]):
         # TODO: there's a potential data loss here
         if self.guild_id:
             guild = self.guild or Object(id=self.guild_id)
-            try:
-                member = data["member"]
-            except KeyError:
-                pass
-            else:
+            if member := data.get("member"):
                 cached_member = self.guild and self.guild.get_member(int(member["user"]["id"]))  # type: ignore # user key should be present here
                 self.user = cached_member or Member(state=self._state, guild=guild, data=member)  # type: ignore # user key should be present here
                 self._permissions = int(member.get("permissions", 0))
+        elif user := data.get("user"):
+            self.user = self._state.get_user(int(user["id"])) or User(state=self._state, data=user)
+
+        authorizing_integration_owners = data.get("authorizing_integration_owners")
+        self.authorizing_integration_owners: Optional[Dict[IntegrationType, int]]
+        if authorizing_integration_owners is None:
+            self.authorizing_integration_owners = None
         else:
-            try:
-                user = data["user"]
-                self.user = self._state.get_user(int(user["id"])) or User(
-                    state=self._state, data=user
-                )
-            except KeyError:
-                pass
+            self.authorizing_integration_owners = {
+                try_enum(IntegrationType, int(integration_type)): int(details)
+                for integration_type, details in authorizing_integration_owners.items()
+            }
+
+        self.context: Optional[InteractionContextType] = (
+            try_enum(InteractionContextType, data["context"]) if "context" in data else None
+        )
 
     @property
     def client(self) -> ClientT:
@@ -363,6 +400,131 @@ class Interaction(Hashable, Generic[ClientT]):
         self._original_message = message
         return message
 
+    def _resolve_users(self) -> list[User | Member]:
+        """Returns a :class:`list` of resolved :class:`User` objects from the interaction data.
+        If possible, it will return a :class:`list` of resolved :class:`Member` objects instead.
+
+
+        Returns
+        -------
+        :class:`list`[:class:`User` | :class:`Member`]
+            List of resolved users, or members if possible.
+        """
+        ret = []
+        data = self.data
+        data = cast(interaction_payloads.ApplicationCommandInteractionData, data)
+
+        if "resolved" in data:
+            # If we can, we will return Member objects instead of User.
+            # If we don't have a guild object though, return User objects.
+            if "members" in data["resolved"] and self.guild is not None:
+                member_payloads = data["resolved"]["members"]
+                # Because the payload is modified further down, a copy is made to avoid affecting methods or
+                #  users that read from interaction.data further down the line.
+                for member_id, member_payload in member_payloads.copy().items():
+                    # If a member isn't in the cache, construct a new one.
+                    if (
+                        not (member := self.guild.get_member(int(member_id)))
+                        and "users" in data["resolved"]
+                    ):
+                        user_payload = data["resolved"]["users"][member_id]
+                        # This is required to construct the Member.
+                        member_payload["user"] = user_payload
+                        member = Member(data=member_payload, guild=self.guild, state=self._state)  # type: ignore
+
+                    if member is not None:
+                        ret.append(member)
+
+            # If we have resolved members + guild, we don't want to go through the users. Hence, the elif.
+            elif "users" in data["resolved"]:
+                resolved_users_payload = data["resolved"]["users"]
+                ret.extend(
+                    [
+                        self._state.create_user(user_payload)
+                        for user_payload in resolved_users_payload.values()
+                    ]
+                )
+
+        return ret
+
+    def _resolve_messages(self) -> list[Message]:
+        """Returns a :class:`list` of resolved :class:`Message` objects from the interaction data.
+
+        Returns
+        -------
+        :class:`list`[:class:`Message`]
+            A list of resolved messages.
+        """
+        ret = []
+        data = self.data
+        data = cast(interaction_payloads.ApplicationCommandInteractionData, data)
+
+        if "resolved" in data and "messages" in data["resolved"]:
+            message_payloads = data["resolved"]["messages"]
+            for msg_id, msg_payload in message_payloads.items():
+                if not (message := self._state._get_message(int(msg_id))):
+                    message = Message(channel=self.channel, data=msg_payload, state=self._state)  # type: ignore
+
+                ret.append(message)
+
+        return ret
+
+    def _resolve_roles(self) -> list[Role]:
+        """Returns a :class:`list` of resolved :class:`Role` objects from the interaction data.
+
+        Returns
+        -------
+        :class:`list`[:class:`Role`]
+            A list of resolved roles.
+        """
+        ret = []
+        data = self.data
+        data = cast(interaction_payloads.ApplicationCommandInteractionData, data)
+
+        if "resolved" in data and "roles" in data["resolved"]:
+            role_payloads = data["resolved"]["roles"]
+            for role_id, role_payload in role_payloads.items():
+                # if True:  # Use this for testing payload -> Role
+                if self.guild is None:
+                    raise TypeError("self.guild cannot be None when resolving a Role")
+
+                if not (role := self.guild.get_role(int(role_id))):
+                    role = Role(guild=self.guild, state=self._state, data=role_payload)
+
+                ret.append(role)
+
+        return ret
+
+    def _resolve_channels(self) -> list[abc.GuildChannel | abc.PrivateChannel]:
+        ret = []
+
+        # TODO: Raise error? Log.warn?
+        if self.data is None:
+            return ret
+
+        if "resolved" in self.data and "channels" in self.data["resolved"]:
+            channel_payloads = self.data["resolved"]["channels"]
+            for ch_id, ch_data in channel_payloads.items():
+                if channel := self._state.get_channel(int(ch_id)):
+                    ret.append(channel)
+
+                # Attempt to actually resolve the channel
+                ch_class, ch_type = _threaded_channel_factory(ch_data["type"])
+                if ch_class is not None:
+                    if ch_type in (ChannelType.group, ChannelType.private):
+                        # the factory will be a DMChannel or GroupChannel here
+                        channel = ch_class(me=self.client.user, data=ch_data, state=self._state)  # type: ignore
+                    else:
+                        guild_id = int(ch_data["guild_id"])  # type: ignore
+                        guild = self._state._get_guild(guild_id) or Object(id=guild_id)
+                        channel = ch_class(guild=guild, state=self._state, data=ch_data)  # type: ignore
+
+                    ret.append(channel)
+                else:
+                    pass  # TODO: Raise error? Log.warn?
+
+        return ret
+
     async def edit_original_message(
         self,
         *,
@@ -374,6 +536,7 @@ class Interaction(Hashable, Generic[ClientT]):
         attachments: List[Attachment] = MISSING,
         view: Optional[View] = MISSING,
         allowed_mentions: Optional[AllowedMentions] = None,
+        components: list[components.Component] | None = None,
     ) -> InteractionMessage:
         """|coro|
 
@@ -438,6 +601,7 @@ class Interaction(Hashable, Generic[ClientT]):
             view=view,
             allowed_mentions=allowed_mentions,
             previous_allowed_mentions=previous_mentions,
+            components=components,
         )
         adapter = async_context.get()
         data = await adapter.edit_original_interaction_response(
@@ -516,6 +680,7 @@ class Interaction(Hashable, Generic[ClientT]):
         flags: Optional[MessageFlags] = None,
         ephemeral: Optional[bool] = None,
         suppress_embeds: Optional[bool] = None,
+        components: list[components.Component] | None = None,
     ) -> Union[PartialInteractionMessage, WebhookMessage]:
         """|coro|
 
@@ -563,6 +728,7 @@ class Interaction(Hashable, Generic[ClientT]):
                 allowed_mentions=allowed_mentions,
                 flags=flags,
                 suppress_embeds=suppress_embeds,
+                components=components,
             )
         return await self.followup.send(
             content=content,  # type: ignore
@@ -630,8 +796,8 @@ class InteractionResponse:
     """
 
     __slots__: Tuple[str, ...] = (
-        "_responded",
         "_parent",
+        "_responded",
     )
 
     def __init__(self, parent: Interaction) -> None:
@@ -777,6 +943,7 @@ class InteractionResponse:
         flags: Optional[MessageFlags] = None,
         ephemeral: Optional[bool] = None,
         suppress_embeds: Optional[bool] = None,
+        components: list[components.Component] | None = None,
     ) -> PartialInteractionMessage:
         """|coro|
 
@@ -885,6 +1052,9 @@ class InteractionResponse:
             flags.suppress_embeds = suppress_embeds
         if ephemeral is not None:
             flags.ephemeral = ephemeral
+        if components is not None:
+            flags.is_components_v2 = True
+            payload["components"] = [comp.to_dict() for comp in components]
 
         if flags.value != 0:
             payload["flags"] = flags.value
@@ -915,8 +1085,8 @@ class InteractionResponse:
             )
         finally:
             if files:
-                for file in files:
-                    file.close()
+                for f in files:
+                    f.close()
 
         if view is not MISSING and view.prevent_update:
             if ephemeral and view.timeout is None:
@@ -977,6 +1147,7 @@ class InteractionResponse:
         attachments: List[Attachment] = MISSING,
         view: Optional[View] = MISSING,
         delete_after: Optional[float] = None,
+        components: list[components.Component] | None = None,
     ) -> Optional[Message]:
         """|coro|
 
@@ -1069,6 +1240,8 @@ class InteractionResponse:
                 payload["components"] = []
             else:
                 payload["components"] = view.to_components()
+        elif components is not None:
+            payload["components"] = [comp.to_dict() for comp in components]
 
         adapter = async_context.get()
         try:
@@ -1082,8 +1255,8 @@ class InteractionResponse:
             )
         finally:
             if files:
-                for file in files:
-                    file.close()
+                for f in files:
+                    f.close()
 
         if view and not view.is_finished() and message_id is not None and view.prevent_update:
             state.store_view(view, message_id)
@@ -1111,6 +1284,7 @@ class _InteractionMessageMixin:
         view: Optional[View] = MISSING,
         allowed_mentions: Optional[AllowedMentions] = None,
         delete_after: Optional[float] = None,
+        components: list[components.Component] | None = None,
     ) -> InteractionMessage:
         """|coro|
 
@@ -1170,6 +1344,7 @@ class _InteractionMessageMixin:
             attachments=attachments,
             view=view,
             allowed_mentions=allowed_mentions,
+            components=components,
         )
 
         if delete_after is not None:

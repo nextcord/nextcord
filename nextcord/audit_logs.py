@@ -28,8 +28,8 @@ from .object import Object
 from .permissions import PermissionOverwrite, Permissions
 
 __all__ = (
-    "AuditLogDiff",
     "AuditLogChanges",
+    "AuditLogDiff",
     "AuditLogEntry",
 )
 
@@ -174,7 +174,7 @@ def _transform_type(entry: AuditLogEntry, data: int) -> Union[enums.ChannelType,
 
 
 def _list_transformer(
-    func: Callable[[AuditLogEntry, Any], T]
+    func: Callable[[AuditLogEntry, Any], T],
 ) -> Callable[[AuditLogEntry, Any], List[T]]:
     def _transform(entry: AuditLogEntry, data: Any) -> List[T]:
         if not data:
@@ -222,11 +222,9 @@ class AuditLogDiff:
 
     if TYPE_CHECKING:
 
-        def __getattr__(self, item: str) -> Any:
-            ...
+        def __getattr__(self, item: str) -> Any: ...
 
-        def __setattr__(self, key: str, value: Any) -> Any:
-            ...
+        def __setattr__(self, key: str, value: Any) -> Any: ...
 
 
 Transformer = Callable[["AuditLogEntry", Any], Any]
@@ -428,6 +426,7 @@ class AuditLogEntry(Hashable):
         contains extra information. See :class:`AuditLogAction` for
         which actions have this field filled out.
     """
+
     extra: Union[
         _AuditLogProxyMemberPrune,
         _AuditLogProxyMemberMoveOrMessageDelete,
@@ -465,7 +464,7 @@ class AuditLogEntry(Hashable):
         # I gave up trying to fix this
 
         elems: Dict[str, Any] = {}
-        channel_id = int(self.extra["channel_id"]) if self.extra.get("channel_id", None) else None
+        channel_id = int(self.extra["channel_id"]) if self.extra.get("channel_id", None) else None  # type: ignore
 
         if isinstance(self.action, enums.AuditLogAction) and self.extra:
             if self.action is enums.AuditLogAction.member_prune:
@@ -478,22 +477,22 @@ class AuditLogEntry(Hashable):
                 or self.action is enums.AuditLogAction.message_delete
             ):
                 elems = {
-                    "count": int(self.extra["count"]),
+                    "count": int(self.extra["count"]),  # type: ignore
                 }
             elif self.action is enums.AuditLogAction.member_disconnect:
                 # The member disconnect action has a dict with some information
                 elems = {
-                    "count": int(self.extra["count"]),
+                    "count": int(self.extra["count"]),  # type: ignore
                 }
             elif self.action.name.endswith("pin"):
                 # the pin actions have a dict with some information
                 elems = {
-                    "message_id": int(self.extra["message_id"]),
+                    "message_id": int(self.extra["message_id"]),  # type: ignore
                 }
             elif self.action.name.startswith("overwrite_"):
                 # the overwrite_ actions have a dict with some information
-                instance_id = int(self.extra["id"])
-                the_type = self.extra.get("type")
+                instance_id = int(self.extra["id"])  # type: ignore
+                the_type = self.extra.get("type")  # type: ignore
                 if the_type == "1":
                     self.extra = self._get_member(instance_id)
                 elif the_type == "0":
@@ -503,7 +502,7 @@ class AuditLogEntry(Hashable):
                         role.name = self.extra.get("role_name")  # type: ignore
                     self.extra = role  # type: ignore
             elif self.action.name.startswith("stage_instance"):
-                channel_id = int(self.extra["channel_id"])
+                channel_id = int(self.extra["channel_id"])  # type: ignore
                 elems = {"channel": self.guild.get_channel(channel_id) or Object(id=channel_id)}
             elif (
                 self.action is enums.AuditLogAction.auto_moderation_block_message
@@ -511,10 +510,10 @@ class AuditLogEntry(Hashable):
                 or self.action is enums.AuditLogAction.auto_moderation_user_communication_disabled
             ):
                 elems = {
-                    "rule_name": self.extra["auto_moderation_rule_name"],
+                    "rule_name": self.extra["auto_moderation_rule_name"],  # type: ignore
                     "rule_trigger_type": enums.try_enum(
                         enums.AutoModerationTriggerType,
-                        int(self.extra["auto_moderation_rule_trigger_type"]),
+                        int(self.extra["auto_moderation_rule_trigger_type"]),  # type: ignore
                     ),
                 }
 
@@ -522,7 +521,7 @@ class AuditLogEntry(Hashable):
         if channel_id and self.action:
             elems["channel"] = self.guild.get_channel_or_thread(channel_id) or Object(id=channel_id)
 
-        if type(self.extra) is dict:
+        if type(self.extra) is dict:  # type: ignore
             self.extra = type("_AuditLogProxy", (), elems)()  # type: ignore
 
         # this key is not present when the above is present, typically.

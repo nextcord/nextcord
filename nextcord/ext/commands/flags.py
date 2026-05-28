@@ -308,7 +308,7 @@ class FlagsMeta(type):
 
         for flag_name, flag in get_flags(attrs, global_ns, local_ns).items():
             flags[flag_name] = flag
-            aliases.update({alias_name: flag_name for alias_name in flag.aliases})
+            aliases.update(dict.fromkeys(flag.aliases, flag_name))
 
         forbidden = set(delimiter).union(prefix)
         for flag_name in flags:
@@ -324,7 +324,7 @@ class FlagsMeta(type):
 
         keys = [re.escape(k) for k in flags]
         keys.extend(re.escape(a) for a in aliases)
-        keys = sorted(keys, key=lambda t: len(t), reverse=True)
+        keys = sorted(keys, key=len, reverse=True)
 
         joined = "|".join(keys)
         pattern = re.compile(
@@ -412,7 +412,7 @@ async def convert_flag(ctx, argument: str, flag: Flag, annotation: Any = None) -
             return await convert_flag(ctx, argument, flag, annotation)
         if origin is Union and annotation.__args__[-1] is type(None):
             # typing.Optional[x]  # noqa: ERA001
-            annotation = Union[annotation.__args__[:-1]]  # type: ignore
+            annotation = Union[annotation.__args__[:-1]]
             return await run_converters(ctx, annotation, argument, param)
         if origin is dict:
             # typing.Dict[K, V] -> typing.Tuple[K, V]

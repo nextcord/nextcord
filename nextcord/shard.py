@@ -598,7 +598,7 @@ class AutoShardedClient(Client):
         activities = () if activity is None else (activity,)
         for guild in guilds:
             me = guild.me
-            if me is None:  # type: ignore
+            if me is None:
                 continue
 
             # Member.activities is typehinted as Tuple[ActivityType, ...], we may be setting it as Tuple[BaseActivity, ...]

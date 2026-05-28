@@ -38,7 +38,7 @@ def _walk_component_interaction_data(
 ) -> Iterator[ComponentInteractionData]:
     for item in components:
         if "components" in item:
-            yield from item["components"]  # type: ignore
+            yield from item["components"]
         else:
             yield item
 
@@ -134,12 +134,8 @@ class Modal:
             if not children:
                 continue
 
-            components.append(
-                {
-                    "type": 1,
-                    "components": children,
-                }
-            )
+            components.append({"type": 1, "components": children})  # When sending data, we don't
+            #  need to specify the ID.
 
         return components
 
@@ -380,7 +376,7 @@ class Modal:
 
 class ModalStore:
     def __init__(self, state: ConnectionState) -> None:
-        # (user_id, custom_id): Modal  # noqa: ERA001
+        # (user_id, custom_id): Modal
         self._modals: Dict[Tuple[int | None, str], Modal] = {}
         self._state: ConnectionState = state
 

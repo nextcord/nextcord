@@ -31,7 +31,7 @@ from ..components import (
     Component,
     SelectMenu as SelectComponent,
     TextInput as TextComponent,
-    _component_factory,
+    resolve_component,
 )
 from .item import Item, ItemCallbackType
 
@@ -222,12 +222,8 @@ class View:
             if not children:
                 continue
 
-            components.append(
-                {
-                    "type": 1,
-                    "components": children,
-                }
-            )
+            components.append({"type": 1, "components": children})  # When sending data, we don't
+            #  need to specify the ID.
 
         return components
 
@@ -500,7 +496,10 @@ class ViewStore:
         self._state: ConnectionState = state
 
     def all_views(self) -> List[View]:
-        return [v for (v, _) in self._views.values()]
+        # Create a unique list of views, as _views stores the same view multiple times,
+        # one for each dispatchable item.
+        views = {view.id: view for view, _ in self._views.values()}
+        return list(views.values())
 
     def views(self, persistent: bool = True) -> List[View]:
         views = self.all_views()
@@ -561,4 +560,4 @@ class ViewStore:
     def update_from_message(self, message_id: int, components: List[ComponentPayload]) -> None:
         # pre-req: is_message_tracked == true
         view = self._synced_message_views[message_id]
-        view.refresh([_component_factory(d) for d in components])
+        view.refresh([resolve_component(d) for d in components])

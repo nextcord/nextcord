@@ -2,13 +2,25 @@
 
 from __future__ import annotations
 
-from typing import List, Optional, TypedDict
+from typing import Dict, List, Literal, Optional, TypedDict
 
 from typing_extensions import NotRequired
 
 from .snowflake import Snowflake
 from .team import Team
 from .user import User
+
+
+class InstallParams(TypedDict):
+    scopes: List[str]
+    permissions: str
+
+
+class ApplicationIntegrationTypeConfig(TypedDict):
+    oauth2_install_params: NotRequired[InstallParams]
+
+
+IntegrationTypesConfig = Dict[Literal["0", "1"], ApplicationIntegrationTypeConfig]
 
 
 class BaseAppInfo(TypedDict):
@@ -18,6 +30,7 @@ class BaseAppInfo(TypedDict):
     icon: Optional[str]
     summary: str
     description: str
+    integration_types_config: NotRequired[IntegrationTypesConfig]
 
 
 class AppInfo(BaseAppInfo):

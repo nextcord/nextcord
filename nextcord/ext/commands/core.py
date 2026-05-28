@@ -261,6 +261,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
 
         .. versionadded:: 2.0.0
     """
+
     __original_kwargs__: Dict[str, Any]
 
     def __new__(cls, *_args: Any, **kwargs: Any) -> Self:
@@ -287,7 +288,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         ],
         **kwargs: Any,
     ) -> None:
-        if not asyncio.iscoroutinefunction(func):
+        if not inspect.iscoroutinefunction(func):
             raise TypeError("Callback must be a coroutine.")
 
         name = kwargs.get("name") or func.__name__
@@ -739,8 +740,12 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         entries = []
         command = self
         # command.parent is type-hinted as GroupMixin some attributes are resolved via MRO
+        #
+        # ooliver1: command.parent may sometimes be bot, but not always since that is only
+        # added via GroupMixin.add_command etc.
+        # This should probably be checked as it is quite the typing issue.
         while command.parent is not None:  # type: ignore
-            command = command.parent
+            command = command.parent  # type: ignore
             entries.append(command.name)  # type: ignore
 
         return " ".join(reversed(entries))
@@ -758,7 +763,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         entries = []
         command = self
         while command.parent is not None:  # type: ignore
-            command = command.parent
+            command = command.parent  # type: ignore
             entries.append(command)
 
         return entries
@@ -1026,7 +1031,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
             The coroutine passed is not actually a coroutine.
         """
 
-        if not asyncio.iscoroutinefunction(coro):
+        if not inspect.iscoroutinefunction(coro):
             raise TypeError("The error handler must be a coroutine.")
 
         self.on_error: Error = coro
@@ -1060,7 +1065,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         TypeError
             The coroutine passed is not actually a coroutine.
         """
-        if not asyncio.iscoroutinefunction(coro):
+        if not inspect.iscoroutinefunction(coro):
             raise TypeError("The pre-invoke hook must be a coroutine.")
 
         self._before_invoke = coro
@@ -1087,7 +1092,7 @@ class Command(_BaseCommand, Generic[CogT, P, T]):
         TypeError
             The coroutine passed is not actually a coroutine.
         """
-        if not asyncio.iscoroutinefunction(coro):
+        if not inspect.iscoroutinefunction(coro):
             raise TypeError("The post-invoke hook must be a coroutine.")
 
         self._after_invoke = coro
@@ -1386,9 +1391,9 @@ class GroupMixin(Generic[CogT]):
         if not isinstance(obj, GroupMixin):
             return obj
 
-        for name in names[1:]:
+        for cmd_name in names[1:]:
             try:
-                obj = obj.all_commands[name]  # type: ignore
+                obj = obj.all_commands[cmd_name]  # type: ignore
             except (AttributeError, KeyError):
                 return None
 
@@ -1409,8 +1414,7 @@ class GroupMixin(Generic[CogT]):
             ]
         ],
         Command[CogT, P, T],
-    ]:
-        ...
+    ]: ...
 
     @overload
     def command(
@@ -1419,8 +1423,7 @@ class GroupMixin(Generic[CogT]):
         cls: Type[CommandT] = Command,
         *args: Any,
         **kwargs: Any,
-    ) -> Callable[[Callable[Concatenate[Context, P], Coro[Any]]], CommandT]:
-        ...
+    ) -> Callable[[Callable[Concatenate[Context, P], Coro[Any]]], CommandT]: ...
 
     def command(
         self,
@@ -1462,8 +1465,7 @@ class GroupMixin(Generic[CogT]):
             ]
         ],
         Group[CogT, P, T],
-    ]:
-        ...
+    ]: ...
 
     @overload
     def group(
@@ -1472,8 +1474,7 @@ class GroupMixin(Generic[CogT]):
         cls: Type[GroupT] = MISSING,
         *args: Any,
         **kwargs: Any,
-    ) -> Callable[[Callable[Concatenate[Context, P], Coro[Any]]], GroupT]:
-        ...
+    ) -> Callable[[Callable[Concatenate[Context, P], Coro[Any]]], GroupT]: ...
 
     def group(
         self,
@@ -1494,7 +1495,7 @@ class GroupMixin(Generic[CogT]):
         def decorator(func: Callable[Concatenate[ContextT, P], Coro[Any]]) -> GroupT:
             kwargs.setdefault("parent", self)
             result = group(name, *args, cls=cls, **kwargs)(func)
-            self.add_command(result)  # type: ignore
+            self.add_command(result)
             return result  # type: ignore
 
         return decorator
@@ -1629,8 +1630,7 @@ def command(
         ]
     ],
     Command[CogT, P, T],
-]:
-    ...
+]: ...
 
 
 @overload
@@ -1646,8 +1646,7 @@ def command(
         ]
     ],
     CommandT,
-]:
-    ...
+]: ...
 
 
 def command(
@@ -1717,8 +1716,7 @@ def group(
         ]
     ],
     Group[CogT, P, T],
-]:
-    ...
+]: ...
 
 
 @overload
@@ -1734,8 +1732,7 @@ def group(
         ]
     ],
     Group[CogT, P, T],
-]:
-    ...
+]: ...
 
 
 @overload
@@ -1751,8 +1748,7 @@ def group(
         ]
     ],
     GroupT,
-]:
-    ...
+]: ...
 
 
 def group(
@@ -1864,7 +1860,7 @@ def check(predicate: Check) -> Callable[[T], T]:
 
         return func
 
-    if asyncio.iscoroutinefunction(predicate):
+    if inspect.iscoroutinefunction(predicate):
         decorator.predicate = predicate
     else:
 

@@ -68,6 +68,22 @@ AutoShardedClient
 Application Info
 ----------------
 
+InstallParams
+~~~~~~~~~~~~~
+
+.. attributetable:: InstallParams
+
+.. autoclass:: InstallParams()
+    :members:
+
+ApplicationIntegrationTypeConfig
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. attributetable:: ApplicationIntegrationTypeConfig
+
+.. autoclass:: ApplicationIntegrationTypeConfig()
+    :members:
+
 AppInfo
 ~~~~~~~
 
@@ -1319,116 +1335,130 @@ from being stringly typed in case the strings change in the future.
 All enumerations are subclasses of an internal class which mimics the behaviour
 of :class:`enum.Enum`.
 
-.. autoclass:: ChannelType
+.. autoclass:: ChannelType()
     :members:
 
-.. autoclass:: MessageType
+.. autoclass:: MessageType()
     :members:
 
-.. autoclass:: VoiceRegion
+.. autoclass:: VoiceRegion()
     :members:
 
-.. autoclass:: VerificationLevel
+.. autoclass:: VerificationLevel()
     :members:
 
-.. autoclass:: ContentFilter
+.. autoclass:: ContentFilter()
     :members:
 
-.. autoclass:: Status
+.. autoclass:: Status()
     :members:
 
-.. autoclass:: DefaultAvatar
+.. autoclass:: DefaultAvatar()
     :members:
 
-.. autoclass:: NotificationLevel
+.. autoclass:: NotificationLevel()
     :members:
 
-.. autoclass:: AuditLogActionCategory
+.. autoclass:: AuditLogActionCategory()
     :members:
 
-.. autoclass:: UserFlags
+.. autoclass:: UserFlags()
     :members:
 
-.. autoclass:: ActivityType
+.. autoclass:: ActivityType()
     :members:
 
-.. autoclass:: TeamMembershipState
+.. autoclass:: TeamMembershipState()
     :members:
 
-.. autoclass:: WebhookType
+.. autoclass:: WebhookType()
     :members:
 
-.. autoclass:: ExpireBehaviour
+.. autoclass:: ExpireBehaviour()
     :members:
 
-.. autoclass:: StickerType
+.. autoclass:: StickerType()
     :members:
 
-.. autoclass:: StickerFormatType
+.. autoclass:: StickerFormatType()
     :members:
 
-.. autoclass:: InviteTarget
+.. autoclass:: InviteTarget()
     :members:
 
-.. autoclass:: InteractionType
+.. autoclass:: InteractionType()
     :members:
 
-.. autoclass:: InteractionResponseType
+.. autoclass:: InteractionResponseType()
     :members:
 
-.. autoclass:: Locale
+.. autoclass:: Locale()
     :members:
 
-.. autoclass:: VideoQualityMode
+.. autoclass:: VideoQualityMode()
     :members:
 
-.. autoclass:: ComponentType
+.. autoclass:: ComponentType()
     :members:
 
-.. autoclass:: ButtonStyle
+.. autoclass:: ButtonStyle()
     :members:
 
-.. autoclass:: TextInputStyle
+.. autoclass:: TextInputStyle()
     :members:
 
-.. autoclass:: StagePrivacyLevel
+.. autoclass:: StagePrivacyLevel()
     :members:
 
-.. autoclass:: NSFWLevel
+.. autoclass:: NSFWLevel()
     :members:
 
-.. autoclass:: ScheduledEventEntityType
+.. autoclass:: ScheduledEventEntityType()
     :members:
 
-.. autoclass:: ScheduledEventPrivacyLevel
+.. autoclass:: ScheduledEventPrivacyLevel()
     :members:
 
-.. autoclass:: ScheduledEventStatus
+.. autoclass:: ScheduledEventStatus()
     :members:
 
-.. autoclass:: AutoModerationEventType
+.. autoclass:: AutoModerationEventType()
     :members:
 
-.. autoclass:: AutoModerationTriggerType
+.. autoclass:: AutoModerationTriggerType()
     :members:
 
-.. autoclass:: KeywordPresetType
+.. autoclass:: KeywordPresetType()
     :members:
 
-.. autoclass:: AutoModerationActionType
+.. autoclass:: AutoModerationActionType()
     :members:
 
-.. autoclass:: SortOrderType
+.. autoclass:: SortOrderType()
     :members:
 
-.. autoclass:: RoleConnectionMetadataType
-    :members:
-    :undoc-members:
-
-.. autoclass:: ForumLayoutType
+.. autoclass:: RoleConnectionMetadataType()
     :members:
 
-.. autoclass:: AuditLogAction
+.. autoclass:: ForumLayoutType()
+    :members:
+
+.. autoclass:: AuditLogAction()
+    :members:
+
+.. autoclass:: InviteType()
+    :members:
+
+.. autoclass:: IntegrationType()
+    :members:
+
+.. autoclass:: InteractionContextType()
+    :members:
+
+.. autoclass:: ApplicationCommandType()
+    :members:
+
+.. autoclass:: MessageReferenceType()
     :members:
 
 Async Iterator
@@ -1442,123 +1472,12 @@ These async iterators can be used as follows: ::
     async for elem in channel.history():
         # do stuff with elem here
 
-Certain utilities make working with async iterators easier, detailed below.
+You can also chunk data using the :func:`utils.as_chunks` utility method.
 
-.. class:: AsyncIterator
+It can be used as follows: ::
 
-    Represents the "AsyncIterator" concept. Note that no such class exists,
-    it is purely abstract.
-
-    .. container:: operations
-
-        .. describe:: async for x in y
-
-            Iterates over the contents of the async iterator.
-
-
-    .. method:: next()
-        :async:
-
-        |coro|
-
-        Advances the iterator by one, if possible. If no more items are found
-        then this raises :exc:`NoMoreItems`.
-
-    .. method:: get(**attrs)
-        :async:
-
-        |coro|
-
-        Similar to :func:`utils.get` except run over the async iterator.
-
-        Getting the last message by a user named 'Dave' or ``None``: ::
-
-            msg = await channel.history().get(author__name='Dave')
-
-    .. method:: find(predicate)
-        :async:
-
-        |coro|
-
-        Similar to :func:`utils.find` except run over the async iterator.
-
-        Unlike :func:`utils.find`\, the predicate provided can be a
-        |coroutine_link|_.
-
-        Getting the last audit log with a reason or ``None``: ::
-
-            def predicate(event):
-                return event.reason is not None
-
-            event = await guild.audit_logs().find(predicate)
-
-        :param predicate: The predicate to use. Could be a |coroutine_link|_.
-        :return: The first element that returns ``True`` for the predicate or ``None``.
-
-    .. method:: flatten()
-        :async:
-
-        |coro|
-
-        Flattens the async iterator into a :class:`list` with all the elements.
-
-        :return: A list of every element in the async iterator.
-        :rtype: list
-
-    .. method:: chunk(max_size)
-
-        Collects items into chunks of up to a given maximum size.
-        Another :class:`AsyncIterator` is returned which collects items into
-        :class:`list`\s of a given size. The maximum chunk size must be a positive integer.
-
-        .. versionadded:: 1.6
-
-        Collecting groups of users: ::
-
-            async for leader, *users in reaction.users().chunk(3):
-                ...
-
-        .. warning::
-
-            The last chunk collected may not be as large as ``max_size``.
-
-        :param max_size: The size of individual chunks.
-        :rtype: :class:`AsyncIterator`
-
-    .. method:: map(func)
-
-        This is similar to the built-in :func:`map <py:map>` function. Another
-        :class:`AsyncIterator` is returned that executes the function on
-        every element it is iterating over. This function can either be a
-        regular function or a |coroutine_link|_.
-
-        Creating a content iterator: ::
-
-            def transform(message):
-                return message.content
-
-            async for content in channel.history().map(transform):
-                message_length = len(content)
-
-        :param func: The function to call on every element. Could be a |coroutine_link|_.
-        :rtype: :class:`AsyncIterator`
-
-    .. method:: filter(predicate)
-
-        This is similar to the built-in :func:`filter <py:filter>` function. Another
-        :class:`AsyncIterator` is returned that filters over the original
-        async iterator. This predicate can be a regular function or a |coroutine_link|_.
-
-        Getting messages by non-bot accounts: ::
-
-            def predicate(message):
-                return not message.author.bot
-
-            async for elem in channel.history().filter(predicate):
-                ...
-
-        :param predicate: The predicate to call on every element. Could be a |coroutine_link|_.
-        :rtype: :class:`AsyncIterator`
+    async for chunk in utils.as_chunks(channel.history(), 10):
+        # do stuff with chunks here
 
 .. _discord-api-audit-logs:
 
@@ -2285,6 +2204,14 @@ User
     .. automethod:: typing
         :async-with:
 
+AvatarDecoration
+~~~~~~~~~~~~~~~~
+
+.. attributetable:: AvatarDecoration
+
+.. autoclass:: AvatarDecoration()
+    :members:
+
 Attachment
 ~~~~~~~~~~
 
@@ -2362,6 +2289,24 @@ Guild
 
         :type: :class:`User`
 
+.. class:: BulkBan
+
+    A namedtuple which represents a ban returned from :meth:`~Guild.bulk_ban`.
+
+    .. versionadded:: 3.0
+
+    .. attribute:: banned_users
+
+        The :class:`list` of successfully banned user :class:`IDs <Object>`.
+
+        :type: List[:class:`Object`]
+
+    .. attribute:: failed_users
+
+        The :class:`list` of unsuccessfully banned user :class:`IDs <Object>`.
+
+        :type: List[:class:`Object`]
+
 GuildPreview
 ~~~~~~~~~~~~
 
@@ -2428,6 +2373,14 @@ MessageInteraction
 .. autoclass:: MessageInteraction()
     :members:
 
+MessageInteractionMetadata
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. attributetable:: MessageInteractionMetadata
+
+.. autoclass:: MessageInteractionMetadata()
+    :members:
+
 Member
 ~~~~~~
 
@@ -2492,6 +2445,14 @@ RoleTags
 .. attributetable:: RoleTags
 
 .. autoclass:: RoleTags()
+    :members:
+
+RoleColours
+~~~~~~~~~~~
+
+.. attributetable:: RoleColours
+
+.. autoclass:: RoleColours()
     :members:
 
 PartialMessageable
@@ -2828,6 +2789,14 @@ AutoModerationActionExecution
 .. autoclass:: AutoModerationActionExecution()
     :members:
 
+MessageRoleSubscription
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. attributetable:: MessageRoleSubscription
+
+.. autoclass:: MessageRoleSubscription()
+    :members:
+
 .. _discord_api_data:
 
 Data Classes
@@ -2877,20 +2846,20 @@ MessageReference
 .. autoclass:: MessageReference
     :members:
 
+MessageSnapshot
+~~~~~~~~~~~~~~~
+
+.. attributetable:: MessageSnapshot
+
+.. autoclass:: MessageSnapshot
+    :members:
+
 PartialMessage
 ~~~~~~~~~~~~~~
 
 .. attributetable:: PartialMessage
 
 .. autoclass:: PartialMessage
-    :members:
-
-SelectOption
-~~~~~~~~~~~~
-
-.. attributetable:: SelectOption
-
-.. autoclass:: SelectOption
     :members:
 
 Intents
@@ -3207,6 +3176,175 @@ ChannelSelect
 
 .. autoclass:: nextcord.ui.ChannelSelectValues
     :members:
+
+
+Low Level UI Components
+-----------------------
+These are relatively simple representations of Discord's Component objects, able to be directly instantiated and
+sent with messages. While there are helper functions to aid with usage, they are intended to be rather bare and thus
+there are almost no safe guards nor data validation checks when creating or sending them. Higher level/friendlier UI
+Component objects can be found in the :ref:`discord_ui_kit` section.
+
+Base Components
+~~~~~~~~~~~~~~~
+Base component classes. Not intended to be instantiated by users, but can be used for :func:`isinstance` checks.
+
+.. attributetable:: Component
+.. autoclass:: Component
+    :members:
+
+.. attributetable:: InteractiveComponent
+.. autoclass:: InteractiveComponent
+    :show-inheritance:
+    :inherited-members:
+
+.. attributetable:: HolderComponent
+.. autoclass:: HolderComponent
+    :show-inheritance:
+    :inherited-members:
+
+
+Action Row
+~~~~~~~~~~
+
+.. attributetable:: ActionRow
+.. autoclass:: ActionRow
+    :show-inheritance:
+    :inherited-members:
+
+Button
+~~~~~~
+
+.. attributetable:: Button
+.. autoclass:: Button
+    :show-inheritance:
+    :inherited-members:
+
+String Select
+~~~~~~~~~~~~~
+
+.. attributetable:: StringSelect
+.. autoclass:: StringSelect
+    :show-inheritance:
+    :inherited-members:
+
+Text Input
+~~~~~~~~~~
+
+.. attributetable:: TextInput
+.. autoclass:: TextInput
+    :show-inheritance:
+    :inherited-members:
+
+User Select
+~~~~~~~~~~~
+
+.. attributetable:: UserSelect
+.. autoclass:: UserSelect
+    :show-inheritance:
+    :inherited-members:
+
+Role Select
+~~~~~~~~~~~
+
+.. attributetable:: RoleSelect
+.. autoclass:: RoleSelect
+    :show-inheritance:
+    :inherited-members:
+
+Mentionable Select
+~~~~~~~~~~~~~~~~~~
+
+.. attributetable:: MentionableSelect
+.. autoclass:: MentionableSelect
+    :show-inheritance:
+    :inherited-members:
+
+Channel Select
+~~~~~~~~~~~~~~
+
+.. attributetable:: ChannelSelect
+.. autoclass:: ChannelSelect
+    :show-inheritance:
+    :inherited-members:
+
+Section
+~~~~~~~
+
+.. attributetable:: Section
+.. autoclass:: Section
+    :show-inheritance:
+    :inherited-members:
+
+Text Display
+~~~~~~~~~~~~
+
+.. attributetable:: TextDisplay
+.. autoclass:: TextDisplay
+    :show-inheritance:
+    :inherited-members:
+
+Thumbnail
+~~~~~~~~~
+
+.. attributetable:: Thumbnail
+.. autoclass:: Thumbnail
+    :show-inheritance:
+    :inherited-members:
+
+Media Gallery
+~~~~~~~~~~~~~
+
+.. attributetable:: MediaGallery
+.. autoclass:: MediaGallery
+    :show-inheritance:
+    :inherited-members:
+
+File Display
+~~~~~~~~~~~~
+
+.. attributetable:: FileDisplay
+.. autoclass:: FileDisplay
+    :show-inheritance:
+    :inherited-members:
+
+Separator
+~~~~~~~~~
+
+.. attributetable:: Separator
+.. autoclass:: Separator
+    :show-inheritance:
+    :inherited-members:
+
+Container
+~~~~~~~~~
+
+.. attributetable:: Container
+.. autoclass:: Container
+    :show-inheritance:
+    :inherited-members:
+
+Component Data Objects
+~~~~~~~~~~~~~~~~~~~~~~
+While these are not components, they are required to create/populate certain components.
+Components for components, if you will.
+
+.. attributetable:: SelectOption
+.. autoclass:: SelectOption
+    :members:
+
+.. attributetable:: SelectDefaultValue
+.. autoclass:: SelectDefaultValue
+    :members:
+
+.. attributetable:: UnfurledMedia
+.. autoclass:: UnfurledMedia
+    :members:
+
+.. attributetable:: MediaGalleryItem
+.. autoclass:: MediaGalleryItem
+    :members:
+
 
 Application Commands
 --------------------

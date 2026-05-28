@@ -154,16 +154,7 @@ class WidgetMember(BaseUser):
         self.deafened: Optional[bool] = data.get("deaf", False) or data.get("self_deaf", False)
         self.muted: Optional[bool] = data.get("mute", False) or data.get("self_mute", False)
         self.suppress: Optional[bool] = data.get("suppress", False)
-
-        try:
-            game = data["game"]
-        except KeyError:
-            activity = None
-        else:
-            activity = create_activity(state, game)
-
-        self.activity = activity
-
+        self.activity = create_activity(state, data["game"]) if "game" in data else None
         self.connected_channel: Optional[WidgetChannel] = connected_channel
 
     def __repr__(self) -> str:

@@ -17,24 +17,24 @@ repos:
         language: python
         files: nextcord/
         additional_dependencies:
-          - autotyping==24.3.0
-          - black==23.12.1
-          - libcst==1.2.0
+          - autotyping==24.9.0
+          - black==24.10.0
+          - libcst==1.8.6
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.11
+    rev: v0.15.14
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
 
-  - repo: https://github.com/psf/black
-    rev: 23.12.1
+  - repo: https://github.com/psf/black-pre-commit-mirror
+    rev: 26.5.1
     hooks:
       - id: black
         name: Running black in all files.
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v6.0.0
     hooks:
       - id: check-ast
         name: Check if python files are valid syntax for the ast parser

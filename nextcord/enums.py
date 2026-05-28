@@ -49,6 +49,12 @@ __all__ = (
     "SortOrderType",
     "RoleConnectionMetadataType",
     "ForumLayoutType",
+    "InviteType",
+    "IntegrationType",
+    "InteractionContextType",
+    "MessageReferenceType",
+    "SelectDefaultValueType",
+    "SeparatorSpacingSize",
 )
 
 
@@ -129,7 +135,7 @@ class IntEnum(int, Enum):
         return self.value
 
 
-class StrEnum(str, Enum):  # noqa: SLOT000
+class StrEnum(str, Enum):
     """An enum that supports comparing and hashing as a string."""
 
     def __str__(self) -> str:
@@ -278,6 +284,11 @@ class MessageType(IntEnum):
     """The system message denoting that an auto moderation action was executed.
 
     .. versionadded:: 2.1
+    """
+    role_subscription_purchase = 25
+    """The system message denoting that a role subscription was purchased.
+
+    .. versionadded:: 3.2
     """
     stage_start = 27
     """The system message denoting that a stage channel has started.
@@ -1795,6 +1806,14 @@ class ComponentType(IntEnum):
 
     .. versionadded:: 2.3
     """
+    section = 9
+    text_display = 10
+    thumbnail = 11
+    media_gallery = 12
+    file = 13
+    separator = 14
+    container = 17
+    label = 18
 
 
 class ButtonStyle(IntEnum):
@@ -1813,6 +1832,7 @@ class ButtonStyle(IntEnum):
     """Represents a red button for dangerous actions."""
     link = 5
     """Represents a link button."""
+    premium = 6
 
     # Aliases
     blurple = 1
@@ -1933,6 +1953,11 @@ class AutoModerationEventType(IntEnum):
 
     message_send = 1
     """A member sends or edits a message in the guild."""
+    member_update = 2
+    """A member edits their profile.
+
+    .. versionadded:: 3.2
+    """
 
 
 class AutoModerationTriggerType(IntEnum):
@@ -1955,6 +1980,11 @@ class AutoModerationTriggerType(IntEnum):
     """This rule checks if the number of mentions in the message is more than the maximum allowed.
 
     .. versionadded:: 2.3
+    """
+    member_profile = 6
+    """This rule checks if member profile contains words from a user defined list of keywords.
+
+    .. versionadded:: 3.2
     """
 
 
@@ -1988,6 +2018,11 @@ class AutoModerationActionType(IntEnum):
     .. note::
 
         This action type can only be used with the :attr:`Permissions.moderate_members` permission.
+    """
+    block_member_interaction = 4
+    """Prevents a member from using text, voice, or other interactions.
+
+    .. versionadded:: 3.2
     """
 
 
@@ -2051,6 +2086,55 @@ class InviteType(IntEnum):
     """The invite is for a Discord user."""
 
 
+class IntegrationType(IntEnum):
+    """Where a :class:`BaseApplicationCommand` is available, only for globally-scoped commands.
+
+    .. versionadded:: 3.0
+    """
+
+    guild_install = 0
+    """App is installable to servers."""
+    user_install = 1
+    """App is installable to users."""
+
+
+class InteractionContextType(IntEnum):
+    """Where a :class:`BaseApplicationCommand` can be used, only for globally-scoped commands, or where a :class:`Interaction` originates from.
+
+    .. versionadded:: 3.0
+    """
+
+    guild = 0
+    """The :class:`BaseApplicationCommand` can be used within servers, or the :class:`Interaction` originates from a server."""
+    bot_dm = 1
+    """The :class:`BaseApplicationCommand` can be used within DMs with the app's bot user, or the :class:`Interaction` originates from such DMs."""
+    private_channel = 2
+    """The :class:`BaseApplicationCommand` can be used within Group DMs and DMs other than the app's bot user, or the :class:`Interaction` originates from such channels."""
+
+
+class MessageReferenceType(IntEnum):
+    """Represents the type of reference that a message is.
+
+    .. versionadded:: 3.0
+    """
+
+    default = 0
+    """The reference is used as a reply."""
+    forward = 1
+    """The reference is used to point to a message."""
+
+
+class SelectDefaultValueType(StrEnum):
+    channel = "channel"
+    role = "role"
+    user = "user"
+
+
+class SeparatorSpacingSize(IntEnum):
+    small = 1
+    large = 2
+
+
 T = TypeVar("T")
 
 
@@ -2061,6 +2145,6 @@ def try_enum(cls: Type[T], val: Any) -> T:
     """
 
     try:
-        return cls(val)
+        return cls(val)  # pyright: ignore[reportCallIssue]
     except ValueError:
         return UnknownEnumValue(name=f"unknown_{val}", value=val)  # type: ignore

@@ -528,6 +528,9 @@ Exceptions
 .. autoexception:: nextcord.ext.commands.ChannelNotFound
     :members:
 
+.. autoexception:: nextcord.ext.commands.ChannelTypeNotFound
+    :members:
+
 .. autoexception:: nextcord.ext.commands.ScheduledEventNotFound
     :members:
 
