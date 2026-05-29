@@ -647,6 +647,8 @@ class HTTPClient:
             self.__session = aiohttp.ClientSession(
                 connector=self._connector,
                 ws_response_class=DiscordClientWebSocketResponse,
+                proxy=self._proxy,
+                proxy_auth=self._proxy_auth,
             )
             await self._start_ratelimit_shedding_loop()
 
@@ -3647,7 +3649,7 @@ class HTTPClient:
         valid_keys = (
             "name",
             "permissions",
-            "color",
+            "colors",
             "hoist",
             "mentionable",
             "icon",

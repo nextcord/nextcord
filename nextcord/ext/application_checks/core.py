@@ -746,7 +746,7 @@ def application_command_before_invoke(coro) -> AC:
             app_cmd._callback_before_invoke = coro
 
     def decorator(
-        func: Union[SlashApplicationSubcommand, BaseApplicationCommand, "CoroFunc"]
+        func: Union[SlashApplicationSubcommand, BaseApplicationCommand, "CoroFunc"],
     ) -> Union[SlashApplicationSubcommand, BaseApplicationCommand, BeforeInvokeModifier]:
         return BeforeInvokeModifier(func)
 
@@ -765,7 +765,7 @@ def application_command_after_invoke(coro) -> AC:
             app_cmd._callback_after_invoke = coro
 
     def decorator(
-        func: Union[SlashApplicationSubcommand, BaseApplicationCommand, "CoroFunc"]
+        func: Union[SlashApplicationSubcommand, BaseApplicationCommand, "CoroFunc"],
     ) -> Union[SlashApplicationSubcommand, BaseApplicationCommand, AfterInvokeModifier]:
         return AfterInvokeModifier(func)
 
