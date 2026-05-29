@@ -207,8 +207,12 @@ class Permissions(BaseFlags):
     @classmethod
     def voice(cls) -> Self:
         """A factory method that creates a :class:`Permissions` with all
-        "Voice" permissions from the official Discord UI set to ``True``."""
-        return cls(0b00000011111100000000001100000000)
+        "Voice" permissions from the official Discord UI set to ``True``.
+
+        .. versionchanged:: 3.0
+            Added :attr:`set_voice_channel_status` permission.
+        """
+        return cls(0b0000000000000001001001001000000000000011111100000000001100000000)
 
     @classmethod
     def stage(cls) -> Self:
@@ -592,6 +596,14 @@ class Permissions(BaseFlags):
         """
         return 1 << 46
 
+    @flag_value
+    def set_voice_channel_status(self) -> int:
+        """:class:`bool`: Returns ``True`` if a user can set the status of voice channels.
+
+        .. versionadded:: 3.3
+        """
+        return 1 << 48
+
 
 def _augment_from_permissions(cls):
     cls.VALID_NAMES = set(Permissions.VALID_FLAGS)
@@ -708,6 +720,7 @@ class PermissionOverwrite:
         moderate_members: Optional[bool]
         create_expressions: Optional[bool]
         create_events: Optional[bool]
+        set_voice_channel_status: Optional[bool]
 
     def __init__(self, **kwargs: Optional[bool]) -> None:
         self._values: Dict[str, Optional[bool]] = {}
