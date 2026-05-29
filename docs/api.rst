@@ -3521,6 +3521,8 @@ Command Helpers
 .. autoclass:: Mentionable
     :members:
 
+.. autofunction:: nextcord.ext.slash_utils.rename
+
 Decorators
 ~~~~~~~~~~
 
