@@ -36,7 +36,7 @@ from .permissions import PermissionOverwrite, Permissions
 from .role import Role
 from .sticker import GuildSticker, StickerItem
 from .types.components import Component as ComponentPayload
-from .utils import MISSING, get, snowflake_time
+from .utils import MISSING, SnowflakeIntT, _snowflake_or_int, get, snowflake_time
 from .voice_client import VoiceClient, VoiceProtocol
 
 __all__ = (
@@ -90,7 +90,7 @@ if TYPE_CHECKING:
         TextChannel, Thread, DMChannel, PartialMessageable, VoiceChannel, StageChannel
     ]
     MessageableChannel = Union[PartialMessageableChannel, GroupChannel]
-    SnowflakeTime = Union["Snowflake", datetime]
+    SnowflakeTime = Union[SnowflakeIntT, datetime]
 
 
 @runtime_checkable
@@ -999,10 +999,10 @@ class GuildChannel:
         *,
         beginning: Optional[bool] = None,
         end: Optional[bool] = None,
-        before: Optional[Snowflake] = None,
-        after: Optional[Snowflake] = None,
+        before: Optional[SnowflakeIntT] = None,
+        after: Optional[SnowflakeIntT] = None,
         offset: int = 0,
-        category: Optional[Snowflake] = MISSING,
+        category: Optional[SnowflakeIntT] = MISSING,
         sync_permissions: bool = False,
         reason: Optional[str] = None,
     ) -> None:
@@ -1036,10 +1036,10 @@ class GuildChannel:
             Whether to move the channel to the end of the
             channel list (or category if given).
             This is mutually exclusive with ``beginning``, ``before``, and ``after``.
-        before: Optional[:class:`~nextcord.abc.Snowflake`]
+        before: Optional[Union[:class:`int`, :class:`~nextcord.abc.Snowflake`]]
             The channel that should be before our current channel.
             This is mutually exclusive with ``beginning``, ``end``, and ``after``.
-        after: Optional[:class:`~nextcord.abc.Snowflake`]
+        after: Optional[Union[:class:`int`, :class:`~nextcord.abc.Snowflake`]]
             The channel that should be after our current channel.
             This is mutually exclusive with ``beginning``, ``end``, and ``before``.
         offset: :class:`int`
@@ -1049,7 +1049,7 @@ class GuildChannel:
             while a negative number moves it above. Note that this
             number is relative and computed after the ``beginning``,
             ``end``, ``before``, and ``after`` parameters.
-        category: Optional[:class:`~nextcord.abc.Snowflake`]
+        category: Optional[Union[:class:`int`, :class:`~nextcord.abc.Snowflake`]]
             The category to move this channel under.
             If ``None`` is given then it moves it out of the category.
             This parameter is ignored if moving a category channel.
@@ -1074,7 +1074,7 @@ class GuildChannel:
         bucket = self._sorting_bucket
         channels: List[GuildChannel]
         if category:
-            parent_id = category.id
+            parent_id = _snowflake_or_int(category)
             channels = [
                 ch
                 for ch in self.guild.channels
@@ -1101,9 +1101,13 @@ class GuildChannel:
         elif end:
             index = len(channels)
         elif before:
-            index = next((i for i, c in enumerate(channels) if c.id == before.id), None)
+            index = next(
+                (i for i, c in enumerate(channels) if c.id == _snowflake_or_int(before)), None
+            )
         elif after:
-            index = next((i + 1 for i, c in enumerate(channels) if c.id == after.id), None)
+            index = next(
+                (i + 1 for i, c in enumerate(channels) if c.id == _snowflake_or_int(after)), None
+            )
 
         if index is None:
             raise InvalidArgument("Could not resolve appropriate move position")
@@ -1128,7 +1132,7 @@ class GuildChannel:
         temporary: bool = False,
         unique: bool = True,
         target_type: Optional[InviteTarget] = None,
-        target_user: Optional[User] = None,
+        target_user: Optional[Union[int, User]] = None,
         target_application_id: Optional[int] = None,
     ) -> Invite:
         """|coro|
@@ -1160,7 +1164,7 @@ class GuildChannel:
 
             .. versionadded:: 2.0
 
-        target_user: Optional[:class:`User`]
+        target_user: Optional[Union[:class:`int, :class:`User`]]
             The user whose stream to display for this invite, required if ``target_type``
             is :attr:`.InviteTarget.stream`. The user must be streaming in the channel.
 
@@ -1194,7 +1198,7 @@ class GuildChannel:
             temporary=temporary,
             unique=unique,
             target_type=target_type.value if target_type else None,
-            target_user_id=target_user.id if target_user else None,
+            target_user_id=_snowflake_or_int(target_user),
             target_application_id=target_application_id,
         )
         return Invite.from_incomplete(data=data, state=self._state)
@@ -1682,15 +1686,15 @@ class Messageable:
             The number of messages to retrieve.
             If ``None``, retrieves every message in the channel. Note, however,
             that this would make it a slow operation.
-        before: Optional[Union[:class:`~nextcord.abc.Snowflake`, :class:`datetime.datetime`]]
+        before: Optional[Union[:class:`int`, :class:`~nextcord.abc.Snowflake`, :class:`datetime.datetime`]]
             Retrieve messages before this date or message.
             If a datetime is provided, it is recommended to use a UTC aware datetime.
             If the datetime is naive, it is assumed to be local time.
-        after: Optional[Union[:class:`~nextcord.abc.Snowflake`, :class:`datetime.datetime`]]
+        after: Optional[Union[:class:`int`, :class:`~nextcord.abc.Snowflake`, :class:`datetime.datetime`]]
             Retrieve messages after this date or message.
             If a datetime is provided, it is recommended to use a UTC aware datetime.
             If the datetime is naive, it is assumed to be local time.
-        around: Optional[Union[:class:`~nextcord.abc.Snowflake`, :class:`datetime.datetime`]]
+        around: Optional[Union[:class:`int`, :class:`~nextcord.abc.Snowflake`, :class:`datetime.datetime`]]
             Retrieve messages around this date or message.
             If a datetime is provided, it is recommended to use a UTC aware datetime.
             If the datetime is naive, it is assumed to be local time.
