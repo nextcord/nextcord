@@ -354,6 +354,17 @@ Context
     .. automethod:: nextcord.ext.commands.Context.typing
         :async-with:
 
+.. _ext_commands_api_delimiters:
+
+Delimiters
+----------
+
+.. autoclass:: nextcord.ext.commands.Separator
+    :members:
+
+.. autoclass:: nextcord.ext.commands.Quotation
+    :members:
+
 .. _ext_commands_api_converters:
 
 Converters
