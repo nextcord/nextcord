@@ -3648,9 +3648,9 @@ class RangeMeta(type):
                 return value
 
             def modify(self, option: SlashCommandOption) -> None:
-                if self.min and option.min_value is None:
+                if self.min is not None and option.min_value is None:
                     option.min_value = self.min
-                if self.max and option.max_value is None:
+                if self.max is not None and option.max_value is None:
                     option.max_value = self.max
 
         if isinstance(value, tuple):
