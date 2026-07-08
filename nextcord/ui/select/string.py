@@ -74,7 +74,7 @@ class StringSelect(SelectBase, Generic[V_co]):
     def __init__(
         self,
         *,
-        custom_id: str = MISSING,
+        custom_id: str | None = None,
         placeholder: Optional[str] = None,
         min_values: int = 1,
         max_values: int = 1,
