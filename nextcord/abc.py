@@ -56,6 +56,7 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from .asset import Asset
+    from .components import Component
     from .channel import (
         CategoryChannel,
         DMChannel,
@@ -1262,6 +1263,7 @@ class Messageable:
         reference: Optional[Union[Message, MessageReference, PartialMessage]] = ...,
         mention_author: Optional[bool] = ...,
         view: Optional[View] = ...,
+        components: Optional[List[Component]] = ...,
         flags: Optional[MessageFlags] = ...,
         suppress_embeds: Optional[bool] = ...,
     ) -> Message: ...
@@ -1281,6 +1283,7 @@ class Messageable:
         reference: Optional[Union[Message, MessageReference, PartialMessage]] = ...,
         mention_author: Optional[bool] = ...,
         view: Optional[View] = ...,
+        components: Optional[List[Component]] = ...,
         flags: Optional[MessageFlags] = ...,
         suppress_embeds: Optional[bool] = ...,
     ) -> Message: ...
@@ -1300,6 +1303,7 @@ class Messageable:
         reference: Optional[Union[Message, MessageReference, PartialMessage]] = ...,
         mention_author: Optional[bool] = ...,
         view: Optional[View] = ...,
+        components: Optional[List[Component]] = ...,
         flags: Optional[MessageFlags] = ...,
         suppress_embeds: Optional[bool] = ...,
     ) -> Message: ...
@@ -1319,6 +1323,7 @@ class Messageable:
         reference: Optional[Union[Message, MessageReference, PartialMessage]] = ...,
         mention_author: Optional[bool] = ...,
         view: Optional[View] = ...,
+        components: Optional[List[Component]] = ...,
         flags: Optional[MessageFlags] = ...,
         suppress_embeds: Optional[bool] = ...,
     ) -> Message: ...
@@ -1339,6 +1344,7 @@ class Messageable:
         reference: Optional[Union[Message, MessageReference, PartialMessage]] = None,
         mention_author: Optional[bool] = None,
         view: Optional[View] = None,
+        components: Optional[List[Component]] = None,
         flags: Optional[MessageFlags] = None,
         suppress_embeds: Optional[bool] = None,
     ):
@@ -1420,6 +1426,10 @@ class Messageable:
             Whether to suppress embeds on this message.
 
             .. versionadded:: 2.4
+        components: List[:class:`~nextcord.components.Component`]
+            A list of components to send with the message (Components V2).
+
+            .. versionadded:: 3.3
 
         Raises
         ------
@@ -1447,6 +1457,8 @@ class Messageable:
             flags = MessageFlags()
         if suppress_embeds is not None:
             flags.suppress_embeds = suppress_embeds
+        if components is not None:
+            flags.is_components_v2 = True
 
         flag_value: Optional[int] = flags.value if flags.value != 0 else None
 
@@ -1488,12 +1500,14 @@ class Messageable:
                     "reference parameter must be Message, MessageReference, or PartialMessage"
                 ) from None
 
-        components: Optional[List[ComponentPayload]] = None
-        if view:
+        components_payload: Optional[List[ComponentPayload]] = None
+        if components is not None:
+            components_payload = [comp.to_dict() for comp in components]
+        elif view:
             if not hasattr(view, "__discord_ui_view__"):
                 raise InvalidArgument(f"view parameter must be View not {view.__class__!r}")
 
-            components = cast(List[ComponentPayload], view.to_components())
+            components_payload = cast(List[ComponentPayload], view.to_components())
 
         if file is not None and files is not None:
             raise InvalidArgument("Cannot pass both file and files parameter to send()")
@@ -1514,7 +1528,7 @@ class Messageable:
                     nonce=nonce,
                     message_reference=reference_payload,
                     stickers=stickers_payload,
-                    components=components,
+                    components=components_payload,
                     flags=flag_value,
                 )
             finally:
@@ -1536,7 +1550,7 @@ class Messageable:
                     allowed_mentions=allowed_mentions_payload,
                     message_reference=reference_payload,
                     stickers=stickers_payload,
-                    components=components,
+                    components=components_payload,
                     flags=flag_value,
                 )
             finally:
@@ -1553,7 +1567,7 @@ class Messageable:
                 allowed_mentions=allowed_mentions_payload,
                 message_reference=reference_payload,
                 stickers=stickers_payload,
-                components=components,
+                components=components_payload,
                 flags=flag_value,
             )
 

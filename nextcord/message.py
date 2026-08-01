@@ -1711,7 +1711,7 @@ class Message(Hashable):
         delete_after: Optional[float] = ...,
         allowed_mentions: Optional[AllowedMentions] = ...,
         view: Optional[View] = ...,
-        file: Optional[File] = ...,
+        components: Optional[List[Component]] = ...,
     ) -> Message: ...
 
     @overload
@@ -1725,6 +1725,7 @@ class Message(Hashable):
         delete_after: Optional[float] = ...,
         allowed_mentions: Optional[AllowedMentions] = ...,
         view: Optional[View] = ...,
+        components: Optional[List[Component]] = ...,
         file: Optional[File] = ...,
     ) -> Message: ...
 
@@ -1739,6 +1740,7 @@ class Message(Hashable):
         delete_after: Optional[float] = ...,
         allowed_mentions: Optional[AllowedMentions] = ...,
         view: Optional[View] = ...,
+        components: Optional[List[Component]] = ...,
         files: Optional[List[File]] = ...,
     ) -> Message: ...
 
@@ -1753,6 +1755,7 @@ class Message(Hashable):
         delete_after: Optional[float] = ...,
         allowed_mentions: Optional[AllowedMentions] = ...,
         view: Optional[View] = ...,
+        components: Optional[List[Component]] = ...,
         files: Optional[List[File]] = ...,
     ) -> Message: ...
 
@@ -1766,6 +1769,7 @@ class Message(Hashable):
         delete_after: Optional[float] = None,
         allowed_mentions: Optional[AllowedMentions] = MISSING,
         view: Optional[View] = MISSING,
+        components: Optional[List[Component]] = MISSING,
         file: Optional[File] = MISSING,
         files: Optional[List[File]] = MISSING,
     ) -> Message:
@@ -1823,6 +1827,10 @@ class Message(Hashable):
             If provided, a list of new files to add to the message.
 
             .. versionadded:: 2.0
+        components: Optional[List[:class:`~nextcord.components.Component`]]
+            If provided, a list of new components to add to the message.
+
+            .. versionadded:: 3.3
 
         Raises
         ------
@@ -1881,7 +1889,15 @@ class Message(Hashable):
         if attachments is not MISSING:
             payload["attachments"] = [a.to_dict() for a in attachments]
 
-        if view is not MISSING:
+        if components is not MISSING:
+            flags = MessageFlags._from_value(self.flags.value)
+            flags.is_components_v2 = True
+            payload["flags"] = flags.value
+            if components:
+                payload["components"] = [c.to_dict() for c in components]
+            else:
+                payload["components"] = []
+        elif view is not MISSING:
             self._state.prevent_view_updates_for(self.id)
             if view:
                 payload["components"] = view.to_components()
