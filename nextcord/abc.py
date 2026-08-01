@@ -56,7 +56,6 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from .asset import Asset
-    from .components import Component
     from .channel import (
         CategoryChannel,
         DMChannel,
@@ -67,6 +66,7 @@ if TYPE_CHECKING:
         VoiceChannel,
     )
     from .client import Client
+    from .components import Component
     from .embeds import Embed, EmbedData
     from .enums import InviteTarget
     from .guild import Guild
@@ -1502,7 +1502,9 @@ class Messageable:
 
         components_payload: Optional[List[ComponentPayload]] = None
         if components is not None:
-            components_payload = cast(List[ComponentPayload], [comp.to_dict() for comp in components])
+            components_payload = cast(
+                List[ComponentPayload], [comp.to_dict() for comp in components]
+            )
         elif view:
             if not hasattr(view, "__discord_ui_view__"):
                 raise InvalidArgument(f"view parameter must be View not {view.__class__!r}")
