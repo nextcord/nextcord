@@ -1502,7 +1502,7 @@ class Messageable:
 
         components_payload: Optional[List[ComponentPayload]] = None
         if components is not None:
-            components_payload = [comp.to_dict() for comp in components]
+            components_payload = cast(List[ComponentPayload], [comp.to_dict() for comp in components])
         elif view:
             if not hasattr(view, "__discord_ui_view__"):
                 raise InvalidArgument(f"view parameter must be View not {view.__class__!r}")
