@@ -830,6 +830,9 @@ class E2EEState:
             )
 
             key_package = self._session.get_marshalled_key_package()
+            if not key_package:
+                msg = "Failed to create new MLS key package"
+                raise RuntimeError(msg)
             await self.voice_client.ws.send_dave_mls_key_package(key_package)
 
         # When the epoch is greater than 1, the protocol version of the existing MLS group is changing.
