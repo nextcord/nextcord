@@ -436,8 +436,8 @@ class AuditLogEntry(Hashable):
         _AuditLogProxyAutoModerationBlockMessage,
         Member,
         User,
-        None,
         Role,
+        None,
     ]
 
     def __init__(
