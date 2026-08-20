@@ -1402,8 +1402,41 @@ class GroupMixin(Generic[CogT]):
     @overload
     def command(
         self,
+        name: str,
+        cls: Type[CommandT],
+        *args: Any,
+        **kwargs: Any,
+    ) -> Callable[
+        [
+            Union[
+                Callable[Concatenate[CogT, ContextT, P], Coro[Any]],
+                Callable[Concatenate[ContextT, P], Coro[Any]],
+            ]
+        ],
+        CommandT,
+    ]: ...
+
+    @overload
+    def command(
+        self,
         name: str = ...,
-        cls: Type[Command[CogT, P, T]] = Command,
+        *args: Any,
+        cls: Type[CommandT],
+        **kwargs: Any,
+    ) -> Callable[
+        [
+            Union[
+                Callable[Concatenate[CogT, ContextT, P], Coro[Any]],
+                Callable[Concatenate[ContextT, P], Coro[Any]],
+            ]
+        ],
+        CommandT,
+    ]: ...
+
+    @overload
+    def command(
+        self,
+        name: str = ...,
         *args: Any,
         **kwargs: Any,
     ) -> Callable[
@@ -1415,15 +1448,6 @@ class GroupMixin(Generic[CogT]):
         ],
         Command[CogT, P, T],
     ]: ...
-
-    @overload
-    def command(
-        self,
-        name: str = ...,
-        cls: Type[CommandT] = Command,
-        *args: Any,
-        **kwargs: Any,
-    ) -> Callable[[Callable[Concatenate[Context, P], Coro[Any]]], CommandT]: ...
 
     def command(
         self,
@@ -1445,16 +1469,48 @@ class GroupMixin(Generic[CogT]):
             kwargs.setdefault("parent", self)
             result = command(name, cls, *args, **kwargs)(func)
             self.add_command(result)
-            return result  # type: ignore
-            # pyright really doesnt know what typevars are
+            return result
 
         return decorator
 
     @overload
     def group(
         self,
+        name: str,
+        cls: Type[GroupT],
+        *args: Any,
+        **kwargs: Any,
+    ) -> Callable[
+        [
+            Union[
+                Callable[Concatenate[CogT, ContextT, P], Coro[Any]],
+                Callable[Concatenate[ContextT, P], Coro[Any]],
+            ]
+        ],
+        GroupT,
+    ]: ...
+
+    @overload
+    def group(
+        self,
         name: str = ...,
-        cls: Type[Group[CogT, P, T]] = MISSING,
+        *args: Any,
+        cls: Type[GroupT],
+        **kwargs: Any,
+    ) -> Callable[
+        [
+            Union[
+                Callable[Concatenate[CogT, ContextT, P], Coro[Any]],
+                Callable[Concatenate[ContextT, P], Coro[Any]],
+            ]
+        ],
+        GroupT,
+    ]: ...
+
+    @overload
+    def group(
+        self,
+        name: str = ...,
         *args: Any,
         **kwargs: Any,
     ) -> Callable[
@@ -1466,15 +1522,6 @@ class GroupMixin(Generic[CogT]):
         ],
         Group[CogT, P, T],
     ]: ...
-
-    @overload
-    def group(
-        self,
-        name: str = ...,
-        cls: Type[GroupT] = MISSING,
-        *args: Any,
-        **kwargs: Any,
-    ) -> Callable[[Callable[Concatenate[Context, P], Coro[Any]]], GroupT]: ...
 
     def group(
         self,
@@ -1496,7 +1543,7 @@ class GroupMixin(Generic[CogT]):
             kwargs.setdefault("parent", self)
             result = group(name, *args, cls=cls, **kwargs)(func)
             self.add_command(result)
-            return result  # type: ignore
+            return result
 
         return decorator
 
@@ -1619,8 +1666,40 @@ class Group(GroupMixin[CogT], Command[CogT, P, T]):
 
 @overload
 def command(
+    name: str,
+    cls: Type[CommandT],
+    **attrs: Any,
+) -> Callable[
+    [
+        Union[
+            Callable[Concatenate[Any, ContextT, P], Coro[Any]],
+            Callable[Concatenate[ContextT, P], Coro[Any]],
+        ]
+    ],
+    CommandT,
+]: ...
+
+
+@overload
+def command(
     name: str = ...,
-    cls: Type[Command[CogT, P, T]] = Command,
+    *,
+    cls: Type[CommandT],
+    **attrs: Any,
+) -> Callable[
+    [
+        Union[
+            Callable[Concatenate[Any, ContextT, P], Coro[Any]],
+            Callable[Concatenate[ContextT, P], Coro[Any]],
+        ]
+    ],
+    CommandT,
+]: ...
+
+
+@overload
+def command(
+    name: str = ...,
     **attrs: Any,
 ) -> Callable[
     [
@@ -1630,22 +1709,6 @@ def command(
         ]
     ],
     Command[CogT, P, T],
-]: ...
-
-
-@overload
-def command(
-    name: str = ...,
-    cls: Type[CommandT] = Command,
-    **attrs: Any,
-) -> Callable[
-    [
-        Union[
-            Callable[Concatenate[Cog, ContextT, P], Coro[Any]],
-            Callable[Concatenate[ContextT, P], Coro[Any]],
-        ]
-    ],
-    CommandT,
 ]: ...
 
 
@@ -1704,50 +1767,52 @@ def command(
     return decorator
 
 
+# see the note on the ``command`` overloads above
 @overload
 def group(
-    name: str = ...,
+    name: str,
+    cls: Type[GroupT],
     **attrs: Any,
 ) -> Callable[
     [
         Union[
-            Callable[Concatenate[CogT, ContextT, P], Coro[T]],
-            Callable[Concatenate[ContextT, P], Coro[T]],
-        ]
-    ],
-    Group[CogT, P, T],
-]: ...
-
-
-@overload
-def group(
-    name: str = ...,
-    cls: Type[Group[CogT, P, T]] = MISSING,
-    **attrs: Any,
-) -> Callable[
-    [
-        Union[
-            Callable[Concatenate[CogT, ContextT, P], Coro[T]],
-            Callable[Concatenate[ContextT, P], Coro[T]],
-        ]
-    ],
-    Group[CogT, P, T],
-]: ...
-
-
-@overload
-def group(
-    name: str = ...,
-    cls: Type[GroupT] = MISSING,
-    **attrs: Any,
-) -> Callable[
-    [
-        Union[
-            Callable[Concatenate[Cog, ContextT, P], Coro[Any]],
+            Callable[Concatenate[Any, ContextT, P], Coro[Any]],
             Callable[Concatenate[ContextT, P], Coro[Any]],
         ]
     ],
     GroupT,
+]: ...
+
+
+@overload
+def group(
+    name: str = ...,
+    *,
+    cls: Type[GroupT],
+    **attrs: Any,
+) -> Callable[
+    [
+        Union[
+            Callable[Concatenate[Any, ContextT, P], Coro[Any]],
+            Callable[Concatenate[ContextT, P], Coro[Any]],
+        ]
+    ],
+    GroupT,
+]: ...
+
+
+@overload
+def group(
+    name: str = ...,
+    **attrs: Any,
+) -> Callable[
+    [
+        Union[
+            Callable[Concatenate[CogT, ContextT, P], Coro[T]],
+            Callable[Concatenate[ContextT, P], Coro[T]],
+        ]
+    ],
+    Group[CogT, P, T],
 ]: ...
 
 
@@ -1775,7 +1840,7 @@ def group(
     if cls is MISSING:
         cls = Group
 
-    return command(name=name, cls=cls, **attrs)  # type: ignore
+    return command(name=name, cls=cls, **attrs)
 
 
 def check(predicate: Check) -> Callable[[T], T]:
