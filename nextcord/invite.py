@@ -23,6 +23,7 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from .abc import GuildChannel
+    from .flags import InviteFlags
     from .guild import Guild
     from .state import ConnectionState
     from .types.channel import PartialChannel as InviteChannelPayload
@@ -319,6 +320,7 @@ class Invite(Hashable):
         "approximate_presence_count",
         "target_application",
         "expires_at",
+        "_flags",
         "type",
     )
 
@@ -370,6 +372,8 @@ class Invite(Hashable):
         self.target_application: Optional[PartialAppInfo] = (
             PartialAppInfo(data=application, state=state) if application else None
         )
+
+        self._flags = data.get("flags", 0)
 
     @classmethod
     def from_incomplete(cls, *, state: ConnectionState, data: InvitePayload) -> Self:
@@ -490,3 +494,11 @@ class Invite(Hashable):
             return
 
         await self._state.http.delete_invite(self.code, reason=reason)
+
+    @property
+    def flags(self) -> InviteFlags:
+        """:class:`InviteFlags`: The avaliable flags the invite has.
+
+        .. versionadded:: 2.6
+        """
+        return InviteFlags._from_value(self._flags)
