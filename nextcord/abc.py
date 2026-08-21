@@ -1429,7 +1429,7 @@ class Messageable:
         components: List[:class:`~nextcord.components.Component`]
             A list of components to send with the message (Components V2).
 
-            .. versionadded:: 3.3
+            .. versionadded:: 3.4
 
         Raises
         ------

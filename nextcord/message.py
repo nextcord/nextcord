@@ -1830,7 +1830,7 @@ class Message(Hashable):
         components: Optional[List[:class:`~nextcord.components.Component`]]
             If provided, a list of new components to add to the message.
 
-            .. versionadded:: 3.3
+            .. versionadded:: 3.4
 
         Raises
         ------
