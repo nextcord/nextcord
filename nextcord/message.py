@@ -25,7 +25,7 @@ from typing import (
 )
 
 from . import utils
-from .components import _component_factory
+from .components import resolve_component
 from .embeds import Embed
 from .emoji import Emoji
 from .enums import ChannelType, IntegrationType, MessageReferenceType, MessageType, try_enum
@@ -41,7 +41,7 @@ from .reaction import Reaction
 from .sticker import StickerItem
 from .threads import Thread
 from .user import User
-from .utils import MISSING, escape_mentions
+from .utils import MISSING, SnowflakeList, cached_slot_property, escape_mentions
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -70,9 +70,11 @@ if TYPE_CHECKING:
         Message as MessagePayload,
         MessageActivity as MessageActivityPayload,
         MessageApplication as MessageApplicationPayload,
+        MessageCall as MessageCallPayload,
         MessageReference as MessageReferencePayload,
         MessageSnapshot as MessageSnapshotPayload,
         Reaction as ReactionPayload,
+        RoleSubscriptionData as RoleSubscriptionDataPayload,
     )
     from .types.threads import Thread as ThreadPayload, ThreadArchiveDuration
     from .types.user import User as UserPayload
@@ -83,13 +85,15 @@ if TYPE_CHECKING:
 
 __all__ = (
     "Attachment",
-    "Message",
-    "PartialMessage",
-    "MessageReference",
     "DeletedReferencedMessage",
+    "Message",
+    "MessageCall",
     "MessageInteraction",
     "MessageInteractionMetadata",
+    "MessageReference",
     "MessageSnapshot",
+    "MessageRoleSubscription",
+    "PartialMessage",
 )
 
 
@@ -671,8 +675,8 @@ class MessageSnapshot:
         self.sticker_items: List[StickerItem] = [
             StickerItem(state=self._state, data=s) for s in self._message.get("sticker_items", [])
         ]
-        self.components: List[Component] = [
-            _component_factory(c) for c in self._message.get("components", [])
+        self.components: list[Component] = [
+            resolve_component(comp_data) for comp_data in self._message.get("components", [])
         ]
 
 
@@ -749,6 +753,39 @@ class MessageInteraction(Hashable):
     def created_at(self) -> datetime.datetime:
         """:class:`datetime.datetime`: The interaction's creation time in UTC."""
         return utils.snowflake_time(self.id)
+
+
+class MessageRoleSubscription:
+    """Represents a message's role subscription information.
+
+    This is accessed through the :attr:`Message.role_subscription` attribute if the :attr:`Message.type` is :attr:`MessageType.role_subscription_purchase`.
+
+    .. versionadded:: 3.2
+
+    Attributes
+    ----------
+    role_subscription_listing_id: :class:`int`
+        The ID of the SKU and listing that the user is subscribed to.
+    tier_name: :class:`str`
+        The name of the tier that the user is subscribed to.
+    total_months_subscribed: :class:`int`
+        The cumulative number of months that the user has been subscribed for.
+    is_renewal: :class:`bool`
+        Whether this notification is for a renewal rather than a new purchase.
+    """
+
+    __slots__ = (
+        "role_subscription_listing_id",
+        "tier_name",
+        "total_months_subscribed",
+        "is_renewal",
+    )
+
+    def __init__(self, data: RoleSubscriptionDataPayload) -> None:
+        self.role_subscription_listing_id: int = int(data["role_subscription_listing_id"])
+        self.tier_name: str = data["tier_name"]
+        self.total_months_subscribed: int = data["total_months_subscribed"]
+        self.is_renewal: bool = data["is_renewal"]
 
 
 class MessageInteractionMetadata(Hashable):
@@ -873,6 +910,37 @@ class MessageInteractionMetadata(Hashable):
     def cached_interacted_message(self) -> Optional[Message]:
         """Optional[:class:`~nextcord.Message`]: The interacted message, if found in the internal message cache."""
         return self._state._get_message(self.interacted_message_id)
+
+
+class MessageCall:
+    """Represents a message's call data.
+
+    .. versionadded:: 3.3
+
+    Attributes
+    ----------
+    data: Dict[:class:`str`, Any]
+        The raw data from the call.
+    """
+
+    __slots__ = ("_cs_participants", "_ended_timestamp", "_participants", "_state", "data")
+
+    def __init__(self, *, data: MessageCallPayload, state: ConnectionState) -> None:
+        self._state: ConnectionState = state
+        self.data: MessageCallPayload = data
+
+        self._participants: SnowflakeList = SnowflakeList(map(int, data["participants"]))
+        self._ended_timestamp: Optional[str] = data.get("ended_timestamp")
+
+    @cached_slot_property("_cs_participants")
+    def participants(self) -> List[User | Object]:
+        """List[Optional[:class:`~User`]]: The list of users that participated in the call."""
+        return [self._state.get_user(p) or Object(id=p) for p in self._participants]
+
+    @property
+    def ended_timestamp(self) -> Optional[datetime.datetime]:
+        """Optional[:class:`datetime.datetime`]: An aware UTC datetime object containing the time the call ended."""
+        return utils.parse_time(self._ended_timestamp)
 
 
 @flatten_handlers
@@ -1004,43 +1072,53 @@ class Message(Hashable):
         A list of message snapshots that the message contains.
 
         .. versionadded:: 3.0
+    role_subscription: Optional[:class:`MessageRoleSubscription`]
+        The role subscription data of a message, if applicable.
+
+        .. versionadded:: 3.2
+    call: Optional[:class:`MessageCall`]
+        The call associated with the message.
+
+        .. versionadded:: 3.3
     """
 
     __slots__ = (
-        "_state",
-        "_edited_timestamp",
+        "_background_tasks",
         "_cs_channel_mentions",
-        "_cs_raw_mentions",
         "_cs_clean_content",
         "_cs_raw_channel_mentions",
+        "_cs_raw_mentions",
         "_cs_raw_role_mentions",
         "_cs_system_content",
-        "tts",
-        "content",
+        "_edited_timestamp",
+        "_state",
+        "activity",
+        "application",
+        "attachments",
+        "author",
+        "call",
         "channel",
-        "webhook_id",
-        "mention_everyone",
+        "components",
+        "content",
         "embeds",
+        "flags",
+        "guild",
         "id",
         "interaction",
         "interaction_metadata",
+        "mention_everyone",
         "mentions",
-        "author",
-        "attachments",
         "nonce",
         "pinned",
-        "role_mentions",
-        "type",
-        "flags",
         "reactions",
         "reference",
-        "application",
-        "activity",
-        "stickers",
-        "components",
-        "_background_tasks",
-        "guild",
+        "role_mentions",
+        "role_subscription",
         "snapshots",
+        "stickers",
+        "tts",
+        "type",
+        "webhook_id",
     )
 
     if TYPE_CHECKING:
@@ -1085,10 +1163,14 @@ class Message(Hashable):
         self.stickers: List[StickerItem] = [
             StickerItem(data=d, state=state) for d in data.get("sticker_items", [])
         ]
-        self.components: List[Component] = [
-            _component_factory(d) for d in data.get("components", [])
+        self.components: list[Component] = [
+            resolve_component(comp_data) for comp_data in data.get("components", [])
         ]
         self._background_tasks: Set[asyncio.Task[None]] = set()
+
+        self.call: Optional[MessageCall] = None
+        if _call := data.get("call"):
+            self.call = MessageCall(state=state, data=_call)
 
         try:
             # if the channel doesn't have a guild attribute, we handle that
@@ -1143,6 +1225,11 @@ class Message(Hashable):
                 data=data["interaction_metadata"], guild=self.guild, state=self._state
             )
             if "interaction_metadata" in data
+            else None
+        )
+        self.role_subscription: Optional[MessageRoleSubscription] = (
+            MessageRoleSubscription(data=data["role_subscription_data"])
+            if "role_subscription_data" in data
             else None
         )
 
@@ -1310,8 +1397,8 @@ class Message(Hashable):
                 if role is not None:
                     self.role_mentions.append(role)
 
-    def _handle_components(self, components: List[ComponentPayload]) -> None:
-        self.components = [_component_factory(d) for d in components]
+    def _handle_components(self, components: list[ComponentPayload]) -> None:
+        self.components = [resolve_component(comp_data) for comp_data in components]
 
     def _handle_thread(self, thread: Optional[ThreadPayload]) -> None:
         if thread:
@@ -1546,6 +1633,18 @@ class Message(Hashable):
 
         if self.type is MessageType.guild_invite_reminder:
             return "Wondering who to invite?\nStart by inviting anyone who can help you build the server!"
+
+        if (
+            self.type is MessageType.role_subscription_purchase
+            and self.role_subscription is not None
+        ):
+            tier_name = self.role_subscription.tier_name
+            total_months_subscribed = self.role_subscription.total_months_subscribed
+            months = f"{total_months_subscribed} month{'s' if total_months_subscribed != 1 else ''}"
+            if self.role_subscription.is_renewal:
+                return f"{self.author.name} renewed {tier_name} and has been a subscriber of {self.guild} for {months}!"
+
+            return f"{self.author.name} joined {tier_name} and has been a subscriber of {self.guild} for {months}!"
 
         if self.type is MessageType.stage_start:
             return f"{self.author.display_name} started {self.content}"
@@ -2373,7 +2472,10 @@ class PartialMessage(Hashable):
 
         if fields:
             # data isn't unbound
-            msg = self._state.create_message(channel=self.channel, data=data)
+            msg = self._state.create_message(
+                channel=self.channel,
+                data=data,  # pyright: ignore[reportPossiblyUnboundVariable]
+            )
             if view and not view.is_finished() and view.prevent_update:
                 self._state.store_view(view, self.id)
             return msg

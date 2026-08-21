@@ -23,7 +23,7 @@ from typing import (
     overload,
 )
 
-from . import abc, ui, utils
+from . import abc, utils
 from .asset import Asset
 from .emoji import Emoji
 from .enums import (
@@ -63,6 +63,7 @@ __all__ = (
 if TYPE_CHECKING:
     from typing_extensions import Self
 
+    from . import ui
     from .abc import Snowflake, SnowflakeTime
     from .embeds import Embed
     from .guild import Guild, GuildChannel as GuildChannelType

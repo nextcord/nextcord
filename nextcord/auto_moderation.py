@@ -54,7 +54,7 @@ class AutoModerationTriggerMetadata:
         .. note::
 
             This is ``None`` and cannot be provided if the trigger type of the rule is not
-            :attr:`AutoModerationTriggerType.keyword`.
+            :attr:`AutoModerationTriggerType.keyword` or :attr:`AutoModerationTriggerType.member_profile`.
     regex_patterns: Optional[List[:class:`str`]]
         A list of regex patterns which will be matched with content. Can only be up to 10 patterns.
 
@@ -63,7 +63,7 @@ class AutoModerationTriggerMetadata:
         .. note::
 
             This is ``None`` and cannot be provided if the trigger type of the rule is not
-            :attr:`AutoModerationTriggerType.keyword`.
+            :attr:`AutoModerationTriggerType.keyword` or :attr:`AutoModerationTriggerType.member_profile`.
 
         .. warning::
 
@@ -84,7 +84,7 @@ class AutoModerationTriggerMetadata:
         .. note::
 
             This is ``None`` and cannot be provided if the trigger type of the rule is not
-            :attr:`AutoModerationTriggerType.keyword_preset`.
+            :attr:`AutoModerationTriggerType.keyword_preset` or :attr:`AutoModerationTriggerType.member_profile`.
 
         .. warning::
 
