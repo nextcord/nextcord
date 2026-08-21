@@ -179,6 +179,7 @@ ignore = [
     "BLE",     # TODO:
     "C90",     # TODO:
     "COM",     # black sorts out trailing commas
+    "CPY001",  # we use SPDX not "regular" copyright strings
     "D",       # TODO:
     "E",       # TODO:
     "E501",    # black sorts out line length
