@@ -2165,7 +2165,7 @@ class Guild(Hashable):
 
         Retrieves the onboarding for this guild.
 
-        .. versionadded:: 3.0
+        .. versionadded:: 3.4
 
         Raises
         ------
@@ -2198,7 +2198,7 @@ class Guild(Hashable):
         You must have the :attr:`~Permissions.manage_guild` &
         :attr:`~Permissions.manage_roles` permissions to use this.
 
-        .. versionadded:: 3.0
+        .. versionadded:: 3.4
 
         Parameters
         ----------

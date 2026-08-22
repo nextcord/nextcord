@@ -2140,7 +2140,7 @@ class SeparatorSpacingSize(IntEnum):
 class OnboardingPromptType(IntEnum):
     """Represents the type of :class:`OnboardingPrompt`.
 
-    .. versionadded:: 3.0
+    .. versionadded:: 3.4
     """
 
     multiple_choice = 0
@@ -2152,7 +2152,7 @@ class OnboardingPromptType(IntEnum):
 class OnboardingMode(IntEnum):
     """The criteria needed in order for onboarding to be enabled.
 
-    .. versionadded:: 3.0
+    .. versionadded:: 3.4
     """
 
     default = 0

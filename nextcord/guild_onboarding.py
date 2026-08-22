@@ -29,7 +29,7 @@ __all__ = (
 class OnboardingPromptOption(Hashable):
     """Represents an option in a guild's onboarding prompt.
 
-    .. versionadded:: 3.0
+    .. versionadded:: 3.4
 
     Attributes
     ----------
@@ -113,7 +113,7 @@ class OnboardingPromptOption(Hashable):
 class OnboardingPrompt(Hashable):
     """Represents a prompt for a guild's onboarding screen.
 
-    .. versionadded:: 3.0
+    .. versionadded:: 3.4
 
     Attributes
     ----------
@@ -200,7 +200,7 @@ class OnboardingPrompt(Hashable):
 class Onboarding:
     """Represents the onboarding screen for a guild.
 
-    .. versionadded:: 3.0
+    .. versionadded:: 3.4
 
     Attributes
     ----------
