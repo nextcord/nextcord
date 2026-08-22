@@ -1448,6 +1448,12 @@ of :class:`enum.Enum`.
 .. autoclass:: MessageReferenceType()
     :members:
 
+.. autoclass:: OnboardingPromptType()
+    :members:
+
+.. autoclass:: OnboardingMode()
+    :members:
+
 Async Iterator
 --------------
 
@@ -2298,6 +2304,18 @@ GuildPreview
 ~~~~~~~~~~~~
 
 .. autoclass:: GuildPreview()
+    :members:
+
+Onboarding
+~~~~~~~~~~
+
+.. autoclass:: Onboarding()
+    :members:
+
+.. autoclass:: OnboardingPrompt()
+    :members:
+
+.. autoclass:: OnboardingPromptOption()
     :members:
 
 Integration
