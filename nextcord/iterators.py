@@ -14,13 +14,13 @@ from .object import Object
 from .utils import snowflake_time, time_snowflake
 
 __all__ = (
-    "archived_thread_iterator",
-    "audit_log_iterator",
-    "ban_iterator",
-    "guild_iterator",
-    "history_iterator",
-    "member_iterator",
     "reaction_iterator",
+    "history_iterator",
+    "ban_iterator",
+    "audit_log_iterator",
+    "guild_iterator",
+    "member_iterator",
+    "archived_thread_iterator",
     "scheduled_event_iterator",
     "scheduled_event_user_iterator",
 )
