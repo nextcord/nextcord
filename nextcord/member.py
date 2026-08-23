@@ -18,7 +18,7 @@ from .enums import Status, try_enum
 from .flags import MemberFlags
 from .object import Object
 from .permissions import Permissions
-from .user import BaseUser, User, _UserTag
+from .user import BaseUser, PrimaryGuild, User, _UserTag
 from .utils import MISSING
 
 __all__ = (
@@ -269,6 +269,7 @@ class Member(abc.Messageable, _UserTag):
         accent_color: Optional[Colour]
         accent_colour: Optional[Colour]
         avatar_decoration: Optional[AvatarDecoration]
+        primary_guild: PrimaryGuild
 
     def __init__(
         self, *, data: MemberWithUserPayload, guild: Guild, state: ConnectionState
@@ -395,7 +396,16 @@ class Member(abc.Messageable, _UserTag):
 
     def _update_inner_user(self, user: UserPayload) -> Optional[Tuple[User, User]]:
         u = self._user
-        original = (u.name, u._avatar, u.discriminator, u.global_name, u._public_flags, u._banner)
+        original = (
+            u.name,
+            u._avatar,
+            u.discriminator,
+            u.global_name,
+            u._public_flags,
+            u._banner,
+            u._avatar_decoration,
+            u._primary_guild,
+        )
         # These keys seem to always be available
         modified = (
             user["username"],
@@ -404,10 +414,21 @@ class Member(abc.Messageable, _UserTag):
             user.get("global_name"),
             user.get("public_flags", 0),
             user.get("banner"),
+            user.get("avatar_decoration_data"),
+            user.get("primary_guild"),
         )
         if original != modified:
             to_return = User._copy(self._user)
-            u.name, u._avatar, u.discriminator, u.global_name, u._public_flags, u._banner = modified
+            (
+                u.name,
+                u._avatar,
+                u.discriminator,
+                u.global_name,
+                u._public_flags,
+                u._banner,
+                u._avatar_decoration,
+                u._primary_guild,
+            ) = modified
             # Signal to dispatch on_user_update
             return to_return, u
         return None

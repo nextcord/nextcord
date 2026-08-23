@@ -2790,6 +2790,14 @@ MessageRoleSubscription
 .. autoclass:: MessageRoleSubscription()
     :members:
 
+PrimaryGuild
+~~~~~~~~~~~~
+
+.. attributetable:: PrimaryGuild
+
+.. autoclass:: PrimaryGuild()
+    :members:
+
 .. _discord_api_data:
 
 Data Classes
