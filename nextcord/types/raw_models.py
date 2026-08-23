@@ -11,6 +11,7 @@ from .user import User
 
 ReactionType = Literal[0, 1]
 
+
 class MessageDeleteEvent(TypedDict):
     id: Snowflake
     channel_id: Snowflake
