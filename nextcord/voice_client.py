@@ -248,6 +248,8 @@ class VoiceClient(VoiceProtocol):
         self.encoder: Encoder = MISSING
         self._incr_nonce: int = 0
         self.ws: DiscordVoiceWebSocket = MISSING
+        # Tracks the exception (if any) that caused the last playback to stop.
+        self._last_player_error: Optional[Exception] = None
         self.e2ee_state: Optional[E2EEState] = E2EEState(self) if has_dave else None
 
     warn_nacl = not has_nacl
@@ -597,6 +599,8 @@ class VoiceClient(VoiceProtocol):
         if not self.encoder and not source.is_opus():
             self.encoder = opus.Encoder()
 
+        # Reset last error for a new playback session
+        self._last_player_error = None
         self._player = AudioPlayer(source, self, after=after)
         self._player.start()
 
@@ -607,6 +611,20 @@ class VoiceClient(VoiceProtocol):
     def is_paused(self) -> bool:
         """Indicates if we're playing audio, but if we're paused."""
         return self._player is not None and self._player.is_paused()
+
+    @property
+    def error(self) -> Optional[Exception]:
+        """Optional[:class:`Exception`]: The exception that caused the last playback to stop, if any.
+
+        This reflects the exception captured by the internal audio player thread.
+        It is reset to ``None`` at the start of a new :meth:`play` invocation.
+        """
+        return self._last_player_error
+
+    @property
+    def has_failed(self) -> bool:
+        """bool: Whether the last playback terminated due to an exception."""
+        return self._last_player_error is not None
 
     def stop(self) -> None:
         """Stops playing audio."""
