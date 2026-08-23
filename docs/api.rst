@@ -1448,6 +1448,9 @@ of :class:`enum.Enum`.
 .. autoclass:: MessageReferenceType()
     :members:
 
+.. autoclass:: ReactionType()
+    :members:
+
 Async Iterator
 --------------
 
