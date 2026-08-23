@@ -1263,7 +1263,7 @@ class Messageable:
         reference: Optional[Union[Message, MessageReference, PartialMessage]] = ...,
         mention_author: Optional[bool] = ...,
         view: Optional[View] = ...,
-        components: Optional[List[Component]] = ...,
+        components: Optional[Sequence[Component]] = ...,
         flags: Optional[MessageFlags] = ...,
         suppress_embeds: Optional[bool] = ...,
     ) -> Message: ...
@@ -1283,7 +1283,7 @@ class Messageable:
         reference: Optional[Union[Message, MessageReference, PartialMessage]] = ...,
         mention_author: Optional[bool] = ...,
         view: Optional[View] = ...,
-        components: Optional[List[Component]] = ...,
+        components: Optional[Sequence[Component]] = ...,
         flags: Optional[MessageFlags] = ...,
         suppress_embeds: Optional[bool] = ...,
     ) -> Message: ...
@@ -1303,7 +1303,7 @@ class Messageable:
         reference: Optional[Union[Message, MessageReference, PartialMessage]] = ...,
         mention_author: Optional[bool] = ...,
         view: Optional[View] = ...,
-        components: Optional[List[Component]] = ...,
+        components: Optional[Sequence[Component]] = ...,
         flags: Optional[MessageFlags] = ...,
         suppress_embeds: Optional[bool] = ...,
     ) -> Message: ...
@@ -1323,7 +1323,7 @@ class Messageable:
         reference: Optional[Union[Message, MessageReference, PartialMessage]] = ...,
         mention_author: Optional[bool] = ...,
         view: Optional[View] = ...,
-        components: Optional[List[Component]] = ...,
+        components: Optional[Sequence[Component]] = ...,
         flags: Optional[MessageFlags] = ...,
         suppress_embeds: Optional[bool] = ...,
     ) -> Message: ...
@@ -1344,7 +1344,7 @@ class Messageable:
         reference: Optional[Union[Message, MessageReference, PartialMessage]] = None,
         mention_author: Optional[bool] = None,
         view: Optional[View] = None,
-        components: Optional[List[Component]] = None,
+        components: Optional[Sequence[Component]] = None,
         flags: Optional[MessageFlags] = None,
         suppress_embeds: Optional[bool] = None,
     ):
@@ -1426,7 +1426,7 @@ class Messageable:
             Whether to suppress embeds on this message.
 
             .. versionadded:: 2.4
-        components: List[:class:`~nextcord.components.Component`]
+        components: Optional[Sequence[:class:`~nextcord.components.Component`]]
             A list of components to send with the message (Components V2).
 
             .. versionadded:: 3.4

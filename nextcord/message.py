@@ -18,6 +18,7 @@ from typing import (
     Dict,
     List,
     Optional,
+    Sequence,
     Set,
     Tuple,
     Union,
@@ -1711,7 +1712,7 @@ class Message(Hashable):
         delete_after: Optional[float] = ...,
         allowed_mentions: Optional[AllowedMentions] = ...,
         view: Optional[View] = ...,
-        components: Optional[List[Component]] = ...,
+        components: Optional[Sequence[Component]] = ...,
     ) -> Message: ...
 
     @overload
@@ -1725,7 +1726,7 @@ class Message(Hashable):
         delete_after: Optional[float] = ...,
         allowed_mentions: Optional[AllowedMentions] = ...,
         view: Optional[View] = ...,
-        components: Optional[List[Component]] = ...,
+        components: Optional[Sequence[Component]] = ...,
         file: Optional[File] = ...,
     ) -> Message: ...
 
@@ -1740,7 +1741,7 @@ class Message(Hashable):
         delete_after: Optional[float] = ...,
         allowed_mentions: Optional[AllowedMentions] = ...,
         view: Optional[View] = ...,
-        components: Optional[List[Component]] = ...,
+        components: Optional[Sequence[Component]] = ...,
         files: Optional[List[File]] = ...,
     ) -> Message: ...
 
@@ -1755,7 +1756,7 @@ class Message(Hashable):
         delete_after: Optional[float] = ...,
         allowed_mentions: Optional[AllowedMentions] = ...,
         view: Optional[View] = ...,
-        components: Optional[List[Component]] = ...,
+        components: Optional[Sequence[Component]] = ...,
         files: Optional[List[File]] = ...,
     ) -> Message: ...
 
@@ -1769,7 +1770,7 @@ class Message(Hashable):
         delete_after: Optional[float] = None,
         allowed_mentions: Optional[AllowedMentions] = MISSING,
         view: Optional[View] = MISSING,
-        components: Optional[List[Component]] = MISSING,
+        components: Optional[Sequence[Component]] = MISSING,
         file: Optional[File] = MISSING,
         files: Optional[List[File]] = MISSING,
     ) -> Message:
@@ -1827,7 +1828,7 @@ class Message(Hashable):
             If provided, a list of new files to add to the message.
 
             .. versionadded:: 2.0
-        components: Optional[List[:class:`~nextcord.components.Component`]]
+        components: Optional[Sequence[:class:`~nextcord.components.Component`]]
             If provided, a list of new components to add to the message.
 
             .. versionadded:: 3.4
