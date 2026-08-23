@@ -401,6 +401,10 @@ class MessageFlags(BaseFlags):
         """
         return 1 << 13
 
+    @flag_value
+    def is_components_v2(self) -> int:
+        return 1 << 15
+
 
 @fill_with_flags()
 class PublicUserFlags(BaseFlags):
