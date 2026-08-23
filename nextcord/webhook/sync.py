@@ -15,7 +15,19 @@ import re
 import threading
 import time
 from types import TracebackType
-from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Tuple, Type, Union, overload
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    List,
+    Literal,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    Union,
+    overload,
+)
 from urllib.parse import quote as urlquote
 from weakref import WeakValueDictionary
 
@@ -35,6 +47,7 @@ _log = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from ..abc import Snowflake
+    from ..components import Component
     from ..embeds import Embed
     from ..file import File
     from ..mentions import AllowedMentions
@@ -405,6 +418,7 @@ class SyncWebhookMessage(Message):
         file: File = MISSING,
         files: List[File] = MISSING,
         allowed_mentions: Optional[AllowedMentions] = None,
+        components: Optional[Sequence[Component]] = MISSING,
     ) -> SyncWebhookMessage:
         """Edits the message.
 
@@ -428,6 +442,11 @@ class SyncWebhookMessage(Message):
         allowed_mentions: :class:`AllowedMentions`
             Controls the mentions being processed in this message.
             See :meth:`.abc.Messageable.send` for more information.
+        components: Optional[Sequence[:class:`~nextcord.components.Component`]]
+            A list of components to edit the message with (Components V2). If ``None`` is passed then
+            the components are removed.
+
+            .. versionadded:: 3.4
 
         Raises
         ------
@@ -456,6 +475,7 @@ class SyncWebhookMessage(Message):
             files=files,
             attachments=attachments,
             allowed_mentions=allowed_mentions,
+            components=components,
         )
 
     def delete(self, *, delay: Optional[float] = None) -> None:
@@ -832,8 +852,10 @@ class SyncWebhook(BaseWebhook):
         embed: Embed = MISSING,
         embeds: List[Embed] = MISSING,
         allowed_mentions: AllowedMentions = MISSING,
+        thread: Snowflake = MISSING,
         wait: Literal[True],
         thread_name: Optional[str] = None,
+        components: Optional[Sequence[Component]] = MISSING,
     ) -> SyncWebhookMessage: ...
 
     @overload
@@ -849,8 +871,10 @@ class SyncWebhook(BaseWebhook):
         embed: Embed = MISSING,
         embeds: List[Embed] = MISSING,
         allowed_mentions: AllowedMentions = MISSING,
+        thread: Snowflake = MISSING,
         wait: Literal[False] = ...,
         thread_name: Optional[str] = None,
+        components: Optional[Sequence[Component]] = MISSING,
     ) -> None: ...
 
     def send(
@@ -868,6 +892,7 @@ class SyncWebhook(BaseWebhook):
         thread: Snowflake = MISSING,
         wait: bool = False,
         thread_name: Optional[str] = None,
+        components: Optional[Sequence[Component]] = MISSING,
     ) -> Optional[SyncWebhookMessage]:
         """Sends a message using the webhook.
 
@@ -921,6 +946,10 @@ class SyncWebhook(BaseWebhook):
             Name of thread to create (requires the webhook channel to be a forum or media channel).
 
             .. versionadded:: 3.0
+        components: Optional[Sequence[:class:`~nextcord.components.Component`]]
+            A list of components (Components V2) to send with the message.
+
+            .. versionadded:: 3.4
 
         Raises
         ------
@@ -962,6 +991,7 @@ class SyncWebhook(BaseWebhook):
             allowed_mentions=allowed_mentions,
             previous_allowed_mentions=previous_mentions,
             thread_name=thread_name,
+            components=components,
         )
         adapter: WebhookAdapter = _get_webhook_adapter()
 
@@ -1030,6 +1060,7 @@ class SyncWebhook(BaseWebhook):
         attachments: List[Attachment] = MISSING,
         allowed_mentions: Optional[AllowedMentions] = None,
         thread: Snowflake = MISSING,
+        components: Optional[Sequence[Component]] = MISSING,
     ) -> SyncWebhookMessage:
         """Edits a message owned by this webhook.
 
@@ -1063,6 +1094,11 @@ class SyncWebhook(BaseWebhook):
             The thread that the message to be edited is in.
 
             .. versionadded:: 3.0
+        components: Optional[Sequence[:class:`~nextcord.components.Component`]]
+            A list of components to edit the message with (Components V2). If ``None`` is passed then
+            the components are removed.
+
+            .. versionadded:: 3.4
 
         Raises
         ------
@@ -1093,6 +1129,7 @@ class SyncWebhook(BaseWebhook):
             embeds=embeds,
             allowed_mentions=allowed_mentions,
             previous_allowed_mentions=previous_mentions,
+            components=components,
         )
         adapter: WebhookAdapter = _get_webhook_adapter()
         thread_id: Optional[int] = None

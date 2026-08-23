@@ -14,6 +14,7 @@ from typing import (
     Generic,
     List,
     Optional,
+    Sequence,
     Set,
     Tuple,
     TypeVar,
@@ -536,7 +537,7 @@ class Interaction(Hashable, Generic[ClientT]):
         attachments: List[Attachment] = MISSING,
         view: Optional[View] = MISSING,
         allowed_mentions: Optional[AllowedMentions] = None,
-        components: list[components.Component] | None = None,
+        components: Optional[Sequence[components.Component]] = MISSING,
     ) -> InteractionMessage:
         """|coro|
 
@@ -572,6 +573,11 @@ class Interaction(Hashable, Generic[ClientT]):
         view: Optional[:class:`~nextcord.ui.View`]
             The updated view to update this message with. If ``None`` is passed then
             the view is removed.
+        components: Optional[Sequence[:class:`~nextcord.components.Component`]]
+            A list of components to edit the message with (Components V2). If ``None`` is passed then
+            the components are removed.
+
+            .. versionadded:: 3.4
 
         Raises
         ------
@@ -680,7 +686,7 @@ class Interaction(Hashable, Generic[ClientT]):
         flags: Optional[MessageFlags] = None,
         ephemeral: Optional[bool] = None,
         suppress_embeds: Optional[bool] = None,
-        components: list[components.Component] | None = None,
+        components: Optional[Sequence[components.Component]] = MISSING,
     ) -> Union[PartialInteractionMessage, WebhookMessage]:
         """|coro|
 
@@ -743,6 +749,7 @@ class Interaction(Hashable, Generic[ClientT]):
             allowed_mentions=allowed_mentions,
             flags=flags,
             suppress_embeds=suppress_embeds,
+            components=components,
         )
 
     async def edit(self, *args, **kwargs) -> Optional[Message]:
@@ -943,7 +950,7 @@ class InteractionResponse:
         flags: Optional[MessageFlags] = None,
         ephemeral: Optional[bool] = None,
         suppress_embeds: Optional[bool] = None,
-        components: list[components.Component] | None = None,
+        components: Optional[Sequence[components.Component]] = MISSING,
     ) -> PartialInteractionMessage:
         """|coro|
 
@@ -993,6 +1000,10 @@ class InteractionResponse:
             Whether to suppress embeds on this message.
 
             .. versionadded:: 2.4
+        components: Optional[Sequence[:class:`~nextcord.components.Component`]]
+            A list of components (Components V2) to send with the message.
+
+            .. versionadded:: 3.4
 
         Raises
         ------
@@ -1052,7 +1063,7 @@ class InteractionResponse:
             flags.suppress_embeds = suppress_embeds
         if ephemeral is not None:
             flags.ephemeral = ephemeral
-        if components is not None:
+        if components is not MISSING and components is not None:
             flags.is_components_v2 = True
             payload["components"] = [comp.to_dict() for comp in components]
 
@@ -1147,7 +1158,7 @@ class InteractionResponse:
         attachments: List[Attachment] = MISSING,
         view: Optional[View] = MISSING,
         delete_after: Optional[float] = None,
-        components: list[components.Component] | None = None,
+        components: Optional[Sequence[components.Component]] = MISSING,
     ) -> Optional[Message]:
         """|coro|
 
@@ -1178,6 +1189,11 @@ class InteractionResponse:
             If provided, the number of seconds to wait in the background
             before deleting the message we just sent. If the deletion fails,
             then it is silently ignored.
+        components: Optional[Sequence[:class:`~nextcord.components.Component`]]
+            A list of components to edit the message with (Components V2). If ``None`` is passed then
+            the components are removed.
+
+            .. versionadded:: 3.4
 
 
         Raises
@@ -1240,8 +1256,11 @@ class InteractionResponse:
                 payload["components"] = []
             else:
                 payload["components"] = view.to_components()
-        elif components is not None:
-            payload["components"] = [comp.to_dict() for comp in components]
+        elif components is not MISSING:
+            if components is not None:
+                payload["components"] = [comp.to_dict() for comp in components]
+            else:
+                payload["components"] = []
 
         adapter = async_context.get()
         try:
@@ -1284,7 +1303,7 @@ class _InteractionMessageMixin:
         view: Optional[View] = MISSING,
         allowed_mentions: Optional[AllowedMentions] = None,
         delete_after: Optional[float] = None,
-        components: list[components.Component] | None = None,
+        components: Optional[Sequence[components.Component]] = MISSING,
     ) -> InteractionMessage:
         """|coro|
 
@@ -1318,6 +1337,11 @@ class _InteractionMessageMixin:
             If provided, the number of seconds to wait in the background
             before deleting the message we just edited. If the deletion fails,
             then it is silently ignored.
+        components: Optional[Sequence[:class:`~nextcord.components.Component`]]
+            A list of components to edit the message with (Components V2). If ``None`` is passed then
+            the components are removed.
+
+            .. versionadded:: 3.4
 
         Raises
         ------

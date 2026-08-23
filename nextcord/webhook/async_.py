@@ -17,6 +17,7 @@ from typing import (
     Literal,
     NamedTuple,
     Optional,
+    Sequence,
     Tuple,
     Type,
     Union,
@@ -507,7 +508,7 @@ def handle_message_parameters(
     flags: Optional[MessageFlags] = None,
     suppress_embeds: Optional[bool] = None,
     thread_name: Optional[str] = None,
-    components: list[Component] | None = None,
+    components: Optional[Sequence[Component]] = MISSING,
 ) -> ExecuteWebhookParameters:
     if files is not MISSING and file is not MISSING:
         raise InvalidArgument("Cannot mix file and files keyword arguments.")
@@ -559,9 +560,12 @@ def handle_message_parameters(
     if ephemeral is not None:
         flags.ephemeral = ephemeral
 
-    if components is not None:
+    if components is not MISSING:
         flags.is_components_v2 = True
-        payload["components"] = [comp.to_dict() for comp in components]
+        if components is not None:
+            payload["components"] = [comp.to_dict() for comp in components]
+        else:
+            payload["components"] = []
 
     if flags.value != 0:
         payload["flags"] = flags.value
@@ -746,6 +750,7 @@ class WebhookMessage(Message):
         view: Optional[View] = MISSING,
         allowed_mentions: Optional[AllowedMentions] = None,
         delete_after: Optional[float] = None,
+        components: Optional[Sequence[Component]] = MISSING,
     ) -> WebhookMessage:
         """|coro|
 
@@ -793,6 +798,11 @@ class WebhookMessage(Message):
             then it is silently ignored.
 
             .. versionadded:: 2.0
+        components: Optional[Sequence[:class:`~nextcord.components.Component`]]
+            A list of components to edit the message with (Components V2). If ``None`` is passed then
+            the components are removed.
+
+            .. versionadded:: 3.4
 
         Raises
         ------
@@ -822,6 +832,7 @@ class WebhookMessage(Message):
             attachments=attachments,
             view=view,
             allowed_mentions=allowed_mentions,
+            components=components,
         )
 
         if delete_after is not None:
@@ -1375,6 +1386,7 @@ class Webhook(BaseWebhook):
         flags: Optional[MessageFlags] = None,
         suppress_embeds: Optional[bool] = None,
         thread_name: Optional[str] = None,
+        components: Optional[Sequence[Component]] = MISSING,
     ) -> WebhookMessage: ...
 
     @overload
@@ -1398,6 +1410,7 @@ class Webhook(BaseWebhook):
         flags: Optional[MessageFlags] = None,
         suppress_embeds: Optional[bool] = None,
         thread_name: Optional[str] = None,
+        components: Optional[Sequence[Component]] = MISSING,
     ) -> None: ...
 
     async def send(
@@ -1420,7 +1433,7 @@ class Webhook(BaseWebhook):
         flags: Optional[MessageFlags] = None,
         suppress_embeds: Optional[bool] = None,
         thread_name: Optional[str] = None,
-        components: list[Component] | None = None,
+        components: Optional[Sequence[Component]] = MISSING,
     ) -> Optional[WebhookMessage]:
         """|coro|
 
@@ -1509,6 +1522,10 @@ class Webhook(BaseWebhook):
             Name of thread to create (requires the webhook channel to be a forum or media channel).
 
             .. versionadded:: 3.0
+        components: Optional[Sequence[:class:`~nextcord.components.Component`]]
+            A list of components (Components V2) to send with the message.
+
+            .. versionadded:: 3.4
 
         Raises
         ------
@@ -1651,6 +1668,7 @@ class Webhook(BaseWebhook):
         view: Optional[View] = MISSING,
         thread: Snowflake = MISSING,
         allowed_mentions: Optional[AllowedMentions] = None,
+        components: Optional[Sequence[Component]] = MISSING,
     ) -> WebhookMessage:
         """|coro|
 
@@ -1701,6 +1719,11 @@ class Webhook(BaseWebhook):
             The thread that the message to be edited is in.
 
             .. versionadded:: 3.0
+        components: Optional[Sequence[:class:`~nextcord.components.Component`]]
+            A list of components to edit the message with (Components V2). If ``None`` is passed then
+            the components are removed.
+
+            .. versionadded:: 3.4
 
         Raises
         ------
@@ -1744,6 +1767,7 @@ class Webhook(BaseWebhook):
             view=view,
             allowed_mentions=allowed_mentions,
             previous_allowed_mentions=previous_mentions,
+            components=components,
         )
         adapter = async_context.get()
         thread_id: Optional[int] = None
