@@ -1,15 +1,15 @@
 # SPDX-License-Identifier: MIT
 
-from typing import List, TypedDict
+from typing import List, Literal, TypedDict
 
 from typing_extensions import NotRequired
 
-from ..enums import ReactionType
 from .emoji import PartialEmoji
 from .member import Member
 from .snowflake import Snowflake
 from .user import User
 
+ReactionType = Literal[0, 1]
 
 class MessageDeleteEvent(TypedDict):
     id: Snowflake

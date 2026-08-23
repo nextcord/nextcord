@@ -9,7 +9,7 @@ from .user import User
 
 if TYPE_CHECKING:
     from .colour import Colour
-    from .enums import ReactionType
+    from .enums import ReactionType, try_enum
     from .guild import Guild
     from .member import Member
     from .message import Message
@@ -153,8 +153,11 @@ class RawReactionActionEvent(_RawReprMixin):
     burst: :class:`bool`
         If the reaction is a super/burst reaction.
 
-        .. versionadded:: 3.2
+        .. versionadded:: 3.4
+    type: :class:`ReactionType`
+        The type of reaction.
 
+        .. versionadded:: 3.4
     event_type: :class:`str`
         The event type that triggered this action. Can be
         ``REACTION_ADD`` for reaction addition or
@@ -185,7 +188,7 @@ class RawReactionActionEvent(_RawReprMixin):
         self.member: Optional[Member] = None
         self.guild_id: Optional[int] = int(data["guild_id"]) if "guild_id" in data else None
         self.burst: bool = data["burst"]
-        self.type: ReactionType = data["type"]
+        self.type: ReactionType = try_enum(ReactionType, data["type"])
 
         if _burst_colors := data.get("burst_colors"):
             self.burst_colors: Optional[List[Colour]] = [
