@@ -1542,6 +1542,7 @@ class HTTPClient:
         channel_id: Snowflake,
         message_id: Snowflake,
         emoji: str,
+        type: Optional[ReactionType] = None,
         *,
         auth: Optional[str] = MISSING,
         retry_request: bool = True,
@@ -1553,8 +1554,14 @@ class HTTPClient:
             message_id=message_id,
             emoji=emoji,
         )
+
+        params: Dict[str, Any] = {}
+        if type:
+            params["type"] = type.value
+
         return self.request(
             r,
+            params=params,
             auth=auth,
             retry_request=retry_request,
         )
