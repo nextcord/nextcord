@@ -49,7 +49,7 @@ class PinsMixin:
 
         Retrieves all messages that are currently pinned in the channel.
 
-        .. deprecated:: 3.2
+        .. deprecated:: 3.4
 
             Use .fetch_pins instead.
 
@@ -93,7 +93,7 @@ class PinsMixin:
 
         This requires :attr:`~nextcord.Permissions.read_message_history`, otherwise the result will be empty.
 
-        .. versionadded:: 3.2
+        .. versionadded:: 3.4
 
         .. note::
 
