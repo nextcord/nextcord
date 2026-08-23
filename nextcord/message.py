@@ -25,7 +25,7 @@ from typing import (
 )
 
 from . import utils
-from .components import _component_factory
+from .components import resolve_component
 from .embeds import Embed
 from .emoji import Emoji
 from .enums import ChannelType, IntegrationType, MessageReferenceType, MessageType, try_enum
@@ -41,7 +41,7 @@ from .reaction import Reaction
 from .sticker import StickerItem
 from .threads import Thread
 from .user import User
-from .utils import MISSING, escape_mentions
+from .utils import MISSING, SnowflakeList, cached_slot_property, escape_mentions
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -70,6 +70,7 @@ if TYPE_CHECKING:
         Message as MessagePayload,
         MessageActivity as MessageActivityPayload,
         MessageApplication as MessageApplicationPayload,
+        MessageCall as MessageCallPayload,
         MessageReference as MessageReferencePayload,
         MessageSnapshot as MessageSnapshotPayload,
         Reaction as ReactionPayload,
@@ -84,14 +85,15 @@ if TYPE_CHECKING:
 
 __all__ = (
     "Attachment",
-    "Message",
-    "PartialMessage",
-    "MessageReference",
     "DeletedReferencedMessage",
+    "Message",
+    "MessageCall",
     "MessageInteraction",
     "MessageInteractionMetadata",
+    "MessageReference",
     "MessageSnapshot",
     "MessageRoleSubscription",
+    "PartialMessage",
 )
 
 
@@ -673,8 +675,8 @@ class MessageSnapshot:
         self.sticker_items: List[StickerItem] = [
             StickerItem(state=self._state, data=s) for s in self._message.get("sticker_items", [])
         ]
-        self.components: List[Component] = [
-            _component_factory(c) for c in self._message.get("components", [])
+        self.components: list[Component] = [
+            resolve_component(comp_data) for comp_data in self._message.get("components", [])
         ]
 
 
@@ -910,6 +912,37 @@ class MessageInteractionMetadata(Hashable):
         return self._state._get_message(self.interacted_message_id)
 
 
+class MessageCall:
+    """Represents a message's call data.
+
+    .. versionadded:: 3.3
+
+    Attributes
+    ----------
+    data: Dict[:class:`str`, Any]
+        The raw data from the call.
+    """
+
+    __slots__ = ("_cs_participants", "_ended_timestamp", "_participants", "_state", "data")
+
+    def __init__(self, *, data: MessageCallPayload, state: ConnectionState) -> None:
+        self._state: ConnectionState = state
+        self.data: MessageCallPayload = data
+
+        self._participants: SnowflakeList = SnowflakeList(map(int, data["participants"]))
+        self._ended_timestamp: Optional[str] = data.get("ended_timestamp")
+
+    @cached_slot_property("_cs_participants")
+    def participants(self) -> List[User | Object]:
+        """List[Optional[:class:`~User`]]: The list of users that participated in the call."""
+        return [self._state.get_user(p) or Object(id=p) for p in self._participants]
+
+    @property
+    def ended_timestamp(self) -> Optional[datetime.datetime]:
+        """Optional[:class:`datetime.datetime`]: An aware UTC datetime object containing the time the call ended."""
+        return utils.parse_time(self._ended_timestamp)
+
+
 @flatten_handlers
 class Message(Hashable):
     r"""Represents a message from Discord.
@@ -1043,44 +1076,49 @@ class Message(Hashable):
         The role subscription data of a message, if applicable.
 
         .. versionadded:: 3.2
+    call: Optional[:class:`MessageCall`]
+        The call associated with the message.
+
+        .. versionadded:: 3.3
     """
 
     __slots__ = (
-        "_state",
-        "_edited_timestamp",
+        "_background_tasks",
         "_cs_channel_mentions",
-        "_cs_raw_mentions",
         "_cs_clean_content",
         "_cs_raw_channel_mentions",
+        "_cs_raw_mentions",
         "_cs_raw_role_mentions",
         "_cs_system_content",
-        "tts",
-        "content",
+        "_edited_timestamp",
+        "_state",
+        "activity",
+        "application",
+        "attachments",
+        "author",
+        "call",
         "channel",
-        "webhook_id",
-        "mention_everyone",
+        "components",
+        "content",
         "embeds",
+        "flags",
+        "guild",
         "id",
         "interaction",
         "interaction_metadata",
+        "mention_everyone",
         "mentions",
-        "author",
-        "attachments",
         "nonce",
         "pinned",
-        "role_mentions",
-        "type",
-        "flags",
         "reactions",
         "reference",
-        "application",
-        "activity",
-        "stickers",
-        "components",
-        "_background_tasks",
-        "guild",
-        "snapshots",
+        "role_mentions",
         "role_subscription",
+        "snapshots",
+        "stickers",
+        "tts",
+        "type",
+        "webhook_id",
     )
 
     if TYPE_CHECKING:
@@ -1125,10 +1163,14 @@ class Message(Hashable):
         self.stickers: List[StickerItem] = [
             StickerItem(data=d, state=state) for d in data.get("sticker_items", [])
         ]
-        self.components: List[Component] = [
-            _component_factory(d) for d in data.get("components", [])
+        self.components: list[Component] = [
+            resolve_component(comp_data) for comp_data in data.get("components", [])
         ]
         self._background_tasks: Set[asyncio.Task[None]] = set()
+
+        self.call: Optional[MessageCall] = None
+        if _call := data.get("call"):
+            self.call = MessageCall(state=state, data=_call)
 
         try:
             # if the channel doesn't have a guild attribute, we handle that
@@ -1355,8 +1397,8 @@ class Message(Hashable):
                 if role is not None:
                     self.role_mentions.append(role)
 
-    def _handle_components(self, components: List[ComponentPayload]) -> None:
-        self.components = [_component_factory(d) for d in components]
+    def _handle_components(self, components: list[ComponentPayload]) -> None:
+        self.components = [resolve_component(comp_data) for comp_data in components]
 
     def _handle_thread(self, thread: Optional[ThreadPayload]) -> None:
         if thread:
@@ -2430,7 +2472,10 @@ class PartialMessage(Hashable):
 
         if fields:
             # data isn't unbound
-            msg = self._state.create_message(channel=self.channel, data=data)
+            msg = self._state.create_message(
+                channel=self.channel,
+                data=data,  # pyright: ignore[reportPossiblyUnboundVariable]
+            )
             if view and not view.is_finished() and view.prevent_update:
                 self._state.store_view(view, self.id)
             return msg
