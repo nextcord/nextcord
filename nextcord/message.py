@@ -71,6 +71,7 @@ if TYPE_CHECKING:
         MessageActivity as MessageActivityPayload,
         MessageApplication as MessageApplicationPayload,
         MessageCall as MessageCallPayload,
+        MessagePin as MessagePinPayload,
         MessageReference as MessageReferencePayload,
         MessageSnapshot as MessageSnapshotPayload,
         Reaction as ReactionPayload,
@@ -94,6 +95,7 @@ __all__ = (
     "MessageSnapshot",
     "MessageRoleSubscription",
     "PartialMessage",
+    "MessagePin",
 )
 
 
@@ -941,6 +943,31 @@ class MessageCall:
     def ended_timestamp(self) -> Optional[datetime.datetime]:
         """Optional[:class:`datetime.datetime`]: An aware UTC datetime object containing the time the call ended."""
         return utils.parse_time(self._ended_timestamp)
+
+
+class MessagePin:
+    """Represents a pinned message and its metadata.
+
+    .. versionadded:: 3.4
+
+    Attributes
+    ----------
+    message: :class:`Message`
+        The pinned message.
+    pinned_at: :class:`datetime.datetime`
+        The time when the message was pinned.
+    """
+
+    __slots__ = ("message", "pinned_at")
+
+    def __init__(
+        self, *, channel: MessageableChannel, data: MessagePinPayload, state: ConnectionState
+    ) -> None:
+        self.message: Message = state.create_message(channel=channel, data=data["message"])
+        self.pinned_at: datetime.datetime = utils.parse_time(data["pinned_at"])
+
+    def __hash__(self) -> int:
+        return hash(self.message)
 
 
 @flatten_handlers

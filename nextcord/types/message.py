@@ -106,6 +106,16 @@ class MessageCall(TypedDict):
     ended_timestamp: NotRequired[Optional[str]]
 
 
+class MessagePin(TypedDict):
+    message: Message
+    pinned_at: str
+
+
+class PinIterator(TypedDict):
+    items: List[MessagePin]
+    has_more: bool
+
+
 class Message(TypedDict):
     id: Snowflake
     channel_id: Snowflake

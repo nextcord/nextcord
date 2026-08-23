@@ -2374,6 +2374,14 @@ MessageCall
 .. autoclass:: MessageCall()
     :members:
 
+MessagePin
+~~~~~~~~~~
+
+.. attributetable:: MessagePin
+
+.. autoclass:: MessagePin()
+    :members:
+
 Member
 ~~~~~~
 
