@@ -90,7 +90,7 @@ class AvatarDecoration:
 class PrimaryGuild:
     """Represents a primary guild for a user.
 
-    .. versionadded:: 3.2
+    .. versionadded:: 3.4
 
     Attributes
     ----------
@@ -406,7 +406,7 @@ class BaseUser(_UserTag):
     def primary_guild(self) -> PrimaryGuild:
         """:class:`PrimaryGuild`: Returns the user's primary guild.
 
-        .. versionadded:: 3.2
+        .. versionadded:: 3.4
         """
         if self._primary_guild is None:
             return PrimaryGuild._empty(self._state)
