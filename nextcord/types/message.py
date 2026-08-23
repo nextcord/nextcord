@@ -24,10 +24,18 @@ class ChannelMention(TypedDict):
     name: str
 
 
+class ReactionCountDetails(TypedDict):
+    burst: int
+    normal: int
+
+
 class Reaction(TypedDict):
     count: int
+    count_details: ReactionCountDetails
     me: bool
+    me_burst: bool
     emoji: PartialEmoji
+    burst_colors: List[str]
 
 
 class Attachment(TypedDict):
