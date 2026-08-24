@@ -14,7 +14,7 @@ from .enums import (
 from .errors import InvalidArgument
 from .mixins import Hashable
 from .object import Object
-from .utils import MISSING, get_as_snowflake
+from .utils import MISSING, SnowflakeIntT, _snowflake_or_int, get_as_snowflake
 
 if TYPE_CHECKING:
     from .abc import GuildChannel, Snowflake
@@ -187,7 +187,7 @@ class AutoModerationActionMetadata:
 
     Attributes
     ----------
-    channel: Optional[:class:`abc.Snowflake`]
+    channel: Optional[Union[:class:`int`, :class:`abc.Snowflake`]]
         The channel to which message content should be logged.
 
         .. note::
@@ -225,11 +225,11 @@ class AutoModerationActionMetadata:
     def __init__(
         self,
         *,
-        channel: Optional[Snowflake] = None,
+        channel: Optional[SnowflakeIntT] = None,
         duration_seconds: Optional[int] = None,
         custom_message: Optional[str] = None,
     ) -> None:
-        self.channel_id: Optional[int] = channel.id if channel is not None else None
+        self.channel_id: Optional[int] = _snowflake_or_int(channel)
         self.duration_seconds: Optional[int] = duration_seconds
         self.custom_message: Optional[str] = custom_message
 
