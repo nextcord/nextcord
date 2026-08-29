@@ -206,9 +206,6 @@ class CooldownMapping:
         return cls(Cooldown(rate, per), type)
 
     def _bucket_key(self, msg: Message) -> Any:
-        if isinstance(self._type, BucketType):
-            raise TypeError("Cannot call _bucket_key on a BucketType")
-
         return self._type(msg)
 
     def _verify_cache_integrity(self, current: Optional[float] = None) -> None:
