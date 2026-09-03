@@ -23,6 +23,7 @@ from typing import (
     Type,
     TypeVar,
     Union,
+    cast,
 )
 from urllib.parse import quote as _uriquote
 
@@ -641,6 +642,25 @@ class HTTPClient:
             ret["User-Agent"] = self._user_agent
 
         return ret
+
+    def _filter_payload(
+        self, payload: Dict[str, Any], valid_keys: Union[Tuple[str, ...], set[str]]
+    ) -> Dict[str, Any]:
+        """Filter a payload dictionary to only include valid keys.
+
+        Parameters
+        ----------
+        payload : Dict[str, Any]
+            The payload to filter.
+        valid_keys : Union[Tuple[str, ...], set[str]]
+            The keys that are allowed in the filtered payload.
+
+        Returns
+        -------
+        Dict[str, Any]
+            A new dictionary containing only the valid keys and their values.
+        """
+        return {k: v for k, v in payload.items() if k in valid_keys}
 
     async def recreate(self) -> None:
         if not self.__session or self.__session.closed:
@@ -2788,7 +2808,7 @@ class HTTPClient:
             "name",
             "description",
         )
-        payload = {k: v for k, v in payload.items() if k in valid_keys}
+        payload = self._filter_payload(payload, valid_keys)
         return self.request(
             Route("PATCH", "/guilds/{guild_id}/templates/{code}", guild_id=guild_id, code=code),
             json=payload,
@@ -3888,7 +3908,7 @@ class HTTPClient:
             "send_start_notification",
             "guild_scheduled_event_id",
         )
-        payload = {k: v for k, v in payload.items() if k in valid_keys}
+        payload = self._filter_payload(payload, valid_keys)
 
         return self.request(
             Route("POST", "/stage-instances"),
@@ -3911,7 +3931,7 @@ class HTTPClient:
             "topic",
             "privacy_level",
         )
-        payload = {k: v for k, v in payload.items() if k in valid_keys}
+        payload = self._filter_payload(payload, valid_keys)
 
         return self.request(
             Route("PATCH", "/stage-instances/{channel_id}", channel_id=channel_id),
@@ -4007,7 +4027,7 @@ class HTTPClient:
             "description",
             "options",
         )
-        payload = {k: v for k, v in payload.items() if k in valid_keys}  # type: ignore
+        payload = self._filter_payload(cast(Dict[str, Any], payload), valid_keys)
         r = Route(
             "PATCH",
             "/applications/{application_id}/commands/{command_id}",
@@ -4143,7 +4163,7 @@ class HTTPClient:
             "description",
             "options",
         )
-        payload = {k: v for k, v in payload.items() if k in valid_keys}  # type: ignore
+        payload = self._filter_payload(cast(Dict[str, Any], payload), valid_keys)  # type: ignore
         r = Route(
             "PATCH",
             "/applications/{application_id}/guilds/{guild_id}/commands/{command_id}",
@@ -4577,7 +4597,7 @@ class HTTPClient:
             "entity_type",
             "image",
         }
-        payload = {k: v for k, v in payload.items() if k in valid_keys}
+        payload = self._filter_payload(payload, valid_keys)
         r = Route("POST", "/guilds/{guild_id}/scheduled-events", guild_id=guild_id)
         return self.request(
             r,
@@ -4632,7 +4652,7 @@ class HTTPClient:
             "status",
             "image",
         }
-        payload = {k: v for k, v in payload.items() if k in valid_keys}
+        payload = self._filter_payload(payload, valid_keys)
         r = Route(
             "PATCH",
             "/guilds/{guild_id}/scheduled-events/{event_id}",
