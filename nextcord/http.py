@@ -1065,7 +1065,8 @@ class HTTPClient:
                 if not response.headers.get("Via") or isinstance(return_value, str):
                     _log.error(
                         "Path %s resulted in what appears to be a CloudFlare ban, either a "
-                        "large amount of errors recently happened and/or Nextcord has a bug."
+                        "large amount of errors recently happened and/or Nextcord has a bug.",
+                        rate_limit_path,
                     )
                     # Banned by Cloudflare more than likely.
                     raise HTTPException(response, return_value)
