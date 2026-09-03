@@ -841,6 +841,7 @@ class HTTPClient:
                         proxy_auth=self._proxy_auth,
                         **kwargs,
                     ) as response:
+                        assert response is not None
                         _log.debug(
                             "%s %s with %s has returned %s",
                             route.method,
