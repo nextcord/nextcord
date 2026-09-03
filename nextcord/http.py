@@ -650,14 +650,14 @@ class HTTPClient:
 
         Parameters
         ----------
-        payload : Dict[str, Any]
+        payload : :class:`dict`[:class:`str`, :class:`Any`]
             The payload to filter.
-        valid_keys : Union[Tuple[str, ...], set[str]]
+        valid_keys : Union[:class:`tuple`[:class:`str`, ...], :class:`set`[:class:`str`]]
             The keys that are allowed in the filtered payload.
 
         Returns
         -------
-        Dict[str, Any]
+        :class:`dict`[:class:`str`, :class:`Any`]
             A new dictionary containing only the valid keys and their values.
         """
         return {k: v for k, v in payload.items() if k in valid_keys}
