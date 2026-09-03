@@ -4027,7 +4027,7 @@ class HTTPClient:
             "description",
             "options",
         )
-        payload = self._filter_payload(cast(Dict[str, Any], payload), valid_keys)
+        payload = self._filter_payload(cast(Dict[str, Any], payload), valid_keys)  # type: ignore
         r = Route(
             "PATCH",
             "/applications/{application_id}/commands/{command_id}",
