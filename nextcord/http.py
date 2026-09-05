@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import sys
+from collections.abc import Mapping
 from datetime import datetime, timedelta, timezone
 from types import TracebackType
 from typing import (
@@ -642,6 +643,25 @@ class HTTPClient:
 
         return ret
 
+    def _filter_payload(
+        self, payload: Mapping[str, Any], valid_keys: Union[Tuple[str, ...], set[str]]
+    ) -> Dict[str, Any]:
+        """Filter a payload dictionary to only include valid keys.
+
+        Parameters
+        ----------
+        payload : :class:`Mapping`[:class:`str`, :class:`Any`]
+            The payload to filter.
+        valid_keys : Union[:class:`tuple`[:class:`str`, ...], :class:`set`[:class:`str`]]
+            The keys that are allowed in the filtered payload.
+
+        Returns
+        -------
+        :class:`dict`[:class:`str`, :class:`Any`]
+            A new dictionary containing only the valid keys and their values.
+        """
+        return {k: v for k, v in payload.items() if k in valid_keys}
+
     async def recreate(self) -> None:
         if not self.__session or self.__session.closed:
             self.__session = aiohttp.ClientSession(
@@ -841,6 +861,7 @@ class HTTPClient:
                         proxy_auth=self._proxy_auth,
                         **kwargs,
                     ) as response:
+                        assert response is not None
                         _log.debug(
                             "%s %s with %s has returned %s",
                             route.method,
@@ -1065,7 +1086,8 @@ class HTTPClient:
                 if not response.headers.get("Via") or isinstance(return_value, str):
                     _log.error(
                         "Path %s resulted in what appears to be a CloudFlare ban, either a "
-                        "large amount of errors recently happened and/or Nextcord has a bug."
+                        "large amount of errors recently happened and/or Nextcord has a bug.",
+                        rate_limit_path,
                     )
                     # Banned by Cloudflare more than likely.
                     raise HTTPException(response, return_value)
@@ -2786,7 +2808,7 @@ class HTTPClient:
             "name",
             "description",
         )
-        payload = {k: v for k, v in payload.items() if k in valid_keys}
+        payload = self._filter_payload(payload, valid_keys)
         return self.request(
             Route("PATCH", "/guilds/{guild_id}/templates/{code}", guild_id=guild_id, code=code),
             json=payload,
@@ -3886,7 +3908,7 @@ class HTTPClient:
             "send_start_notification",
             "guild_scheduled_event_id",
         )
-        payload = {k: v for k, v in payload.items() if k in valid_keys}
+        payload = self._filter_payload(payload, valid_keys)
 
         return self.request(
             Route("POST", "/stage-instances"),
@@ -3909,7 +3931,7 @@ class HTTPClient:
             "topic",
             "privacy_level",
         )
-        payload = {k: v for k, v in payload.items() if k in valid_keys}
+        payload = self._filter_payload(payload, valid_keys)
 
         return self.request(
             Route("PATCH", "/stage-instances/{channel_id}", channel_id=channel_id),
@@ -4005,7 +4027,7 @@ class HTTPClient:
             "description",
             "options",
         )
-        payload = {k: v for k, v in payload.items() if k in valid_keys}  # type: ignore
+        payload = self._filter_payload(payload, valid_keys)  # type: ignore
         r = Route(
             "PATCH",
             "/applications/{application_id}/commands/{command_id}",
@@ -4141,7 +4163,7 @@ class HTTPClient:
             "description",
             "options",
         )
-        payload = {k: v for k, v in payload.items() if k in valid_keys}  # type: ignore
+        payload = self._filter_payload(payload, valid_keys)  # type: ignore
         r = Route(
             "PATCH",
             "/applications/{application_id}/guilds/{guild_id}/commands/{command_id}",
@@ -4575,7 +4597,7 @@ class HTTPClient:
             "entity_type",
             "image",
         }
-        payload = {k: v for k, v in payload.items() if k in valid_keys}
+        payload = self._filter_payload(payload, valid_keys)
         r = Route("POST", "/guilds/{guild_id}/scheduled-events", guild_id=guild_id)
         return self.request(
             r,
@@ -4630,7 +4652,7 @@ class HTTPClient:
             "status",
             "image",
         }
-        payload = {k: v for k, v in payload.items() if k in valid_keys}
+        payload = self._filter_payload(payload, valid_keys)
         r = Route(
             "PATCH",
             "/guilds/{guild_id}/scheduled-events/{event_id}",
