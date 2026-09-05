@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import sys
+from collections.abc import Mapping
 from datetime import datetime, timedelta, timezone
 from types import TracebackType
 from typing import (
@@ -23,7 +24,6 @@ from typing import (
     Type,
     TypeVar,
     Union,
-    cast,
 )
 from urllib.parse import quote as _uriquote
 
@@ -644,13 +644,13 @@ class HTTPClient:
         return ret
 
     def _filter_payload(
-        self, payload: Dict[str, Any], valid_keys: Union[Tuple[str, ...], set[str]]
+        self, payload: Mapping[str, Any], valid_keys: Union[Tuple[str, ...], set[str]]
     ) -> Dict[str, Any]:
         """Filter a payload dictionary to only include valid keys.
 
         Parameters
         ----------
-        payload : :class:`dict`[:class:`str`, :class:`Any`]
+        payload : :class:`Mapping`[:class:`str`, :class:`Any`]
             The payload to filter.
         valid_keys : Union[:class:`tuple`[:class:`str`, ...], :class:`set`[:class:`str`]]
             The keys that are allowed in the filtered payload.
@@ -4027,7 +4027,7 @@ class HTTPClient:
             "description",
             "options",
         )
-        payload = self._filter_payload(cast(Dict[str, Any], payload), valid_keys)  # type: ignore
+        payload = self._filter_payload(payload, valid_keys)  # type: ignore
         r = Route(
             "PATCH",
             "/applications/{application_id}/commands/{command_id}",
@@ -4163,7 +4163,7 @@ class HTTPClient:
             "description",
             "options",
         )
-        payload = self._filter_payload(cast(Dict[str, Any], payload), valid_keys)  # type: ignore
+        payload = self._filter_payload(payload, valid_keys)  # type: ignore
         r = Route(
             "PATCH",
             "/applications/{application_id}/guilds/{guild_id}/commands/{command_id}",
