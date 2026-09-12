@@ -57,6 +57,12 @@ To run all of these but `slotscheck`, you can simply run `task lint` in the root
 
 If you would like these to run automatically, you can use `task precommit` to install pre-commit hooks. This will run all of the above on every commit.
 
+## Unit Tests
+
+Run `python -m unittest discover -s tests` in the development environment.
+The lint workflow runs these tests alongside slotscheck. UI custom-ID tests cover
+construction and reassignment, preserving generated IDs and link buttons.
+
 ## Type Annotations
 
 Nextcord uses [Pyright](https://github.com/microsoft/pyright) for type checking. To use it, run `task pyright` in the root directory of the project, or `python -m task pyright` (`py -m` etc) if that does not work.

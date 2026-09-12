@@ -101,7 +101,7 @@ class ChannelSelect(SelectBase, Generic[V_co]):
         self._selected_values: ChannelSelectValues = ChannelSelectValues()
         self.channel_types: list[ChannelType] = channel_types
         self._underlying = ChannelSelectMenu(
-            custom_id=custom_id,
+            custom_id=self.custom_id,
             channel_types=channel_types,
             placeholder=placeholder if placeholder is not None else MISSING,
             # default_values=

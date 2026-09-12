@@ -10,7 +10,7 @@ from ..components import Button as ButtonComponent
 from ..enums import ButtonStyle, ComponentType
 from ..partial_emoji import PartialEmoji, _EmojiTag
 from ..utils import MISSING
-from .item import Item, ItemCallbackType
+from .item import Item, ItemCallbackType, _validate_custom_id
 
 __all__ = (
     "Button",
@@ -77,6 +77,7 @@ class Button(Item[V_co]):
         row: Optional[int] = None,
     ) -> None:
         super().__init__()
+        _validate_custom_id(custom_id, allow_none=True)
         if custom_id is not None and url is not None:
             raise TypeError("Cannot mix both url and custom_id with Button")
 
@@ -127,8 +128,7 @@ class Button(Item[V_co]):
 
     @custom_id.setter
     def custom_id(self, value: Optional[str]) -> None:
-        if value is not None and not isinstance(value, str):
-            raise TypeError("custom_id must be None or str")
+        _validate_custom_id(value, allow_none=True)
 
         self._underlying.custom_id = value  # type: ignore
 

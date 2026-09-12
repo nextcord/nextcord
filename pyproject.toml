@@ -218,6 +218,8 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
+# Unit tests use the standard library runner rather than pytest.
+"tests/*" = ["PT009", "PT027"]
 "__init__.py" = [
     "F401", # unused imports in __init__.py, "from . import abc, ..."
 ]

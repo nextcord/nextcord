@@ -10,7 +10,7 @@ from ..enums import ComponentType, TextInputStyle
 from ..guild import Guild
 from ..state import ConnectionState
 from ..utils import MISSING
-from .item import Item
+from .item import Item, _validate_custom_id
 
 __all__ = ("TextInput",)
 
@@ -87,6 +87,7 @@ class TextInput(Item[V_co]):
     ) -> None:
         self._provided_custom_id = custom_id is not MISSING
         custom_id = os.urandom(16).hex() if custom_id is MISSING else custom_id
+        _validate_custom_id(custom_id)
         self._underlying = TextInputComponent(
             style=style,
             label=label,
@@ -110,16 +111,15 @@ class TextInput(Item[V_co]):
         self._underlying.style = value
 
     @property
-    def custom_id(self) -> Optional[str]:
-        """Optional[:class:`str`]: The ID of the text input that gets received during an interaction."""
+    def custom_id(self) -> str:
+        """:class:`str`: The ID of the text input that gets received during an interaction."""
         return self._underlying.custom_id
 
     @custom_id.setter
-    def custom_id(self, value: Optional[str]) -> None:
-        if value is not None and not isinstance(value, str):
-            raise TypeError("custom_id must be None or str")
+    def custom_id(self, value: str) -> None:
+        _validate_custom_id(value)
 
-        self._underlying.custom_id = value  # type: ignore
+        self._underlying.custom_id = value
 
     @property
     def label(self) -> str:

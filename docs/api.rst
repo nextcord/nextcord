@@ -3053,6 +3053,12 @@ RoleConnectionMetadata
 Bot UI Kit
 ----------
 
+Custom IDs supplied to UI items and modals must be strings; invalid types raise
+:class:`TypeError` during construction or assignment. Omitting the ID generates
+one automatically. Buttons and select menus also accept ``None`` during
+construction to generate an ID; link buttons have no custom ID.
+
+
 The library has helpers to help create component-based UIs.
 
 View
