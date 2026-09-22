@@ -14,7 +14,7 @@ from ...role import Role
 from ...state import ConnectionState
 from ...user import User
 from ...utils import MISSING
-from ..item import Item
+from ..item import Item, _validate_custom_id
 
 __all__ = ("SelectBase",)
 
@@ -121,8 +121,9 @@ class SelectBase(Item[V_co]):
     ) -> None:
         super().__init__()
         self._selected_values: List[str] = []
-        self._provided_custom_id = custom_id is not None
-        custom_id = os.urandom(16).hex() if custom_id is None else custom_id
+        self._provided_custom_id = custom_id is not None and custom_id is not MISSING
+        custom_id = os.urandom(16).hex() if not self._provided_custom_id else custom_id
+        _validate_custom_id(custom_id)
         self._underlying = SelectMenu(
             custom_id=custom_id,
             placeholder=placeholder if placeholder is not None else MISSING,
@@ -139,8 +140,7 @@ class SelectBase(Item[V_co]):
 
     @custom_id.setter
     def custom_id(self, value: str) -> None:
-        if not isinstance(value, str):
-            raise TypeError("custom_id must be None or str")
+        _validate_custom_id(value)
 
         self._underlying.custom_id = value
 

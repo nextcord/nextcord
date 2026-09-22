@@ -109,7 +109,7 @@ class MentionableSelect(SelectBase, Generic[V_co]):
         )
         self._selected_values: MentionableSelectValues = MentionableSelectValues()
         self._underlying = MentionableSelectMenu(
-            custom_id=custom_id,
+            custom_id=self.custom_id,
             placeholder=placeholder if placeholder is not None else MISSING,
             # default_values=
             min_values=min_values,

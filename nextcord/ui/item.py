@@ -24,6 +24,12 @@ V_co = TypeVar("V_co", bound="View", covariant=True)
 ItemCallbackType = Callable[[Any, I, Interaction[ClientT]], Coroutine[Any, Any, Any]]
 
 
+def _validate_custom_id(value: object, *, allow_none: bool = False) -> None:
+    if not isinstance(value, str) and not (allow_none and value is None):
+        expected = "None or str" if allow_none else "str"
+        raise TypeError(f"custom_id must be {expected}")
+
+
 class Item(Generic[V_co]):
     """Represents the base UI item that all UI components inherit from.
 

@@ -100,7 +100,7 @@ class UserSelect(SelectBase, Generic[V_co]):
         )
         self._selected_values: UserSelectValues = UserSelectValues()
         self._underlying = UserSelectMenu(
-            custom_id=custom_id,
+            custom_id=self.custom_id,
             placeholder=placeholder if placeholder is not None else MISSING,
             # default_values=
             min_values=min_values,
