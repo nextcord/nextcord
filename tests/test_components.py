@@ -13,8 +13,8 @@ def fixture_id(fixture_value):
     match fixture_value[0]:
         case "c":
             return f"comps {fixture_value[1]} {fixture_value[2]}"
-        case "s":
-            return f"saved_comp_payload {fixture_value[1]} {fixture_value[2]}"
+        case "p":
+            return f"comp_payload {fixture_value[1]} {fixture_value[2]}"
         case "o":
             return f"offline_response {fixture_value[1]} {fixture_value[2]}"
         case _:
@@ -265,27 +265,27 @@ class TestActionRowAndButtons:
         ]
 
     @pytest.fixture(scope="class")
-    async def online_response(self, http_session, saved_comp_payload):
+    async def online_response(self, http_session, comp_payload):
         flags = nextcord.MessageFlags()
         flags.is_components_v2 = True
 
         data = await http_session.send_message(
             utils.EnvVar.test_channel,
             None,
-            components=saved_comp_payload,
+            components=comp_payload,
             flags=flags.value,
         )
         return data["components"]
 
     @pytest.fixture(scope="class")
-    def button(self, request: pytest.FixtureRequest, comps, saved_comp_payload, offline_response):
+    def button(self, request: pytest.FixtureRequest, comps, comp_payload, offline_response):
         # Param should be a tuple of 3 values: (payload_source, action_row_index, button_index)
         match request.param[0]:
             case "c":
                 return comps[request.param[1]].components[request.param[2]]
-            case "s":
+            case "p":
                 return nextcord.resolve_component(
-                    saved_comp_payload[request.param[1]]["components"][request.param[2]]
+                    comp_payload[request.param[1]]["components"][request.param[2]]
                 )
             case "o":
                 return nextcord.resolve_component(
@@ -404,7 +404,7 @@ class TestActionRowAndButtons:
         assert action_row.id == 3
 
     @pytest.mark.parametrize(
-        "button", [("c", 0, 0), ("s", 0, 0), ("o", 0, 0)], ids=fixture_id, indirect=True
+        "button", [("c", 0, 0), ("p", 0, 0), ("o", 0, 0)], ids=fixture_id, indirect=True
     )
     def test_button_primary_1_attributes(self, button):
         assert isinstance(button, nextcord.Button)
@@ -419,7 +419,7 @@ class TestActionRowAndButtons:
         assert button.disabled is MISSING
 
     @pytest.mark.parametrize(
-        "button", [("c", 0, 1), ("s", 0, 1), ("o", 0, 1)], ids=fixture_id, indirect=True
+        "button", [("c", 0, 1), ("p", 0, 1), ("o", 0, 1)], ids=fixture_id, indirect=True
     )
     def test_button_primary_2_attributes(self, button):
         assert isinstance(button, nextcord.Button)
@@ -435,7 +435,7 @@ class TestActionRowAndButtons:
         assert button.disabled is MISSING
 
     @pytest.mark.parametrize(
-        "button", [("c", 0, 2), ("s", 0, 2), ("o", 0, 2)], ids=fixture_id, indirect=True
+        "button", [("c", 0, 2), ("p", 0, 2), ("o", 0, 2)], ids=fixture_id, indirect=True
     )
     def test_button_primary_3_attributes(self, button):
         assert isinstance(button, nextcord.Button)
@@ -451,7 +451,7 @@ class TestActionRowAndButtons:
         assert button.disabled is MISSING
 
     @pytest.mark.parametrize(
-        "button", [("c", 0, 3), ("s", 0, 3), ("o", 0, 3)], ids=fixture_id, indirect=True
+        "button", [("c", 0, 3), ("p", 0, 3), ("o", 0, 3)], ids=fixture_id, indirect=True
     )
     def test_button_primary_4_attributes(self, button):
         assert isinstance(button, nextcord.Button)
@@ -465,7 +465,7 @@ class TestActionRowAndButtons:
         assert button.url is MISSING
         assert button.disabled is True
 
-    @pytest.mark.parametrize("button", [("c", 0, 4), ("s", 0, 4)], ids=fixture_id, indirect=True)
+    @pytest.mark.parametrize("button", [("c", 0, 4), ("p", 0, 4)], ids=fixture_id, indirect=True)
     def test_button_primary_5_attributes_generated(self, button):
         assert isinstance(button, nextcord.Button)
         assert button.type == 2
@@ -497,7 +497,7 @@ class TestActionRowAndButtons:
         )  # Discord currently doesn't return False, so this should be MISSING.
 
     @pytest.mark.parametrize(
-        "button", [("c", 1, 0), ("s", 1, 0), ("o", 1, 0)], ids=fixture_id, indirect=True
+        "button", [("c", 1, 0), ("p", 1, 0), ("o", 1, 0)], ids=fixture_id, indirect=True
     )
     def test_button_secondary_attributes(self, button):
         assert isinstance(button, nextcord.Button)
@@ -512,7 +512,7 @@ class TestActionRowAndButtons:
         assert button.disabled is MISSING
 
     @pytest.mark.parametrize(
-        "button", [("c", 1, 1), ("s", 1, 1), ("o", 1, 1)], ids=fixture_id, indirect=True
+        "button", [("c", 1, 1), ("p", 1, 1), ("o", 1, 1)], ids=fixture_id, indirect=True
     )
     def test_button_success_attributes(self, button):
         assert isinstance(button, nextcord.Button)
@@ -527,7 +527,7 @@ class TestActionRowAndButtons:
         assert button.disabled is MISSING
 
     @pytest.mark.parametrize(
-        "button", [("c", 1, 2), ("s", 1, 2), ("o", 1, 2)], ids=fixture_id, indirect=True
+        "button", [("c", 1, 2), ("p", 1, 2), ("o", 1, 2)], ids=fixture_id, indirect=True
     )
     def test_button_danger_attributes(self, button):
         assert isinstance(button, nextcord.Button)
@@ -542,7 +542,7 @@ class TestActionRowAndButtons:
         assert button.disabled is MISSING
 
     @pytest.mark.parametrize(
-        "button", [("c", 2, 0), ("s", 2, 0), ("o", 2, 0)], ids=fixture_id, indirect=True
+        "button", [("c", 2, 0), ("p", 2, 0), ("o", 2, 0)], ids=fixture_id, indirect=True
     )
     def test_button_link_attributes(self, button):
         assert isinstance(button, nextcord.Button)
