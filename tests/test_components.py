@@ -319,10 +319,26 @@ class TestActionRowAndButtons:
             ):
                 ta.validate_python(orig_payload, extra="forbid")
 
+    def test_action_row_typings_against_saved_comp_payload(self, subtests, saved_comp_payload):
+        ta = pydantic.TypeAdapter(comp_payloads.ActionRow)
+        for orig_payload in saved_comp_payload:
+            action_row_payload = orig_payload.copy()
+            action_row_payload["components"] = []
+            with subtests.test(
+                msg="action row typing against payload without components",
+                id=action_row_payload["id"],
+            ):
+                ta.validate_python(action_row_payload, extra="forbid")
+            with subtests.test(
+                msg="action row typing against payload with components", id=action_row_payload["id"]
+            ):
+                ta.validate_python(orig_payload, extra="forbid")
+
     def test_button_typings(self, subtests, comps, offline_response):
         ta = pydantic.TypeAdapter(comp_payloads.ButtonComponent)
 
         for action_row in comps:
+            assert isinstance(action_row, nextcord.ActionRow)
             for button in action_row.components:
                 with subtests.test("Test comps payload typing", button=button):
                     ta.validate_python(button.to_dict())
@@ -334,6 +350,7 @@ class TestActionRowAndButtons:
 
         resolved = [nextcord.resolve_component(d) for d in offline_response]
         for action_row in resolved:
+            assert isinstance(action_row, nextcord.ActionRow)
             for button in action_row.components:
                 with subtests.test("Test offline resolved typing", button=button):
                     ta.validate_python(button.to_dict())
