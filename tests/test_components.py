@@ -12,11 +12,11 @@ from tests import utils
 def fixture_id(fixture_value):
     match fixture_value[0]:
         case "c":
-            return f"comps {fixture_value[1]} {fixture_value[2]}"
+            return f"comps {fixture_value[1:]}"
         case "p":
-            return f"comp_payload {fixture_value[1]} {fixture_value[2]}"
+            return f"comp_payload {fixture_value[1:]}"
         case "o":
-            return f"offline_response {fixture_value[1]} {fixture_value[2]}"
+            return f"offline_response {fixture_value[1:]}"
         case _:
             raise ValueError(f"Unhandled fixture value {fixture_value}")
 
@@ -294,6 +294,19 @@ class TestActionRowAndButtons:
             case _:
                 raise ValueError(f"Unhandled request param value {request.param}")
 
+    @pytest.fixture(scope="class")
+    def action_row(self, request: pytest.FixtureRequest, comps, comp_payload, offline_response):
+        # Param should be a tuple of 2 values: (payload_source, action_row_index)
+        match request.param[0]:
+            case "c":
+                return comps[request.param[1]]
+            case "p":
+                return nextcord.resolve_component(comp_payload[request.param[1]])
+            case "o":
+                return nextcord.resolve_component(offline_response[request.param[1]])
+            case _:
+                raise ValueError(f"Unhandled request param value {request.param}")
+
     @pytest.mark.skipif(utils.EnvVar.online is False, reason="Online only test.")
     async def test_offline_against_online_response(self, offline_response, online_response):
         assert (
@@ -361,47 +374,32 @@ class TestActionRowAndButtons:
                 with subtests.test("Test offline response typing", i=i, button_data=button_data):
                     ta.validate_python(button_data, extra="forbid", strict=True)
 
-    def test_action_row_1_attributes(self, comps):
-        action_row: nextcord.ActionRow = comps[0]
+    @pytest.mark.parametrize(
+        "action_row", [("c", 0), ("p", 0), ("o", 0)], ids=fixture_id, indirect=True
+    )
+    def test_action_row_1_attributes(self, action_row):
+        assert isinstance(action_row, nextcord.ActionRow)
         assert action_row.type == 1
         assert action_row.id == 1
         assert len(action_row.components) == 5
 
-    def test_action_row_1_offline_response(self, offline_response):
-        data = offline_response[0].copy()
-        data["components"] = []
-        action_row: nextcord.ActionRow = nextcord.resolve_component(data)
+    @pytest.mark.parametrize(
+        "action_row", [("c", 1), ("p", 1), ("o", 1)], ids=fixture_id, indirect=True
+    )
+    def test_action_row_2_attributes(self, action_row):
         assert isinstance(action_row, nextcord.ActionRow)
-        assert action_row.type == 1
-        assert action_row.id == 1
-
-    def test_action_row_2_attributes(self, comps):
-        action_row: nextcord.ActionRow = comps[1]
         assert action_row.type == 1
         assert action_row.id == 2
         assert len(action_row.components) == 3
 
-    def test_action_row_2_offline_response(self, offline_response):
-        data = offline_response[1].copy()
-        data["components"] = []
-        action_row: nextcord.ActionRow = nextcord.resolve_component(data)
+    @pytest.mark.parametrize(
+        "action_row", [("c", 2), ("p", 2), ("o", 2)], ids=fixture_id, indirect=True
+    )
+    def test_action_row_3_attributes(self, action_row):
         assert isinstance(action_row, nextcord.ActionRow)
-        assert action_row.type == 1
-        assert action_row.id == 2
-
-    def test_action_row_3_attributes(self, comps):
-        action_row: nextcord.ActionRow = comps[2]
         assert action_row.type == 1
         assert action_row.id == 3
         assert len(action_row.components) == 1
-
-    def test_action_row_3_offline_response(self, offline_response):
-        data = offline_response[2].copy()
-        data["components"] = []
-        action_row: nextcord.ActionRow = nextcord.resolve_component(data)
-        assert isinstance(action_row, nextcord.ActionRow)
-        assert action_row.type == 1
-        assert action_row.id == 3
 
     @pytest.mark.parametrize(
         "button", [("c", 0, 0), ("p", 0, 0), ("o", 0, 0)], ids=fixture_id, indirect=True
