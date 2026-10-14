@@ -3,55 +3,20 @@
 import nextcord
 from nextcord.ext import commands
 
+from .. import test_components
 from .base import GenerateBase
 
-button_components = [
-    nextcord.ActionRow(
-        [
-            nextcord.Button.as_primary(
-                label="Primary1", component_id=11, custom_id="test_button_11"
-            ),  # Test basic label.
-            nextcord.Button.as_primary(
-                emoji="⚠️", component_id=12, custom_id="test_button_12"
-            ),  # Test basic string emoji.
-            nextcord.Button.as_primary(
-                label="Primary3", emoji="⚠️", component_id=13, custom_id="test_button_13"
-            ),  # Test label + emoji.
-            nextcord.Button.as_primary(
-                label="Primary4", disabled=True, component_id=14, custom_id="test_button_14"
-            ),  # Test Disabled = True.
-            nextcord.Button.as_primary(
-                label="Primary5",
-                disabled=False,
-                component_id=15,
-                custom_id="test_button_15",
-            ),  # Test Disabled = False.
-        ],
-        component_id=1,
-    ),
-    nextcord.ActionRow(
-        [
-            nextcord.Button.as_secondary(
-                label="Secondary", component_id=21, custom_id="test_button_21"
-            ),
-            nextcord.Button.as_success(
-                label="Success", component_id=22, custom_id="test_button_22"
-            ),
-            nextcord.Button.as_danger(label="Danger", component_id=23, custom_id="test_button_23"),
-        ],
-        component_id=2,
-    ),
-    nextcord.ActionRow(
-        [
-            nextcord.Button.as_link(
-                "https://docs.discord.com/developers/components/reference#button",
-                label="Link1",
-                component_id=31,
-            ),
-        ],
-        component_id=3,
-    ),
-]
+
+async def send_components(interaction: nextcord.Interaction, components: list[nextcord.Component]):
+    flags = nextcord.MessageFlags()
+    flags.is_components_v2 = True
+    data = await interaction.client.http.send_message(
+        interaction.channel_id,
+        None,
+        components=[c.to_dict() for c in components],
+        flags=flags.value,
+    )
+    return data["components"]
 
 
 class GenerateComponents(commands.Cog):
@@ -59,20 +24,59 @@ class GenerateComponents(commands.Cog):
     async def components(self, interaction: nextcord.Interaction):
         await interaction.send("You shouldn't be able to see this!")
 
-    @components.subcommand(name="buttons_generated")
-    async def buttons_generated(self, interaction: nextcord.Interaction):
-        await interaction.send(
-            f"```\n{[c.to_dict() for c in button_components]}\n```", ephemeral=True
-        )
+    @components.subcommand(name="buttons")
+    async def buttons(
+        self,
+        interaction: nextcord.Interaction,
+        choice: str = nextcord.SlashOption(choices=["generated", "response"]),
+    ):
+        match choice:
+            case "generated":
+                await interaction.send(
+                    f"```\n{[c.to_dict() for c in test_components.button_components]}\n```",
+                    ephemeral=True,
+                )
+            case "response":
+                data = await send_components(interaction, test_components.button_components)
+                await interaction.send(f"```\n{data}\n```", ephemeral=True)
+            case _:
+                await interaction.send(f"Invalid choice `{choice}` provided!", ephemeral=True)
 
-    @components.subcommand(name="buttons_response")
-    async def buttons_response(self, interaction: nextcord.Interaction):
-        flags = nextcord.MessageFlags()
-        flags.is_components_v2 = True
-        data = await interaction.client.http.send_message(
-            interaction.channel_id,
-            None,
-            components=[c.to_dict() for c in button_components],
-            flags=flags.value,
-        )
-        await interaction.send(f"```\n{data["components"]}\n```", ephemeral=True)
+    @components.subcommand(name="string_select_options")
+    async def string_select_options(
+        self,
+        interaction: nextcord.Interaction,
+        choice: str = nextcord.SlashOption(choices=["generated", "response"]),
+    ):
+        match choice:
+            case "generated":
+                await interaction.send(
+                    f"```\n{[c.to_dict() for c in test_components.select_option_components]}\n```",
+                    ephemeral=True,
+                )
+            case "response":
+                comps = [
+                    nextcord.ActionRow(
+                        [nextcord.StringSelect(options=test_components.select_option_components)]
+                    )
+                ]
+                data = await send_components(interaction, comps)
+                await interaction.send(
+                    f"```\n{data[0]["components"][0]["options"]}\n```", ephemeral=True
+                )
+            case _:
+                await interaction.send(f"Invalid choice `{choice}` provided!", ephemeral=True)
+
+    @components.subcommand(name="string_selects")
+    async def string_selects(
+        self,
+        interaction: nextcord.Interaction,
+        choice: str = nextcord.SlashOption(choices=["generated", "response"]),
+    ):
+        match choice:
+            case "generated":
+                pass
+            case "response":
+                pass
+            case _:
+                await interaction.send(f"Invalid choice `{choice}` provided!", ephemeral=True)
