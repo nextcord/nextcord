@@ -734,7 +734,502 @@ class TestSelectOption:
         assert option.default is MISSING
 
 
-string_select_components = []
+_string_select_options = [
+    nextcord.SelectOption(label="First"),
+    nextcord.SelectOption(label="Second", value="2nd"),
+    nextcord.SelectOption(label="Third", description="The third one."),
+]
+string_select_components = [
+    nextcord.ActionRow(
+        [
+            nextcord.StringSelect(
+                options=_string_select_options, custom_id="test_string_select_1", component_id=10
+            )
+        ],
+        component_id=1,
+    ),
+    nextcord.ActionRow(
+        [
+            nextcord.StringSelect(
+                options=_string_select_options,
+                placeholder="Placeholder text",
+                custom_id="test_string_select_2",
+                component_id=20,
+            )
+        ],
+        component_id=2,
+    ),
+    nextcord.ActionRow(
+        [
+            nextcord.StringSelect(
+                options=_string_select_options,
+                min_values=1,
+                custom_id="test_string_select_3",
+                component_id=30,
+            )
+        ],
+        component_id=3,
+    ),
+    nextcord.ActionRow(
+        [
+            nextcord.StringSelect(
+                options=_string_select_options,
+                max_values=2,
+                custom_id="test_string_select_4",
+                component_id=40,
+            )
+        ],
+        component_id=4,
+    ),
+    nextcord.ActionRow(
+        [
+            nextcord.StringSelect(
+                options=_string_select_options,
+                min_values=2,
+                max_values=3,
+                custom_id="test_string_select_5",
+                component_id=50,
+            )
+        ],
+        component_id=5,
+    ),
+    nextcord.ActionRow(
+        [
+            nextcord.StringSelect(
+                options=_string_select_options,
+                disabled=True,
+                custom_id="test_string_select_6",
+                component_id=60,
+            )
+        ],
+        component_id=6,
+    ),
+]
+
+
+class TestStringSelects:
+    @pytest.fixture(scope="class")
+    def comps(self):
+        return string_select_components
+
+    @pytest.fixture(scope="class")
+    def comp_payload(self, comps):
+        return [comp.to_dict() for comp in comps]
+
+    @pytest.fixture(scope="class")
+    def saved_comp_payload(self):
+        return [
+            {
+                "type": 1,
+                "id": 1,
+                "components": [
+                    {
+                        "type": 3,
+                        "id": 10,
+                        "custom_id": "test_string_select_1",
+                        "options": [
+                            {"label": "First", "value": "First"},
+                            {"label": "Second", "value": "2nd"},
+                            {"label": "Third", "value": "Third", "description": "The third one."},
+                        ],
+                    }
+                ],
+            },
+            {
+                "type": 1,
+                "id": 2,
+                "components": [
+                    {
+                        "type": 3,
+                        "id": 20,
+                        "custom_id": "test_string_select_2",
+                        "options": [
+                            {"label": "First", "value": "First"},
+                            {"label": "Second", "value": "2nd"},
+                            {"label": "Third", "value": "Third", "description": "The third one."},
+                        ],
+                        "placeholder": "Placeholder text",
+                    }
+                ],
+            },
+            {
+                "type": 1,
+                "id": 3,
+                "components": [
+                    {
+                        "type": 3,
+                        "id": 30,
+                        "custom_id": "test_string_select_3",
+                        "options": [
+                            {"label": "First", "value": "First"},
+                            {"label": "Second", "value": "2nd"},
+                            {"label": "Third", "value": "Third", "description": "The third one."},
+                        ],
+                        "min_values": 1,
+                    }
+                ],
+            },
+            {
+                "type": 1,
+                "id": 4,
+                "components": [
+                    {
+                        "type": 3,
+                        "id": 40,
+                        "custom_id": "test_string_select_4",
+                        "options": [
+                            {"label": "First", "value": "First"},
+                            {"label": "Second", "value": "2nd"},
+                            {"label": "Third", "value": "Third", "description": "The third one."},
+                        ],
+                        "max_values": 2,
+                    }
+                ],
+            },
+            {
+                "type": 1,
+                "id": 5,
+                "components": [
+                    {
+                        "type": 3,
+                        "id": 50,
+                        "custom_id": "test_string_select_5",
+                        "options": [
+                            {"label": "First", "value": "First"},
+                            {"label": "Second", "value": "2nd"},
+                            {"label": "Third", "value": "Third", "description": "The third one."},
+                        ],
+                        "min_values": 2,
+                        "max_values": 3,
+                    }
+                ],
+            },
+            {
+                "type": 1,
+                "id": 6,
+                "components": [
+                    {
+                        "type": 3,
+                        "id": 60,
+                        "custom_id": "test_string_select_6",
+                        "options": [
+                            {"label": "First", "value": "First"},
+                            {"label": "Second", "value": "2nd"},
+                            {"label": "Third", "value": "Third", "description": "The third one."},
+                        ],
+                        "disabled": True,
+                    }
+                ],
+            },
+        ]
+
+    @pytest.fixture(scope="class")
+    def offline_response(self):
+        return [
+            {
+                "type": 1,
+                "id": 1,
+                "components": [
+                    {
+                        "type": 3,
+                        "id": 10,
+                        "custom_id": "test_string_select_1",
+                        "min_values": 1,
+                        "max_values": 1,
+                        "options": [
+                            {"label": "First", "value": "First"},
+                            {"label": "Second", "value": "2nd"},
+                            {"label": "Third", "value": "Third", "description": "The third one."},
+                        ],
+                    }
+                ],
+            },
+            {
+                "type": 1,
+                "id": 2,
+                "components": [
+                    {
+                        "type": 3,
+                        "id": 20,
+                        "custom_id": "test_string_select_2",
+                        "placeholder": "Placeholder text",
+                        "min_values": 1,
+                        "max_values": 1,
+                        "options": [
+                            {"label": "First", "value": "First"},
+                            {"label": "Second", "value": "2nd"},
+                            {"label": "Third", "value": "Third", "description": "The third one."},
+                        ],
+                    }
+                ],
+            },
+            {
+                "type": 1,
+                "id": 3,
+                "components": [
+                    {
+                        "type": 3,
+                        "id": 30,
+                        "custom_id": "test_string_select_3",
+                        "min_values": 1,
+                        "max_values": 1,
+                        "options": [
+                            {"label": "First", "value": "First"},
+                            {"label": "Second", "value": "2nd"},
+                            {"label": "Third", "value": "Third", "description": "The third one."},
+                        ],
+                    }
+                ],
+            },
+            {
+                "type": 1,
+                "id": 4,
+                "components": [
+                    {
+                        "type": 3,
+                        "id": 40,
+                        "custom_id": "test_string_select_4",
+                        "min_values": 1,
+                        "max_values": 2,
+                        "options": [
+                            {"label": "First", "value": "First"},
+                            {"label": "Second", "value": "2nd"},
+                            {"label": "Third", "value": "Third", "description": "The third one."},
+                        ],
+                    }
+                ],
+            },
+            {
+                "type": 1,
+                "id": 5,
+                "components": [
+                    {
+                        "type": 3,
+                        "id": 50,
+                        "custom_id": "test_string_select_5",
+                        "min_values": 2,
+                        "max_values": 3,
+                        "options": [
+                            {"label": "First", "value": "First"},
+                            {"label": "Second", "value": "2nd"},
+                            {"label": "Third", "value": "Third", "description": "The third one."},
+                        ],
+                    }
+                ],
+            },
+            {
+                "type": 1,
+                "id": 6,
+                "components": [
+                    {
+                        "type": 3,
+                        "id": 60,
+                        "custom_id": "test_string_select_6",
+                        "min_values": 1,
+                        "max_values": 1,
+                        "disabled": True,
+                        "options": [
+                            {"label": "First", "value": "First"},
+                            {"label": "Second", "value": "2nd"},
+                            {"label": "Third", "value": "Third", "description": "The third one."},
+                        ],
+                    }
+                ],
+            },
+        ]
+
+    @pytest.fixture(scope="class")
+    async def online_response(self, http_session, comp_payload):
+        return await send_components(http_session, comp_payload)
+
+    @pytest.fixture(scope="class")
+    def string_select(self, request: pytest.FixtureRequest, comps, comp_payload, offline_response):
+        # Param should be a tuple of 2 values: (payload_source, action_row_index)
+        match request.param[0]:
+            case "c":
+                return comps[request.param[1]].components[0]
+            case "p":
+                return nextcord.resolve_component(comp_payload[request.param[1]]["components"][0])
+            case "o":
+                return nextcord.resolve_component(
+                    offline_response[request.param[1]]["components"][0]
+                )
+            case _:
+                raise ValueError(f"Unhandled request param value {request.param}")
+
+    @pytest.mark.skipif(
+        utils.EnvVar.online is False or utils.EnvVar.test_channel is None,
+        reason="Online only test, requires TEST_CHANNEL to be set.",
+    )
+    async def test_offline_against_online_response(self, offline_response, online_response):
+        assert (
+            offline_response == online_response
+        ), "StringSelect offline response no longer matches online response, please update."
+
+    def test_comp_payload_against_saved(self, comp_payload, saved_comp_payload):
+        assert (
+            comp_payload == saved_comp_payload
+        ), "Saved StringSelect payload no longer matches generated payload, either update or fix."
+
+    def test_comp_payload_typing(self, comp_payload):
+        ta = pydantic.TypeAdapter(comp_payloads.SelectMenu)
+        for data in comp_payload:
+            ta.validate_python(data["components"][0], extra="forbid", strict=True)
+
+    def test_offline_response_typing(self, offline_response):
+        ta = pydantic.TypeAdapter(comp_payloads.SelectMenu)
+        for data in offline_response:
+            ta.validate_python(data["components"][0], extra="forbid", strict=True)
+
+    def test_select_menu_alias(self):
+        assert nextcord.SelectMenu is nextcord.StringSelect
+
+    def test_string_select_menu_alias(self):
+        assert nextcord.StringSelectMenu is nextcord.StringSelect
+
+    def _assert_options(self, select: nextcord.StringSelect):
+        assert select.options[0].label == "First"
+        assert select.options[1].label == "Second"
+        assert select.options[1].value == "2nd"
+        assert select.options[2].label == "Third"
+        assert select.options[2].description == "The third one."
+        return True
+
+    @pytest.mark.parametrize("string_select", [("c", 0), ("p", 0)], ids=fixture_id, indirect=True)
+    def test_string_select_1_payload_attributes(self, string_select):
+        assert isinstance(string_select, nextcord.StringSelect)
+        assert string_select.id == 10
+        assert string_select.custom_id == "test_string_select_1"
+        assert len(string_select.options) == 3
+        self._assert_options(string_select)
+        assert string_select.placeholder is MISSING
+        assert string_select.min_values is MISSING
+        assert string_select.max_values is MISSING
+        assert string_select.disabled is MISSING
+
+    @pytest.mark.parametrize("string_select", [("o", 0)], ids=fixture_id, indirect=True)
+    def test_string_select_1_offline_attributes(self, string_select):
+        assert isinstance(string_select, nextcord.StringSelect)
+        assert string_select.id == 10
+        assert string_select.custom_id == "test_string_select_1"
+        assert len(string_select.options) == 3
+        self._assert_options(string_select)
+        assert string_select.placeholder is MISSING
+        assert (
+            string_select.min_values == 1
+        )  # Discord returns 1 for min and max values, even if we don't include them in the payload.
+        assert string_select.max_values == 1
+        assert string_select.disabled is MISSING
+
+    @pytest.mark.parametrize("string_select", [("c", 1), ("p", 1)], ids=fixture_id, indirect=True)
+    def test_string_select_2_payload_attributes(self, string_select):
+        assert isinstance(string_select, nextcord.StringSelect)
+        assert string_select.id == 20
+        assert string_select.custom_id == "test_string_select_2"
+        assert len(string_select.options) == 3
+        self._assert_options(string_select)
+        assert string_select.placeholder == "Placeholder text"
+        assert string_select.min_values is MISSING
+        assert string_select.max_values is MISSING
+        assert string_select.disabled is MISSING
+
+    @pytest.mark.parametrize("string_select", [("o", 1)], ids=fixture_id, indirect=True)
+    def test_string_select_2_offline_attributes(self, string_select):
+        assert isinstance(string_select, nextcord.StringSelect)
+        assert string_select.id == 20
+        assert string_select.custom_id == "test_string_select_2"
+        assert len(string_select.options) == 3
+        self._assert_options(string_select)
+        assert string_select.placeholder == "Placeholder text"
+        assert string_select.min_values == 1
+        assert string_select.max_values == 1
+        assert string_select.disabled is MISSING
+
+    @pytest.mark.parametrize("string_select", [("c", 2), ("p", 2)], ids=fixture_id, indirect=True)
+    def test_string_select_3_payload_attributes(self, string_select):
+        assert isinstance(string_select, nextcord.StringSelect)
+        assert string_select.id == 30
+        assert string_select.custom_id == "test_string_select_3"
+        assert len(string_select.options) == 3
+        self._assert_options(string_select)
+        assert string_select.placeholder is MISSING
+        assert string_select.min_values == 1
+        assert string_select.max_values is MISSING
+        assert string_select.disabled is MISSING
+
+    @pytest.mark.parametrize("string_select", [("o", 2)], ids=fixture_id, indirect=True)
+    def test_string_select_3_offline_attributes(self, string_select):
+        assert isinstance(string_select, nextcord.StringSelect)
+        assert string_select.id == 30
+        assert string_select.custom_id == "test_string_select_3"
+        assert len(string_select.options) == 3
+        self._assert_options(string_select)
+        assert string_select.placeholder is MISSING
+        assert string_select.min_values == 1
+        assert string_select.max_values == 1
+        assert string_select.disabled is MISSING
+
+    @pytest.mark.parametrize("string_select", [("c", 3), ("p", 3)], ids=fixture_id, indirect=True)
+    def test_string_select_4_payload_attributes(self, string_select):
+        assert isinstance(string_select, nextcord.StringSelect)
+        assert string_select.id == 40
+        assert string_select.custom_id == "test_string_select_4"
+        assert len(string_select.options) == 3
+        self._assert_options(string_select)
+        assert string_select.placeholder is MISSING
+        assert string_select.min_values is MISSING
+        assert string_select.max_values == 2
+        assert string_select.disabled is MISSING
+
+    @pytest.mark.parametrize("string_select", [("o", 3)], ids=fixture_id, indirect=True)
+    def test_string_select_4_offline_attributes(self, string_select):
+        assert isinstance(string_select, nextcord.StringSelect)
+        assert string_select.id == 40
+        assert string_select.custom_id == "test_string_select_4"
+        assert len(string_select.options) == 3
+        self._assert_options(string_select)
+        assert string_select.placeholder is MISSING
+        assert string_select.min_values == 1
+        assert string_select.max_values == 2
+        assert string_select.disabled is MISSING
+
+    @pytest.mark.parametrize(
+        "string_select", [("c", 4), ("p", 4), ("o", 4)], ids=fixture_id, indirect=True
+    )
+    def test_string_select_5_payload_attributes(self, string_select):
+        assert isinstance(string_select, nextcord.StringSelect)
+        assert string_select.id == 50
+        assert string_select.custom_id == "test_string_select_5"
+        assert len(string_select.options) == 3
+        self._assert_options(string_select)
+        assert string_select.placeholder is MISSING
+        assert string_select.min_values == 2
+        assert string_select.max_values == 3
+        assert string_select.disabled is MISSING
+
+    @pytest.mark.parametrize("string_select", [("c", 5), ("p", 5)], ids=fixture_id, indirect=True)
+    def test_string_select_6_payload_attributes(self, string_select):
+        assert isinstance(string_select, nextcord.StringSelect)
+        assert string_select.id == 60
+        assert string_select.custom_id == "test_string_select_6"
+        assert len(string_select.options) == 3
+        self._assert_options(string_select)
+        assert string_select.placeholder is MISSING
+        assert string_select.min_values is MISSING
+        assert string_select.max_values is MISSING
+        assert string_select.disabled is True
+
+    @pytest.mark.parametrize("string_select", [("o", 5)], ids=fixture_id, indirect=True)
+    def test_string_select_6_offline_attributes(self, string_select):
+        assert isinstance(string_select, nextcord.StringSelect)
+        assert string_select.id == 60
+        assert string_select.custom_id == "test_string_select_6"
+        assert len(string_select.options) == 3
+        self._assert_options(string_select)
+        assert string_select.placeholder is MISSING
+        assert string_select.min_values == 1
+        assert string_select.max_values == 1
+        assert string_select.disabled is True
 
 
 class TestSelectDefaultValues:

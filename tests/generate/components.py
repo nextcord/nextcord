@@ -75,8 +75,12 @@ class GenerateComponents(commands.Cog):
     ):
         match choice:
             case "generated":
-                pass
+                await interaction.send(
+                    f"```\n{[c.to_dict() for c in test_components.string_select_components]}\n```",
+                    ephemeral=True,
+                )
             case "response":
-                pass
+                data = await send_components(interaction, test_components.string_select_components)
+                await interaction.send(f"```\n{data}\n```", ephemeral=True)
             case _:
                 await interaction.send(f"Invalid choice `{choice}` provided!", ephemeral=True)
