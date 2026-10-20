@@ -3,7 +3,7 @@
 import nextcord
 from nextcord.ext import commands
 
-from .. import test_components
+from .. import test_components, utils
 from .base import GenerateBase
 
 
@@ -82,5 +82,33 @@ class GenerateComponents(commands.Cog):
             case "response":
                 data = await send_components(interaction, test_components.string_select_components)
                 await interaction.send(f"```\n{data}\n```", ephemeral=True)
+            case _:
+                await interaction.send(f"Invalid choice `{choice}` provided!", ephemeral=True)
+
+    @components.subcommand(name="user_selects")
+    async def user_selects(
+        self,
+        interaction: nextcord.Interaction,
+        choice: str = nextcord.SlashOption(choices=["generated", "response"]),
+    ):
+        if utils.EnvVar.test_user is None:
+            await interaction.send(
+                "`TEST_USER` envvar must be set to run this command.", ephemeral=True
+            )
+            return
+
+        match choice:
+            case "generated":
+                to_send = str([c.to_dict() for c in test_components.user_select_components])
+                to_send = to_send.replace(str(utils.EnvVar.test_user), "utils.EnvVar.test_user")
+                await interaction.send(f"```\n{to_send}\n```", ephemeral=True)
+            case "response":
+                data = await send_components(interaction, test_components.user_select_components)
+                to_send = str(data)
+                to_send = to_send.replace(
+                    f"'{utils.EnvVar.test_user!s}'", 'f"{utils.EnvVar.test_user}"'
+                )
+                to_send = to_send.replace(str(utils.EnvVar.test_user), "utils.EnvVar.test_user")
+                await interaction.send(f"```\n{to_send}\n```", ephemeral=True)
             case _:
                 await interaction.send(f"Invalid choice `{choice}` provided!", ephemeral=True)
