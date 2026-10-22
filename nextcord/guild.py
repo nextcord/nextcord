@@ -322,6 +322,7 @@ class Guild(Hashable):
 
     incidents: :class:`Incidents`
         Currently applied security actions to guild.
+
         .. versionadded:: 3.2
     """
 
@@ -1874,9 +1875,9 @@ class Guild(Hashable):
             Set this to None to enable invites.
             Can be enabled for a maximal timespan of 24 hours in the future.
         dms_disabled_until: Optional[Union[:class:`~datetime.datetime`, :class:`~datetime.timedelta`]
-            The time until guild direct messages between members should be disabled.
-            Friends can still DM each other, moderators can still DM members, and Applications can still DM members.
-            Set this to None to enable direct messages between members.
+            The time until direct messages between guild members are disabled.
+            Direct messages between friends, from moderators to members, and from applications to members remain enabled.
+            Set this to None to enable direct messages between guild members.
             Can be enabled for a maximal timespan of 24 hours in the future.
         reason: Optional[:class:`str`]
             The reason for editing this guild. Shows up on the audit log.
