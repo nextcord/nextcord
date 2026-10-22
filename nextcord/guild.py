@@ -1870,11 +1870,11 @@ class Guild(Hashable):
             This will prevent new users from joining said guild.
         premium_progress_bar_enabled: :class:`bool`
             Whether the premium guild boost progress bar is enabled.
-        invites_disabled_until: Optional[Union[:class:`~datetime.datetime`, :class:`~datetime.timedelta`]
+        invites_disabled_until: Optional[Union[:class:`~datetime.datetime`, :class:`~datetime.timedelta`]]
             The time until guild invites should be disabled.
             Set this to None to enable invites.
             Can be enabled for a maximal timespan of 24 hours in the future.
-        dms_disabled_until: Optional[Union[:class:`~datetime.datetime`, :class:`~datetime.timedelta`]
+        dms_disabled_until: Optional[Union[:class:`~datetime.datetime`, :class:`~datetime.timedelta`]]
             The time until direct messages between guild members are disabled.
             Direct messages between friends, from moderators to members, and from applications to members remain enabled.
             Set this to None to enable direct messages between guild members.
