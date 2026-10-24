@@ -227,9 +227,7 @@ def check_any(*checks: "ApplicationCheck") -> AC:
     for wrapped in checks:
         pred = getattr(wrapped, "predicate", None)
         if pred is None:
-            raise TypeError(
-                f"{wrapped!r} must be wrapped by application_checks.check decorator"
-            )
+            raise TypeError(f"{wrapped!r} must be wrapped by application_checks.check decorator")
         unwrapped.append(pred)
 
     async def predicate(interaction: Interaction) -> bool:
