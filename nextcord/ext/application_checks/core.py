@@ -164,7 +164,17 @@ def check(predicate: "ApplicationCheck") -> AC:
     def wrapper(func):
         return CheckWrapper(func, predicate)
 
-    wrapper.predicate = predicate
+    # Always expose a coroutine predicate for introspection / check_any
+    # (matches nextcord.ext.commands.check).
+    if inspect.iscoroutinefunction(predicate):
+        wrapper.predicate = predicate
+    else:
+
+        @functools.wraps(predicate)
+        async def async_predicate(ctx):
+            return predicate(ctx)
+
+        wrapper.predicate = async_predicate
     return wrapper
 
 
@@ -215,16 +225,12 @@ def check_any(*checks: "ApplicationCheck") -> AC:
 
     unwrapped = []
     for wrapped in checks:
-        try:
-            # we only want to get the predicate, the arg type is not used
-            wrapper = wrapped(None)  # type: ignore
-            pred = wrapper.predicate  # type: ignore
-        except AttributeError:
+        pred = getattr(wrapped, "predicate", None)
+        if pred is None:
             raise TypeError(
                 f"{wrapped!r} must be wrapped by application_checks.check decorator"
-            ) from None
-        else:
-            unwrapped.append(pred)
+            )
+        unwrapped.append(pred)
 
     async def predicate(interaction: Interaction) -> bool:
         errors = []
@@ -421,6 +427,17 @@ def _permission_check_wrapper(predicate: ApplicationCheck, name: str, perms: Dic
         setattr(callback, name, perms)
         return check(predicate)(func)  # type: ignore
 
+    # Expose coroutine predicate for check_any() and introspection
+    # (see check() docstring / ext.commands.check).
+    if inspect.iscoroutinefunction(predicate):
+        wrapper.predicate = predicate
+    else:
+
+        @functools.wraps(predicate)
+        async def async_predicate(ctx):
+            return predicate(ctx)
+
+        wrapper.predicate = async_predicate
     return wrapper
 
 
