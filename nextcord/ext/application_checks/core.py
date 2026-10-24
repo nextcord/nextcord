@@ -170,9 +170,9 @@ def check(predicate: "ApplicationCheck") -> AC:
         wrapper.predicate = predicate
     else:
 
-        @functools.wraps(predicate)
+        @functools.wraps(predicate)  # type: ignore
         async def async_predicate(ctx):
-            return predicate(ctx)
+            return predicate(ctx)  # type: ignore
 
         wrapper.predicate = async_predicate
     return wrapper
@@ -431,9 +431,9 @@ def _permission_check_wrapper(predicate: ApplicationCheck, name: str, perms: Dic
         wrapper.predicate = predicate
     else:
 
-        @functools.wraps(predicate)
+        @functools.wraps(predicate)  # type: ignore
         async def async_predicate(ctx):
-            return predicate(ctx)
+            return predicate(ctx)  # type: ignore
 
         wrapper.predicate = async_predicate
     return wrapper
