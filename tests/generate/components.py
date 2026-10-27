@@ -112,3 +112,31 @@ class GenerateComponents(commands.Cog):
                 await interaction.send(f"```\n{to_send}\n```", ephemeral=True)
             case _:
                 await interaction.send(f"Invalid choice `{choice}` provided!", ephemeral=True)
+
+    @components.subcommand(name="role_selects")
+    async def role_selects(
+        self,
+        interaction: nextcord.Interaction,
+        choice: str = nextcord.SlashOption(choices=["generated", "response"]),
+    ):
+        if utils.EnvVar.test_role is None:
+            await interaction.send(
+                "`TEST_ROLE` envvar must be set to run this command.", ephemeral=True
+            )
+            return
+
+        match choice:
+            case "generated":
+                to_send = str([c.to_dict() for c in test_components.role_select_components])
+                to_send = to_send.replace(str(utils.EnvVar.test_role), "utils.EnvVar.test_role")
+                await interaction.send(f"```\n{to_send}\n```", ephemeral=True)
+            case "response":
+                data = await send_components(interaction, test_components.role_select_components)
+                to_send = str(data)
+                to_send = to_send.replace(
+                    f"'{utils.EnvVar.test_role!s}'", 'f"{utils.EnvVar.test_role}"'
+                )
+                to_send = to_send.replace(str(utils.EnvVar.test_role), "utils.EnvVar.test_role")
+                await interaction.send(f"```\n{to_send}\n```", ephemeral=True)
+            case _:
+                await interaction.send(f"Invalid choice `{choice}` provided!", ephemeral=True)
