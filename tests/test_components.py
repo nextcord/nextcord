@@ -1904,6 +1904,365 @@ class TestRoleSelects:
         assert select.default_values[0].type == nextcord.SelectDefaultValueType.role
 
 
+mentionable_select_components = [
+    nextcord.ActionRow(
+        [nextcord.MentionableSelect(custom_id="test_mentionable_select_1", component_id=10)],
+        component_id=1,
+    ),
+    nextcord.ActionRow(
+        [
+            nextcord.MentionableSelect(
+                placeholder="Placeholder text",
+                min_values=1,
+                max_values=1,
+                custom_id="test_mentionable_select_2",
+                component_id=20,
+            )
+        ],
+        component_id=2,
+    ),
+    nextcord.ActionRow(
+        [
+            nextcord.MentionableSelect(
+                min_values=2, max_values=3, custom_id="test_mentionable_select_3", component_id=30
+            )
+        ],
+        component_id=3,
+    ),
+    nextcord.ActionRow(
+        [
+            nextcord.MentionableSelect(
+                default_values=[
+                    nextcord.SelectDefaultValue(
+                        utils.EnvVar.test_user, nextcord.SelectDefaultValueType.user
+                    ),
+                    nextcord.SelectDefaultValue(
+                        utils.EnvVar.test_role, nextcord.SelectDefaultValueType.role
+                    ),
+                ],
+                min_values=1,
+                max_values=2,
+                custom_id="test_mentionable_select_4",
+                component_id=40,
+            )
+        ],
+        component_id=4,
+    ),
+    nextcord.ActionRow(
+        [
+            nextcord.MentionableSelect(
+                disabled=True,
+                min_values=1,
+                max_values=1,
+                custom_id="test_mentionable_select_5",
+                component_id=50,
+            )
+        ],
+        component_id=5,
+    ),
+]
+
+
+@pytest.mark.skipif(
+    utils.EnvVar.test_user is None or utils.EnvVar.test_role is None,
+    reason="Requires TEST_USER and TEST_ROLE envvars to be set.",
+)
+class TestMentionableSelects:
+    @pytest.fixture(scope="class")
+    def comps(self):
+        return mentionable_select_components
+
+    @pytest.fixture(scope="class")
+    def comp_payload(self, comps):
+        return [comp.to_dict() for comp in comps]
+
+    @pytest.fixture(scope="class")
+    def saved_comp_payload(self):
+        return [
+            {
+                "type": 1,
+                "id": 1,
+                "components": [{"type": 7, "id": 10, "custom_id": "test_mentionable_select_1"}],
+            },
+            {
+                "type": 1,
+                "id": 2,
+                "components": [
+                    {
+                        "type": 7,
+                        "id": 20,
+                        "custom_id": "test_mentionable_select_2",
+                        "placeholder": "Placeholder text",
+                        "min_values": 1,
+                        "max_values": 1,
+                    }
+                ],
+            },
+            {
+                "type": 1,
+                "id": 3,
+                "components": [
+                    {
+                        "type": 7,
+                        "id": 30,
+                        "custom_id": "test_mentionable_select_3",
+                        "min_values": 2,
+                        "max_values": 3,
+                    }
+                ],
+            },
+            {
+                "type": 1,
+                "id": 4,
+                "components": [
+                    {
+                        "type": 7,
+                        "id": 40,
+                        "custom_id": "test_mentionable_select_4",
+                        "default_values": [
+                            {"id": utils.EnvVar.test_user, "type": "user"},
+                            {"id": utils.EnvVar.test_role, "type": "role"},
+                        ],
+                        "min_values": 1,
+                        "max_values": 2,
+                    }
+                ],
+            },
+            {
+                "type": 1,
+                "id": 5,
+                "components": [
+                    {
+                        "type": 7,
+                        "id": 50,
+                        "custom_id": "test_mentionable_select_5",
+                        "min_values": 1,
+                        "max_values": 1,
+                        "disabled": True,
+                    }
+                ],
+            },
+        ]
+
+    @pytest.fixture(scope="class")
+    def offline_response(self):
+        return [
+            {
+                "type": 1,
+                "id": 1,
+                "components": [
+                    {
+                        "type": 7,
+                        "id": 10,
+                        "custom_id": "test_mentionable_select_1",
+                        "min_values": 1,
+                        "max_values": 1,
+                    }
+                ],
+            },
+            {
+                "type": 1,
+                "id": 2,
+                "components": [
+                    {
+                        "type": 7,
+                        "id": 20,
+                        "custom_id": "test_mentionable_select_2",
+                        "placeholder": "Placeholder text",
+                        "min_values": 1,
+                        "max_values": 1,
+                    }
+                ],
+            },
+            {
+                "type": 1,
+                "id": 3,
+                "components": [
+                    {
+                        "type": 7,
+                        "id": 30,
+                        "custom_id": "test_mentionable_select_3",
+                        "min_values": 2,
+                        "max_values": 3,
+                    }
+                ],
+            },
+            {
+                "type": 1,
+                "id": 4,
+                "components": [
+                    {
+                        "type": 7,
+                        "id": 40,
+                        "custom_id": "test_mentionable_select_4",
+                        "min_values": 1,
+                        "max_values": 2,
+                        "default_values": [
+                            {"type": "user", "id": f"{utils.EnvVar.test_user}"},
+                            {"type": "role", "id": f"{utils.EnvVar.test_role}"},
+                        ],
+                    }
+                ],
+            },
+            {
+                "type": 1,
+                "id": 5,
+                "components": [
+                    {
+                        "type": 7,
+                        "id": 50,
+                        "custom_id": "test_mentionable_select_5",
+                        "min_values": 1,
+                        "max_values": 1,
+                        "disabled": True,
+                    }
+                ],
+            },
+        ]
+
+    @pytest.fixture(scope="class")
+    async def online_response(self, http_session, comp_payload):
+        return await send_components(http_session, comp_payload)
+
+    @pytest.fixture(scope="class")
+    def mentionable_select(
+        self, request: pytest.FixtureRequest, comps, comp_payload, offline_response
+    ):
+        # Param should be a tuple of 2 values: (payload_source, action_row_index)
+        match request.param[0]:
+            case "c":
+                return comps[request.param[1]].components[0]
+            case "p":
+                return nextcord.resolve_component(comp_payload[request.param[1]]["components"][0])
+            case "o":
+                return nextcord.resolve_component(
+                    offline_response[request.param[1]]["components"][0]
+                )
+            case _:
+                raise ValueError(f"Unhandled request param value {request.param}")
+
+    @pytest.mark.skipif(
+        utils.EnvVar.online is False or utils.EnvVar.test_channel is None,
+        reason="Online only test, requires TEST_CHANNEL to be set.",
+    )
+    async def test_offline_against_online_response(self, offline_response, online_response):
+        assert (
+            offline_response == online_response
+        ), "MentionableSelect offline response no longer matches online response, please update."
+
+    def test_comp_payload_against_saved(self, comp_payload, saved_comp_payload):
+        assert (
+            comp_payload == saved_comp_payload
+        ), "Saved MentionableSelect payload no longer matches generate, either update or fix."
+
+    def test_comp_payload_typing(self, comp_payload):
+        ta = pydantic.TypeAdapter(comp_payloads.MentionableSelectMenu)
+        for data in comp_payload:
+            ta.validate_python(data["components"][0], extra="forbid", strict=True)
+
+    def test_offline_response_typing(self, offline_response):
+        ta = pydantic.TypeAdapter(comp_payloads.MentionableSelectMenu)
+        for data in offline_response:
+            ta.validate_python(data["components"][0], extra="forbid", strict=True)
+
+    def test_select_menu_alias(self):
+        assert nextcord.MentionableSelectMenu is nextcord.MentionableSelect
+
+    @pytest.mark.parametrize(
+        "mentionable_select", [("c", 0), ("p", 0)], ids=fixture_id, indirect=True
+    )
+    def test_mentionable_select_1_payload_attributes(self, mentionable_select):
+        assert isinstance(mentionable_select, nextcord.MentionableSelect)
+        assert mentionable_select.id == 10
+        assert mentionable_select.custom_id == "test_mentionable_select_1"
+        assert mentionable_select.placeholder is MISSING
+        assert mentionable_select.default_values is MISSING
+        assert mentionable_select.min_values is MISSING
+        assert mentionable_select.max_values is MISSING
+        assert mentionable_select.disabled is MISSING
+
+    @pytest.mark.parametrize("mentionable_select", [("o", 0)], ids=fixture_id, indirect=True)
+    def test_mentionable_select_1_offline_attributes(self, mentionable_select):
+        assert isinstance(mentionable_select, nextcord.MentionableSelect)
+        assert mentionable_select.id == 10
+        assert mentionable_select.custom_id == "test_mentionable_select_1"
+        assert mentionable_select.placeholder is MISSING
+        assert mentionable_select.default_values is MISSING
+        assert mentionable_select.min_values == 1
+        assert mentionable_select.max_values == 1
+        assert mentionable_select.disabled is MISSING
+
+    @pytest.mark.parametrize(
+        "mentionable_select", [("c", 1), ("p", 1), ("o", 1)], ids=fixture_id, indirect=True
+    )
+    def test_mentionable_select_2_attributes(self, mentionable_select):
+        assert isinstance(mentionable_select, nextcord.MentionableSelect)
+        assert mentionable_select.id == 20
+        assert mentionable_select.custom_id == "test_mentionable_select_2"
+        assert mentionable_select.placeholder == "Placeholder text"
+        assert mentionable_select.default_values is MISSING
+        assert mentionable_select.min_values == 1
+        assert mentionable_select.max_values == 1
+        assert mentionable_select.disabled is MISSING
+
+    @pytest.mark.parametrize(
+        "mentionable_select", [("c", 2), ("p", 2), ("o", 2)], ids=fixture_id, indirect=True
+    )
+    def test_mentionable_select_3_attributes(self, mentionable_select):
+        assert isinstance(mentionable_select, nextcord.MentionableSelect)
+        assert mentionable_select.id == 30
+        assert mentionable_select.custom_id == "test_mentionable_select_3"
+        assert mentionable_select.placeholder is MISSING
+        assert mentionable_select.default_values is MISSING
+        assert mentionable_select.min_values == 2
+        assert mentionable_select.max_values == 3
+        assert mentionable_select.disabled is MISSING
+
+    @pytest.mark.parametrize(
+        "mentionable_select", [("c", 3), ("p", 3), ("o", 3)], ids=fixture_id, indirect=True
+    )
+    def test_mentionable_select_4_attributes(self, mentionable_select):
+        assert isinstance(mentionable_select, nextcord.MentionableSelect)
+        assert mentionable_select.id == 40
+        assert mentionable_select.custom_id == "test_mentionable_select_4"
+        assert mentionable_select.placeholder is MISSING
+        assert mentionable_select.default_values is not MISSING
+        assert len(mentionable_select.default_values) == 2
+        assert mentionable_select.default_values[0].id == utils.EnvVar.test_user
+        assert mentionable_select.default_values[0].type == nextcord.SelectDefaultValueType.user
+        assert mentionable_select.default_values[1].id == utils.EnvVar.test_role
+        assert mentionable_select.default_values[1].type == nextcord.SelectDefaultValueType.role
+        assert mentionable_select.min_values == 1
+        assert mentionable_select.max_values == 2
+        assert mentionable_select.disabled is MISSING
+
+    @pytest.mark.parametrize(
+        "mentionable_select", [("c", 4), ("p", 4), ("o", 4)], ids=fixture_id, indirect=True
+    )
+    def test_mentionable_select_5_attributes(self, mentionable_select):
+        assert isinstance(mentionable_select, nextcord.MentionableSelect)
+        assert mentionable_select.id == 50
+        assert mentionable_select.custom_id == "test_mentionable_select_5"
+        assert mentionable_select.placeholder is MISSING
+        assert mentionable_select.default_values is MISSING
+        assert mentionable_select.min_values == 1
+        assert mentionable_select.max_values == 1
+        assert mentionable_select.disabled is True
+
+    def test_mentionable_select_add_default(self):
+        select = nextcord.MentionableSelect()
+        assert select.default_values is MISSING
+        select.add_default_value(utils.EnvVar.test_user, nextcord.SelectDefaultValueType.user)
+        assert select.default_values is not MISSING
+        assert len(select.default_values) == 1
+        assert select.default_values[0].id == utils.EnvVar.test_user
+        assert select.default_values[0].type == nextcord.SelectDefaultValueType.user
+        select.add_default_value(utils.EnvVar.test_role, nextcord.SelectDefaultValueType.role)
+        assert len(select.default_values) == 2
+        assert select.default_values[1].id == utils.EnvVar.test_role
+        assert select.default_values[1].type == nextcord.SelectDefaultValueType.role
+
+
 class TestSelectDefaultValues:
     def test_select_default_channel_string(self):
         default = nextcord.SelectDefaultValue(111111, "channel")
